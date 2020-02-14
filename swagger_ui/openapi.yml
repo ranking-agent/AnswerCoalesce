@@ -1,0 +1,118 @@
+openapi: 3.0.2
+info:
+  title: Answer Coalesce - A Swagger UI/web service
+  description: 'A Swagger UI/web service interface for the Answer Coalesce service'
+  version: '0.0.1'
+  contact:
+    email: whomever@renci.org
+  termsOfService: http://robokop.renci.org:7055/tos?service_long=Answer+Coalesce+service&provider_long=the+Translator+Consortium
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+tags:
+  - name: QRW
+paths:
+  /query:
+    post:
+      tags:
+        - AC
+      requestBody:
+        content:
+          application/json:
+              schema:
+                "$ref": "#/definitions/Answer"
+        description: A question graph
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/definitions/Answer"
+          description: Returns an array of relevant questions
+      summary: 'Coalesce Answers related to a Answer.'
+definitions:
+  QEdge:
+    description: Minimal edge specification
+    properties:
+      id:
+        description: Internal ID of this edge
+        type: string
+      source_id:
+        description: Internal ID of source node of this edge
+        type: string
+      target_id:
+        description: Internal ID of target node of this edge
+        type: string
+      type:
+        description: Optional relationship type of this edge
+        type: string
+    required:
+    - id
+    - source_id
+    - target_id
+    type: object
+  QGraph:
+    description: Graph representing the minimal question specification
+    properties:
+      edges:
+        items:
+          "$ref": "#/definitions/QEdge"
+        type: array
+      nodes:
+        items:
+          "$ref": "#/definitions/QNode"
+        type: array
+    type: object
+  QNode:
+    description: Minimal node specification
+    properties:
+      curie:
+        description: Optional curie of this node
+        type: string
+      id:
+        description: Internal ID of this node
+        type: string
+      set:
+        description: Flag indicating whether node should be collapsed in answers
+        type: boolean
+      type:
+        description: Optional biolink-model type of this node
+        type: string
+    required:
+    - id
+  Question:
+    description: Question
+    example:
+      machine_question:
+        edges:
+        - source_id: n0
+          target_id: n1
+        - source_id: n1
+          target_id: n2
+        nodes:
+        - curie: MONDO:0005737
+          id: n0
+          type: disease
+        - id: n1
+          type: gene
+        - id: n2
+          type: genetic_condition
+      name: Ebola--(gene)--(genetic_condition)
+      natural_question: What genetic conditions might provide protection against Ebola?
+      notes: "#ebola #q1"
+    id: Question
+    properties:
+      machine_question:
+        "$ref": "#/definitions/QGraph"
+      name:
+        description: human-readable question name
+        type: string
+      natural_question:
+        description: natural language English question
+        type: string
+      notes:
+        description: notes about question
+        type: string

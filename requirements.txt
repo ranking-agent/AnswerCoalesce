@@ -1,0 +1,8 @@
+Jinja2
+jsonschema
+sanic==19.9.0
+swagger-ui-bundle
+pyyaml
+argparse
+setuptools
+json5

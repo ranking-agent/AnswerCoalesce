@@ -1,0 +1,9 @@
+version: "3"
+services:
+  qrw:
+    container_name: ac
+    image: ac
+    build:
+        context: .
+    ports:
+      - "6380:6380"

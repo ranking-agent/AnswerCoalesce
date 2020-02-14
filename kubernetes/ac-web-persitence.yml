@@ -1,0 +1,31 @@
+apiVersion: v1
+items:
+
+- apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: ac-web-data-pv-volume
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    capacity:
+      storage: 5Gi
+    hostPath:
+      path: "/d/dvols/ac/data"
+    persistentVolumeReclaimPolicy: Retain
+    storageClassName: ac-web-data-pv
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: ac-web-data-pvc
+    labels:
+      type: local
+  spec:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 5Gi
+    storageClassName: ac-web-data-pv
+kind: List
