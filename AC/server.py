@@ -5,7 +5,7 @@ import json
 from sanic import Sanic, response
 from sanic.request import Request
 
-from QRW.apidocs import bp as apidocs_blueprint
+from AC.apidocs import bp as apidocs_blueprint
 
 """ Sanic server for Question Rewrite - A Swagger UI/web service. """
 
