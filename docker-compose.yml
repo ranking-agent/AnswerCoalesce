@@ -1,6 +1,6 @@
 version: "3"
 services:
-  qrw:
+  ac:
     container_name: ac
     image: ac
     build:
