@@ -7,21 +7,21 @@ from sanic.request import Request
 
 from AC.apidocs import bp as apidocs_blueprint
 
-""" Sanic server for Question Rewrite - A Swagger UI/web service. """
+""" Sanic server for Answer Coalesce - A Swagger UI/web service. """
 
 # initialize this web app
-app: Sanic = Sanic("Question rewrite")
+app: Sanic = Sanic("Answer Coalesce")
 
 # suppress access logging
 app.config.ACCESS_LOG = False
 
-# init the app using the paramters defined in
+# init the app using the parameters defined in
 app.blueprint(apidocs_blueprint)
 
 
-@app.post('/query')
-async def query_handler(request: Request) -> json:
-    """ Handler for question rewrite operations. """
+@app.post('/result')
+async def result_handler(request: Request) -> json:
+    """ Handler for Answer coalesce operations. """
 
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
@@ -30,14 +30,14 @@ async def query_handler(request: Request) -> json:
     with open(os.path.join(dir_path, 'translator_interchange_0.9.0.yaml')) as f:
         spec: dict = yaml.load(f, Loader=yaml.SafeLoader)
 
-    # load the query specification, first get the question node
-    validate_with: dict = spec["components"]["schemas"]["Question"]
+    # load the query specification, first get the result node
+    validate_with: dict = spec["components"]["schemas"]["Result"]
 
     # then get the components in their own array so the relative references are found
     validate_with["components"] = spec["components"]
 
-    # remove the question node because we already have it at the top
-    validate_with["components"].pop("Question", None)
+    # remove the result node because we already have it at the top
+    validate_with["components"].pop("Result", None)
 
     try:
         # load the input into a json object
@@ -49,9 +49,9 @@ async def query_handler(request: Request) -> json:
     # all JSON validation errors are manifested as a thrown exception
     except jsonschema.exceptions.ValidationError as error:
         # print (f"ERROR: {str(error)}")
-        return response.json({'Question failed validation. Message': str(error)}, status=400)
+        return response.json({'Result failed validation. Message': str(error)}, status=400)
 
-    # TODO: do the real work here. get a list of rewritten questions related to the requested one
+    # TODO: do the real work here. get a coalesced list of results related to the initial result
     query_rewritten: list = [incoming, incoming]
 
     try:

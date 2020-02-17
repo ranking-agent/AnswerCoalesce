@@ -10,9 +10,9 @@ info:
     name: MIT
     url: 'https://opensource.org/licenses/MIT'
 tags:
-  - name: QRW
+  - name: AC
 paths:
-  /query:
+  /result:
     post:
       tags:
         - AC
@@ -20,8 +20,8 @@ paths:
         content:
           application/json:
               schema:
-                "$ref": "#/definitions/Answer"
-        description: A question graph
+                "$ref": "#/definitions/Result"
+        description: A result graph
         required: true
       responses:
         '200':
@@ -30,89 +30,288 @@ paths:
               schema:
                 type: array
                 items:
-                  "$ref": "#/definitions/Answer"
-          description: Returns an array of relevant questions
+                  "$ref": "#/definitions/Result"
+          description: Returns an array of coalesced results
       summary: 'Coalesce Answers related to a Answer.'
 definitions:
-  QEdge:
-    description: Minimal edge specification
-    properties:
-      id:
-        description: Internal ID of this edge
-        type: string
-      source_id:
-        description: Internal ID of source node of this edge
-        type: string
-      target_id:
-        description: Internal ID of target node of this edge
-        type: string
-      type:
-        description: Optional relationship type of this edge
-        type: string
-    required:
-    - id
-    - source_id
-    - target_id
-    type: object
-  QGraph:
-    description: Graph representing the minimal question specification
-    properties:
-      edges:
-        items:
-          "$ref": "#/definitions/QEdge"
-        type: array
-      nodes:
-        items:
-          "$ref": "#/definitions/QNode"
-        type: array
-    type: object
-  QNode:
-    description: Minimal node specification
-    properties:
-      curie:
-        description: Optional curie of this node
-        type: string
-      id:
-        description: Internal ID of this node
-        type: string
-      set:
-        description: Flag indicating whether node should be collapsed in answers
-        type: boolean
-      type:
-        description: Optional biolink-model type of this node
-        type: string
-    required:
-    - id
-  Question:
-    description: Question
-    example:
-      machine_question:
-        edges:
-        - source_id: n0
-          target_id: n1
-        - source_id: n1
-          target_id: n2
+    Node:
+      type: object
+      description: A node in the thought subgraph
+      properties:
+        id:
+          type: string
+          example: 'OMIM:603903'
+          description: CURIE identifier for this node
+        uri:
+          type: string
+          example: 'https://www.uniprot.org/uniprot/P00738'
+          description: URI identifier for this node"
+        name:
+          type: string
+          example: Haptoglobin
+          description: Formal name of the entity
+        type:
+          type: array
+          description: 'Entity type of this node (e.g., protein, disease, etc.)'
+          example:
+            - protein
+          items:
+            type: string
+        description:
+          type: string
+          example: 'Haptoglobin captures, and combines with free plasma hemoglobin...'
+          description: One to three sentences of description/definition of this entity
+        symbol:
+          type: string
+          example: HP
+          description: Short abbreviation or symbol for this entity
+        node_attributes:
+          type: array
+          description: A list of arbitrary attributes for the node
+          items:
+            $ref: '#/definitions/NodeAttribute'
+      additionalProperties: true
+    NodeAttribute:
+      type: object
+      description: A generic attribute for a node
+      properties:
+        type:
+          type: string
+          example: article
+          description: Entity type of this attribute
+        name:
+          type: string
+          example: Wikipedia article
+          description: Formal name of the attribute
+        value:
+          type: string
+          example: '7.23e-12'
+          description: Value of the attribute
+        url:
+          type: string
+          example: 'https://en.wikipedia.org/wiki/Malaria'
+          description: A URL corresponding to this attribute
+      additionalProperties: true
+    Edge:
+      type: object
+      description: An edge in the thought subgraph linking two nodes
+      properties:
+        id:
+          type: string
+          example: '553903'
+          description: >-
+            Local identifier for this node which is unique within this
+            KnowledgeGraph, and perhaps within the source reasoner's knowledge
+            graph
+        type:
+          type: string
+          example: affects
+          description: Higher-level relationship type of this edge
+        relation:
+          type: string
+          example: upregulates
+          description: Lower-level relationship type of this edge
+        source_id:
+          type: string
+          example: 'https://omim.org/entry/603903'
+          description: Corresponds to the @id of source node of this edge
+        target_id:
+          type: string
+          example: 'https://www.uniprot.org/uniprot/P00738'
+          description: Corresponds to the @id of target node of this edge
+        is_defined_by:
+          type: string
+          example: reasoner
+          description: A CURIE/URI for the translator group that made the KG
+        defined_datetime:
+          type: string
+          example: '2018-11-03 15:34:23'
+          description: >-
+            Datetime at which the KG builder/updater pulled the information from
+            the original source. Used as a freshness indicator.
+        provided_by:
+          type: string
+          example: OMIM
+          description: A CURIE/URI for the knowledge source that defined this edge
+        confidence:
+          type: number
+          format: float
+          example: 0.99
+          description: >-
+            Confidence metric for this edge, a value between (inclusive) 0.0 (no
+            confidence) and 1.0 (highest confidence)
+        weight:
+          type: number
+          format: float
+          example: 0.99
+          description: >-
+            Weight metric for this edge, with no upper bound. Perhaps useful when
+            formal confidence metrics are not available
+        publications:
+          type: array
+          description: List of CURIEs for publications associated with this edge
+          example:
+            - 'PMID:12345562'
+          items:
+            type: string
+        evidence_type:
+          type: string
+          example: 'ECO:0000220'
+          description: >-
+            A CURIE/URI for class of evidence supporting the statement made in an
+            edge - typically a class from the ECO ontology
+        qualifiers:
+          type: string
+          example: 'ECO:0000220'
+          description: >-
+            Terms representing qualifiers that modify or qualify the meaning of
+            the statement made in an edge
+        negated:
+          type: boolean
+          example: true
+          description: >-
+            Boolean that if set to true, indicates the edge statement is negated
+            i.e. is not true
+        edge_attributes:
+          type: array
+          description: A list of additional attributes for this edge
+          items:
+            $ref: '#/definitions/EdgeAttribute'
+      additionalProperties: true
+    EdgeAttribute:
+      type: object
+      description: A generic additional attribute for an edge
+      properties:
+        type:
+          type: string
+          example: localization
+          description: Entity type of this attribute
+        name:
+          type: string
+          example: Cell type limitation
+          description: Formal name of the attribute
+        value:
+          type: string
+          example: MFC cells
+          description: >-
+            Value of the attribute. While all attributes should have a name, many
+            will not have a value
+        url:
+          type: string
+          example: 'https://www.ncbi.nlm.nih.gov/pubmed/29309293'
+          description: A URL corresponding to this attribute
+      additionalProperties: true
+    KnowledgeGraph:
+      type: object
+      description: >-
+        A thought graph associated with this result. This will commonly be a
+        linear path subgraph from one concept to another, but related items aside
+        of the path may be included.
+      properties:
         nodes:
-        - curie: MONDO:0005737
-          id: n0
-          type: disease
-        - id: n1
-          type: gene
-        - id: n2
-          type: genetic_condition
-      name: Ebola--(gene)--(genetic_condition)
-      natural_question: What genetic conditions might provide protection against Ebola?
-      notes: "#ebola #q1"
-    id: Question
-    properties:
-      machine_question:
-        "$ref": "#/definitions/QGraph"
-      name:
-        description: human-readable question name
-        type: string
-      natural_question:
-        description: natural language English question
-        type: string
-      notes:
-        description: notes about question
-        type: string
+          type: array
+          description: List of nodes in the KnowledgeGraph
+          items:
+            $ref: '#/definitions/Node'
+        edges:
+          type: array
+          description: List of edges in the KnowledgeGraph
+          items:
+            $ref: '#/definitions/Edge'
+      additionalProperties: true
+    Result:
+      type: object
+      description: One of potentially several results or answers for a query
+      properties:
+        id:
+          type: string
+          example: 'https://rtx.ncats.io/api/rtx/v1/result/234'
+          description: URI for this message
+        description:
+          type: string
+          example: >-
+            The genetic condition sickle cell anemia may provide protection from
+            cerebral malaria via genetic alterations of proteins HBB (P68871) and
+            HMOX1 (P09601).
+          description: A free text description of this result answer from the reasoner
+        essence:
+          type: string
+          example: ibuprofen
+          description: >-
+            A single string that is the terse essence of the result (useful for
+            simple answers)
+        essence_type:
+          type: string
+          example: drug
+          description: A Translator bioentity type of the essence
+        row_data:
+          type: array
+          example:
+            - ibuprofen
+            - 'CHEMBL:CHEMBL521'
+          description: >-
+            An arbitrary list of values that captures the essence of the result
+            that can be turned into a tabular result across all answers (each
+            result is a row) for a user that wants tabular output
+          items:
+            type: string
+        score:
+          type: number
+          format: float
+          example: 163.233
+          description: Any type of score associated with this result
+        score_name:
+          type: string
+          example: Jaccard distance
+          description: Name for the score
+        score_direction:
+          type: string
+          example: lower_is_better
+          description: >-
+            Sorting indicator for the score: one of higher_is_better or
+            lower_is_better
+        confidence:
+          type: number
+          format: float
+          example: 0.9234
+          description: >-
+            Confidence metric for this result, a value between (inclusive) 0.0 (no
+            confidence) and 1.0 (highest confidence)
+        result_type:
+          type: string
+          example: individual query answer
+          description: >-
+            One of several possible result types: 'individual query answer',
+            'neighborhood graph', 'type summary graph'
+        result_group:
+          type: integer
+          example: 1
+          description: >-
+            An integer group number for results for use in cases where several
+            results should be grouped together. Also useful to control sorting
+            ascending.
+        result_group_similarity_score:
+          type: number
+          format: float
+          example: 0.95
+          description: >-
+            A score that denotes the similarity of this result to other members of
+            the result_group
+        reasoner_id:
+          type: string
+          example: RTX
+          description: >-
+            Identifier string of the reasoner that provided this result (e.g.,
+            RTX, Robokop, Indigo, Integrator)
+        result_graph:
+          type: object
+          description: >-
+            A graph that describes the thought pattern of this result (i.e. answer
+            to the query)
+          $ref: '#/definitions/KnowledgeGraph'
+        knowledge_map:
+          type: object
+          description: >-
+            Lookup dict that maps QNode and QEdge identifiers in the QueryGraph to
+            Node and Edge identifiers in the KnowledgeGraph
+          additionalProperties: true

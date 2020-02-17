@@ -1,4 +1,4 @@
-"""Setup file for QRW package."""
+"""Setup file for AC package."""
 from setuptools import setup
 
 setup(
@@ -7,7 +7,7 @@ setup(
     author='Phil Owen',
     author_email='powen@renci.org',
     url='https://github.com/patrickkwang/r3',
-    description='Answer Coalesce - Offers coalesced answers based on the anser passed in.',
+    description='Answer Coalesce - Offers coalesced answers based on the answer passed in.',
     packages=['AC'],
     include_package_data=True,
     zip_safe=False,
