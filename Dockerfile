@@ -19,6 +19,9 @@ RUN git clone https://github.com/TranslatorIIPrototypes/AnswerCoalesce.git
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
 
+# get the right branch if desired
+#RUN git checkout _AC
+
 # install all required packages
 RUN pip install -r requirements.txt
 
