@@ -31,7 +31,7 @@ paths:
                 type: array
                 items:
                   "$ref": "#/definitions/Result"
-          description: Returns an array of coalesced results
+          description: 'Example: Returns an array of coalesced results'
       summary: 'Coalesce Answers related to a Answer.'
 definitions:
     Node:
