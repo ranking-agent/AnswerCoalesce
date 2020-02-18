@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """ Run Answer coalesce. """
 import argparse
-from AC.server import app
+from src.server import app
 
 parser = argparse.ArgumentParser(description='Start Answer Coalesce interface.')
 parser.add_argument('--host', default='0.0.0.0', type=str)

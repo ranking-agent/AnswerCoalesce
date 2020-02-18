@@ -5,7 +5,7 @@ import json
 from sanic import Sanic, response
 from sanic.request import Request
 
-from AC.apidocs import bp as apidocs_blueprint
+from src.apidocs import bp as apidocs_blueprint
 
 """ Sanic server for Answer Coalesce - A Swagger UI/web service. """
 
