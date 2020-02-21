@@ -20,7 +20,7 @@ env:
 
 # command to run tests
 script:
-  - pytest -p no:warnings test
+  - pytest -p no:warnings tests
 
 after_success:
   - coveralls
