@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/TranslatorIIPrototypes/AnswerCoalesce.svg?branch=master)](https://travis-ci.com/TranslatorIIPrototypes/AnswerCoalesce)
+
 # AnswerCoalesce
 
 A Swagger UI/web service interface for the Answer Coalesce service.
