@@ -29,17 +29,28 @@ def identify_coalescent_nodes(answers):
         hashes = make_answer_hashes(result,graph,question)
 
 def make_answer_hashes(result,graph,question):
-    #First combine the node and edge bindings into a single dictionary, making sure that the same id is not
-    #used for both a node and edge.
-    bindings = { f'n_{qg_id}': kg_id for qg_id, kg_id in result['node_bindings'].items() }
-    bindings.update({ f'e_{qg_id}': kg_id for qg_id, kg_id in result['edge_bindings'].items() } )
+    #First combine the node and edge bindings into a single dictionary,
+    bindings = make_bindings(question, result)
     for qg_id in result['node_bindings']:
         newhash = make_answer_hash(bindings,graph,question,qg_id)
+
+
+def make_bindings(question, result):
+    """Given a question and a result, build a single bindings map, making sure that the same id is not
+    used for both a node and edge. Also remove any edge_bindings that are not part of the question, such
+    as support edges"""
+    question_nodes = [e['id'] for e in question['nodes']]
+    question_edges = [e['id'] for e in question['edges']]
+    bindings = {f'n_{qg_id}': kg_id for qg_id, kg_id in result['node_bindings'].items() if qg_id in question_nodes}
+    bindings.update( {f'e_{qg_id}': kg_id for qg_id, kg_id in result['edge_bindings'].items() if qg_id in question_edges})
+    return bindings
+
 
 def make_answer_hash(bindings,graph,question,qg_id):
     """given a combined node/edge bindings dictionary, plus the knowledge graph it points to and the question graph,
     create a key that characterizes the answer, except for one of the nodes (and its edges)."""
-    singlehash = bindings.copy()
+    #for some reason, the bindings are to lists?  Just grabbing the first (and only) element to the new bindings.
+    singlehash = { x:y[0] for x,y in bindings.items() }
     #take out the binding for qg_id
     del singlehash[f'n_{qg_id}']
     #Now figure out which edges hook to qg_id
@@ -47,8 +58,10 @@ def make_answer_hash(bindings,graph,question,qg_id):
     # we might end up with edges pointing either way, and we need to compare that as well.
     sedges = list(filter( lambda x: x['source_id'] == qg_id, question['edges']))
     tedges = list(filter( lambda x: x['target_id'] == qg_id, question['edges']))
-    sedge_types = { f's_{se["id"]}': graph['edges'][singlehash[f'e_{se["id"]}']]['type'] for se in sedges }
-    tedge_types = { f'e_{se["id"]}': graph['edges'][singlehash[f'e_{se["id"]}']]['type'] for se in tedges }
+    #make a map of kg edges to type.  probably move this out of make_answer_hash?
+    kg_edgetypes = { edge['id']: edge['type'] for edge in graph['edges']}
+    sedge_types = { f's_{se["id"]}': kg_edgetypes[singlehash[f'e_{se["id"]}']] for se in sedges }
+    tedge_types = { f'e_{se["id"]}': kg_edgetypes[singlehash[f'e_{se["id"]}']] for se in tedges }
     #Add in the edge types to our hash
     singlehash.update(sedge_types)
     singlehash.update(tedge_types)
