@@ -22,9 +22,9 @@ def identify_coalescent_nodes(answers):
     #This is essentially just the node and edge bindings for the answer, except for 1) one node
     # that is allowed to vary and 2) the edges attached to that node, that are allowed to vary in
     # identity but must remain constant in type.
-    question = answers['query_graph']
+    question = answers['question_graph']
     graph = answers['knowledge_graph']
-    inputs = answers['results']
+    inputs = answers['answers']
     for result in inputs:
         hashes = make_answer_hashes(result,graph,question)
 
