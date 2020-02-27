@@ -12,7 +12,7 @@ def coalesce(answers):
     identify_coalescent_nodes(answers)
     return answers
 
-def identify_coalescent_nodes(answers):
+def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single
     element.  For instance if we have an answer (a)-(b)-(c) and another answer (a)-(b')-(c)
     we will return (a)-(*)-(c) [b,b'].
@@ -22,17 +22,36 @@ def identify_coalescent_nodes(answers):
     #This is essentially just the node and edge bindings for the answer, except for 1) one node
     # that is allowed to vary and 2) the edges attached to that node, that are allowed to vary in
     # identity but must remain constant in type.
-    question = answers['question_graph']
-    graph = answers['knowledge_graph']
-    inputs = answers['answers']
-    for result in inputs:
-        hashes = make_answer_hashes(result,graph,question)
+    question = answerset['question_graph']
+    graph = answerset['knowledge_graph']
+    answers = answerset['answers']
+    varhash_to_answers = defaultdict(list)
+    varhash_to_qg = {}
+    varhash_to_kg = defaultdict(list)
+    for answer_i, answer in enumerate(answers):
+        hashes = make_answer_hashes(answer,graph,question)
+        for hash,qg_id,kg_id in hashes:
+            varhash_to_answers[hash].append(answer_i)
+            varhash_to_qg[hash] = qg_id
+            varhash_to_kg[hash].append(kg_id)
+    coalescent_nodes = []
+    for hash,answer_indices in varhash_to_answers.items():
+        if len(answer_indices) > 1 and len(varhash_to_kg[hash]) > 1:
+            #We have more than one answer that matches this pattern, and there is more than one kg node
+            # in the variable spot.
+            coalescent_nodes.append( (hash,varhash_to_qg[hash],varhash_to_kg[hash]) )
+    return coalescent_nodes
 
 def make_answer_hashes(result,graph,question):
+    """Given a single answer, find the hash for each answer node and return it along
+    with the answer node that was varied, and the kg node id for that qnode in this answer"""
     #First combine the node and edge bindings into a single dictionary,
     bindings = make_bindings(question, result)
+    hashes = []
     for qg_id in result['node_bindings']:
         newhash = make_answer_hash(bindings,graph,question,qg_id)
+        hashes.append( (newhash, qg_id,result['node_bindings'][qg_id]))
+    return hashes
 
 
 def make_bindings(question, result):

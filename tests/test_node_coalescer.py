@@ -84,4 +84,57 @@ def test_hash_topology():
         if len(l) > 1:
             nb += 1
     assert nb==4
+    t = defaultdict(list)
+    for i,a in enumerate(answers):
+        bindings = snc.make_bindings(qg,a)
+        t[snc.make_answer_hash(bindings,kg,qg,'n3')].append(i)
+    nb = 0
+    #If n3 is allowed to vary, then we're looking for process gropuings.  There aren't any.
+    # There are 2 processes that have more than one gene, but the predicate from gene to
+    # chemical is different.
+    for b,l in t.items():
+        if len(l) > 1:
+            nb += 1
+    assert nb==0
 
+def make_answer_set():
+    # This test is based on a kg that looks like
+    #           D
+    #         /   \
+    #   A - B - E - G
+    #     \   X   /     (the X is a path from B-F and one from C-E
+    #       C - F
+    # And the answers trace al paths from A to G
+    # ABEG, ABDG, ABFG, ACFG, ACEG
+
+    #Create the testing KG
+    nodenames ='ABCDEFG'
+    nodes = [{"id":n, "type":"named_thing"} for n in nodenames]
+    inputedges = ['AB','AC','BD','BE','BF','CE','CF','DG','EG','FG']
+    edges = [{"id":e, "source_id":e[0], "target_id":e[1], "type":"related_to"} for e in inputedges]
+    kg = {'nodes': nodes, 'edges':edges}
+    #Create the QG
+    qnodes = [{'id':'n0','curie':'A'},{'id':'n1'},{'id':'n2'},{'id':'n3','curie':'D'}]
+    qedges = [{'id':'e0','source_id':'n0','target_id':'n1'},
+              {'id':'e1','source_id':'n1','target_id':'n2'},
+              {'id':'e2','source_id':'n2','target_id':'n3'}]
+    qg = {'nodes':qnodes, 'edges':qedges}
+    ans = ['ABEG','ABDG','ABFG','ACFG','ACEG']
+    answers = []
+    for a in ans:
+        nb =  {f'n{i}':list(x) for i,x in enumerate(a) }
+        eb =  {f'e{i}':[f'{a[i]}{a[i+1]}'] for i in range(len(a)-1) }
+        assert len(eb) == len(nb) -1
+        answers.append( {'node_bindings':nb, 'edge_bindings':eb})
+    answerset = {'question_graph': qg, 'knowledge_graph':kg, 'answers': answers}
+    return answerset
+
+def test_identify_coalescent_nodes():
+    # There should be two nodes that can vary: (B,C) and (D,E,F)
+    # We should get back for (B,C) 2 hash of A*FG, and A*EG and for (D,E,F) 2 hashes: AB*G, AC*G
+    # But for AC*G, the * is limited to E,F
+    answerset = make_answer_set()
+    groups = snc.identify_coalescent_nodes(answerset)
+    #for group in groups:
+    #    print(group)
+    assert len(groups) == 4
