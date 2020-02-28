@@ -135,6 +135,12 @@ def test_identify_coalescent_nodes():
     # But for AC*G, the * is limited to E,F
     answerset = make_answer_set()
     groups = snc.identify_coalescent_nodes(answerset)
-    #for group in groups:
-    #    print(group)
+    for group in groups:
+        print(group)
     assert len(groups) == 4
+    found = defaultdict(int)
+    for hash,vnode,vvals in groups:
+        found[ (vnode,frozenset(vvals)) ] += 1
+    assert found[('n1',frozenset(['B','C']))] == 2
+    assert found[('n2',frozenset(['D','E','F']))] == 1
+    assert found[('n2',frozenset(['E','F']))] == 1

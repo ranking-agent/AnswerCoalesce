@@ -27,13 +27,13 @@ def identify_coalescent_nodes(answerset):
     answers = answerset['answers']
     varhash_to_answers = defaultdict(list)
     varhash_to_qg = {}
-    varhash_to_kg = defaultdict(list)
+    varhash_to_kg = defaultdict(set)
     for answer_i, answer in enumerate(answers):
         hashes = make_answer_hashes(answer,graph,question)
         for hash,qg_id,kg_id in hashes:
             varhash_to_answers[hash].append(answer_i)
             varhash_to_qg[hash] = qg_id
-            varhash_to_kg[hash].append(kg_id)
+            varhash_to_kg[hash].update(kg_id)
     coalescent_nodes = []
     for hash,answer_indices in varhash_to_answers.items():
         if len(answer_indices) > 1 and len(varhash_to_kg[hash]) > 1:
