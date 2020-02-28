@@ -9,15 +9,50 @@ def coalesce(answers):
     entities.
     """
     #Look for places to combine
-    identify_coalescent_nodes(answers)
+    coalescence_opportunities = identify_coalescent_nodes(answers)
+    for co in coalescence_opportunities:
+        new_answers = coalesce(co)
+    return new_answers
+
+def coalesce(opportunities):
+    answers = coalesce_by_property(opportunities)
+    answers += coalesce_by_graph(opportunities)
+    answers += coalesce_by_ontology(opportunities)
     return answers
+
+def coalesce_by_property(opportunities):
+    #from scipy.stats import hypergeom
+    #in scipy:
+    #The hypergeometric distribution models drawing objects from a bin.
+    #M is the total number of objects,
+    #n is total number of Type I objects.
+    #The random variate represents the number of Type I objects in N drawn without replacement from the total population.
+    #total_chemical_count=355413 # M above
+    #subset_count = len(chems) # N above
+    #def calc_enrich_p(x,n):
+    #    return hypergeom.sf(x-1, total_chemical_count, n, subset_count)
+    return []
+
+def coalesce_by_graph(opportunities):
+    return []
+
+def coalesce_by_ontology(opportunities):
+    return []
 
 def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single
-    element.  For instance if we have an answer (a)-(b)-(c) and another answer (a)-(b')-(c)
-    we will return (a)-(*)-(c) [b,b'].
+    element.  For instance if we have an answer (a)-(b)-(c) and another answer (a)-(d)-(c)
+    we will return (a)-(*)-(c) [b,d].
     Note that the goal is not to coalesce every answer in the set into a single thing, but to
-    find all the possible coalescent locations of 2 or more answers."""
+    find all the possible coalescent locations of 2 or more answers.
+    The return value is a list of groupings. Each grouping is a tuple consiting of
+    1) The fixed portions of the coalescent graph expressed as bindings, and stored
+       as a set of tuples
+    2) the question graph id of the node that is varying across the solutions
+    3) a set of kg_id's that are the variable bindings to the qg_id.
+    e.g. if the qg for the example above were (qa)-[qp1:t1]-(qb)-[qp2:t2]-(qc) then we would
+    return a list with one value that would look like:
+    [ (set(('qa','a'),('qc','c'),('qp1','t1'),('qp2','t2')), 'qb', set('b','d') )]"""
     #In this implementation, we characterize each result with a frozendict that we can compare.
     #This is essentially just the node and edge bindings for the answer, except for 1) one node
     # that is allowed to vary and 2) the edges attached to that node, that are allowed to vary in
