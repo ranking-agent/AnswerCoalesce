@@ -1,5 +1,8 @@
 from collections import defaultdict
 
+from src.property_coalescence.property_coalescer import coalesce_by_property
+
+
 def coalesce(answers):
     """Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -20,18 +23,6 @@ def coalesce(opportunities):
     answers += coalesce_by_ontology(opportunities)
     return answers
 
-def coalesce_by_property(opportunities):
-    #from scipy.stats import hypergeom
-    #in scipy:
-    #The hypergeometric distribution models drawing objects from a bin.
-    #M is the total number of objects,
-    #n is total number of Type I objects.
-    #The random variate represents the number of Type I objects in N drawn without replacement from the total population.
-    #total_chemical_count=355413 # M above
-    #subset_count = len(chems) # N above
-    #def calc_enrich_p(x,n):
-    #    return hypergeom.sf(x-1, total_chemical_count, n, subset_count)
-    return []
 
 def coalesce_by_graph(opportunities):
     return []
