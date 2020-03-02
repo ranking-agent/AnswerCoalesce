@@ -2,19 +2,35 @@ from neo4j.v1 import GraphDatabase
 from collections import defaultdict
 import os.path
 import argparse
+import sqlite3
 
 from src.node_handling import normalize
 
 garbage_properties=set(['molecular_formula','iupac_name','pubchem.orig_smiles','inchikey','inchi','smiles','synonyms',
                         'molecular_weight','molecule_properties','equivalent_identifiers','simple_smiles','id','name',
-                        'drugbank.accession_number','foodb_id','monoisotopic_mass','charge','chebi.orig_smiles','mass'])
+                        'drugbank.accession_number','foodb_id','monoisotopic_mass','charge','chebi.orig_smiles','mass',
+                        'role'])
+
+def initialize_property_dbs(stype):
+    thisdir = os.path.dirname(os.path.realpath(__file__) )
+    dbname = f'{thisdir}/{stype}.db'
+    if os.path.exists(dbname):
+        os.remove(dbname)
+    with sqlite3.connect(dbname) as conn:
+        conn.execute('''CREATE TABLE properties (node text, propertyset text)''')
+        conn.execute('''CREATE TABLE property_counts (property text, count integer)''')
+    return dbname
 
 def create_property_counts(stype,db,pw):
+    #Because we're normalizing stuff from the older db, we sometimes find that multiple nodes from the old db
+    # get glommed together in the new norm.
+    #So we have to accumulate properties, then write them all out, rather than dump as wel go.
     driver = GraphDatabase.driver(f'bolt://{db}:7687', auth=('neo4j', pw))
     cypher = f'MATCH (a:{stype}) RETURN a'
     counts = defaultdict( int )
     thisdir = os.path.dirname(os.path.realpath(__file__) )
-    with driver.session() as session, open(f'{thisdir}/{stype}.properties','w') as outf:
+    properties_per_node = defaultdict(set)
+    with driver.session() as session:
         results = session.run(cypher)
         for result in results:
             node = result['a']
@@ -22,13 +38,16 @@ def create_property_counts(stype,db,pw):
             newid = normalize(node['id'])
             if newid is None:
                 continue
-            outf.write(f'{newid}\t{properties}\n')
+            properties_per_node[newid].update(properties)
             for p in properties:
                 counts[p] += 1
-    with open(f'{thisdir}/{stype}.property_counts','w') as outf:
+    dbname = initialize_property_dbs(stype)
+    with sqlite3.connect(dbname) as conn:
+        for newid,properties in properties_per_node.items():
+            conn.execute( 'INSERT INTO properties (node ,propertyset) VALUES (?,?)', (newid, str(properties)))
         for p,c in counts.items():
             if c > 1:
-                outf.write(f'{p}\t{c}\n')
+                conn.execute( 'INSERT INTO property_counts (property, count) VALUES (?,?)', (p,c))
 
 def clean_properties(node):
     props = set()

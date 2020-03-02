@@ -14,15 +14,19 @@ def coalesce(answers):
     #Look for places to combine
     coalescence_opportunities = identify_coalescent_nodes(answers)
     for co in coalescence_opportunities:
-        new_answers = coalesce(co)
+        patches = coalesce(co)
+    new_answers = patch_answers(answers,patches)
+    return new_answers
+
+def patch_answers(answers,patches):
+    new_answers = []
     return new_answers
 
 def coalesce(opportunities):
-    answers = coalesce_by_property(opportunities)
-    answers += coalesce_by_graph(opportunities)
-    answers += coalesce_by_ontology(opportunities)
-    return answers
-
+    patches = coalesce_by_property(opportunities)
+    patches += coalesce_by_graph(opportunities)
+    patches += coalesce_by_ontology(opportunities)
+    return patches
 
 def coalesce_by_graph(opportunities):
     return []
@@ -39,33 +43,36 @@ def identify_coalescent_nodes(answerset):
     The return value is a list of groupings. Each grouping is a tuple consiting of
     1) The fixed portions of the coalescent graph expressed as bindings, and stored
        as a set of tuples
-    2) the question graph id of the node that is varying across the solutions
+    2) the question graph id and type of the node that is varying across the solutions
     3) a set of kg_id's that are the variable bindings to the qg_id.
     e.g. if the qg for the example above were (qa)-[qp1:t1]-(qb)-[qp2:t2]-(qc) then we would
     return a list with one value that would look like:
-    [ (set(('qa','a'),('qc','c'),('qp1','t1'),('qp2','t2')), 'qb', set('b','d') )]"""
+    [ (set(('qa','a'),('qc','c'),('qp1','t1'),('qp2','t2')), ('qb','disease'), set('b','d') )]"""
     #In this implementation, we characterize each result with a frozendict that we can compare.
     #This is essentially just the node and edge bindings for the answer, except for 1) one node
     # that is allowed to vary and 2) the edges attached to that node, that are allowed to vary in
     # identity but must remain constant in type.
-    question = answerset['question_graph']
+    question = answerset['query_graph']
     graph = answerset['knowledge_graph']
-    answers = answerset['answers']
+    answers = answerset['results']
     varhash_to_answers = defaultdict(list)
     varhash_to_qg = {}
     varhash_to_kg = defaultdict(set)
+    varhash_to_answer_indices = defaultdict(list)
     for answer_i, answer in enumerate(answers):
         hashes = make_answer_hashes(answer,graph,question)
         for hash,qg_id,kg_id in hashes:
             varhash_to_answers[hash].append(answer_i)
-            varhash_to_qg[hash] = qg_id
+            qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
+            varhash_to_qg[hash] = (qg_id,qg_type)
             varhash_to_kg[hash].update(kg_id)
+            varhash_to_answer_indices[hash].append(answer_i)
     coalescent_nodes = []
     for hash,answer_indices in varhash_to_answers.items():
         if len(answer_indices) > 1 and len(varhash_to_kg[hash]) > 1:
             #We have more than one answer that matches this pattern, and there is more than one kg node
             # in the variable spot.
-            coalescent_nodes.append( (hash,varhash_to_qg[hash],varhash_to_kg[hash]) )
+            coalescent_nodes.append( (hash,varhash_to_qg[hash],varhash_to_kg[hash],varhash_to_answer_indices[hash]) )
     return coalescent_nodes
 
 def make_answer_hashes(result,graph,question):
@@ -74,9 +81,12 @@ def make_answer_hashes(result,graph,question):
     #First combine the node and edge bindings into a single dictionary,
     bindings = make_bindings(question, result)
     hashes = []
-    for qg_id in result['node_bindings']:
+    #for qg_id in [x['qg_id'] for x in result['node_bindings']]:
+    for nb in result['node_bindings']:
+        qg_id = nb['qg_id']
+        kg_ids = nb['kg_id']
         newhash = make_answer_hash(bindings,graph,question,qg_id)
-        hashes.append( (newhash, qg_id,result['node_bindings'][qg_id]))
+        hashes.append( (newhash, qg_id, kg_ids))
     return hashes
 
 
@@ -86,8 +96,21 @@ def make_bindings(question, result):
     as support edges"""
     question_nodes = [e['id'] for e in question['nodes']]
     question_edges = [e['id'] for e in question['edges']]
-    bindings = {f'n_{qg_id}': kg_id for qg_id, kg_id in result['node_bindings'].items() if qg_id in question_nodes}
-    bindings.update( {f'e_{qg_id}': kg_id for qg_id, kg_id in result['edge_bindings'].items() if qg_id in question_edges})
+    bindings = defaultdict(list)
+    for nb in result['node_bindings']:
+        if nb['qg_id'] in question_nodes:
+            if isinstance(nb['kg_id'],list):
+                bindings[f'n_{nb["qg_id"]}'] += nb['kg_id']
+            else:
+                bindings[f'n_{nb["qg_id"]}'].append(nb['kg_id'])
+    for eb in result['edge_bindings']:
+        if eb['qg_id'] in question_edges:
+            if isinstance(nb['kg_id'],list):
+                bindings[f'e_{eb["qg_id"]}'] += eb['kg_id']
+            else:
+                bindings[f'e_{eb["qg_id"]}'].append(eb['kg_id'])
+    #bindings = {f'n_{nb["qg_id"]}': [nb['kg_id']] for nb in result['node_bindings'] if nb['qg_id'] in question_nodes}
+    #bindings.update( {f'e_{eb["qg_id"]}': [eb['kg_id']] for eb in result['edge_bindings'] if eb['qg_id'] in question_edges})
     return bindings
 
 
