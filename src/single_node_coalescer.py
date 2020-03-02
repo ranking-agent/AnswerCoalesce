@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 
 from src.property_coalescence.property_coalescer import coalesce_by_property
 
@@ -19,10 +20,23 @@ def coalesce(answers):
     return new_answers
 
 def patch_answers(answers,patches):
+    #probably only good for the prop coalescer
     new_answers = []
+    for patch in patches:
+        #First, find an answer that we want to patch
+        base_answer = answers[patch[3][0]]
+        new_answer = deepcopy(base_answer)
+        node_bindings = new_answer['node_bindings']
+        for nb in node_bindings:
+            if nb['kg_id'] == patch[0]:
+                nb['kg_id'] = patch[1]
+                nb.update(patch[2])
+        new_answers.append(new_answer)
     return new_answers
 
 def coalesce(opportunities):
+    #Pushing the patches to this level is maybe not helpful, as the patches are probably all different types?
+    # so push back down into the individual coalescers, I think.  Or make patch a class, and do some polymorphism...
     patches = coalesce_by_property(opportunities)
     patches += coalesce_by_graph(opportunities)
     patches += coalesce_by_ontology(opportunities)
