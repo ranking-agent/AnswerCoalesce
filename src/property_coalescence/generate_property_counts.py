@@ -1,7 +1,9 @@
 from neo4j.v1 import GraphDatabase
 from collections import defaultdict
-from src.node_handling import normalize,denormalize
+import os.path
 import argparse
+
+from src.node_handling import normalize
 
 garbage_properties=set(['molecular_formula','iupac_name','pubchem.orig_smiles','inchikey','inchi','smiles','synonyms',
                         'molecular_weight','molecule_properties','equivalent_identifiers','simple_smiles','id','name',
@@ -11,7 +13,8 @@ def create_property_counts(stype,db,pw):
     driver = GraphDatabase.driver(f'bolt://{db}:7687', auth=('neo4j', pw))
     cypher = f'MATCH (a:{stype}) RETURN a'
     counts = defaultdict( int )
-    with driver.session() as session, open(f'{stype}.properties','w') as outf:
+    thisdir = os.path.dirname(os.path.realpath(__file__) )
+    with driver.session() as session, open(f'{thisdir}/{stype}.properties','w') as outf:
         results = session.run(cypher)
         for result in results:
             node = result['a']
@@ -22,7 +25,7 @@ def create_property_counts(stype,db,pw):
             outf.write(f'{newid}\t{properties}\n')
             for p in properties:
                 counts[p] += 1
-    with open(f'{stype}.property_counts','w') as outf:
+    with open(f'{thisdir}/{stype}.property_counts','w') as outf:
         for p,c in counts.items():
             if c > 1:
                 outf.write(f'{p}\t{c}\n')
