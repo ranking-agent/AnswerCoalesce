@@ -181,7 +181,7 @@ def test_apply_patches():
     assert 'BE' in edge_bindings_1
     assert 'BF' in edge_bindings_1
     assert len(edge_bindings_2) == 2
-    assert 'EG' in edge_bindings_1
-    assert 'FG' in edge_bindings_1
+    assert 'EG' in edge_bindings_2
+    assert 'FG' in edge_bindings_2
 
 
