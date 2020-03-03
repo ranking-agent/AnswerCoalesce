@@ -25,13 +25,6 @@ items:
             - containerPort: 6380
           resources: {}
           imagePullPolicy: Always
-          volumeMounts:
-            - mountPath: /data
-              name: ac-web-data-volume
-        volumes:
-          - name: ac-web-data-volume
-            persistentVolumeClaim:
-              claimName: ac-web-data-pvc
         restartPolicy: Always
   status: {}
 

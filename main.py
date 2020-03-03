@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """ Run Answer coalesce. """
 import argparse
 from src.server import app
