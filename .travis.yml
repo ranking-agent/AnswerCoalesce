@@ -10,6 +10,9 @@ notifications:
     - bizon@renci.org
     - kebedey@renci.org
 
+before_install:
+  - git lfs pull
+
 # command to install dependencies
 install:
   - pip install -r requirements.txt
