@@ -155,7 +155,7 @@ def test_identify_coalescent_nodes():
     assert found[('n2',frozenset(['D','E','F']))] == 1
     assert found[('n2',frozenset(['E','F']))] == 1
 
-def test_apply_patches():
+def test_apply_property_patches():
     answerset = make_answer_set()
     answers = answerset['results']
     #Find the opportunity we want to test:

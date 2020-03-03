@@ -18,13 +18,13 @@ def coalesce_by_ontology(opportunities):
         # group by curies.
         c2e = defaultdict(list)
         for ep in enriched_properties:
-            c2e[ep[5]].append(ep)
+            c2e[frozenset(ep[5])].append(ep)
         #now construct a patch for each curie set.
         for curieset,eps in c2e.items():
             #patch = [kg_id that is being replaced, curies in the new combined set, props for the new curies, answers being collapsed]
-            newprops = {'coalescence_method':'property_enrichment',
+            newprops = {'coalescence_method':'ontology_enrichment',
                         'p_values': [x[0] for x in eps],
-                        'properties': [x[1] for x in eps]}
+                        'superclass': [x[1] for x in eps]}
             patch = [qg_id,curieset,newprops,opportunity[3]]
             patches.append(patch)
     return patches
@@ -38,7 +38,7 @@ def get_shared_superclasses(nodes,prefix):
     superclasses = set( filter( lambda x: x.startswith(prefix), superclasses))
     return superclasses
 
-def get_enriched_superclasses(nodes,semantic_type,pcut=1e-4):
+def get_enriched_superclasses(nodes,semantic_type,pcut=1e-6):
     prefixes = set( [n.split(':')[0] for n in nodes ])
     if len(prefixes) > 1:
         return []
