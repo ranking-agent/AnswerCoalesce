@@ -23,17 +23,50 @@ def patch_answers(answers,patches):
     #probably only good for the prop coalescer
     new_answers = []
     for patch in patches:
-        #First, find an answer that we want to patch
-        base_answer = answers[patch[3][0]]
+        #First, find an answer that we want to patch.  It needs to be consistent
+        for possibleanswer_i in patch[3]:
+            possibleanswer = answers[possibleanswer_i]
+            if isconsistent(patch,possibleanswer):
+                base_answer = possibleanswer
+        #Start with some answer
         new_answer = deepcopy(base_answer)
-        print(new_answer)
         node_bindings = new_answer['node_bindings']
+        #Replace the relevant node binding, adding the new properties
         for nb in node_bindings:
             if nb['qg_id'] == patch[0]:
                 nb['kg_id'] = patch[1]
                 nb.update(patch[2])
+        #Now, figure out which edges we need.  We essentially need every edge from
+        # any answer that matches
+        for possibleanswer_i in patch[3]:
+            possibleanswer = answers[possibleanswer_i]
+            if isconsistent(patch,possibleanswer):
+                add_edge_bindings(new_answer,possibleanswer)
         new_answers.append(new_answer)
     return new_answers
+
+def isconsistent(patch,possibleanswer):
+    #needs work if sets are allowed
+    nb_possible = possibleanswer['node_bindings']
+    kg_ids_possible = [ x['kg_id'][0] for x in nb_possible if x['qg_id'] == patch[0] ]
+    kg_id_possible = kg_ids_possible[0]
+    return kg_id_possible in patch[1]
+
+def add_edge_bindings(newanswer,panswer):
+    original_bindings = { x['qg_id']: x['kg_id'] for x in newanswer['edge_bindings']}
+    for eb in panswer['edge_bindings']:
+        eb_q = eb['qg_id']
+        eb_k = eb['kg_id']
+        ebl = [x for x in newanswer['edge_bindings'] if x['qg_id'] == eb_q]
+        if len(ebl) == 0:
+            newanswer['edge_bindings'].append( {'qg_id': eb_q, 'kg_id': eb_k})
+        else:
+            eb = ebl[0]
+            ebk = eb_k[0]
+            if ebk not in eb['kg_id']:
+                eb['kg_id'].append(ebk)
+
+
 
 def coalesce(opportunities):
     #Pushing the patches to this level is maybe not helpful, as the patches are probably all different types?

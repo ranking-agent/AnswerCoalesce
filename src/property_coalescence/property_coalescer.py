@@ -63,7 +63,8 @@ class PropertyLookup():
 def coalesce_by_property(opportunities):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
-    patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
+    patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
+    qg_id of the edges being removed/combined, answers being collapsed]
     """
     patches = []
     for opportunity in opportunities:
