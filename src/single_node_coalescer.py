@@ -26,9 +26,10 @@ def patch_answers(answers,patches):
         #First, find an answer that we want to patch
         base_answer = answers[patch[3][0]]
         new_answer = deepcopy(base_answer)
+        print(new_answer)
         node_bindings = new_answer['node_bindings']
         for nb in node_bindings:
-            if nb['kg_id'] == patch[0]:
+            if nb['qg_id'] == patch[0]:
                 nb['kg_id'] = patch[1]
                 nb.update(patch[2])
         new_answers.append(new_answer)

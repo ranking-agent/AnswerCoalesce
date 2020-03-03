@@ -169,12 +169,12 @@ def test_apply_patches():
     new_answers = snc.patch_answers(answers,[patch])
     assert len(new_answers) == 1
     na = new_answers[0]
-    node_binding = [ x for x in na['node_bindings' ] if x['qg_id'] == 'n2' ][0]
+    node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
+    print(node_binding)
+    print(na)
     assert len(node_binding['kg_id']) == 2
-    assert 'E' in node_binding['kg_id']
-    assert 'F' in node_binding['kg_id']
-    assert node_binding['new'] == 'test'
+    assert 'E' in node_binding[ 'kg_id' ]
+    assert 'F' in node_binding[ 'kg_id' ]
+    assert node_binding['new1'] == 'test'
     assert len(node_binding['new2']) == 3
-
-
 
