@@ -1,64 +1,7 @@
 from collections import defaultdict
 from scipy.stats import hypergeom
-from ast import literal_eval
-import sqlite3
+from src.ontology_coalescence.ubergraph import UberGraph
 
-import os.path
-
-class PropertyLookup():
-    def __init__(self):
-        # Right now, we're going to load the property file, but we should replace with a redis or sqlite
-        self.thisdir = os.path.dirname(os.path.realpath(__file__))
-        #dbfiles = list(filter(lambda x: x.endswith('.db'), os.listdir(thisdir)))
-        #self.propfiles = [f'{thisdir}/{dbf}' for dbf in dbfiles]
-    def lookup_property_by_node(self,node,stype):
-        pf = f'{self.thisdir}/{stype}.db'
-        if not os.path.exists(pf):
-            return {}
-        with sqlite3.connect(pf) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.execute('SELECT propertyset from properties where node=?', (node,))
-        results = cur.fetchall()
-        if len(results) > 0:
-            r = results[0]['propertyset']
-            if r == 'set()':
-                return {}
-            return literal_eval(r)
-        return {}
-    def total_nodes_with_property(self,property,stype):
-        pf = f'{self.thisdir}/{stype}.db'
-        if not os.path.exists(pf):
-            return 0
-        with sqlite3.connect(pf) as conn:
-            conn.row_factory = sqlite3.Row
-            cur = conn.execute('SELECT count from property_counts where property=?', (property,))
-        results = cur.fetchall()
-        if len(results) > 0:
-            return results[0]['count']
-        return 0
-    def get_nodecount(self, stype):
-        pf = f'{self.thisdir}/{stype}.db'
-        if not os.path.exists(pf):
-            return 0
-        with sqlite3.connect(pf) as conn:
-            cur = conn.execute('SELECT count(node) from properties' )
-        results = cur.fetchall()
-        return results[0][0]
-    def collect_properties(self,nodes, stype):
-        """
-        given a list of curies, go somewhere and find out all of the properties that two or more
-        of the nodes share.  Return a dict from the shared property to the nodes.
-        """
-        prop2nodes = defaultdict(list)
-        for node in nodes:
-            properties = self.lookup_property_by_node(node,stype)
-            for prop in properties:
-                prop2nodes[prop].append(node)
-        returnmap = {}
-        for prop, nodelist in prop2nodes.items():
-            if len(nodelist) > 1:
-                returnmap[prop] = frozenset(nodelist)
-        return returnmap
 
 def coalesce_by_ontology(opportunities):
     """
@@ -70,7 +13,7 @@ def coalesce_by_ontology(opportunities):
     for opportunity in opportunities:
         nodes = opportunity[2] #this is the list of curies that can be in the given spot
         qg_id,stype = opportunity[1]
-        enriched_properties = get_enriched_properties(nodes,stype)
+        enriched_properties = get_enriched_superclasses(nodes,stype)
         #There will be multiple ways to combine the same curies
         # group by curies.
         c2e = defaultdict(list)
@@ -86,25 +29,59 @@ def coalesce_by_ontology(opportunities):
             patches.append(patch)
     return patches
 
-def get_enriched_properties(nodes,semantic_type,pcut=1e-4):
-    property_lookup = PropertyLookup()
-    properties = property_lookup.collect_properties(nodes,semantic_type)  # properties = {property: (curies with it)}
+def get_shared_superclasses(nodes,prefix):
+    ug = UberGraph()
+    superclasses = set(ug.get_superclasses_of(nodes[0]))
+    for ni in nodes[1:]:
+        superclasses = superclasses.intersection(ug.get_superclasses_of(ni))
+    #let's only return superclasses with the prefix of our node
+    superclasses = set( filter( lambda x: x.startswith(prefix), superclasses))
+    return superclasses
+
+def get_enriched_superclasses(nodes,semantic_type,pcut=1e-4):
+    prefixes = set( [n.split(':')[0] for n in nodes ])
+    if len(prefixes) > 1:
+        return []
+    prefix = list(prefixes)[0]
+    shared_superclasses = get_shared_superclasses(nodes,prefix)
+    ug = UberGraph()
     enriched = []
-    for property, curies in properties.items():
+    for ssc in shared_superclasses:
         # The hypergeometric distribution models drawing objects from a bin.
         # M is the total number of objects (nodes) ,
         # n is total number of Type I objects (nodes with that property).
         # The random variate represents the number of Type I objects in N drawn
         #  without replacement from the total population (len curies).
-        x = len(curies)  # draws with the property
-        total_node_count = property_lookup.get_nodecount(semantic_type)
-        n = property_lookup.total_nodes_with_property(property,semantic_type)
+        x = len(nodes)  # draws with the property
+        total_node_count = get_total_nodecount(semantic_type,prefix)
+        n = ug.count_subclasses_of(ssc) #total nodes with property of being a subclass of ssc
         ndraws = len(nodes)
         enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
         if enrichp < pcut:
-            enriched.append( (enrichp, property, ndraws, n, total_node_count, curies) )
+            enriched.append( (enrichp, ssc, ndraws, n, total_node_count, nodes) )
     enriched.sort()
     return enriched
+
+def get_total_nodecount(stype,prefix):
+    #This is a straight up hack.
+    if prefix == 'MONDO':
+        return 22000
+    if prefix == 'CHEBI':
+        return 130000
+    if stype == 'cellular_component':
+        return 4186
+    if stype == 'molecular_activity':
+        return 11000
+    if stype == 'biological_function':
+        return 30000
+    if stype == 'biological_function_or_activity':
+        return 41000
+    if stype == 'phenotypic_feature':
+        return 13000
+    if prefix == 'CL':
+        return 11000
+    if prefix == 'UBERON':
+        return 15000
 
 
 
