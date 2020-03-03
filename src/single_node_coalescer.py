@@ -3,9 +3,9 @@ from copy import deepcopy
 
 from src.property_coalescence.property_coalescer import coalesce_by_property
 
-
 def coalesce(answers):
-    """Given a set of answers coalesce them and return some combined answers.
+    """
+    Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
     except for a single node.
     For this prototype, the answers must all be the same shape.
@@ -46,6 +46,11 @@ def patch_answers(answers,patches):
     return new_answers
 
 def isconsistent(patch,possibleanswer):
+    """
+    The patch is constructed from a set of possible nodes, but it doesn't have to use all
+    of them.  Checks to see if this answer is one of the ones that is still part of
+    the patch.
+    """
     #needs work if sets are allowed
     nb_possible = possibleanswer['node_bindings']
     kg_ids_possible = [ x['kg_id'][0] for x in nb_possible if x['qg_id'] == patch[0] ]
@@ -53,6 +58,7 @@ def isconsistent(patch,possibleanswer):
     return kg_id_possible in patch[1]
 
 def add_edge_bindings(newanswer,panswer):
+    """Update an answer with edges from the patch"""
     original_bindings = { x['qg_id']: x['kg_id'] for x in newanswer['edge_bindings']}
     for eb in panswer['edge_bindings']:
         eb_q = eb['qg_id']
@@ -65,8 +71,6 @@ def add_edge_bindings(newanswer,panswer):
             ebk = eb_k[0]
             if ebk not in eb['kg_id']:
                 eb['kg_id'].append(ebk)
-
-
 
 def coalesce(opportunities):
     #Pushing the patches to this level is maybe not helpful, as the patches are probably all different types?
