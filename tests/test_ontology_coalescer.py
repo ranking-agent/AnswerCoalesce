@@ -1,24 +1,74 @@
 import src.ontology_coalescence.ontology_coalescer as oc
-from src.components import Opportunity
+from src.single_node_coalescer import identify_coalescent_nodes
+from src.components import Opportunity,Answer
 
 def test_shared_superclass():
-    sc = oc.get_shared_superclasses(['MONDO:0009215','MONDO:0012187'],'MONDO')
-    assert 'MONDO:0019391' in sc
+    """Check that FA is a shared superclass of FA type A and FA type J"""
+    sc = oc.get_shared_superclasses(set(['MONDO:0009215','MONDO:0012187']),'MONDO')
+    assert len(sc) == 1
+    for k,v in sc.items():
+        assert len(k) == 2
+        assert 'MONDO:0019391' in v
+
+#These tests are all based on the following subset of MONDO.  There are other terms in this hierarchy but not shown
+# 771 Allergic Resperatory Disease
+#   4784 Allergic Asthma
+#     25556 Isocyanate induced asthma
+#   4553 External Allergic Alveolitis
+#     5668 Bird fanciers lung
+#     5865 Mushroom workers lung
+#   0017853 Hypersensitivy Pneumonitis
+#     4584  Maple bark stripper's lung
 
 def test_shared_superclass_2():
-    sc = oc.get_shared_superclasses(['MONDO:0025556','MONDO:0004584'],'MONDO')
-    assert 'MONDO:0000771' in sc
+    """closest common super is 771"""
+    sc = oc.get_shared_superclasses(set(['MONDO:0025556','MONDO:0004584']),'MONDO')
+    assert len(sc) == 1
+    for k,v in sc.items():
+        assert len(k) == 2
+        assert 'MONDO:0000771' in v
 
 def test_shared_superclass_3():
     """If the shared superclass is in the list we should still return it"""
-    sc = oc.get_shared_superclasses(['MONDO:0025556','MONDO:0004584','MONDO:0000771'],'MONDO')
-    assert 'MONDO:0000771' in sc
+    sc = oc.get_shared_superclasses(set(['MONDO:0025556','MONDO:0004584','MONDO:0000771']),'MONDO')
+    assert len(sc) == 1
+    for k,v in sc.items():
+        assert len(k) == 3
+        assert 'MONDO:0000771' in v
+
+def test_shared_superclass_subsets():
+    """The first two ids have a direct superclass of 4553, but to get the last one we have to go up to 771"""
+    sc = oc.get_shared_superclasses(set(['MONDO:0005668','MONDO:0005865','MONDO:0025556']),'MONDO')
+    assert len(sc) == 2
+    for k,v in sc.items():
+        if len(k) == 3:
+            assert 'MONDO:0000771' in v
+        if len(k) == 2:
+            assert 'MONDO:0004553' in v
+    keylens = [ len(k) for k in sc.keys() ]
+    assert 2 in keylens
+    assert 3 in keylens
 
 def test_get_enriched_supers():
-    sc = oc.get_enriched_superclasses(['MONDO:0025556','MONDO:0004584','MONDO:0000771'],'disease')
+    sc = oc.get_enriched_superclasses(set(['MONDO:0025556','MONDO:0004584','MONDO:0000771']),'disease')
+    assert len(sc) == 1
+    #The other two are both subclasses of 0000771, so the most enrichment will be for that node
+    for v in sc:
+        assert v[1] == 'MONDO:0000771'
+        assert len(v[5]) == 3
+
+def test_get_enriched_supers_multiple_results():
+    sc = oc.get_enriched_superclasses(set(['MONDO:0005668','MONDO:0005865','MONDO:0025556']),'MONDO')
     assert len(sc) == 2
     #The other two are both subclasses of 0000771, so the most enrichment will be for that node
-    sc[0][1] == 'MONDO:0000771'
+    for v in sc:
+        if len(v[5]) == 3:
+            assert v[1] == 'MONDO:0000771'
+        if len(v[5]) == 2:
+            assert v[1] == 'MONDO:0004553'
+    vcounts = [len(v[5]) for v in sc]
+    assert 3 in vcounts
+    assert 2 in vcounts
 
 def test_ontology_coalescer():
     curies = [ 'MONDO:0025556', 'MONDO:0004584', 'MONDO:0000771' ]
@@ -34,3 +84,46 @@ def test_ontology_coalescer():
     assert p.new_props['p_values'][0] < 1e-4
     assert len(p.new_props['p_values']) == 2
     assert p.new_props['superclass'][0] == 'MONDO:0000771'
+
+def test_full_coalesce_no_new_node():
+    """Construct a test case that has our favorite mondo indentifiers. The most significant superclass is in the
+    original list, so we don't need to add a new node to the kg.  We do need to add a couple of is_a edges though."""
+    #This is going to create a KG that looks like:
+    #           MONDO:0025556
+    #         /               \
+    # (start) - MONDO:0004584 - (end)
+    #         \               /
+    #           MONDO:0000771
+    # Question goes (start)-disease-(end)
+    # All 3 paths are given as answers
+    curies = ['MONDO:0025556', 'MONDO:0004584', 'MONDO:0000771']
+    nodes = [{"id":"start", "type":"phenotypic_feature"}, {"id":"end", "type":"phenotypic_feature"}]
+    for c in curies:
+        nodes.append({'id': c, 'type': 'disease'})
+    edges = []
+    for si,source in enumerate(curies):
+        for ti,target in enumerate(['start','end']):
+            edges.append({"id":f'e_{si}_{ti}', "source_id": source, "target_id": target, 'type': 'has_phenotype'})
+    kg = {'nodes': nodes, 'edges':edges}
+    #Create the QG
+    qnodes = [{'id':'n0','curie':'start','type':'phenotypic_feature'},{'id':'n1','type':'disease'},
+              {'id':'n2','curie':'end','type':'phenotypic_feature'}]
+    qedges = [{'id':'e0','source_id':'n1','target_id':'n0','type':'has_phenotype'},
+              {'id':'e1','source_id':'n1','target_id':'n1','type':'has_phenotype'}]
+    qg = {'nodes':qnodes, 'edges':qedges}
+    results = []
+    for i,c in enumerate(curies):
+        #These are the new-style (messenger) bindings:
+        nb = [{'qg_id':'n0', 'kg_id':'start'},{'qg_id':'n2', 'kg_id':'end'},{'qg_id':'n1', 'kg_id':c}]
+        eb = [{'qg_id':'e0', 'kg_id':f'e_{i}_{0}'}, {'qg_id':'e1', 'kg_id':f'e_{i}_{1}'}]
+        results.append( {'node_bindings':nb, 'edge_bindings':eb, 'score': 10-i})
+    answerset = {'query_graph': qg, 'knowledge_graph':kg, 'results': results}
+    opps =  identify_coalescent_nodes(answerset)
+    assert len(opps) == 1
+    patches = oc.coalesce_by_ontology(opps)
+    assert len(patches) == 1
+    patch = patches[0]
+    answers = [ Answer(r,qg,kg) for r in results]
+    new_answer = patch.apply(answers)
+    print(new_answer.to_json())
+    assert False

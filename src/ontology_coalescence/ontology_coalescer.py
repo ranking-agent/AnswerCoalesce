@@ -32,37 +32,50 @@ def coalesce_by_ontology(opportunities):
     return patches
 
 def get_shared_superclasses(nodes,prefix):
+    """Return the intersection of the superclasses of every node in nodes"""
     ug = UberGraph()
-    superclasses = set(ug.get_superclasses_of(nodes[0]))
-    for ni in nodes[1:]:
-        superclasses = superclasses.intersection(ug.get_superclasses_of(ni))
-    #let's only return superclasses with the prefix of our node
-    superclasses = set( filter( lambda x: x.startswith(prefix), superclasses))
-    return superclasses
+    sc_to_nodes = defaultdict(set)
+    for node in nodes:
+        superclasses = ug.get_superclasses_of(node)
+        for sc in superclasses:
+            if sc.startswith(prefix):
+                sc_to_nodes[sc].add(node)
+    nodes_to_sc = defaultdict(list)
+    for sc,nodes in sc_to_nodes.items():
+        if len(nodes) > 1:
+            nodes_to_sc[frozenset(nodes)].append(sc)
+    return nodes_to_sc
 
 def get_enriched_superclasses(nodes,semantic_type,pcut=1e-6):
+    """Get the most enriched superclass for a group of nodes.
+    Note that this implementation only finds nodes that are superclasses of ALL the
+    input nodes.  A more facile version would check all the superclasses shared by at least 2."""
     prefixes = set( [n.split(':')[0] for n in nodes ])
     if len(prefixes) > 1:
         return []
     prefix = list(prefixes)[0]
-    shared_superclasses = get_shared_superclasses(nodes,prefix)
+    nodeset_to_superclasses = get_shared_superclasses(nodes,prefix)
     ug = UberGraph()
-    enriched = []
-    for ssc in shared_superclasses:
-        # The hypergeometric distribution models drawing objects from a bin.
-        # M is the total number of objects (nodes) ,
-        # n is total number of Type I objects (nodes with that property).
-        # The random variate represents the number of Type I objects in N drawn
-        #  without replacement from the total population (len curies).
-        x = len(nodes)  # draws with the property
-        total_node_count = get_total_nodecount(semantic_type,prefix)
-        n = ug.count_subclasses_of(ssc) #total nodes with property of being a subclass of ssc
-        ndraws = len(nodes)
-        enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
-        if enrichp < pcut:
-            enriched.append( (enrichp, ssc, ndraws, n, total_node_count, nodes) )
-    enriched.sort()
-    return enriched
+    results = []
+    for nodeset, shared_superclasses in nodeset_to_superclasses.items():
+        enriched = []
+        for ssc in shared_superclasses:
+            # The hypergeometric distribution models drawing objects from a bin.
+            # M is the total number of objects (nodes) ,
+            # n is total number of Type I objects (nodes with that property).
+            # The random variate represents the number of Type I objects in N drawn
+            #  without replacement from the total population (len curies).
+            x = len(nodeset)  # draws with the property
+            total_node_count = get_total_nodecount(semantic_type,prefix)
+            n = ug.count_subclasses_of(ssc) #total nodes with property of being a subclass of ssc
+            ndraws = len(nodes)
+            enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
+            if enrichp < pcut:
+                enriched.append( (enrichp, ssc, ndraws, n, total_node_count, nodeset) )
+        enriched.sort()
+        if len(enriched) > 0:
+            results.append(enriched[0] )
+    return results
 
 def get_total_nodecount(stype,prefix):
     #This is a straight up hack.
