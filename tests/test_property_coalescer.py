@@ -1,4 +1,5 @@
 import src.property_coalescence.property_coalescer as pc
+from src.components import Opportunity
 
 def test_disease_props():
     #this won't work in travis unless we put the db files there.
@@ -100,16 +101,15 @@ def test_disease_property_enrichment():
 
 def test_property_coalsecer():
     curies = ['CHEBI:23704', 'CHEBI:16856', 'CHEBI:28901']
-    opportunity = ['hash',('qg_0','chemical_substance'),curies,[0,1,2]]
+    opportunity = Opportunity('hash',('qg_0','chemical_substance'),curies,[0,1,2])
     opportunities=[opportunity]
     patches = pc.coalesce_by_property(opportunities)
     assert len(patches) == 1
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
     p = patches[0]
-    assert p[0] == 'qg_0'
-    assert len(p[1]) == 2 # 2 of the 3 curies have the identified properties
-    assert isinstance(p[2],dict)
-    assert p[2]['coalescence_method'] == 'property_enrichment'
-    assert p[2]['p_values'][0] < 1e-4
-    assert len(p[2]['p_values']) == 3
-    assert p[2]['properties'][2] == 'aetiopathogenetic_role'
+    assert p.qg_id == 'qg_0'
+    assert len(p.set_curies) == 2 # 2 of the 3 curies have the identified properties
+    assert p.new_props['coalescence_method'] == 'property_enrichment'
+    assert p.new_props['p_values'][0] < 1e-4
+    assert len(p.new_props['p_values']) == 3
+    assert p.new_props['properties'][2] == 'aetiopathogenetic_role'

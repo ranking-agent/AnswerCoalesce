@@ -3,6 +3,7 @@ import json
 import os
 import src.single_node_coalescer as snc
 from collections import defaultdict
+from src.components import PropertyPatch
 
 def test_bindings():
     """Load up the answer in robokop_one_hop.json.
@@ -149,8 +150,9 @@ def test_identify_coalescent_nodes():
     #    print(group)
     assert len(groups) == 4
     found = defaultdict(int)
-    for hash,vnode,vvals,ansrs in groups:
-        found[ (vnode[0],frozenset(vvals)) ] += 1
+    #for hash,vnode,vvals,ansrs in groups:
+    for opp in groups:
+            found[ (opp.get_qg_id(),frozenset(opp.get_kg_ids())) ] += 1
     assert found[('n1',frozenset(['B','C']))] == 2
     assert found[('n2',frozenset(['D','E','F']))] == 1
     assert found[('n2',frozenset(['E','F']))] == 1
@@ -160,12 +162,14 @@ def test_apply_patches():
     answers = answerset['results']
     #Find the opportunity we want to test:
     groups = snc.identify_coalescent_nodes(answerset)
-    for hash,vnode,vvals,ansrs in groups:
-        if vnode[0] == 'n2' and frozenset(vvals) == frozenset(['D','E','F']):
+    #for hash,vnode,vvals,ansrs in groups:
+    for opp in groups:
+        if opp.get_qg_id() == 'n2' and frozenset(opp.get_kg_ids()) == frozenset(['D','E','F']):
+            ansrs = opp.get_answer_indices()
             break
     #Now pretend that we ran this through some kind of coalescence like a property
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
-    patch = ['n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs]
+    patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     new_answers = snc.patch_answers(answers,[patch])
     assert len(new_answers) == 1
     na = new_answers[0]

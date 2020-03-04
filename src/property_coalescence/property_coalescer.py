@@ -2,8 +2,9 @@ from collections import defaultdict
 from scipy.stats import hypergeom
 from ast import literal_eval
 import sqlite3
-
 import os.path
+
+from src.components import PropertyPatch
 
 class PropertyLookup():
     def __init__(self):
@@ -68,8 +69,9 @@ def coalesce_by_property(opportunities):
     """
     patches = []
     for opportunity in opportunities:
-        nodes = opportunity[2] #this is the list of curies that can be in the given spot
-        qg_id,stype = opportunity[1]
+        nodes = opportunity.get_kg_ids() #this is the list of curies that can be in the given spot
+        qg_id = opportunity.get_qg_id()
+        stype = opportunity.get_qg_semantic_type()
         enriched_properties = get_enriched_properties(nodes,stype)
         #There will be multiple ways to combine the same curies
         # group by curies.
@@ -78,11 +80,10 @@ def coalesce_by_property(opportunities):
             c2e[ep[5]].append(ep)
         #now construct a patch for each curie set.
         for curieset,eps in c2e.items():
-            #patch = [kg_id that is being replaced, curies in the new combined set, props for the new curies, answers being collapsed]
             newprops = {'coalescence_method':'property_enrichment',
                         'p_values': [x[0] for x in eps],
                         'properties': [x[1] for x in eps]}
-            patch = [qg_id,curieset,newprops,opportunity[3]]
+            patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
             patches.append(patch)
     return patches
 

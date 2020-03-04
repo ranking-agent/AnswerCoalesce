@@ -1,6 +1,6 @@
 from collections import defaultdict
-from copy import deepcopy
 
+from src.components import Opportunity
 from src.property_coalescence.property_coalescer import coalesce_by_property
 
 def coalesce(answers):
@@ -23,54 +23,8 @@ def patch_answers(answers,patches):
     #probably only good for the prop coalescer
     new_answers = []
     for patch in patches:
-        #First, find an answer that we want to patch.  It needs to be consistent
-        for possibleanswer_i in patch[3]:
-            possibleanswer = answers[possibleanswer_i]
-            if isconsistent(patch,possibleanswer):
-                base_answer = possibleanswer
-        #Start with some answer
-        new_answer = deepcopy(base_answer)
-        node_bindings = new_answer['node_bindings']
-        #Replace the relevant node binding, adding the new properties
-        for nb in node_bindings:
-            if nb['qg_id'] == patch[0]:
-                nb['kg_id'] = patch[1]
-                nb.update(patch[2])
-        #Now, figure out which edges we need.  We essentially need every edge from
-        # any answer that matches
-        for possibleanswer_i in patch[3]:
-            possibleanswer = answers[possibleanswer_i]
-            if isconsistent(patch,possibleanswer):
-                add_edge_bindings(new_answer,possibleanswer)
-        new_answers.append(new_answer)
+        new_answers += patch.apply(answers)
     return new_answers
-
-def isconsistent(patch,possibleanswer):
-    """
-    The patch is constructed from a set of possible nodes, but it doesn't have to use all
-    of them.  Checks to see if this answer is one of the ones that is still part of
-    the patch.
-    """
-    #needs work if sets are allowed
-    nb_possible = possibleanswer['node_bindings']
-    kg_ids_possible = [ x['kg_id'][0] for x in nb_possible if x['qg_id'] == patch[0] ]
-    kg_id_possible = kg_ids_possible[0]
-    return kg_id_possible in patch[1]
-
-def add_edge_bindings(newanswer,panswer):
-    """Update an answer with edges from the patch"""
-    original_bindings = { x['qg_id']: x['kg_id'] for x in newanswer['edge_bindings']}
-    for eb in panswer['edge_bindings']:
-        eb_q = eb['qg_id']
-        eb_k = eb['kg_id']
-        ebl = [x for x in newanswer['edge_bindings'] if x['qg_id'] == eb_q]
-        if len(ebl) == 0:
-            newanswer['edge_bindings'].append( {'qg_id': eb_q, 'kg_id': eb_k})
-        else:
-            eb = ebl[0]
-            ebk = eb_k[0]
-            if ebk not in eb['kg_id']:
-                eb['kg_id'].append(ebk)
 
 def coalesce(opportunities):
     #Pushing the patches to this level is maybe not helpful, as the patches are probably all different types?
@@ -124,7 +78,8 @@ def identify_coalescent_nodes(answerset):
         if len(answer_indices) > 1 and len(varhash_to_kg[hash]) > 1:
             #We have more than one answer that matches this pattern, and there is more than one kg node
             # in the variable spot.
-            coalescent_nodes.append( (hash,varhash_to_qg[hash],varhash_to_kg[hash],varhash_to_answer_indices[hash]) )
+            opportunity = Opportunity(hash,varhash_to_qg[hash],varhash_to_kg[hash],varhash_to_answer_indices[hash])
+            coalescent_nodes.append( opportunity )
     return coalescent_nodes
 
 def make_answer_hashes(result,graph,question):
@@ -192,85 +147,3 @@ def make_answer_hash(bindings,graph,question,qg_id):
     h = [ xi for xi in singlehash.items() ]
     h.sort()
     return tuple(h)
-
-def _identify_coalescent_nodes(answers):
-    """Given a set of answers, locate answersets that are equivalent except for a single
-    element.  For instance if we have an answer (a)-(b)-(c) and another answer (a)-(b')-(c)
-    we will return (a)-(*)-(c) [b,b'].
-    Note that the goal is not to coalesce every answer in the set into a single thing, but to
-    find all the possible coalescent locations of 2 or more answers."""
-    #What we're really looking for are results that have equivalent edge types, and
-    # also share all node bindings except for 1.
-    question = answers['query_graph']
-    graph = answers['knowledge_graph']
-    inputs = answers['results']
-    #First, find all the groups of results that only vary in one spot.
-    identify_node_differing_groups(inputs,question,graph)
-
-def identify_node_differing_groups(results, question_graph, knowledge_graph):
-    """Given a list of results, find groupings that have all the same node bindings except
-    for a single node."""
-    #I'm not sure this is the best implementation.  I think that there's maybe a simpler version that does an NxN
-    # type comparison and characterizes how each pair differs, and makes cliques that way.  I think that this
-    # potentially simpler approach is probably slower, but if it fails fast on the comparison, maybe it would be
-    # equivalent speed and maybe? simpler?
-
-    #Index the results
-    index = index_results(results)
-    #Now, we're going to go qg_id by qg_id, and make groups
-    for variable_qg_id in index: #This is the qg that is allowed to be different
-        #Look for cases where we match on nodes.
-        matches = find_partial_matches_by_node(index,variable_qg_id)
-        #Now double check those based on the edges
-        matches = filter_matches_by_edges(matches,question_graph,knowledge_graph,results)
-
-def filter_matches_by_edges(matches, question_graph, knowledge_graph, results):
-    """Given a list of matches, each of which is a pair (qgkg_dict, result_indices), plus
-    the input question graph and resulting knowledge graph, pare down the matches to matches
-    that also match on predicates.   For edges where both source and target are in the qgkg
-    dictionary, we can check for exact edge match in the kg.   But for cases where one or the
-    other of the nodes for an edges is the vnode for the match, then by definition the edges
-    will not be identical.  In that case, we check the predicates for the edge.  They  must be
-    the same."""
-    #it's possible that each match set will contain N subsets once we're worried about edges. gross.
-
-    return []
-
-def find_partial_matches_by_node(index,variable_qg_id):
-    """Given a bunch of indexed answers, find sets of answers where the answers all share qg->kg mappings,
-    except for one qg node (specified).  This doesn't check edges at all, that's done in a separate step"""
-    last_sets = None
-    for qg_id in index:
-        new_sets = []
-        if qg_id == variable_qg_id:
-            continue
-        if last_sets is None:
-            # First pass here.
-            for kg_id,asets in index[qg_id].items():
-                if len(asets) > 1:
-                    new_sets.append( ( {qg_id:kg_id}, asets ) )
-        else:
-            #There's already some sets, intersect them
-            for kg_id,aset in index[qg_id].items():
-                for kg_id_dict, oldset in last_sets:
-                    newset = oldset.intersection(aset)
-                    if len(newset) > 1:
-                        newdict = kg_id_dict.copy()
-                        newdict.update( {qg_id:kg_id})
-                        new_sets.append( (newdict, newset) )
-        last_sets = new_sets
-        if len(last_sets) == 0:
-            break
-    return last_sets
-
-
-def index_results(results):
-    """Given a list of results, and a list of gq ids, return a dictionary
-    going qg_id -> kg_id -> [index of results with that mapping] """
-    index = defaultdict( lambda: defaultdict(set))
-    for i,result in enumerate(results):
-        nb = result['node_bindings']
-        for binding in nb:
-            index[binding['qg_id']][binding['kg_id']].add(i)
-    return index
-
