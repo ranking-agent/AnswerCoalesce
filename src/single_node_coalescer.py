@@ -2,6 +2,7 @@ from collections import defaultdict
 
 from src.components import Opportunity,Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
+from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
 
 def coalesce(answers):
     """
@@ -35,9 +36,6 @@ def coalesce(opportunities):
     return patches
 
 def coalesce_by_graph(opportunities):
-    return []
-
-def coalesce_by_ontology(opportunities):
     return []
 
 def identify_coalescent_nodes(answerset):

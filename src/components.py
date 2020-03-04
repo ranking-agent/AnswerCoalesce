@@ -123,6 +123,7 @@ class Answer:
             props = { k:v for k,v in eb.items() if k not in ('qg_id','kg_id')}
             self.binding_properties[eb['qg_id']] = props
     def to_json(self):
+        """Serialize the answer back to ReasonerStd JSON"""
         json_node_bindings = [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.node_bindings.items() ]
         json_edge_bindings = [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.question_edge_bindings.items() ]
         json_node_bindings += [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.support_edge_bindings.items() ]
@@ -145,7 +146,7 @@ class Answer:
         combined_bindings.update(self.question_edge_bindings)
         return combined_bindings
     def update(self,other_answer):
-        """Add bindings from the other answer to this one."""
+        """Add bindings from the other answer to this one. Creates a combined answer."""
         for k,v in other_answer.node_bindings.items():
             self.node_bindings[k].update(v)
         for k, v in other_answer.question_edge_bindings.items():
@@ -156,6 +157,7 @@ class Answer:
         for k, v in other_answer.binding_properties.items():
             self.binding_properties[k].update(v)
     def add_properties(self,qg_id,bps):
+        """Update the property map of element qg_id with the properties in bps"""
         self.binding_properties[qg_id].update(bps)
 
 
