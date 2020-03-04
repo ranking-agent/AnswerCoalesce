@@ -6,9 +6,7 @@ python:
 
 notifications:
   email:
-    - powen@renci.org
     - bizon@renci.org
-    - kebedey@renci.org
 
 before_install:
   - git lfs pull
