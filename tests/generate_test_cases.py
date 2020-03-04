@@ -32,54 +32,48 @@ def create_asthma_chemical_request(edgetype):
         req['edges'][0]['type'] = 'contributes_to'
     return req
 
-def create_svil_request():
+def create_imatinib_asthma_by_gene():
     request = {
-    "message": {
-        "query_graph": {
-            "nodes": [
-                {
+        "message": {
+            "query_graph": {
+                "nodes": [
+                  {
                     "id": "n0",
-                    "type": "gene",
-                    "set": False,
-                    "name": "SVIL",
+                    "type": "chemical_substance",
+                    "name": "imatinib",
                     "curie": [
-                        "HGNC:11480"
+                      "CHEBI:45783"
                     ]
-                },
-                {
+                  },
+                  {
                     "id": "n1",
-                    "type": "sequence_variant",
-                    "set": False
-                },
-                {
+                    "type": "gene",
+                  },
+                  {
                     "id": "n2",
-                    "type": "disease_or_phenotypic_feature",
-                    "set": False
-                },
-                {
-                    "id": "n3",
                     "type": "disease",
-                    "set": False,
-                    "name": "autism spectrum disorder",
+                    "name": "Asthma",
                     "curie": [
-                        "MONDO:0005258"
+                      "MONDO:0004979"
                     ]
-                }
-            ],
-            "edges": [
-                {
+                  }
+                ],
+                "edges": [
+                  {
                     "id": "e0",
                     "source_id": "n0",
                     "target_id": "n1"
-                },
-                {
+                  },
+                  {
                     "id": "e1",
                     "source_id": "n1",
                     "target_id": "n2"
-                }
-            ]
+                  }
+                ]
+              },
         }
-    } }
+    }
+    return request
 
 def pipeline(request):
     #normalize question
@@ -116,4 +110,5 @@ def create_example(request,fname):
 
 if __name__ == '__main__':
     #create_example( create_asthma_chemical_request(edgetype=True), 'asthma_one_hop.json')
-    create_example( create_asthma_chemical_request(edgetype=False), 'asthma_one_hop_many_preds.json')
+    #create_example( create_asthma_chemical_request(edgetype=False), 'asthma_one_hop_many_preds.json')
+    create_example( create_imatinib_asthma_by_gene(), 'imatinib_gene_asthma.json')

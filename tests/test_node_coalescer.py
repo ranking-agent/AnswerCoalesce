@@ -3,7 +3,7 @@ import json
 import os
 import src.single_node_coalescer as snc
 from collections import defaultdict
-from src.components import PropertyPatch
+from src.components import PropertyPatch,Answer
 
 def test_bindings():
     """Load up the answer in robokop_one_hop.json.
@@ -16,8 +16,8 @@ def test_bindings():
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
     answers = answerset['results']
-    a = answers[0]
-    bindings = snc.make_bindings(qg,a)
+    a = Answer(answers[0],qg,kg)
+    bindings = a.make_bindings()
     print(bindings)
     assert len(bindings) == 3 # 2 nodes, 1 edge
 
@@ -31,15 +31,15 @@ def test_hash_one_hop():
         answerset = json.load(tf)
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
-    answers = answerset['results']
+    answers = [Answer(ai,qg,kg) for ai in answerset['results']]
     s = set()
     for a in answers:
-        bindings = snc.make_bindings(qg,a)
+        bindings = a.make_bindings()
         s.add(snc.make_answer_hash(bindings,kg,qg,'n0'))
     assert len(s) == 1
     s = set()
     for a in answers:
-        bindings = snc.make_bindings(qg,a)
+        bindings = a.make_bindings()
         s.add(snc.make_answer_hash(bindings,kg,qg,'n1'))
     assert len(s) == len(answers)
 
@@ -55,13 +55,13 @@ def test_hash_one_hop_with_different_predicates():
         answerset = json.load(tf)
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
-    answers = answerset['results']
+    answers = [Answer(ai,qg,kg) for ai in answerset['results']]
     s = set()
     #how many preds in the kg?
     preds = set( [e['type'] for e in kg['edges']])
     preds.remove('literature_co-occurrence') #omnicorp edges not part of our mapping
     for a in answers:
-        bindings = snc.make_bindings(qg,a)
+        bindings = a.make_bindings()
         s.add(snc.make_answer_hash(bindings,kg,qg,'n0'))
     print(s)
     print(preds)
@@ -128,7 +128,7 @@ def make_answer_set():
     qg = {'nodes':qnodes, 'edges':qedges}
     ans = ['ABEG','ABDG','ABFG','ACFG','ACEG']
     answers = []
-    for a in ans:
+    for i,a in enumerate(ans):
         #These are for the old-style (robokop) bindings:
         #nb =  {f'n{i}':list(x) for i,x in enumerate(a) }
         #eb =  {f'e{i}':[f'{a[i]}{a[i+1]}'] for i in range(len(a)-1) }
@@ -136,7 +136,7 @@ def make_answer_set():
         nb = [{'qg_id':f'n{i}', 'kg_id': list(x)} for i,x in enumerate(a)]
         eb = [{'qg_id':f'e{i}', 'kg_id':[f'{a[i]}{a[i+1]}']} for i in range(len(a)-1)]
         assert len(eb) == len(nb) -1
-        answers.append( {'node_bindings':nb, 'edge_bindings':eb})
+        answers.append( {'node_bindings':nb, 'edge_bindings':eb, 'score': 10-i})
     answerset = {'query_graph': qg, 'knowledge_graph':kg, 'results': answers}
     return answerset
 
@@ -159,7 +159,10 @@ def test_identify_coalescent_nodes():
 
 def test_apply_property_patches():
     answerset = make_answer_set()
-    answers = answerset['results']
+    #answers = answerset['results']
+    qg = answerset['query_graph']
+    kg = answerset['knowledge_graph']
+    answers = [Answer(ai,qg,kg) for ai in answerset['results']]
     #Find the opportunity we want to test:
     groups = snc.identify_coalescent_nodes(answerset)
     #for hash,vnode,vvals,ansrs in groups:
@@ -167,12 +170,13 @@ def test_apply_property_patches():
         if opp.get_qg_id() == 'n2' and frozenset(opp.get_kg_ids()) == frozenset(['D','E','F']):
             ansrs = opp.get_answer_indices()
             break
+    assert len(ansrs) == 3
     #Now pretend that we ran this through some kind of coalescence like a property
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     new_answers = snc.patch_answers(answers,[patch])
     assert len(new_answers) == 1
-    na = new_answers[0]
+    na = new_answers[0].to_json()
     node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
     assert len(node_binding['kg_id']) == 2
     assert 'E' in node_binding[ 'kg_id' ]

@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from src.components import Opportunity
+from src.components import Opportunity,Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
 
 def coalesce(answers):
@@ -23,7 +23,7 @@ def patch_answers(answers,patches):
     #probably only good for the prop coalescer
     new_answers = []
     for patch in patches:
-        new_answers += patch.apply(answers)
+        new_answers.append(patch.apply(answers))
     return new_answers
 
 def coalesce(opportunities):
@@ -60,7 +60,7 @@ def identify_coalescent_nodes(answerset):
     # identity but must remain constant in type.
     question = answerset['query_graph']
     graph = answerset['knowledge_graph']
-    answers = answerset['results']
+    answers = [ Answer(ans,question,graph) for ans in answerset['results'] ]
     varhash_to_answers = defaultdict(list)
     varhash_to_qg = {}
     varhash_to_kg = defaultdict(set)
@@ -86,48 +86,47 @@ def make_answer_hashes(result,graph,question):
     """Given a single answer, find the hash for each answer node and return it along
     with the answer node that was varied, and the kg node id for that qnode in this answer"""
     #First combine the node and edge bindings into a single dictionary,
-    bindings = make_bindings(question, result)
+    #bindings = make_bindings(question, result)
+    bindings = result.make_bindings()
     hashes = []
     #for qg_id in [x['qg_id'] for x in result['node_bindings']]:
-    for nb in result['node_bindings']:
-        qg_id = nb['qg_id']
-        kg_ids = nb['kg_id']
+    for qg_id,kg_ids in result.node_bindings.items():
         newhash = make_answer_hash(bindings,graph,question,qg_id)
         hashes.append( (newhash, qg_id, kg_ids))
     return hashes
 
 
-def make_bindings(question, result):
-    """Given a question and a result, build a single bindings map, making sure that the same id is not
-    used for both a node and edge. Also remove any edge_bindings that are not part of the question, such
-    as support edges"""
-    question_nodes = [e['id'] for e in question['nodes']]
-    question_edges = [e['id'] for e in question['edges']]
-    bindings = defaultdict(list)
-    for nb in result['node_bindings']:
-        if nb['qg_id'] in question_nodes:
-            if isinstance(nb['kg_id'],list):
-                bindings[f'n_{nb["qg_id"]}'] += nb['kg_id']
-            else:
-                bindings[f'n_{nb["qg_id"]}'].append(nb['kg_id'])
-    for eb in result['edge_bindings']:
-        if eb['qg_id'] in question_edges:
-            if isinstance(nb['kg_id'],list):
-                bindings[f'e_{eb["qg_id"]}'] += eb['kg_id']
-            else:
-                bindings[f'e_{eb["qg_id"]}'].append(eb['kg_id'])
-    #bindings = {f'n_{nb["qg_id"]}': [nb['kg_id']] for nb in result['node_bindings'] if nb['qg_id'] in question_nodes}
-    #bindings.update( {f'e_{eb["qg_id"]}': [eb['kg_id']] for eb in result['edge_bindings'] if eb['qg_id'] in question_edges})
-    return bindings
+#def make_bindings(question, result):
+#    """Given a question and a result, build a single bindings map, making sure that the same id is not
+#    used for both a node and edge. Also remove any edge_bindings that are not part of the question, such
+#    as support edges"""
+#    question_nodes = [e['id'] for e in question['nodes']]
+#    question_edges = [e['id'] for e in question['edges']]
+#    bindings = defaultdict(list)
+#    for nb in result['node_bindings']:
+#        if nb['qg_id'] in question_nodes:
+#            if isinstance(nb['kg_id'],list):
+#                bindings[f'n_{nb["qg_id"]}'] += nb['kg_id']
+#            else:
+#                bindings[f'n_{nb["qg_id"]}'].append(nb['kg_id'])
+#    for eb in result['edge_bindings']:
+#        if eb['qg_id'] in question_edges:
+#            if isinstance(nb['kg_id'],list):
+#                bindings[f'e_{eb["qg_id"]}'] += eb['kg_id']
+#            else:
+#                bindings[f'e_{eb["qg_id"]}'].append(eb['kg_id'])
+#    #bindings = {f'n_{nb["qg_id"]}': [nb['kg_id']] for nb in result['node_bindings'] if nb['qg_id'] in question_nodes}
+#    #bindings.update( {f'e_{eb["qg_id"]}': [eb['kg_id']] for eb in result['edge_bindings'] if eb['qg_id'] in question_edges})
+#    return bindings
 
 
 def make_answer_hash(bindings,graph,question,qg_id):
     """given a combined node/edge bindings dictionary, plus the knowledge graph it points to and the question graph,
     create a key that characterizes the answer, except for one of the nodes (and its edges)."""
     #for some reason, the bindings are to lists?  Just grabbing the first (and only) element to the new bindings.
-    singlehash = { x:y[0] for x,y in bindings.items() }
+    singlehash = { x:list(y)[0] for x,y in bindings.items() }
     #take out the binding for qg_id
-    del singlehash[f'n_{qg_id}']
+    del singlehash[qg_id]
     #Now figure out which edges hook to qg_id
     #Note that we're keeping source and target edges separately.  If the question doesn't define a direction,
     # we might end up with edges pointing either way, and we need to compare that as well.
@@ -135,14 +134,14 @@ def make_answer_hash(bindings,graph,question,qg_id):
     tedges = list(filter( lambda x: x['target_id'] == qg_id, question['edges']))
     #make a map of kg edges to type.  probably move this out of make_answer_hash?
     kg_edgetypes = { edge['id']: edge['type'] for edge in graph['edges']}
-    sedge_types = { f's_{se["id"]}': kg_edgetypes[singlehash[f'e_{se["id"]}']] for se in sedges }
-    tedge_types = { f'e_{se["id"]}': kg_edgetypes[singlehash[f'e_{se["id"]}']] for se in tedges }
-    #Add in the edge types to our hash
+    sedge_types = { se["id"]: kg_edgetypes[singlehash[se["id"]]] for se in sedges }
+    tedge_types = { se["id"]: kg_edgetypes[singlehash[se["id"]]] for se in tedges }
+    #Add in the edge types to our hash. this overwrites the qgid -> kgid mapping with type mapping
     singlehash.update(sedge_types)
     singlehash.update(tedge_types)
     #Take the original qgid connected edges out of the hash
-    for edge in sedges+tedges:
-        del singlehash[f'e_{edge["id"]}']
+    #for edge in sedges+tedges:
+    #    del singlehash[f'{edge["id"]}']
     #Now we need to add back in types for the qg_id related edges.
     h = [ xi for xi in singlehash.items() ]
     h.sort()
