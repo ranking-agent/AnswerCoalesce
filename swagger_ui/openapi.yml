@@ -12,10 +12,21 @@ info:
 tags:
   - name: AC
 paths:
-  /result:
+  /coalesce:
     post:
       tags:
         - AC
+      parameters:
+        - in: query
+          name: method
+          schema:
+            type: string
+            enum:
+              - all
+              - property
+              - ontology
+              - graph
+          default: all
       requestBody:
         content:
           application/json:

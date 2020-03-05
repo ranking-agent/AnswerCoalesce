@@ -6,6 +6,7 @@ from sanic import Sanic, response
 from sanic.request import Request
 
 from src.apidocs import bp as apidocs_blueprint
+from src.single_node_coalescer import coalesce
 
 """ Sanic server for Answer Coalesce - A Swagger UI/web service. """
 
@@ -19,9 +20,10 @@ app.config.ACCESS_LOG = False
 app.blueprint(apidocs_blueprint)
 
 
-@app.post('/result')
-async def result_handler(request: Request) -> json:
+@app.post('/coalesce')
+async def coalesce_handler(request: Request) -> json:
     """ Handler for Answer coalesce operations. """
+    method = request.args.get('method', 'all')
 
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
@@ -51,12 +53,11 @@ async def result_handler(request: Request) -> json:
         # print (f"ERROR: {str(error)}")
         return response.json({'Result failed validation. Message': str(error)}, status=400)
 
-    # TODO: do the real work here. get a coalesced list of results related to the initial result
-    query_rewritten: list = [incoming, incoming]
+    coalesced = coalesce(incoming,method=method)
 
     try:
         # validate each response item against the spec
-        for item in query_rewritten:
+        for item in coalesced:
             jsonschema.validate(item, validate_with)
 
     # all JSON validation errors are manifested as a thrown exception
@@ -64,4 +65,4 @@ async def result_handler(request: Request) -> json:
         return response.json({'Response failed validation. Message': str(error)}, status=400)
 
     # if we are here the response validated properly
-    return response.json(query_rewritten, status=200)
+    return response.json(coalesced, status=200)

@@ -4,7 +4,7 @@ from src.components import Opportunity,Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
 
-def coalesce(answerset):
+def coalesce(answerset,method='all'):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -15,8 +15,14 @@ def coalesce(answerset):
     """
     #Look for places to combine
     coalescence_opportunities = identify_coalescent_nodes(answerset)
+    patches = []
     for co in coalescence_opportunities:
-        patches = coalesce_opportunities(co)
+        if method in ['all','property']:
+            patches += coalesce_by_property(coalescence_opportunities)
+        if method in ['all','graph']:
+            patches += coalesce_by_graph(coalescence_opportunities)
+        if method in ['all','ontology']:
+            patches += coalesce_by_ontology(coalescence_opportunities)
     new_answers,updated_qg,updated_kg = patch_answers(answerset,patches)
     new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
     return new_answerset
@@ -36,9 +42,7 @@ def patch_answers(answerset,patches):
 def coalesce_opportunities(opportunities):
     #Pushing the patches to this level is maybe not helpful, as the patches are probably all different types?
     # so push back down into the individual coalescers, I think.  Or make patch a class, and do some polymorphism...
-    patches = coalesce_by_property(opportunities)
-    patches += coalesce_by_graph(opportunities)
-    patches += coalesce_by_ontology(opportunities)
+
     return patches
 
 def coalesce_by_graph(opportunities):
