@@ -4,7 +4,7 @@ from src.components import Opportunity,Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
 
-def coalesce(answers):
+def coalesce(answerset):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -14,20 +14,26 @@ def coalesce(answers):
     entities.
     """
     #Look for places to combine
-    coalescence_opportunities = identify_coalescent_nodes(answers)
+    coalescence_opportunities = identify_coalescent_nodes(answerset)
     for co in coalescence_opportunities:
-        patches = coalesce(co)
-    new_answers = patch_answers(answers,patches)
-    return new_answers
+        patches = coalesce_opportunities(co)
+    new_answers,updated_qg,updated_kg = patch_answers(answerset,patches)
+    new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
+    return new_answerset
 
-def patch_answers(answers,patches):
+def patch_answers(answerset,patches):
     #probably only good for the prop coalescer
+    #We want to maintain a single kg, and qg.
+    qg = answerset['query_graph']
+    kg = answerset['knowledge_graph']
+    answers = [ Answer(ans,qg,kg) for ans in answerset['results'] ]
     new_answers = []
     for patch in patches:
-        new_answers.append(patch.apply(answers))
-    return new_answers
+        new_answer,qg,kg = patch.apply(answers,qg,kg)
+        new_answers.append(new_answer)
+    return new_answers,qg,kg
 
-def coalesce(opportunities):
+def coalesce_opportunities(opportunities):
     #Pushing the patches to this level is maybe not helpful, as the patches are probably all different types?
     # so push back down into the individual coalescers, I think.  Or make patch a class, and do some polymorphism...
     patches = coalesce_by_property(opportunities)

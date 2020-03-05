@@ -16,18 +16,16 @@ def coalesce_by_ontology(opportunities):
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
         enriched_properties = get_enriched_superclasses(nodes,stype)
-        #There will be multiple ways to combine the same curies
-        # group by curies.
-        c2e = defaultdict(list)
-        for ep in enriched_properties:
-            c2e[frozenset(ep[5])].append(ep)
+        #There will NOT be multiple ways to combine the same curies
         #now construct a patch for each curie set.
-        for curieset,eps in c2e.items():
+        #enriched_properties = [(enrichp, ssc, ndraws, n, total_node_count, nodeset)]
+        for enrichp, superclass, ndraws, nhits, totalndoes, curieset in enriched_properties:
             #patch = [kg_id that is being replaced, curies in the new combined set, props for the new curies, answers being collapsed]
             newprops = {'coalescence_method':'ontology_enrichment',
-                        'p_values': [x[0] for x in eps],
-                        'superclass': [x[1] for x in eps]}
+                        'p_value': enrichp,
+                        'superclass': superclass}
             patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
+            patch.add_extra_node(superclass,stype,edge_type='is_a',newnode_is='target')
             patches.append(patch)
     return patches
 

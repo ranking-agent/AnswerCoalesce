@@ -1,4 +1,5 @@
 import pytest
+from copy import deepcopy
 import json
 import os
 import src.single_node_coalescer as snc
@@ -173,8 +174,9 @@ def test_apply_property_patches():
     assert len(ansrs) == 3
     #Now pretend that we ran this through some kind of coalescence like a property
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
+    #get the original kg counts:
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
-    new_answers = snc.patch_answers(answers,[patch])
+    new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     assert len(new_answers) == 1
     na = new_answers[0].to_json()
     node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
@@ -192,4 +194,90 @@ def test_apply_property_patches():
     assert 'EG' in edge_bindings_2
     assert 'FG' in edge_bindings_2
 
+def test_apply_property_patches_add_new_node_that_isnt_new():
+    """
+    This is like our apply_property_patch_test, but we're going to also add a new node.
+    But in a twist, the new node that we're adding is also one of our old nodes.  This is the case,
+    e.g. when we do a superclass merge, but the superclass is one of the nodes that we're merging.
+    We want to see that this causes a new edge to appear in our kg, which is an is_a edge between
+    E and F. We also want to check that this edge makes it into the answer's edge bindings.
+    """
+    #Maybe it would be more readable to break this into a few different tests.  Same setup but checking different things
+    answerset = make_answer_set()
+    #answers = answerset['results']
+    qg = answerset['query_graph']
+    kg = answerset['knowledge_graph']
+    assert len(qg['nodes']) == 4
+    assert len(qg['edges']) == 3
+    answers = [Answer(ai,qg,kg) for ai in answerset['results']]
+    #Find the opportunity we want to test:
+    groups = snc.identify_coalescent_nodes(answerset)
+    #for hash,vnode,vvals,ansrs in groups:
+    for opp in groups:
+        if opp.get_qg_id() == 'n2' and frozenset(opp.get_kg_ids()) == frozenset(['D','E','F']):
+            ansrs = opp.get_answer_indices()
+            break
+    assert len(ansrs) == 3
+    #Now pretend that we ran this through some kind of coalescence like a property
+    #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
+    #get the original kg counts:
+    kg_nodes = deepcopy(kg['nodes'])
+    kg_edges = deepcopy(kg['edges'])
+    assert len(kg_edges) == 10
+    patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
+    #This is the new line:
+    patch.add_extra_node("E",'named_thing','is_a',newnode_is='target')
+    new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
+    #Did we patch the question correctly?
+    assert len(updated_qg['nodes']) == 5 #started as 4
+    assert len(updated_qg['edges']) == 4 #started as 3
+    #n2 should now be a set in the question
+    vnode = [x for x in updated_qg['nodes'] if x['id'] == 'n2'][0]
+    assert vnode['set']
+    #Don't want to break any of the stuff that was already working...
+    assert len(new_answers) == 1
+    na = new_answers[0].to_json()
+    node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
+    assert len(node_binding['kg_id']) == 2
+    assert 'E' in node_binding[ 'kg_id' ]
+    assert 'F' in node_binding[ 'kg_id' ]
+    assert node_binding['new1'] == 'test'
+    assert len(node_binding['new2']) == 3
+    #take advantage of node_bindings being a list.  it's a little hinky
+    extra_nb = na['node_bindings'][-1]
+    assert extra_nb['qg_id'].startswith('extra')
+    assert len(extra_nb['kg_id']) == 1
+    assert extra_nb['kg_id'][0] == 'E'
+    #edge bindings
+    edge_bindings_1 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e1' ][0]
+    edge_bindings_2 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
+    assert len(edge_bindings_1) == 2
+    assert 'BE' in edge_bindings_1
+    assert 'BF' in edge_bindings_1
+    assert len(edge_bindings_2) == 2
+    assert 'EG' in edge_bindings_2
+    assert 'FG' in edge_bindings_2
+    #Now, want to look at what happened to the kg
+    updated_kg_nodes = updated_kg['nodes']
+    updated_kg_edges = updated_kg['edges']
+    assert len(updated_kg_nodes) == len(kg_nodes) #shouldn't add a node
+    assert len(updated_kg_edges) == 1 + len(kg_edges) #added 1 is_a edge
+    idm = set([ x['id'] for x in kg_edges] )
+    uidm = { x['id']: x for x in updated_kg_edges }
+    found = False
+    for eid in uidm:
+        if eid not in idm:
+            new_edge = uidm[eid]
+            assert new_edge['type'] == 'is_a'
+            assert new_edge['source_id'] == 'F'
+            assert new_edge['target_id'] == 'E'
+            found = True
+    assert found
+    # Again, use the somewhat accidental fact that the new bindings are at the end of the list
+    extra_eb = na['edge_bindings'][-1]
+    print(extra_eb)
+    assert extra_eb['qg_id'].startswith('extra') #mostly checking to see we got the right edge
+    assert len(extra_eb['kg_id'])== 1 #is it pointing to the new kg_id edge?
+    assert extra_eb['kg_id'][0] == eid #is it pointing to the new
+    #edge_bindings_isa = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
 

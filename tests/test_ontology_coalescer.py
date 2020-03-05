@@ -29,12 +29,15 @@ def test_shared_superclass_2():
         assert 'MONDO:0000771' in v
 
 def test_shared_superclass_3():
-    """If the shared superclass is in the list we should still return it"""
+    """If the shared superclass is in the list we should still return it.  From the
+    bit of ontology listed above, there should be only one result. But, there's another
+    way that 25556 and 4584 can have a superclass through anatomical groupings."""
     sc = oc.get_shared_superclasses(set(['MONDO:0025556','MONDO:0004584','MONDO:0000771']),'MONDO')
-    assert len(sc) == 1
+    print(sc)
+    assert len(sc) == 2
     for k,v in sc.items():
-        assert len(k) == 3
-        assert 'MONDO:0000771' in v
+        if len(k) == 3:
+            assert 'MONDO:0000771' in v
 
 def test_shared_superclass_subsets():
     """The first two ids have a direct superclass of 4553, but to get the last one we have to go up to 771"""
@@ -81,9 +84,8 @@ def test_ontology_coalescer():
     assert p.qg_id == 'qg_0'
     assert len(p.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
     assert p.new_props['coalescence_method'] == 'ontology_enrichment'
-    assert p.new_props['p_values'][0] < 1e-4
-    assert len(p.new_props['p_values']) == 2
-    assert p.new_props['superclass'][0] == 'MONDO:0000771'
+    assert p.new_props['p_value'] < 1e-4
+    assert p.new_props['superclass'] == 'MONDO:0000771'
 
 def test_full_coalesce_no_new_node():
     """Construct a test case that has our favorite mondo indentifiers. The most significant superclass is in the
@@ -124,6 +126,14 @@ def test_full_coalesce_no_new_node():
     assert len(patches) == 1
     patch = patches[0]
     answers = [ Answer(r,qg,kg) for r in results]
-    new_answer = patch.apply(answers)
-    print(new_answer.to_json())
-    assert False
+    new_answer,updated_qg,updated_kg = patch.apply(answers,qg,kg)
+    #I want to see that we've updated the kg to include is_a edges.
+    is_a_curies = []
+    for edge in kg['edges']:
+        if edge['target_id'] == 'MONDO:0000771' and edge['type'] == 'is_a':
+            is_a_curies.append(edge['source_id'])
+    assert len(is_a_curies) == 2
+    assert 'MONDO:0025556' in is_a_curies
+    assert 'MONDO:0004584' in is_a_curies
+    #print(new_answer.to_json())
+    #assert False
