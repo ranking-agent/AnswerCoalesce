@@ -36,7 +36,7 @@ def patch_answers(answerset,patches):
     new_answers = []
     for patch in patches:
         new_answer,qg,kg = patch.apply(answers,qg,kg)
-        new_answers.append(new_answer)
+        new_answers.append(new_answer.to_json())
     return new_answers,qg,kg
 
 def coalesce_opportunities(opportunities):

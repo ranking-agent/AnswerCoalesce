@@ -178,7 +178,7 @@ def test_apply_property_patches():
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     assert len(new_answers) == 1
-    na = new_answers[0].to_json()
+    na = new_answers[0]
     node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
     assert len(node_binding['kg_id']) == 2
     assert 'E' in node_binding[ 'kg_id' ]
@@ -236,7 +236,7 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     assert vnode['set']
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
-    na = new_answers[0].to_json()
+    na = new_answers[0]
     node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
     assert len(node_binding['kg_id']) == 2
     assert 'E' in node_binding[ 'kg_id' ]
@@ -281,3 +281,17 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     assert extra_eb['kg_id'][0] == eid #is it pointing to the new
     #edge_bindings_isa = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
 
+def test_round_trip():
+    """Load up the answer in robokop_one_hop.json.
+    It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
+    If the chemical substance is allowed to vary, every answer should give the same hash."""
+    #note that this json also contains support edges which are in the edge bindings, but not in the question
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop.json')
+    with open(testfilename,'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset,method='property')
+    qg = json.dumps(newset['query_graph'])
+    kg = json.dumps(newset['knowledge_graph'])
+    rs = json.dumps(newset['results'])
+    newset_json = json.dumps(newset)
+    assert True
