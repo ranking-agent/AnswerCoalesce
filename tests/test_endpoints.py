@@ -32,7 +32,7 @@ def test_coalesce():
     jsonschema.validate(instance=answerset, schema=validate_with)
 
     # setup some parameters
-    param = {'method': 'all'}
+    param = {'method': 'property'}
 
     # make a good request
     request, response = app.test_client.post('/coalesce', params= param, data=json.dumps(answerset))
