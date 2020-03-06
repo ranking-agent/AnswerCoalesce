@@ -178,7 +178,7 @@ def test_apply_property_patches():
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     assert len(new_answers) == 1
-    na = new_answers[0].to_json()
+    na = new_answers[0]
     node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
     assert len(node_binding['kg_id']) == 2
     assert 'E' in node_binding[ 'kg_id' ]
@@ -236,7 +236,7 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     assert vnode['set']
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
-    na = new_answers[0].to_json()
+    na = new_answers[0]
     node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
     assert len(node_binding['kg_id']) == 2
     assert 'E' in node_binding[ 'kg_id' ]
