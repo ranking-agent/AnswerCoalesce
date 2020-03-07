@@ -15,18 +15,30 @@ def coalesce_by_graph(opportunities):
         nodes = opportunity.get_kg_ids() #this is the list of curies that can be in the given spot
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
-        enriched_properties = get_enriched_links(nodes,stype)
-        #There will NOT be multiple ways to combine the same curies
-        #now construct a patch for each curie set.
-        #enriched_properties = [(enrichp, ssc, ndraws, n, total_node_count, nodeset)]
-        for enrichp, superclass, ndraws, nhits, totalndoes, curieset in enriched_properties:
-            #patch = [kg_id that is being replaced, curies in the new combined set, props for the new curies, answers being collapsed]
-            newprops = {'coalescence_method':'ontology_enrichment',
-                        'p_value': enrichp,
-                        'superclass': superclass}
-            patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
-            patch.add_extra_node(superclass,stype,edge_type='is_a',newnode_is='target')
-            patches.append(patch)
+        enriched_links = get_enriched_links(nodes,stype)
+        #For the moment, we're only going to return the best enrichment.  Note that this
+        # might mean more than one shared node, if the cardinalities all come out the
+        # same.  It's POC, really you'd like to include many of these.  But we don't want
+        # to end up with more answers than we started with, so we need to parameterize, and
+        # that's more work that we can do later.
+        #(enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
+        best_enrich_p = enriched_links[0][0]
+        best_grouping = enriched_links[0][7]
+        best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
+        newprops = {'coalescence_method':'graph_enrichment',
+                    'p_value': best_enrich_p,
+                    'enriched_nodes': [x[1] for x in best_enrichments]}
+        patch = PropertyPatch(qg_id,best_grouping,newprops,opportunity.get_answer_indices())
+        for e in best_enrichments:
+            newcurie = e[1]
+            etype = e[2]
+            if e[3]:
+                nni = 'target'
+            else:
+                nni = 'source'
+            #Need to get the right node type.
+            patch.add_extra_node(newcurie,'named_thing',edge_type=etype,newnode_is=nni)
+        patches.append(patch)
     return patches
 
 def get_shared_links(nodes,stype):
@@ -43,7 +55,7 @@ def get_shared_links(nodes,stype):
             nodes_to_links[frozenset(nodes)].append(link)
     return nodes_to_links
 
-def get_enriched_links(nodes,semantic_type,pcut=1e-10):
+def get_enriched_links(nodes,semantic_type,pcut=1e-6):
     """Get the most enriched connected node for a group of nodes."""
     nodeset_to_links = get_shared_links(nodes,semantic_type)
     rm = RobokopMessenger()
@@ -57,10 +69,11 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-10):
             # The random variate represents the number of Type I objects in N drawn
             #  without replacement from the total population (len curies).
             x = len(nodeset)  # draws with the property
-            total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
+            total_node_count = get_total_node_count(semantic_type)
+            #total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
             #Note that is_source is from the point of view of the input nodes, not newcurie
             newcurie_is_source = not is_source
-            n = rm.get_total_nodecount(newcurie,predicate,newcurie_is_source,semantic_type)
+            n = rm.get_hit_nodecount(newcurie,predicate,newcurie_is_source,semantic_type)
             ndraws = len(nodes)
             enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
             if enrichp < pcut:
@@ -70,4 +83,36 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-10):
     results.sort()
     return results
 
+def get_total_node_count(semantic_type):
+    """In the hypergeometric calculation, you're drawing balls from a bag, and you have
+    to know the total number of possible draws.  What should that be?   It could be the number
+    of nodes in the graph, but is that fair?  If I'm expanding from say, a chemical, there are
+    only certain nodes and certain kinds of nodes that I can connect to.  Is it fair
+    to say that the total number of nodes is all the nodes?
+
+    In some sense it doesn't matter, because all you're doing is scaling the p-value, but it
+    might make sense because of the way that variants are affecting things.   They are
+    preferentially hooked to certain nodes.  So another approach would be to leave them
+    out of everything.  But that doesn't seem fair either.  Especially b/c of gwas catalog.
+    (or maybe even gtex).
+
+    So here, we're going to say that if you have stype, then we're looking at
+    match (a:stype)--(n) return count distinct n.  For genes and for anatomical features,
+    we're ignoring variants, because we don't really want to deal with gtex right now, and we
+    might need to consider the independently somehow?  These numbers are precomputed using
+    the robokopdb2 database march 7, 2020."""
+    stype2counts = {'disease':84000,
+                    'gene':329000,
+                    'phenotypic_feature':74000,
+                    'disease_or_phenotypic_feature':174000,
+                    'chemical_substance':214000,
+                    'anatomical_entity':112000,
+                    'cell':40000,
+                    'biological_process':133000,
+                    'molecular_activity':86000,
+                    'biological_process_or_activity':148000 }
+    if semantic_type in stype2counts:
+        return stype2counts[semantic_type]
+    #Give up and return the total number of nodes
+    return 6000000
 
