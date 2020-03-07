@@ -68,6 +68,7 @@ def test_hash_one_hop_with_different_predicates():
     print(preds)
     assert len(s) == len(preds)
     assert len(s) > 1 #there better be more than one
+    assert False
 
 #out until I can regenerate the question with the new api format
 def x_test_hash_topology():
