@@ -36,14 +36,9 @@ def patch_answers(answerset,patches):
     new_answers = []
     for patch in patches:
         new_answer,qg,kg = patch.apply(answers,qg,kg)
-        new_answers.append(new_answer)
+        new_answers.append(new_answer.to_json())
     return new_answers,qg,kg
 
-def coalesce_opportunities(opportunities):
-    #Pushing the patches to this level is maybe not helpful, as the patches are probably all different types?
-    # so push back down into the individual coalescers, I think.  Or make patch a class, and do some polymorphism...
-
-    return patches
 
 def coalesce_by_graph(opportunities):
     return []

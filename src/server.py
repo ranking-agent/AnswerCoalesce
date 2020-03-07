@@ -53,16 +53,16 @@ async def coalesce_handler(request: Request) -> json:
         # print (f"ERROR: {str(error)}")
         return response.json({'Result failed validation. Message': str(error)}, status=400)
 
-    coalesced = coalesce(incoming,method=method)
+    coalesced = coalesce(incoming, method=method)
 
-    try:
-        # validate each response item against the spec
-        for item in coalesced:
-            jsonschema.validate(item, validate_with)
-
-    # all JSON validation errors are manifested as a thrown exception
-    except jsonschema.exceptions.ValidationError as error:
-        return response.json({'Response failed validation. Message': str(error)}, status=400)
+    # try:
+    #     # validate each response item against the spec
+    #     for item in coalesced:
+    #         jsonschema.validate(item, validate_with)
+    #
+    # # all JSON validation errors are manifested as a thrown exception
+    # except jsonschema.exceptions.ValidationError as error:
+    #     return response.json({'Response failed validation. Message': str(error)}, status=400)
 
     # if we are here the response validated properly
     return response.json(coalesced, status=200)
