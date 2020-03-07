@@ -37,7 +37,7 @@ class RobokopMessenger:
             link = (other_node,predicate,source)
             links.append(link)
         return links
-    def get_total_nodecount(self, newcurie, predicate, newcurie_is_source, semantic_type):
+    def get_hit_nodecount(self, newcurie, predicate, newcurie_is_source, semantic_type):
         query = { 'nodes': [{'id': 'n0', 'curie':newcurie},
                             {'id': 'n1', 'type': semantic_type}] }
         if newcurie_is_source:

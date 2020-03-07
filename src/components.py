@@ -24,29 +24,34 @@ class Opportunity:
     def get_answer_indices(self):
         return self.answer_indices
 
+class NewNode:
+    def __init__(self,newnode, newnodetype, edge_type, newnode_is):
+        self.newnode = newnode
+        self.newnode_type = newnodetype
+        self.new_edges = edge_type
+        self.newnode_is = newnode_is
+
+
 class PropertyPatch:
     def __init__(self,qg_id,curies,props,answer_ids):
         self.qg_id = qg_id
         self.set_curies = curies
         self.new_props = props
         self.answer_indices = answer_ids
-        self.newnode = None
+        self.added_nodes = []
     def add_extra_node(self,newnode, newnodetype, edge_type, newnode_is):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
-        self.newnode = newnode
-        self.newnode_type = newnodetype
-        self.new_edges = edge_type
-        self.newnode_is = newnode_is
+        self.added_nodes.append( NewNode(newnode, newnodetype, edge_type, newnode_is) )
     def apply(self,answers,question,graph):
         #Modify the question graph and the knowledge graph
         #If we're not adding a new node, extra_q_node = None, extra_q_edges = extra_k_edges =[]. No bindings to add
         #If we have an added node, the added node is always self.newnode
         # Also we will have an extra_q_node in that case, as well as one extra_q_edge, and 1 or more new k_edges
-        question,extra_q_node,extra_q_edge = self.update_qg(question)
-        graph,extra_k_edges = self.update_kg(graph)
+        question,extra_q_nodes,extra_q_edges = self.update_qg(question)
+        graph,all_extra_k_edges = self.update_kg(graph)
         #Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
         # answers that were originally in the opportunity, but we might have only found commonality
         # among a subset of them
@@ -60,8 +65,9 @@ class PropertyPatch:
         #Add in any extra properties
         new_answer.add_properties(self.qg_id,self.new_props)
         #Add newnode-related bindings if necessary
-        if self.newnode is not None:
-            new_answer.add_bindings(extra_q_node, self.newnode, extra_q_edge, extra_k_edges)
+        for newnode,extra_q_node,extra_q_edge,extra_k_edges in \
+                zip(self.added_nodes,extra_q_nodes,extra_q_edges,all_extra_k_edges):
+            new_answer.add_bindings(extra_q_node, [newnode.newnode], extra_q_edge, extra_k_edges)
         return new_answer, question, graph
     def isconsistent(self, possibleanswer):
         """
@@ -75,76 +81,74 @@ class PropertyPatch:
             return True
         return False
     def update_qg(self,qg):
-        extra_q_node = None
-        extra_q_edge = None
+        extra_q_nodes = []
+        extra_q_edges = []
         #First add "set":True to our variable node
         for node in qg['nodes']:
             if node['id'] == self.qg_id:
                 node['set'] = True
-        if self.newnode is None:
-            #no work to do...
-            return qg,extra_q_node,extra_q_edge
-        #Add the new node to the question.
-        node_ids = [n['id'] for n in qg['nodes']]
-        nnid = 0
-        new_node_id = f'extra_qn_{nnid}'
-        while new_node_id in node_ids:
-            nnid += 1
+        for newnode in self.added_nodes:
+            #Add the new node to the question.
+            node_ids = [n['id'] for n in qg['nodes']]
+            nnid = 0
             new_node_id = f'extra_qn_{nnid}'
-        extra_q_node = new_node_id
-        qg['nodes'].append({'id': new_node_id, 'type': self.newnode_type})
-        #Add the new edge to the question
-        edge_ids = [ e['id'] for e in qg['edges']]
-        neid = 0
-        new_edge_id = f'extra_qe_{neid}'
-        while new_edge_id in edge_ids:
-            neid += 1
+            while new_node_id in node_ids:
+                nnid += 1
+                new_node_id = f'extra_qn_{nnid}'
+            extra_q_nodes.append(new_node_id)
+            qg['nodes'].append({'id': new_node_id, 'type': newnode.newnode_type})
+            #Add the new edge to the question
+            edge_ids = [ e['id'] for e in qg['edges']]
+            neid = 0
             new_edge_id = f'extra_qe_{neid}'
-        if self.newnode_is == 'target':
-            qg['edges'].append( {'id': new_edge_id, 'source_id': self.qg_id, 'target_id': self.newnode })
-        else:
-            qg['edges'].append( {'id': new_edge_id, 'source_id': self.newnode, 'target_id': self.qg_id })
-        extra_q_edge = new_edge_id
-        return qg, extra_q_node, extra_q_edge
-    def update_kg(self,kg):
-        extra_edges = []
-        if self.newnode is None:
-            #no work to do...
-            return kg,extra_edges
-        #See if the newnode is already in the KG, and if not, add it.
-        found = False
-        for node in kg['nodes']:
-            if node['id'] == self.newnode:
-                found = True
-                break
-        if not found:
-            kg['nodes'].append( {'id': self.newnode, 'type': self.newnode_type})
-        #Add new edges
-        for curie in self.set_curies: #try to add a new edge from this curie to newnode
-            if curie == self.newnode:
-                continue #no self edge please
-            #check to see if the edge we want to add is already present in the kg
-            if self.newnode_is == 'source':
-                source_id = self.newnode
-                target_id = curie
+            while new_edge_id in edge_ids:
+                neid += 1
+                new_edge_id = f'extra_qe_{neid}'
+            if newnode.newnode_is == 'target':
+                qg['edges'].append( {'id': new_edge_id, 'source_id': self.qg_id, 'target_id': newnode.newnode })
             else:
-                source_id = curie
-                target_id = self.newnode
-            eid = None
-            for edge in kg['edges']:
-                if edge['source_id'] == source_id:
-                    if edge['target_id'] == target_id:
-                        if edge['type'] == self.new_edges:
-                            eid = edge['id']
-                            break
-            if eid is None:
-                #Add the new edge
-                edge = { 'source_id': source_id, 'target_id': target_id, 'type': self.new_edges }
-                eid = hash(frozenset(edge.items()))
-                edge['id'] = eid
-                kg['edges'].append(edge)
-            extra_edges.append(eid)
-        return kg,extra_edges
+                qg['edges'].append( {'id': new_edge_id, 'source_id': newnode.newnode, 'target_id': self.qg_id })
+            extra_q_edges.append(new_edge_id)
+        return qg, extra_q_nodes, extra_q_edges
+    def update_kg(self,kg):
+        all_extra_edges = []
+        for newnode in self.added_nodes:
+            extra_edges=[]
+            #See if the newnode is already in the KG, and if not, add it.
+            found = False
+            for node in kg['nodes']:
+                if node['id'] == newnode.newnode:
+                    found = True
+                    break
+            if not found:
+                kg['nodes'].append( {'id': newnode.newnode, 'type': newnode.newnode_type})
+            #Add new edges
+            for curie in self.set_curies: #try to add a new edge from this curie to newnode
+                if curie == newnode.newnode:
+                    continue #no self edge please
+                #check to see if the edge we want to add is already present in the kg
+                if newnode.newnode_is == 'source':
+                    source_id = newnode.newnode
+                    target_id = curie
+                else:
+                    source_id = curie
+                    target_id = newnode.newnode
+                eid = None
+                for edge in kg['edges']:
+                    if edge['source_id'] == source_id:
+                        if edge['target_id'] == target_id:
+                            if edge['type'] == newnode.new_edges:
+                                eid = edge['id']
+                                break
+                if eid is None:
+                    #Add the new edge
+                    edge = { 'source_id': source_id, 'target_id': target_id, 'type': newnode.new_edges }
+                    eid = hash(frozenset(edge.items()))
+                    edge['id'] = eid
+                    kg['edges'].append(edge)
+                extra_edges.append(eid)
+            all_extra_edges.append(extra_edges)
+        return kg,all_extra_edges
 
 
 
