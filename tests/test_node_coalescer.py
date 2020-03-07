@@ -64,8 +64,8 @@ def test_hash_one_hop_with_different_predicates():
     for a in answers:
         bindings = a.make_bindings()
         s.add(snc.make_answer_hash(bindings,kg,qg,'n0'))
-    #print(s)
-    #print(preds)
+    print(s)
+    print(preds)
     assert len(s) == len(preds)
     assert len(s) > 1 #there better be more than one
 
