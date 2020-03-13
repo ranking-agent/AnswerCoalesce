@@ -1,8 +1,7 @@
 [![Build Status](https://travis-ci.com/TranslatorIIPrototypes/AnswerCoalesce.svg?branch=master)](https://travis-ci.com/TranslatorIIPrototypes/AnswerCoalesce)
 
 # AnswerCoalesce
-
-A web service and Swagger UI for the Answer Coalesce service for ARAGORN.
+### A web service and Swagger UI for the Answer Coalesce service for ARAGORN.
 
 This serivce accepts a [translator reasoner standard message](https://github.com/NCATS-Tangerine/NCATS-ReasonerStdAPI) containing answers and returns the same format with answers that have been coalesced.
 
