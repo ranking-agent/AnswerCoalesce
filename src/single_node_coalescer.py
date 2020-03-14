@@ -3,6 +3,7 @@ from collections import defaultdict
 from src.components import Opportunity,Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
+from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 
 def coalesce(answerset,method='all'):
     """
@@ -39,9 +40,6 @@ def patch_answers(answerset,patches):
         new_answers.append(new_answer.to_json())
     return new_answers,qg,kg
 
-
-def coalesce_by_graph(opportunities):
-    return []
 
 def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single
