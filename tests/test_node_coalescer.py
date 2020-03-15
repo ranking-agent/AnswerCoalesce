@@ -389,3 +389,32 @@ def test_apply_property_patches_add_two_new_nodes():
         assert len(extra_eb['kg_id'])== 2 #is it pointing to the new kg_id edge?
         #assert extra_eb['kg_id'][0] == eid #is it pointing to the new
 
+def test_automat_treat_diabetes_properties():
+    """Load up the answer in
+    It contains the robokop answer for
+    If the chemical substance is allowed to vary, every answer should give the same hash."""
+    fn = 'mychem_treats_diabetes.json'
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    with open(testfilename,'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset,method='property')
+    rs = newset['results']
+    assert len(rs) > 10
+    print(rs[0]['node_bindings'][1])
+    assert rs[0]['node_bindings'][1]['p_values'][0] < 1e-20
+
+def est_automat_treat_diabetes_graph():
+    """Load up the answer in
+    It contains the robokop answer for
+    If the chemical substance is allowed to vary, every answer should give the same hash."""
+    fn = 'mychem_treats_diabetes.json'
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    with open(testfilename,'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset,method='graph')
+    rs = newset['results']
+    assert len(rs) > 0
+    print(len(rs))
+    print(rs[0]['node_bindings'][1])
+    assert rs[0]['node_bindings'][1]['p_values'][0] < 1e-20
+
