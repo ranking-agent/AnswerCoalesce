@@ -44,10 +44,16 @@ def get_shared_superclasses(nodes,prefix):
             nodes_to_sc[frozenset(nodes)].append(sc)
     return nodes_to_sc
 
-def get_enriched_superclasses(nodes,semantic_type,pcut=1e-6):
-    """Get the most enriched superclass for a group of nodes.
-    Note that this implementation only finds nodes that are superclasses of ALL the
-    input nodes.  A more facile version would check all the superclasses shared by at least 2."""
+def filter_class_nodes(inodes):
+    onodes = []
+    for inode in inodes:
+        if inode.split(':')[0] in ('CHEBI','MONDO','HP','GO','CL','UBERON'):
+            onodes.append(inode)
+    return onodes
+
+def get_enriched_superclasses(input_nodes,semantic_type,pcut=1e-6):
+    """Get the most enriched superclass for a group of nodes."""
+    nodes = filter_class_nodes(input_nodes)
     prefixes = set( [n.split(':')[0] for n in nodes ])
     if len(prefixes) > 1:
         return []
