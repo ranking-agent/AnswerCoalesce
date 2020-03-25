@@ -295,3 +295,126 @@ def test_round_trip():
     rs = json.dumps(newset['results'])
     newset_json = json.dumps(newset)
     assert True
+
+def test_apply_property_patches_add_two_new_nodes():
+    """
+    Given our normal pretend graph, add a couple of enrichment nodes, rather than one.
+    """
+    #Maybe it would be more readable to break this into a few different tests.  Same setup but checking different things
+    answerset = make_answer_set()
+    #answers = answerset['results']
+    qg = answerset['query_graph']
+    kg = answerset['knowledge_graph']
+    assert len(qg['nodes']) == 4
+    assert len(qg['edges']) == 3
+    answers = [Answer(ai,qg,kg) for ai in answerset['results']]
+    #Find the opportunity we want to test:
+    groups = snc.identify_coalescent_nodes(answerset)
+    #for hash,vnode,vvals,ansrs in groups:
+    for opp in groups:
+        if opp.get_qg_id() == 'n2' and frozenset(opp.get_kg_ids()) == frozenset(['D','E','F']):
+            ansrs = opp.get_answer_indices()
+            break
+    assert len(ansrs) == 3
+    #Now pretend that we ran this through some kind of coalescence like a property
+    #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
+    #get the original kg counts:
+    kg_nodes = deepcopy(kg['nodes'])
+    kg_edges = deepcopy(kg['edges'])
+    assert len(kg_edges) == 10
+    patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
+    #This is the new line:
+    patch.add_extra_node("Q",'named_thing','part_of',newnode_is='target')
+    patch.add_extra_node("R",'named_thing','interacts_with',newnode_is='source')
+    new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
+    #Did we patch the question correctly?
+    assert len(updated_qg['nodes']) == 6 #started as 4
+    assert len(updated_qg['edges']) == 5 #started as 3
+    #n2 should now be a set in the question
+    vnode = [x for x in updated_qg['nodes'] if x['id'] == 'n2'][0]
+    assert vnode['set']
+    #Don't want to break any of the stuff that was already working...
+    assert len(new_answers) == 1
+    na = new_answers[0]
+    node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
+    assert len(node_binding['kg_id']) == 2
+    assert 'E' in node_binding[ 'kg_id' ]
+    assert 'F' in node_binding[ 'kg_id' ]
+    assert node_binding['new1'] == 'test'
+    assert len(node_binding['new2']) == 3
+    #take advantage of node_bindings being a list.  it's a little hinky
+    for extra_nb in na['node_bindings'][-2:]:
+        assert extra_nb['qg_id'].startswith('extra')
+        assert len(extra_nb['kg_id']) == 1
+    extras = [enb['kg_id'][0] for enb in na['node_bindings'][-2:]]
+    assert 'Q' in extras
+    assert 'R' in extras
+    #edge bindings
+    edge_bindings_1 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e1' ][0]
+    edge_bindings_2 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
+    assert len(edge_bindings_1) == 2
+    assert 'BE' in edge_bindings_1
+    assert 'BF' in edge_bindings_1
+    assert len(edge_bindings_2) == 2
+    assert 'EG' in edge_bindings_2
+    assert 'FG' in edge_bindings_2
+    #Now, want to look at what happened to the kg
+    updated_kg_nodes = updated_kg['nodes']
+    updated_kg_edges = updated_kg['edges']
+    assert len(updated_kg_nodes) == len(kg_nodes)+2
+    assert len(updated_kg_edges) == 4 + len(kg_edges) #added 1 is_a edge
+    #There should be 2 (E,F)-[part_of]->Q
+    # and 2 (E,F)<-[interacts_with]-R
+    idm = set([ x['id'] for x in kg_edges] )
+    uidm = { x['id']: x for x in updated_kg_edges }
+    found = False
+    countsQ = []
+    countsR = []
+    for eid in uidm:
+        if eid not in idm:
+            new_edge = uidm[eid]
+            if new_edge['source_id'] == 'R':
+                countsR.append(new_edge['target_id'])
+                assert new_edge['type'] == 'interacts_with'
+            else:
+                assert new_edge['target_id'] == 'Q'
+                countsQ.append(new_edge['source_id'])
+    assert 'E' in countsQ
+    assert 'E' in countsR
+    assert 'F' in countsQ
+    assert 'F' in countsR
+    # Again, use the somewhat accidental fact that the new bindings are at the end of the list
+    for extra_eb in na['edge_bindings'][-2:]:
+        assert extra_eb['qg_id'].startswith('extra') #mostly checking to see we got the right edge
+        assert len(extra_eb['kg_id'])== 2 #is it pointing to the new kg_id edge?
+        #assert extra_eb['kg_id'][0] == eid #is it pointing to the new
+
+def test_automat_treat_diabetes_properties():
+    """Load up the answer in
+    It contains the robokop answer for
+    If the chemical substance is allowed to vary, every answer should give the same hash."""
+    fn = 'mychem_treats_diabetes.json'
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    with open(testfilename,'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset,method='property')
+    rs = newset['results']
+    assert len(rs) > 10
+    print(rs[0]['node_bindings'][1])
+    assert rs[0]['node_bindings'][1]['p_values'][0] < 1e-20
+
+def est_automat_treat_diabetes_graph():
+    """Load up the answer in
+    It contains the robokop answer for
+    If the chemical substance is allowed to vary, every answer should give the same hash."""
+    fn = 'mychem_treats_diabetes.json'
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    with open(testfilename,'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset,method='graph')
+    rs = newset['results']
+    assert len(rs) > 0
+    print(len(rs))
+    print(rs[0]['node_bindings'][1])
+    assert rs[0]['node_bindings'][1]['p_values'][0] < 1e-20
+
