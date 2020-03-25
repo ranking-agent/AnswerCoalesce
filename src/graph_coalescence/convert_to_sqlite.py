@@ -37,9 +37,9 @@ class Normalizer:
                 # convert the string response to json
                 results = response.json()
 
-                # put away every member requsted
+                # put away every member requested
                 for c in unknown:
-                    # was there a value fr this cureie
+                    # was there a value for this curie
                     if results[c] is not None:
                         # save the data
                         translator_curie = results[c]['id']['identifier']
@@ -51,19 +51,19 @@ class Normalizer:
             else:
                 print(f'Block {block} of {len(lines)} curies entirely failed normalization. \n - Start line: {lines[0]} - End line: {lines[len(lines) - 1]}')
 
-    def get_normed_id(self, x):
+    def get_normed_translator_curie(self, x):
         try:
             ret_val = self.nn[x]
-        except IndexError:
+        except Exception:
             # print(f'{x} ID not found.')
             ret_val = None
 
         return ret_val
 
-    def get_normed_type(self, x):
+    def get_normed_semantic_type(self, x):
         try:
             ret_val = self.st[x]
-        except IndexError:
+        except Exception:
             # print(f'{x} type not found.')
             ret_val = None
 
@@ -124,90 +124,91 @@ def go():
     this_dir = os.path.dirname(os.path.realpath(__file__))
 
     # specify the source data files to process
-    source_in_filename = f'{this_dir}/asource.txt'
+    in_filenames = [f'{this_dir}/atarget.txt', f'{this_dir}/asource.txt']
+
+    # create the DB name
+    db_name: str = f'{this_dir}/node_hit_count_lookup.db'
 
     # create the target DB
-    initialize_edge_dbs('asource')
+    initialize_lookup_db(db_name)
 
     # get a reference to the object that does the node normalization
     norman = Normalizer()
 
-    # open the tab-delimited source data file
-    with open(source_in_filename, 'r') as inf:
-        # init the request data block count
-        block = 1
+    # for all files
+    for in_filename in in_filenames:
+        # open the tab-delimited source data file
+        with open(in_filename, 'r') as inf:
+            # init the request data block count
+            block = 1
 
-        # skip the header line
-        inf.readline()
+            # skip the header line
+            inf.readline()
 
-        # loop through the data a block at a time
-        for n_lines in iter(lambda: tuple(islice(inf, block_size)), ()):
-            # load the identifiers into the normalized info object
-            norman.normalize_block(n_lines, block)
+            # loop through the data a block at a time
+            for n_lines in iter(lambda: tuple(islice(inf, block_size)), ()):
+                # load the identifiers into the normalized info object
+                norman.normalize_block(n_lines, block)
 
-            # spin through the lines of data in the block
-            for line in n_lines:
-                # split the data line into its' parts
-                parts = line.strip().split('\t')
+                # init the data array
+                data: list = []
 
-                # determine the new target concept type
-                newtargettype = fix_concept_type(parts[3])
+                # spin through the lines of data in the block
+                for line in n_lines:
+                    # split the data line into its' parts
+                    parts = line.strip().split('\t')
 
-                # if newtargettype is not None:
-                # TODO: add record to sqlite DB
-                #     print(f'parts 0: {parts[0]}, normed id: {norman.get_normed_id(parts[0])}, parts 1: {parts[1]}, normed type: {norman.get_normed_type(parts[0])}, new target type: {newtargettype}, parts 4: {parts[4]}')
+                    # determine the corrected concept type
+                    concept = fix_concept_type(parts[3])
 
-            # progress indicator
-            if block % 10000 == 0:
-                print(f'{block} blocks processed.')
+                    if concept is not None:
+                        data.append([parts[0], norman.get_normed_translator_curie(parts[0]), parts[1], norman.get_normed_semantic_type(parts[0]), concept, parts[4]])
 
-            # move to next block
-            block = block + 1
+                        # print(f'original curie: {parts[0]}, normalized curie: {norman.get_normed_translator_curie(parts[0])}, predicate: {parts[1]}, semantic type: \
+                        # {norman.get_normed_semantic_type(parts[0])}, concept: {concept}, count: {parts[4]}')
 
+                # persist the data
+                load_data(db_name, in_filename, data)
 
-def initialize_edge_dbs(source_type):
-    """ this method creates new sqlite DBs for the data """
+                # progress indicator
+                if block % 25000 == 0:
+                    print(f'{block} blocks processed in file: {in_filename}.')
+
+                # move to next block
+                block = block + 1
+
+def initialize_lookup_db(db_name: str):
+    """ this method creates a new sqlite DB for the lookup data """
 
     # get the true directory we are in
     this_dir = os.path.dirname(os.path.realpath(__file__))
 
-    # create the DB name
-    dbname = f'{this_dir}/{source_type}.db'
+    # remove the DB if it already exists
+    if os.path.exists(db_name):
+        os.remove(db_name)
 
-    # remove the DB if the db already exists
-    if os.path.exists(dbname):
-        os.remove(dbname)
-
+    # original curie: HGNC:5, normalized curie: NCBIGene:1, predicate: decreases_expression_of, semantic type: gene, concept: chemical_substance, count: 1
     # create the DB tables
-    with sqlite3.connect(dbname) as conn:
-        conn.execute('''CREATE TABLE edges (node text, edgeset text)''')
-        conn.execute('''CREATE TABLE edge_counts (edge text, count integer)''')
+    with sqlite3.connect(db_name) as conn:
+        conn.execute('''CREATE TABLE source_curie (original_curie text, normalized_cure text, predicate text, semantic_type text, concept text, count integer)''')
+        conn.execute('''CREATE TABLE target_curie (original_curie text, normalized_cure text, predicate text, semantic_type text, concept text, count integer)''')
 
     # return the DB name to the caller
-    return dbname
+    return db_name
 
-
-def create_edge_counts(stype, db, pw):
+def load_data(db_name:str, file_name: str, data: list):
     """ loads the sqlite database with data """
-    for result in results:
-        node = result['a']
-        properties = clean_properties(node)
-        newid = normalize(node['id'])
-        if newid is None:
-            continue
-        properties_per_node[newid].update(properties)
-        for p in properties:
-            counts[p] += 1
 
-    dbname = initialize_edge_dbs(stype)
+    # get the name of the table
+    if 'source' in file_name:
+        table_name: str = 'source_curie'
+    else:
+        table_name: str = 'target_curie'
 
-    with sqlite3.connect(dbname) as conn:
-        for newid, properties in properties_per_node.items():
-            conn.execute('INSERT INTO edges (node ,propertyset) VALUES (?,?)', (newid, str(properties)))
-
-        for p, c in counts.items():
-            if c > 1:
-                conn.execute('INSERT INTO edge_counts (property, count) VALUES (?,?)', (p, c))
+    # open a db connection and persist the data
+    with sqlite3.connect(db_name) as conn:
+        for original_curie, normalized_cure, predicate, semantic_type, concept, count in data:
+            conn.execute(f'INSERT INTO {table_name} (original_curie, normalized_cure, predicate, semantic_type, concept, count) VALUES (?,?,?,?,?,?)', (original_curie, normalized_cure, predicate, semantic_type, concept, int(count)))
 
 
 if __name__ == '__main__':

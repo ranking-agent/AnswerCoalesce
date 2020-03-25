@@ -1,8 +1,13 @@
 import requests
 
 class RobokopMessenger:
+    # TODO: storage for the sqlite database connection
+
     def __init__(self):
         self.url = 'http://robokop.renci.org:4868'
+
+        # TODO: create the DB connection
+
     def pipeline(self,request,yank = True):
         #normalize question
         response = requests.post( f'{self.url}/normalize', json=request )
@@ -13,11 +18,13 @@ class RobokopMessenger:
         answered = response.json()
         if not yank:
             return answered
+
         #Yank
         request = { 'message': answered, }
         response = requests.post( f'{self.url}/yank', json=request )
         filled = response.json()
         return filled
+
     def get_links_for(self,curie,stype):
         query = { 'nodes': [{'id': 'n0', 'curie':curie, 'type': stype},
                             {'id': 'n1'}],
@@ -25,6 +32,7 @@ class RobokopMessenger:
         request = { "message": { "query_graph": query } }
         result = self.pipeline(request)
         kg = result['knowledge_graph']
+
         #This kg should be a star, centered on "curie".  Just walk its edges.
         links = []
         for edge in kg['edges']:
@@ -37,14 +45,20 @@ class RobokopMessenger:
             link = (other_node,predicate,source)
             links.append(link)
         return links
+
+    # TODO: convert this functionality to use a sqlite DB
     def get_hit_nodecount(self, newcurie, predicate, newcurie_is_source, semantic_type):
         query = { 'nodes': [{'id': 'n0', 'curie':newcurie},
                             {'id': 'n1', 'type': semantic_type}] }
+
         if newcurie_is_source:
             query['edges'] = [{'id': 'e0', 'source_id': 'n0', 'target_id': 'n1', 'type': predicate}]
         else:
             query['edges'] = [{'id': 'e0', 'source_id': 'n1', 'target_id': 'n0', 'type': predicate}]
+
         request = { "message": { "query_graph": query } }
+
         result = self.pipeline(request,yank = False)
+
         #Just need to know how many
         return len(result['results'])
