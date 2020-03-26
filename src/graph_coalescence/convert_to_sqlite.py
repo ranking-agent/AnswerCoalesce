@@ -32,24 +32,31 @@ class Normalizer:
             # make the call to get normalized nodes
             response: requests.Response = requests.get(self.url, params={'curie': unknown})
 
-            # check the response code
-            if response.status_code == 200:
-                # convert the string response to json
-                results = response.json()
+            # retry up to 3 times
+            for x in range(0, 3):
+                # check the response code
+                if response.status_code == 200:
+                    # convert the string response to json
+                    results = response.json()
 
-                # put away every member requested
-                for c in unknown:
-                    # was there a value for this curie
-                    if results[c] is not None:
-                        # save the data
-                        translator_curie = results[c]['id']['identifier']
-                        semantic_type = results[c]['type'][0]
-                        self.nn[c] = translator_curie
-                        self.st[c] = semantic_type
-                    # else:
-                    #     print(f'No normalization result found for curie: {c}')
-            else:
-                print(f'Block {block} of {len(lines)} curies entirely failed normalization. \n - Start line: {lines[0]} - End line: {lines[len(lines) - 1]}')
+                    # put away every member requested
+                    for c in unknown:
+                        # was there a value for this curie
+                        if results[c] is not None:
+                            # save the data
+                            translator_curie = results[c]['id']['identifier']
+                            semantic_type = results[c]['type'][0]
+                            self.nn[c] = translator_curie
+                            self.st[c] = semantic_type
+                        # else:
+                        #     print(f'No normalization result found for curie: {c}')
+
+                    break
+                else:
+                    if x > 2:
+                        print(f'All retry attempts failed. Block {block} of {len(lines)} curies entirely failed normalization. \n - Start line: {lines[0]} - End line: {lines[len(lines) - 1]}')
+                    else:
+                        print(f'Normalization failed event occurred on attempt {x + 1}. Retrying...')
 
     def get_normed_translator_curie(self, x):
         try:
@@ -124,10 +131,10 @@ def go():
     this_dir = os.path.dirname(os.path.realpath(__file__))
 
     # specify the source data files to process
-    in_filenames = [f'{this_dir}/atarget.txt', f'{this_dir}/asource.txt']
+    in_filenames = [f'{this_dir}\\atarget.txt', f'{this_dir}\\asource.txt'] # f'{this_dir}\\test.text',
 
     # create the DB name
-    db_name: str = f'{this_dir}/node_hit_count_lookup.db'
+    db_name: str = f'{this_dir}\\node_hit_count_lookup.db'
 
     # create the target DB
     initialize_lookup_db(db_name)
@@ -139,7 +146,7 @@ def go():
     for in_filename in in_filenames:
         # open the tab-delimited source data file
         with open(in_filename, 'r') as inf:
-            # init the request data block count
+            # init the node norm request data block counter
             block = 1
 
             # skip the header line
@@ -171,17 +178,15 @@ def go():
                 load_data(db_name, in_filename, data)
 
                 # progress indicator
-                if block % 25000 == 0:
-                    print(f'{block} blocks processed in file: {in_filename}.')
+                if block % 2500 == 0:
+                    print(f'{block} blocks of 100 curies processed in file: {in_filename}.')
 
                 # move to next block
                 block = block + 1
 
+
 def initialize_lookup_db(db_name: str):
     """ this method creates a new sqlite DB for the lookup data """
-
-    # get the true directory we are in
-    this_dir = os.path.dirname(os.path.realpath(__file__))
 
     # remove the DB if it already exists
     if os.path.exists(db_name):
@@ -190,13 +195,14 @@ def initialize_lookup_db(db_name: str):
     # original curie: HGNC:5, normalized curie: NCBIGene:1, predicate: decreases_expression_of, semantic type: gene, concept: chemical_substance, count: 1
     # create the DB tables
     with sqlite3.connect(db_name) as conn:
-        conn.execute('''CREATE TABLE source_curie (original_curie text, normalized_cure text, predicate text, semantic_type text, concept text, count integer)''')
-        conn.execute('''CREATE TABLE target_curie (original_curie text, normalized_cure text, predicate text, semantic_type text, concept text, count integer)''')
+        conn.execute('''CREATE TABLE source_curie (original_curie text, normalized_curie text, predicate text, semantic_type text, concept text, count integer)''')
+        conn.execute('''CREATE TABLE target_curie (original_curie text, normalized_curie text, predicate text, semantic_type text, concept text, count integer)''')
 
     # return the DB name to the caller
     return db_name
 
-def load_data(db_name:str, file_name: str, data: list):
+
+def load_data(db_name: str, file_name: str, data: list):
     """ loads the sqlite database with data """
 
     # get the name of the table
@@ -207,8 +213,11 @@ def load_data(db_name:str, file_name: str, data: list):
 
     # open a db connection and persist the data
     with sqlite3.connect(db_name) as conn:
-        for original_curie, normalized_cure, predicate, semantic_type, concept, count in data:
-            conn.execute(f'INSERT INTO {table_name} (original_curie, normalized_cure, predicate, semantic_type, concept, count) VALUES (?,?,?,?,?,?)', (original_curie, normalized_cure, predicate, semantic_type, concept, int(count)))
+        for original_curie, normalized_curie, predicate, semantic_type, concept, count in data:
+            conn.execute(f'\
+            INSERT INTO {table_name} (original_curie, normalized_curie, predicate, semantic_type, concept, count) \
+            VALUES (?,?,?,?,?,?)', \
+            (original_curie, normalized_curie, predicate, semantic_type, concept, int(count)))
 
 
 if __name__ == '__main__':

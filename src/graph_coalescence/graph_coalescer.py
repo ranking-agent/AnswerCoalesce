@@ -74,7 +74,6 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-6):
             #Note that is_source is from the point of view of the input nodes, not newcurie
             newcurie_is_source = not is_source
 
-            # TODO: replace this with sqlite DB calls
             n = rm.get_hit_nodecount(newcurie,predicate,newcurie_is_source,semantic_type)
 
             ndraws = len(nodes)

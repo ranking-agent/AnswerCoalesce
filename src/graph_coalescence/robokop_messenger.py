@@ -1,10 +1,20 @@
+import os
 import requests
+import sqlite3
+
 
 class RobokopMessenger:
     # TODO: storage for the sqlite database connection
+    # declare the DB name
 
     def __init__(self):
         self.url = 'http://robokop.renci.org:4868'
+
+        # find the absolute directory we are in
+        this_dir: str = os.path.dirname(os.path.realpath(__file__))
+
+        # create the DB name
+        self.db_name: str = f'{this_dir}/node_hit_count_lookup.db'
 
         # TODO: create the DB connection
 
@@ -46,8 +56,39 @@ class RobokopMessenger:
             links.append(link)
         return links
 
-    # TODO: convert this functionality to use a sqlite DB
     def get_hit_nodecount(self, newcurie, predicate, newcurie_is_source, semantic_type):
+        """ gets the number of nodes (loaded from the graph database into a local database)
+            that share this node, predicate and semantic type """
+
+        # use the direction of the lookup to use the correct db table
+        if newcurie_is_source:
+            table_name: str = 'source_curie'
+        else:
+            table_name: str = 'target_curie'
+
+        # open a db connection and get the data
+        with sqlite3.connect(self.db_name) as conn:
+            # prepare and execute the SQL statement
+            cur = conn.execute(f'\
+                SELECT count \
+                FROM {table_name} \
+                WHERE normalized_curie=? AND predicate=? AND concept=?', \
+                (newcurie, predicate, semantic_type))
+
+        # get the results
+        result = cur.fetchall()
+
+        # did we get something
+        try:
+            ret_val: int = result[0][0]
+        except Exception:
+            ret_val: int = 0
+
+        # Just need to know how many
+        return ret_val
+
+    def get_hit_nodecount_old(self, newcurie, predicate, newcurie_is_source, semantic_type):
+        """ old style node count retreival. may be used for testing only """
         query = { 'nodes': [{'id': 'n0', 'curie':newcurie},
                             {'id': 'n1', 'type': semantic_type}] }
 
@@ -60,5 +101,4 @@ class RobokopMessenger:
 
         result = self.pipeline(request,yank = False)
 
-        #Just need to know how many
         return len(result['results'])
