@@ -2,6 +2,7 @@ Jinja2
 jsonschema
 sanic==19.12.2
 swagger-ui-bundle
+neo4j
 pyyaml
 argparse
 setuptools

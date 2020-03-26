@@ -73,7 +73,9 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-6):
             #total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
             #Note that is_source is from the point of view of the input nodes, not newcurie
             newcurie_is_source = not is_source
-            n = rm.get_hit_nodecount(newcurie,predicate,newcurie_is_source,semantic_type)
+
+            n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
+
             ndraws = len(nodes)
             enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
             if enrichp < pcut:

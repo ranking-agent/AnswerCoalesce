@@ -1,10 +1,10 @@
-from neo4j.v1 import GraphDatabase
 import os
+from neo4j import GraphDatabase
 
 # Maybe make this a notebook?
 
 def get_driver(url):
-    driver = GraphDatabase.driver(url, auth=("neo4j", os.environ['NEO4J_PASSWORD']))
+    driver = GraphDatabase.driver(url, auth=("neo4j", 'ncatsgamma'))
     return driver
 
 def run_query(url,cypherquery):
