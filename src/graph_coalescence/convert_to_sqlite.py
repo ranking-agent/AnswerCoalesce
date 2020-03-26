@@ -20,12 +20,12 @@ class Normalizer:
         # for each line
         for line in lines:
             # split each line into an array of items
-            x: list = line.split('\t')[0]
+            value: list = line.split('\t')[0]
 
             # is this a duplicate
-            if x not in self.nn:
+            if value not in self.nn:
                 # add it to the list for processing
-                unknown.append(x)
+                unknown.append(value)
 
         # did we find some items to process
         if len(unknown) > 0:
@@ -61,8 +61,8 @@ class Normalizer:
     def get_normed_translator_curie(self, x):
         try:
             ret_val = self.nn[x]
-        except Exception:
-            # print(f'{x} ID not found.')
+        except Exception as e:
+            print(f'{x} Normalizer ID not found. {e}')
             ret_val = None
 
         return ret_val
@@ -70,14 +70,14 @@ class Normalizer:
     def get_normed_semantic_type(self, x):
         try:
             ret_val = self.st[x]
-        except Exception:
-            # print(f'{x} type not found.')
+        except Exception as e:
+            print(f'{x} Normalizer type not found. {e}')
             ret_val = None
 
         return ret_val
 
 
-# declare concept filtering mechanisms. each set represents a layer of filtering
+# declare concept filtering mechanisms. each set represents another layer of extended filtering
 pass1_types: set = {'gene', 'chemical_substance', 'disease', 'phenotypic_feature', 'cell', 'anatomical_entity', 'cellular_component'}
 pass2_types: set = {'cellular_component'}
 pass3_types: set = {'disease', 'phenotypic_feature'}
@@ -87,7 +87,7 @@ pass6_types: set = {'cell', 'anatomical_entity'}
 
 
 def fix_concept_type(list_string: list):
-    """ filters and repairs the concept type for the item passed """
+    """ filters and replaces the concept type for the item passed """
 
     # init the return value
     ret_val = None
@@ -131,7 +131,7 @@ def go():
     this_dir = os.path.dirname(os.path.realpath(__file__))
 
     # specify the source data files to process
-    in_filenames = [f'{this_dir}\\atarget.txt', f'{this_dir}\\asource.txt'] # f'{this_dir}\\test.text',
+    in_filenames = [f'{this_dir}\\atarget.txt', f'{this_dir}\\asource.txt']  # f'{this_dir}\\test.text',
 
     # create the DB name
     db_name: str = f'{this_dir}\\node_hit_count_lookup.db'
@@ -216,8 +216,7 @@ def load_data(db_name: str, file_name: str, data: list):
         for original_curie, normalized_curie, predicate, semantic_type, concept, count in data:
             conn.execute(f'\
             INSERT INTO {table_name} (original_curie, normalized_curie, predicate, semantic_type, concept, count) \
-            VALUES (?,?,?,?,?,?)', \
-            (original_curie, normalized_curie, predicate, semantic_type, concept, int(count)))
+            VALUES (?,?,?,?,?,?)', (original_curie, normalized_curie, predicate, semantic_type, concept, int(count)))
 
 
 if __name__ == '__main__':

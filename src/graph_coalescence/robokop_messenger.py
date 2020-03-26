@@ -4,9 +4,6 @@ import sqlite3
 
 
 class RobokopMessenger:
-    # TODO: storage for the sqlite database connection
-    # declare the DB name
-
     def __init__(self):
         self.url = 'http://robokop.renci.org:4868'
 
@@ -16,34 +13,31 @@ class RobokopMessenger:
         # create the DB name
         self.db_name: str = f'{this_dir}/node_hit_count_lookup.db'
 
-        # TODO: create the DB connection
-
-    def pipeline(self,request,yank = True):
-        #normalize question
-        response = requests.post( f'{self.url}/normalize', json=request )
+    def pipeline(self, request, yank=True):
+        # normalize question
+        response = requests.post(f'{self.url}/normalize', json=request)
         normalized = response.json()
-        #answer question
-        request = { 'message': normalized, }
-        response = requests.post( f'{self.url}/answer', json=request )
+        # answer question
+        request = {'message': normalized}
+        response = requests.post(f'{self.url}/answer', json=request)
         answered = response.json()
         if not yank:
             return answered
 
-        #Yank
-        request = { 'message': answered, }
-        response = requests.post( f'{self.url}/yank', json=request )
+        # Yank
+        request = {'message': answered}
+        response = requests.post(f'{self.url}/yank', json=request)
         filled = response.json()
         return filled
 
-    def get_links_for(self,curie,stype):
-        query = { 'nodes': [{'id': 'n0', 'curie':curie, 'type': stype},
-                            {'id': 'n1'}],
-                  'edges': [{'id': 'e0', 'source_id': 'n0', 'target_id': 'n1'}]}
-        request = { "message": { "query_graph": query } }
+    def get_links_for(self, curie, stype):
+        query = {'nodes': [{'id': 'n0', 'curie': curie, 'type': stype}, {'id': 'n1'}],
+                 'edges': [{'id': 'e0', 'source_id': 'n0', 'target_id': 'n1'}]}
+        request = {"message": {"query_graph": query}}
         result = self.pipeline(request)
         kg = result['knowledge_graph']
 
-        #This kg should be a star, centered on "curie".  Just walk its edges.
+        # This kg should be a star, centered on "curie".  Just walk its edges.
         links = []
         for edge in kg['edges']:
             source = (edge['source_id'] == curie)
@@ -52,11 +46,11 @@ class RobokopMessenger:
             else:
                 other_node = edge['source_id']
             predicate = edge['type']
-            link = (other_node,predicate,source)
+            link = (other_node, predicate, source)
             links.append(link)
         return links
 
-    def get_hit_nodecount(self, newcurie, predicate, newcurie_is_source, semantic_type):
+    def get_hit_node_count(self, newcurie: str, predicate: str, newcurie_is_source: bool, semantic_type: str) -> int:
         """ gets the number of nodes (loaded from the graph database into a local database)
             that share this node, predicate and semantic type """
 
@@ -72,8 +66,7 @@ class RobokopMessenger:
             cur = conn.execute(f'\
                 SELECT count \
                 FROM {table_name} \
-                WHERE normalized_curie=? AND predicate=? AND concept=?', \
-                (newcurie, predicate, semantic_type))
+                WHERE normalized_curie=? AND predicate=? AND concept=?', (newcurie, predicate, semantic_type))
 
         # get the results
         result = cur.fetchall()
@@ -81,7 +74,8 @@ class RobokopMessenger:
         # did we get something
         try:
             ret_val: int = result[0][0]
-        except Exception:
+        except Exception as e:
+            print(f'{newcurie} in get_hit_node_count() not found. {e}')
             ret_val: int = 0
 
         # Just need to know how many
@@ -89,16 +83,15 @@ class RobokopMessenger:
 
     def get_hit_nodecount_old(self, newcurie, predicate, newcurie_is_source, semantic_type):
         """ old style node count retreival. may be used for testing only """
-        query = { 'nodes': [{'id': 'n0', 'curie':newcurie},
-                            {'id': 'n1', 'type': semantic_type}] }
+        query = {'nodes': [{'id': 'n0', 'curie': newcurie}, {'id': 'n1', 'type': semantic_type}]}
 
         if newcurie_is_source:
             query['edges'] = [{'id': 'e0', 'source_id': 'n0', 'target_id': 'n1', 'type': predicate}]
         else:
             query['edges'] = [{'id': 'e0', 'source_id': 'n1', 'target_id': 'n0', 'type': predicate}]
 
-        request = { "message": { "query_graph": query } }
+        request = {"message": {"query_graph": query}}
 
-        result = self.pipeline(request,yank = False)
+        result = self.pipeline(request, yank=False)
 
         return len(result['results'])
