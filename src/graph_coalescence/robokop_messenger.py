@@ -13,7 +13,11 @@ class RobokopMessenger:
         # create the DB name
         self.db_name: str = f'{this_dir}/node_hit_count_lookup.db'
 
+        self.RK_call_count = 0
+
     def pipeline(self, request, yank=True):
+        self.RK_call_count = self.RK_call_count + 1
+
         # normalize question
         response = requests.post(f'{self.url}/normalize', json=request)
         normalized = response.json()
@@ -64,7 +68,7 @@ class RobokopMessenger:
         with sqlite3.connect(self.db_name) as conn:
             # prepare and execute the SQL statement
             cur = conn.execute(f'\
-                SELECT count \
+                SELECT ifnull(sum(count), 0) when as Total \
                 FROM {table_name} \
                 WHERE normalized_curie=? AND predicate=? AND concept=?', (newcurie, predicate, semantic_type))
 
@@ -73,12 +77,14 @@ class RobokopMessenger:
 
         # did we get something
         try:
+            # Just need to know how many
             ret_val: int = result[0][0]
         except Exception as e:
+            # if not found then return 0
             print(f'{newcurie} in get_hit_node_count() not found. {e}')
             ret_val: int = 0
 
-        # Just need to know how many
+        # return to the caller
         return ret_val
 
     def get_hit_nodecount_old(self, newcurie, predicate, newcurie_is_source, semantic_type):

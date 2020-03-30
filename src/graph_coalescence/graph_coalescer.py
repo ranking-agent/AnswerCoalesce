@@ -53,6 +53,9 @@ def get_shared_links(nodes,stype):
     for link,nodes in links_to_nodes.items():
         if len(nodes) > 1:
             nodes_to_links[frozenset(nodes)].append(link)
+
+    print(f'total RK hit count: {rm.RK_call_count}')
+
     return nodes_to_links
 
 def get_enriched_links(nodes,semantic_type,pcut=1e-6):
