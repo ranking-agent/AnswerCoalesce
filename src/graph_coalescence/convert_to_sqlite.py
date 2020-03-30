@@ -198,9 +198,6 @@ def initialize_lookup_db(db_name: str):
         conn.execute('''CREATE TABLE source_curie (original_curie text, normalized_curie text, predicate text, semantic_type text, concept text, count integer)''')
         conn.execute('''CREATE TABLE target_curie (original_curie text, normalized_curie text, predicate text, semantic_type text, concept text, count integer)''')
 
-    # return the DB name to the caller
-    return db_name
-
 
 def load_data(db_name: str, file_name: str, data: list):
     """ loads the sqlite database with data """

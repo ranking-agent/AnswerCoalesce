@@ -27,6 +27,7 @@ def test_enriched_links_hg():
     """This set of genes is chosen because it runs quickly"""
     sl = gc.get_enriched_links(set(['HGNC:44283', 'HGNC:44284','HGNC:44282']), 'gene')
     assert sl[0][1] == 'HGNC.FAMILY:1384'
+    assert sl[0][5] == 5
 
 def test_ontology_coalescer():
     curies = [ 'HGNC:44283', 'HGNC:44284','HGNC:44282' ]

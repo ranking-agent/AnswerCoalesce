@@ -66,7 +66,7 @@ class RobokopMessenger:
             cur = conn.execute(f'\
                 SELECT count \
                 FROM {table_name} \
-                WHERE normalized_curie=? AND predicate=? AND concept=?', (newcurie, predicate, semantic_type))
+                WHERE original_curie=? AND predicate=? AND concept=?', (newcurie, predicate, semantic_type))
 
         # get the results
         result = cur.fetchall()
