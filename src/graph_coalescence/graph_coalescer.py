@@ -54,13 +54,13 @@ def coalesce_by_graph(opportunities):
 
     return patches
 
-def get_shared_links(nodes,stype):
+def get_shared_links(nodes, stype):
     """Return the intersection of the superclasses of every node in nodes"""
     rm = RobokopMessenger()
     links_to_nodes = defaultdict(set)
     for node in nodes:
         logger.debug(f'start get_links_for({node}, {stype})')
-        links = rm.get_links_for(node,stype)
+        links = rm.get_links_for(node, stype)
         logger.debug('end get_links_for()')
         for link in links:
             links_to_nodes[link].add(node)
