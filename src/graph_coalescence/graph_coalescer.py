@@ -8,7 +8,7 @@ import os
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
-logger = LoggingUtil.init_logging('graph_coalescer', level=logging.DEBUG, format='long', logFilePath=this_dir+'/')
+logger = LoggingUtil.init_logging('graph_coalescer', level=logging.INFO, format='long', logFilePath=this_dir+'/')
 
 
 def coalesce_by_graph(opportunities):
@@ -18,6 +18,9 @@ def coalesce_by_graph(opportunities):
     qg_id of the edges being removed/combined, answers being collapsed]
     """
     patches = []
+
+    logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
+
     for opportunity in opportunities:
         logger.debug('Starting new opportunity')
 
@@ -26,6 +29,8 @@ def coalesce_by_graph(opportunities):
         stype = opportunity.get_qg_semantic_type()
 
         enriched_links = get_enriched_links(nodes,stype)
+
+        logger.info(f'{len(enriched_links)} enriched links discovered.')
 
         #For the moment, we're only going to return the best enrichment.  Note that this
         # might mean more than one shared node, if the cardinalities all come out the
@@ -52,6 +57,8 @@ def coalesce_by_graph(opportunities):
         patches.append(patch)
         logger.debug('end of opportunity')
 
+    logger.info('All opportunities processed.')
+
     return patches
 
 def get_shared_links(nodes, stype):
@@ -69,22 +76,26 @@ def get_shared_links(nodes, stype):
         if len(nodes) > 1:
             nodes_to_links[frozenset(nodes)].append(link)
 
-    logger.debug(f'total RK hit count: {rm.RK_call_count}')
-
     return nodes_to_links
 
 def get_enriched_links(nodes,semantic_type,pcut=1e-6):
-    logger.debug ('start get_enriched_links()')
+    logger.info (f'{len(nodes)} enriched node links to process.')
 
-    """Get the most enriched connected node for a group of nodes."""
+    # Get the most enriched connected node for a group of nodes.
     logger.debug ('start get_shared_links()')
+
     nodeset_to_links = get_shared_links(nodes,semantic_type)
+
     logger.debug ('end get_shared_links()')
+
+    logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
 
     rm = RobokopMessenger()
     results = []
+
+    logger.info(f'{len(nodeset_to_links.items())} possible links discovered.')
+
     for nodeset, possible_links in nodeset_to_links.items():
-        logger.debug ('start processing of get_shared_links()')
         enriched = []
         for newcurie,predicate,is_source in possible_links:
             # The hypergeometric distribution models drawing objects from a bin.
@@ -102,11 +113,13 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-6):
 
             newcurie_is_source = not is_source
 
-            logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
+            #logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
             n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
-            logger.debug (f'end get_hit_node_count() = {n}, start get_hit_nodecount_old()')
-            y = rm.get_hit_nodecount_old(newcurie, predicate, newcurie_is_source, semantic_type)
-            logger.debug (f'end get_hit_nodecount_old() = {y}')
+            #logger.debug (f'end get_hit_node_count() = {n}, start get_hit_nodecount_old()')
+            #o = rm.get_hit_nodecount_old(newcurie, predicate, newcurie_is_source, semantic_type)
+
+            #if n != o:
+            #    logger.debug (f'New and old node count mismatch for ({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type}: n:{n}, o:{o}')
 
             ndraws = len(nodes)
 
