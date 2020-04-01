@@ -64,11 +64,13 @@ class RobokopMessenger:
         else:
             table_name: str = 'target_curie'
 
-        # open a db connection and get the data
+        # open a db connection, get the data, and close the connection
         with sqlite3.connect(self.db_name) as conn:
-            # prepare and execute the SQL statement
-            sql = "IFNULL(sum(count), 0)"
-            cur = conn.execute(f'SELECT {sql} as Total FROM {table_name} WHERE normalized_curie=? AND predicate=? AND concept=?', (newcurie, predicate, semantic_type))
+            # prepare the SQL statement
+            sql = f"SELECT IFNULL(sum(count), 0) as Total FROM {table_name} WHERE normalized_curie='{newcurie}' AND predicate='{predicate}' AND concept='{semantic_type}'"
+
+            # execute the statement
+            cur = conn.execute(sql)
 
         # get the results
         result = cur.fetchall()
