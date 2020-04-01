@@ -2,9 +2,20 @@ import pytest
 import src.graph_coalescence.graph_coalescer as gc
 from src.single_node_coalescer import identify_coalescent_nodes
 from src.components import Opportunity,Answer
+from src.graph_coalescence.robokop_messenger import RobokopMessenger
+
+def test_get_links_for():
+    rm = RobokopMessenger()
+    links = rm.get_links_for('MESH:D006843', 'chemical_substance')
+
+    # this normally returns 149 links
+    assert len(links) == 149
+
+    # the curie at this location (CHEBI:28509) should be normalized to CHEBI:53243
+    assert links[20][0] == 'CHEBI:53243'
 
 def test_shared_links():
-    sl = gc.get_shared_links(set(['HGNC:869','HGNC:870']),'gene')
+    sl = gc.get_shared_links(set(['HGNC:869','HGNC:870']), 'gene')
     #Because we only had a pair of inputs, we should only get a single output.
     assert len(sl) == 1
     fams = []
