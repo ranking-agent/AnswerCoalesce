@@ -108,25 +108,25 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-6):
 
             total_node_count = get_total_node_count(semantic_type)
 
-            #total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
-            #Note that is_source is from the point of view of the input nodes, not newcurie
+            # total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
+            # Note that is_source is from the point of view of the input nodes, not newcurie
 
             newcurie_is_source = not is_source
 
-            #logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
+            # logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
             n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
-            #logger.debug (f'end get_hit_node_count() = {n}, start get_hit_nodecount_old()')
-            #o = rm.get_hit_nodecount_old(newcurie, predicate, newcurie_is_source, semantic_type)
+            # logger.debug (f'end get_hit_node_count() = {n}, start get_hit_nodecount_old()')
+            # o = rm.get_hit_nodecount_old(newcurie, predicate, newcurie_is_source, semantic_type)
 
-            #if n != o:
-            #    logger.debug (f'New and old node count mismatch for ({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type}: n:{n}, o:{o}')
+            # if n != o:
+            #     logger.info (f'New and old node count mismatch for ({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type}: n:{n}, o:{o}')
 
             ndraws = len(nodes)
 
             enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
 
             if enrichp < pcut:
-                enriched.append( (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
+                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset))
         if len(enriched) > 0:
             results += enriched
 
