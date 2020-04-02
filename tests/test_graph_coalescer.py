@@ -11,8 +11,8 @@ def test_get_links_for():
     # this normally returns 149 links
     assert len(links) == 149
 
-    # the curie at this location (CHEBI:28509) should be normalized to CHEBI:53243
-    assert links[20][0] == 'CHEBI:53243'
+    # the curie at this location is (CHEBI:28509) but the normalized value is CHEBI:53243
+    assert links[20][0] == 'CHEBI:28509'
 
 def test_shared_links():
     sl = gc.get_shared_links(set(['HGNC:869','HGNC:870']), 'gene')
