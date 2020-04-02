@@ -93,7 +93,7 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-6):
     rm = RobokopMessenger()
     results = []
 
-    logger.info(f'{len(nodeset_to_links.items())} possible links discovered.')
+    logger.info(f'{len(nodeset_to_links.items())} possible shared links discovered.')
 
     for nodeset, possible_links in nodeset_to_links.items():
         enriched = []
