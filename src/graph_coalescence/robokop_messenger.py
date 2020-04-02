@@ -13,7 +13,15 @@ class RobokopMessenger:
         # create the DB name
         self.db_name: str = f'{this_dir}/node_hit_count_lookup.db'
 
+        # open a connection to the database
+        self.db_conn = sqlite3.connect(self.db_name)
+
+        # counter for the number of robokop queries done in a pass
         self.RK_call_count = 0
+
+    def __del__(self):
+        # close db connection
+        self.db_conn.close()
 
     def pipeline(self, request, yank=True):
         self.RK_call_count = self.RK_call_count + 1
@@ -64,13 +72,11 @@ class RobokopMessenger:
         else:
             table_name: str = 'target_curie'
 
-        # open a db connection, get the data, and close the connection
-        with sqlite3.connect(self.db_name) as conn:
-            # prepare the SQL statement
-            sql = f"SELECT IFNULL(sum(count), 0) as Total FROM {table_name} WHERE original_curie='{newcurie}' AND predicate='{predicate}' AND concept='{semantic_type}'"
+        # prepare the SQL statement
+        sql = f"SELECT IFNULL(sum(count), 0) as Total FROM {table_name} WHERE concept='{semantic_type}' AND predicate='{predicate}' AND original_curie='{newcurie}'"
 
-            # execute the statement
-            cur = conn.execute(sql)
+        # execute the statement
+        cur = self.db_conn.execute(sql)
 
         # get the results
         result = cur.fetchall()
