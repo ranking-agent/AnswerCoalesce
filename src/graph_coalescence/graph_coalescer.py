@@ -8,7 +8,7 @@ import os
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
-logger = LoggingUtil.init_logging('graph_coalescer', level=logging.INFO, format='long', logFilePath=this_dir+'/')
+logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir+'/')
 
 
 def coalesce_by_graph(opportunities):
