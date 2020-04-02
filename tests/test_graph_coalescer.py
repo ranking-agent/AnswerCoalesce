@@ -4,6 +4,16 @@ from src.single_node_coalescer import identify_coalescent_nodes
 from src.components import Opportunity,Answer
 from src.graph_coalescence.robokop_messenger import RobokopMessenger
 
+def test_get_node_count():
+    # fire up the class
+    rm = RobokopMessenger()
+
+    # call to get the number of nodes
+    n = rm.get_hit_node_count('HGNC:108', 'decreases_activity_of', False, 'chemical_substance')
+
+    # get the expected node count
+    assert n == 2184
+
 def test_get_links_for():
     rm = RobokopMessenger()
     links = rm.get_links_for('MESH:D006843', 'chemical_substance')
