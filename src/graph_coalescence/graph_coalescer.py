@@ -32,29 +32,31 @@ def coalesce_by_graph(opportunities):
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
-        #For the moment, we're only going to return the best enrichment.  Note that this
-        # might mean more than one shared node, if the cardinalities all come out the
-        # same.  It's POC, really you'd like to include many of these.  But we don't want
+        #For the moment, we're only going to return an arbitrarily small number of enrichments
+        # It's POC, really you'd like to include many of these.  But we don't want
         # to end up with more answers than we started with, so we need to parameterize, and
         # that's more work that we can do later.
         #(enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
-        best_enrich_p = enriched_links[0][0]
-        best_grouping = enriched_links[0][7]
-        best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
-        newprops = {'coalescence_method':'graph_enrichment',
-                    'p_value': best_enrich_p,
-                    'enriched_nodes': [x[1] for x in best_enrichments]}
-        patch = PropertyPatch(qg_id,best_grouping,newprops,opportunity.get_answer_indices())
-        for e in best_enrichments:
-            newcurie = e[1]
-            etype = e[2]
-            if e[3]:
-                nni = 'target'
-            else:
-                nni = 'source'
-            #Need to get the right node type.
-            patch.add_extra_node(newcurie,'named_thing',edge_type=etype,newnode_is=nni)
-        patches.append(patch)
+        for i,link in enumerate(enriched_links):
+            if i > len(nodes):
+                break
+            best_enrich_p = link[0]
+            best_grouping = link[7]
+            best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
+            newprops = {'coalescence_method':'graph_enrichment',
+                        'p_value': best_enrich_p,
+                        'enriched_nodes': [x[1] for x in best_enrichments]}
+            patch = PropertyPatch(qg_id,best_grouping,newprops,opportunity.get_answer_indices())
+            for e in best_enrichments:
+                newcurie = e[1]
+                etype = e[2]
+                if e[3]:
+                    nni = 'target'
+                else:
+                    nni = 'source'
+                #Need to get the right node type.
+                patch.add_extra_node(newcurie,'named_thing',edge_type=etype,newnode_is=nni)
+            patches.append(patch)
         logger.debug('end of opportunity')
 
     logger.info('All opportunities processed.')

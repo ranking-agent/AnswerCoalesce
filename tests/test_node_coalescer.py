@@ -403,18 +403,21 @@ def test_automat_treat_diabetes_properties():
     print(rs[0]['node_bindings'][1])
     assert rs[0]['node_bindings'][1]['p_values'][0] < 1e-20
 
-def est_automat_treat_diabetes_graph():
+def test_automat_asthma_graph():
     """Load up the answer in
     It contains the robokop answer for
     If the chemical substance is allowed to vary, every answer should give the same hash."""
-    fn = 'mychem_treats_diabetes.json'
+    #fn = 'mychem_treats_diabetes.json'
+    fn = 'asthma_one_hop.json'
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
     newset = snc.coalesce(answerset,method='graph')
     rs = newset['results']
-    assert len(rs) > 0
-    print(len(rs))
-    print(rs[0]['node_bindings'][1])
-    assert rs[0]['node_bindings'][1]['p_values'][0] < 1e-20
+    assert len(rs) > 2
+#    print(rs[0]['node_bindings'])
+#    print(rs[1]['node_bindings'])
+#    print(rs[2]['node_bindings'])
+#    print(rs[3]['node_bindings'])
+    assert rs[0]['node_bindings'][0]['p_value'] < 1e-20
 
