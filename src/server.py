@@ -49,7 +49,7 @@ async def coalesce_handler(request: Request) -> json:
         jsonschema.validate(instance=incoming, schema=validate_with)
 
     # all JSON validation errors are manifested as a thrown exception
-    except jsonschema.exceptions.ValidationError as error:
+    except (jsonschema.exceptions.ValidationError, json.JSONDecodeError) as error: #
         # print (f"ERROR: {str(error)}")
         return response.json({'Result failed validation. Message': str(error)}, status=400)
 
