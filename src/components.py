@@ -143,10 +143,10 @@ class PropertyPatch:
                 if eid is None:
                     #Add the new edge
                     edge = { 'source_id': source_id, 'target_id': target_id, 'type': newnode.new_edges }
-                    eid = hash(frozenset(edge.items()))
-                    edge['id'] = str(eid)
+                    eid = str(hash(frozenset(edge.items())))
+                    edge['id'] = eid
                     kg['edges'].append(edge)
-                extra_edges.append(eid)
+                extra_edges.append(str(eid))
             all_extra_edges.append(extra_edges)
         return kg,all_extra_edges
 
