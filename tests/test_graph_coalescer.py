@@ -18,15 +18,15 @@ def test_get_links_for():
     rm = RobokopMessenger()
     links = rm.get_links_for('MESH:D006843', 'chemical_substance')
 
-    # this normally returns 149 links
-    assert len(links) == 149
+    # this normally returns 92 links
+    assert len(links) == 92
 
-    # the curie at this location is (CHEBI:28509) but the normalized value is CHEBI:53243
-    assert links[20][0] == 'CHEBI:28509'
+    # the curie at this location is ('GO:0018978')
+    assert links[0][0] == 'GO:0018978'
 
 def test_shared_links():
     sl = gc.get_shared_links(set(['HGNC:869','HGNC:870']), 'gene')
-    #Because we only had a pair of inputs, we should only get a single output.
+    # Because we only had a pair of inputs, we should only get a single output.
     assert len(sl) == 1
     fams = []
     for value in sl.values():
