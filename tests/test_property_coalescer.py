@@ -115,7 +115,7 @@ def test_property_coalsecer():
     assert len(p.new_props['p_values']) == 3
     assert p.new_props['properties'][2] == 'aetiopathogenetic_role'
 
-def test_propery_coalescer_perf_test():
+def test_property_coalescer_perf_test():
     from src.single_node_coalescer import coalesce
     import os
     import json
@@ -137,8 +137,8 @@ def test_propery_coalescer_perf_test():
     # get the amount of time it took
     diff = datetime.datetime.now() - t1
 
-    # it should be less that this
-    assert(diff.seconds < 15)
+    # it should be less than this
+    assert(diff.seconds < 60)
 
     # loop through the query_graph return and insure that edge ids are strs
     for n in coalesced['query_graph']['edges']:
