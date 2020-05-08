@@ -106,3 +106,36 @@ def test_graph_coalescer_perf_test():
     # loop through the knowledge_graph return and insure that edge ids are strs
     for n in coalesced['knowledge_graph']['edges']:
         assert(isinstance(n['id'], str))
+
+def test_missing_node_norm():
+    from src.single_node_coalescer import coalesce
+    import os
+    import json
+    import datetime
+
+    # get a timestamp
+    t1 = datetime.datetime.now()
+
+    # get the path to the test file
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'graph_named_thing_issue.json')
+
+    # open the file and load it
+    with open(test_filename,'r') as tf:
+        incoming = json.load(tf)
+
+    # call function that does property coalesce
+    coalesced = coalesce(incoming, method='graph')
+
+    # get the amount of time it took
+    diff = datetime.datetime.now() - t1
+
+    # it should be less than this
+    assert(diff.seconds < 60)
+
+    # loop through the query_graph return and insure that edge ids are strs
+    for n in coalesced['query_graph']['edges']:
+        assert(isinstance(n['id'], str))
+
+    # loop through the knowledge_graph return and insure that edge ids are strs
+    for n in coalesced['knowledge_graph']['edges']:
+        assert(isinstance(n['id'], str))
