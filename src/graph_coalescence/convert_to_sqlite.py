@@ -4,7 +4,25 @@ import sqlite3
 from itertools import islice
 from ast import literal_eval
 
+"""
+once this process creates a database the following statements need to be run to create the indexes
 
+CREATE INDEX IDX_target_curie ON target_curie (
+    original_curie ASC,
+    predicate ASC,
+    concept ASC
+);
+
+CREATE INDEX IDX_source_curie ON source_curie (
+    original_curie ASC,
+    predicate ASC,
+    concept ASC
+);
+
+
+"""
+
+# noinspection PyBroadException
 class Normalizer:
     """ Class that performs normalization on a block of curies """
 
@@ -62,7 +80,6 @@ class Normalizer:
                         break
                     else:
                         print(f'Normalization failed event occurred on attempt {x}. Retrying...')
-                        # sleep(1)
 
     def get_normed_translator_curie(self, x):
         try:
@@ -158,6 +175,10 @@ def go():
     for in_filename in in_filenames:
         # open the tab-delimited source data file
         with open(in_filename, 'r') as inf:
+
+            with open("error.txt", "a") as ef:
+                ef.write(f'Working file: {in_filename}\n')
+
             # init the node norm request data block counter
             block = 1
 
