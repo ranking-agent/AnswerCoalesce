@@ -29,11 +29,11 @@ class Normalizer:
 
         # did we find some items to process
         if len(unknown) > 0:
-            # make the call to get normalized nodes
-            response: requests.Response = requests.get(self.url, params={'curie': unknown})
+            # retry up to 5 times
+            for x in range(1, 6):
+                # make the call to get normalized nodes
+                response: requests.Response = requests.get(self.url, params={'curie': unknown})
 
-            # retry up to 3 times
-            for x in range(0, 3):
                 # check the response code
                 if response.status_code == 200:
                     # convert the string response to json
@@ -48,22 +48,31 @@ class Normalizer:
                             semantic_type = results[c]['type'][0]
                             self.nn[c] = translator_curie
                             self.st[c] = semantic_type
-                        # else:
-                        #     print(f'No normalization result found for curie: {c}')
+                        else:
+                            with open("error.txt", "a") as ef:
+                                ef.write(f'No normalization result found for curie: {c}\n')
 
+                            # print(f'No normalization result found for curie: {c}')
                     break
                 else:
-                    if x > 2:
-                        print(f'All retry attempts failed. Block {block} of {len(lines)} curies entirely failed normalization. \n - Start line: {lines[0]} - End line: {lines[len(lines) - 1]}')
+                    if x == 5:
+                        with open("error.txt", "a") as ef:
+                            ef.write(f'All {x} attempts failed. Block {block} of {len(lines)} curies entirely failed normalization. \n - Start line: {lines[0]} - End line: {lines[len(lines) - 1]}')
+                            print(f'All {x} retry attempts failed. Block {block} of {len(lines)} curies entirely failed normalization. \n - Start line: {lines[0]} - End line: {lines[len(lines) - 1]}')
+                        break
                     else:
-                        print(f'Normalization failed event occurred on attempt {x + 1}. Retrying...')
+                        print(f'Normalization failed event occurred on attempt {x}. Retrying...')
+                        # sleep(1)
 
     def get_normed_translator_curie(self, x):
         try:
             ret_val = self.nn[x]
         except Exception as e:
-            print(f'{x} Normalizer ID not found. {e}')
             ret_val = None
+
+            # with open("error.txt", "a") as ef:
+            #     ef.write(f'Normalizer ID not found: {e}\n')
+            # print(f'Normalizer ID not found: {e}')
 
         return ret_val
 
@@ -71,8 +80,11 @@ class Normalizer:
         try:
             ret_val = self.st[x]
         except Exception as e:
-            print(f'{x} Normalizer type not found. {e}')
             ret_val = None
+
+            # with open("error.txt", "a") as ef:
+            #     ef.write(f'Normalizer type not found: {e}\n')
+            # print(f'Normalizer type not found: {e}')
 
         return ret_val
 
@@ -125,13 +137,13 @@ def go():
     """ executes the normalization of nodes and putting the data in a sqlite database """
 
     # define the number of records in the block request
-    block_size = 100
+    block_size = 500
 
     # find the absolute directory we are in
     this_dir = os.path.dirname(os.path.realpath(__file__))
 
     # specify the source data files to process
-    in_filenames = [f'{this_dir}\\atarget.txt', f'{this_dir}\\asource.txt']  # f'{this_dir}\\test.text',
+    in_filenames = [f'{this_dir}\\atarget.full.txt', f'{this_dir}\\asource.full.txt']  # f'{this_dir}\\test.text',
 
     # create the DB name
     db_name: str = f'{this_dir}\\node_hit_count_lookup.db'
@@ -179,10 +191,10 @@ def go():
 
                 # progress indicator
                 if block % 2500 == 0:
-                    print(f'{block} blocks of 100 curies processed in file: {in_filename}.')
+                    print(f'{block} blocks of {block_size} curies processed in file: {in_filename}.')
 
                 # move to next block
-                block = block + 1
+                block += 1
 
 
 def initialize_lookup_db(db_name: str):
