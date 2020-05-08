@@ -5,7 +5,7 @@ from itertools import islice
 from ast import literal_eval
 
 """
-once this process creates a database the following statements need to be run to create the indexes
+Once this process creates the database the following statements need to be run to create the indexes:
 
 CREATE INDEX IDX_target_curie ON target_curie (
     original_curie ASC,
@@ -18,8 +18,6 @@ CREATE INDEX IDX_source_curie ON source_curie (
     predicate ASC,
     concept ASC
 );
-
-
 """
 
 # noinspection PyBroadException
