@@ -49,10 +49,15 @@ class RobokopMessenger:
         result = self.pipeline(request)
         kg = result['knowledge_graph']
 
+        #The input curie may have been normalized to something else.  Find it in the kg
+        for node in kg['nodes']:
+            if curie in node['equivalent_identifiers']:
+                norm_curie = node['id']
+
         # This kg should be a star, centered on "curie".  Just walk its edges.
         links = []
         for edge in kg['edges']:
-            source = (edge['source_id'] == curie)
+            source = (edge['source_id'] == norm_curie)
             if source:
                 other_node = edge['target_id']
             else:
