@@ -143,11 +143,11 @@ def test_full_coalesce_no_new_node():
 def test_ontology_coalescer_met():
     curies = ['MONDO:0024388','MONDO:0006604','MONDO:0004235','MONDO:0000705','MONDO:0001028','MONDO:0005316','MONDO:0006989']
     sc = oc.get_enriched_superclasses(set(curies),'disease',pcut=1e-5)
-    assert len(sc) > 1
+    assert len(sc) > 0
     sc = oc.get_enriched_superclasses(set(curies),'disease',pcut=1e-6)
     assert len(sc) == 0
 
 def test_ontology_coalescer_bogus_prefix():
     curies = ['FAKE:1234','MONDO:0024388','MONDO:0006604','MONDO:0004235','MONDO:0000705','MONDO:0001028','MONDO:0005316','MONDO:0006989']
     sc = oc.get_enriched_superclasses(set(curies),'disease',pcut=1e-5)
-    assert len(sc) > 1
+    assert len(sc) > 0
