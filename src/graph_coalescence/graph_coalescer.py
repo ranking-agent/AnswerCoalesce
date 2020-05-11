@@ -28,7 +28,7 @@ def coalesce_by_graph(opportunities):
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
 
-        enriched_links = get_enriched_links(nodes,stype)
+        enriched_links = get_enriched_links(nodes, stype)
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -55,7 +55,7 @@ def coalesce_by_graph(opportunities):
                 else:
                     nni = 'source'
                 #Need to get the right node type.
-                patch.add_extra_node(newcurie,'named_thing',edge_type=etype,newnode_is=nni)
+                patch.add_extra_node(newcurie, e[8], edge_type=etype, newnode_is=nni)
             patches.append(patch)
         logger.debug('end of opportunity')
 
@@ -63,14 +63,15 @@ def coalesce_by_graph(opportunities):
 
     return patches
 
-def get_shared_links(nodes, stype):
+def get_shared_links(nodes, stype, nodes_type_list: dict):
     """Return the intersection of the superclasses of every node in nodes"""
     rm = RobokopMessenger()
     links_to_nodes = defaultdict(set)
     for node in nodes:
         logger.debug(f'start get_links_for({node}, {stype})')
-        links = rm.get_links_for(node, stype)
+        links = rm.get_links_for(node, stype, nodes_type_list)
         logger.debug('end get_links_for()')
+
         for link in links:
             links_to_nodes[link].add(node)
     nodes_to_links = defaultdict(list)
@@ -80,13 +81,16 @@ def get_shared_links(nodes, stype):
 
     return nodes_to_links
 
-def get_enriched_links(nodes,semantic_type,pcut=1e-6):
+def get_enriched_links(nodes, semantic_type, pcut=1e-6):
     logger.info (f'{len(nodes)} enriched node links to process.')
 
     # Get the most enriched connected node for a group of nodes.
     logger.debug ('start get_shared_links()')
 
-    nodeset_to_links = get_shared_links(nodes,semantic_type)
+    ret_nodes_type_list: dict = {}
+    nodes_type_list: dict = {}
+
+    nodeset_to_links = get_shared_links(nodes, semantic_type, nodes_type_list)
 
     logger.debug ('end get_shared_links()')
 
@@ -128,7 +132,7 @@ def get_enriched_links(nodes,semantic_type,pcut=1e-6):
             enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
 
             if enrichp < pcut:
-                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset))
+                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, nodes_type_list[newcurie]))
         if len(enriched) > 0:
             results += enriched
 

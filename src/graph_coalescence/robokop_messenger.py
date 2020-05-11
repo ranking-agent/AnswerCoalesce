@@ -42,15 +42,17 @@ class RobokopMessenger:
         filled = response.json()
         return filled
 
-    def get_links_for(self, curie, stype):
+    def get_links_for(self, curie, stype, node_types: dict):
         query = {'nodes': [{'id': 'n0', 'curie': curie, 'type': stype}, {'id': 'n1'}],
                  'edges': [{'id': 'e0', 'source_id': 'n0', 'target_id': 'n1'}]}
         request = {"message": {"query_graph": query}}
         result = self.pipeline(request)
         kg = result['knowledge_graph']
 
-        #The input curie may have been normalized to something else.  Find it in the kg
+        # The input curie may have been normalized to something else.  Find it in the kg
         for node in kg['nodes']:
+            node_types.update({node['id']: node['type']})
+
             if curie in node['equivalent_identifiers']:
                 norm_curie = node['id']
 
@@ -65,6 +67,7 @@ class RobokopMessenger:
             predicate = edge['type']
             link = (other_node, predicate, source)
             links.append(link)
+
         return links
 
     def get_hit_node_count(self, newcurie: str, predicate: str, newcurie_is_source: bool, semantic_type: str) -> int:
