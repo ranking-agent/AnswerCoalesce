@@ -107,6 +107,10 @@ def test_graph_coalescer_perf_test():
     for n in coalesced['knowledge_graph']['edges']:
         assert(isinstance(n['id'], str))
 
+    # loop through the knowledge_graph return and insure that nodes have a type list
+    for n in coalesced['knowledge_graph']['nodes']:
+        assert(isinstance(n['type'], list))
+
 def test_missing_node_norm():
     from src.single_node_coalescer import coalesce
     import os
