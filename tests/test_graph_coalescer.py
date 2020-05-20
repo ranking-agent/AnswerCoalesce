@@ -9,17 +9,18 @@ def test_get_node_count():
     rm = RobokopMessenger()
 
     # call to get the number of nodes
-    n = rm.get_hit_node_count('HGNC:108', 'decreases_activity_of', False, 'chemical_substance')
+    n = rm.get_hit_node_count('NCBIGENE:100328933', 'decreases_activity_of', False, 'chemical_substance')
 
     # get the expected node count
-    assert n == 2184
+    assert n == 2
 
 def test_get_links_for():
     """Test that we are able to retrieve edges from robokop.  We would rather point at KGX but this is it for now.
     We are also testing that we are aware of robokop's identifier converting.   We're passing in a mesh but what
     comes back in the KG will be a chebi.  make sure that we correctly identify the other node in this case."""
     rm = RobokopMessenger()
-    links = rm.get_links_for('MESH:D006843', 'chemical_substance')
+    nodes_type_list: dict = {}
+    links = rm.get_links_for('MESH:D006843', 'chemical_substance', nodes_type_list)
 
     # The exact number doesn't matter
     assert len(links) > 20
@@ -30,7 +31,8 @@ def test_get_links_for():
 
 def test_shared_links():
     #sl = gc.get_shared_links(set(['HGNC:869','HGNC:870']), 'gene')
-    sl = gc.get_shared_links(set(['NCBIGene:538','NCBIGene:540']), 'gene')
+    nodes_type_list: dict = {}
+    sl = gc.get_shared_links(set(['NCBIGene:538','NCBIGene:540']), 'gene', nodes_type_list)
     #Because we only had a pair of inputs, we should only get a single output.
     assert len(sl) == 1
     fams = []
