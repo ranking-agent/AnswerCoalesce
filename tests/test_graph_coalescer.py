@@ -47,7 +47,7 @@ def test_shared_links():
     assert 'PANTHER.FAMILY:PTHR43520' in fams
 
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
-def xtest_enriched_links():
+def test_enriched_links():
     """This pair of genes is chosen because they're not connected to much that is connected
     to much, so the test runs quickly.  The downside is that we get an unrealistically
     low number of results, but it doesn't take all day."""
@@ -55,14 +55,14 @@ def xtest_enriched_links():
     assert sl[0][1] == 'HGNC.FAMILY:568'
 
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
-def xtest_enriched_links_hg():
+def test_enriched_links_hg():
     """This set of genes is chosen because it runs quickly"""
     sl = gc.get_enriched_links(set(['HGNC:44283', 'HGNC:44284','HGNC:44282']), 'gene')
     assert sl[0][1] == 'HGNC.FAMILY:1384'
     assert sl[0][5] == 5
 
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
-def xtest_graph_coalescer():
+def test_graph_coalescer():
     curies = [ 'HGNC:44283', 'HGNC:44284','HGNC:44282' ]
     opportunity = Opportunity('hash',('qg_0','gene'),curies,[0,1,2])
     opportunities=[opportunity]
