@@ -1,3 +1,6 @@
+import os
+import json
+
 import src.ontology_coalescence.ontology_coalescer as oc
 from src.single_node_coalescer import identify_coalescent_nodes
 from src.components import Opportunity,Answer
@@ -139,6 +142,41 @@ def test_full_coalesce_no_new_node():
     assert 'MONDO:0004584' in is_a_curies
     #print(new_answer.to_json())
     #assert False
+
+def test_unique_coalesce():
+    """This test is to fix https://github.com/ranking-agent/AnswerCoalesce/issues/13
+    The issue is that the ontology coalescer preoduces non-unique results."""
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path,  'famcov.json')
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+    opps = identify_coalescent_nodes(answerset)
+    #TO check that each of these opportunities is unique, we will check that the
+    # kg_ids each identifies are unique
+    unique_kg_ids = set()
+    for op in opps:
+        aggable_identifiers = frozenset(op.kg_ids)
+        assert aggable_identifiers not in unique_kg_ids
+        unique_kg_ids.add(aggable_identifiers)
+    #so we're good at this point, we have  set of unique opportunities.
+    patches = oc.coalesce_by_ontology(opps)
+    assert len(patches) == 1
+    #patch = patches[0]
+    #answers = [Answer(r, qg, kg) for r in results]
+    #new_answer, updated_qg, updated_kg = patch.apply(answers, qg, kg)
+    ## I want to see that we've updated the kg to include is_a edges.
+    #is_a_curies = []
+    #for edge in kg['edges']:
+    #    if edge['target_id'] == 'MONDO:0000771' and edge['type'] == 'is_a':
+    #        is_a_curies.append(edge['source_id'])
+    #assert len(is_a_curies) == 2
+    #assert 'MONDO:0025556' in is_a_curies
+    #assert 'MONDO:0004584' in is_a_curies
+
+
+# print(new_answer.to_json())
+# assert False
+
 
 def test_ontology_coalescer_met():
     curies = ['MONDO:0024388','MONDO:0006604','MONDO:0004235','MONDO:0000705','MONDO:0001028','MONDO:0005316','MONDO:0006989']
