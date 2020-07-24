@@ -75,6 +75,7 @@ def test_graph_coalescer():
     assert p.new_props['coalescence_method'] == 'graph_enrichment'
     assert p.new_props['p_value'] < 1e-10
     assert isinstance(p.new_props['enriched_nodes'],list)
+    assert len(p.added_nodes)==1
 
 def test_graph_coalescer_perf_test():
     from src.single_node_coalescer import coalesce

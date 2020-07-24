@@ -160,7 +160,7 @@ def test_unique_coalesce():
         unique_kg_ids.add(aggable_identifiers)
     #so we're good at this point, we have  set of unique opportunities.
     patches = oc.coalesce_by_ontology(opps)
-    assert len(patches) == 1
+    assert len(patches) == 2
     #patch = patches[0]
     #answers = [Answer(r, qg, kg) for r in results]
     #new_answer, updated_qg, updated_kg = patch.apply(answers, qg, kg)

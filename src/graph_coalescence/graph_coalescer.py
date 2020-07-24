@@ -28,7 +28,9 @@ def coalesce_by_graph(opportunities):
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
 
+        print ('get enriched links')
         enriched_links = get_enriched_links(nodes, stype)
+        print ('got enriched links')
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -42,7 +44,9 @@ def coalesce_by_graph(opportunities):
                 break
             best_enrich_p = link[0]
             best_grouping = link[7]
-            best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
+            #I don't think this is right
+            #best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
+            best_enrichments = [link] #?
             newprops = {'coalescence_method':'graph_enrichment',
                         'p_value': best_enrich_p,
                         'enriched_nodes': [x[1] for x in best_enrichments]}
