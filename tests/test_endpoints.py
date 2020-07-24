@@ -45,3 +45,25 @@ def test_coalesce():
 
     # TODO: check the data
     assert(True)
+
+def test_unique_coalesce():
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path, 'famcov.json')
+
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+
+    # setup some parameters
+    param = {'method': 'ontology'}
+
+    # make a good request
+    request, response = app.test_client.post('/coalesce', params= param, data=json.dumps(answerset))
+
+    # was the request successful
+    assert(response.status == 200)
+
+    # convert the response to a json object
+    ret = json.loads(response.body)
+
+    assert('results' in ret)
+    assert( len(ret['results'] < 4 ))
