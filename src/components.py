@@ -87,8 +87,32 @@ class PropertyPatch:
         for node in qg['nodes']:
             if node['id'] == self.qg_id:
                 node['set'] = True
+        #We are going to want to know whether we have aleady added a particular new node/edge.  Then if we are
+        # adding it again, we can say, nope, already did it. So let's collect what we have.
+        added_nodes = []
+        for edge in qg['edges']:
+            if edge['id'].startswith('extra_'):
+                if edge['source_id'].startswith('extra'):
+                    itis = 'source'
+                    qid = edge['source_id']
+                    oid = edge['target_id']
+                else:
+                    itis = 'target'
+                    qid = edge['target_id']
+                    oid = edge['source_id']
+                #it might be that the oid is not the same one for this patch
+                if oid != self.qg_id:
+                    continue
+                for node in qg['nodes']:
+                    if node['id'] == qid:
+                        ntype = node['type']
+                added_nodes.append( (set(ntype), itis) )
         for newnode in self.added_nodes:
-            #Add the new node to the question.
+            #First, we need to decide whether this new node is already in there.
+            rep = (set(newnode.newnode_type), newnode.newnode_is)
+            if rep in added_nodes:
+                continue
+            #Doesn't seem like it's already here, so Add the new node to the question.
             node_ids = [n['id'] for n in qg['nodes']]
             nnid = 0
             new_node_id = f'extra_qn_{nnid}'
@@ -105,9 +129,9 @@ class PropertyPatch:
                 neid += 1
                 new_edge_id = f'extra_qe_{neid}'
             if newnode.newnode_is == 'target':
-                qg['edges'].append( {'id': new_edge_id, 'source_id': self.qg_id, 'target_id': newnode.newnode })
+                qg['edges'].append( {'id': new_edge_id, 'source_id': self.qg_id, 'target_id': new_node_id })
             else:
-                qg['edges'].append( {'id': new_edge_id, 'source_id': newnode.newnode, 'target_id': self.qg_id })
+                qg['edges'].append( {'id': new_edge_id, 'source_id': new_node_id, 'target_id': self.qg_id })
             extra_q_edges.append(new_edge_id)
         return qg, extra_q_nodes, extra_q_edges
     def update_kg(self,kg):
