@@ -48,7 +48,7 @@ def test_hash_one_hop_with_different_predicates():
     """Load up the answer in robokop_one_hop_many_pred.json.
     It contains the robokop answer for (chemical_substance)--(Asthma).
     It differs from one_hop.json in that it does not specify the predicate.  Therefore,
-    we should end up with as many classes as predicates when n0 is the variable node
+    we should end up with as many classes as combinations of predicates when n0 is the variable node
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop_many_preds.json')
@@ -58,9 +58,24 @@ def test_hash_one_hop_with_different_predicates():
     kg = answerset['knowledge_graph']
     answers = [Answer(ai,qg,kg) for ai in answerset['results']]
     s = set()
+    #We need to know how many predicate combinations are in the answers.  So a-[type1]-b is one,
+    # and a-[type1,type2]-b (two edges between and and b with types type1,type2) is a different one.
     #how many preds in the kg?
-    preds = set( [e['type'] for e in kg['edges']])
-    preds.remove('literature_co-occurrence') #omnicorp edges not part of our mapping
+    types = { e['id']: e['type'] for e in kg['edges']}
+    preds = set()
+    for result in answerset['results']:
+        ebs = result['edge_bindings']
+        ps = set()
+        for eb in ebs:
+            #all the qg_id should be e1, but just in case
+            if eb['qg_id'] != 'e1':
+                continue
+            et = types[ eb['kg_id']]
+            if et == 'literature_cooccurence':
+                continue
+            ps.add(et)
+        predset = frozenset( ps )
+        preds.add(predset)
     for a in answers:
         bindings = a.make_bindings()
         s.add(snc.make_answer_hash(bindings,kg,qg,'n0'))
@@ -421,3 +436,46 @@ def test_automat_asthma_graph():
 #    print(rs[3]['node_bindings'])
     assert rs[0]['node_bindings'][0]['p_value'] < 1e-20
 
+def test_unique_ontology():
+    fn = 'famcov.json'
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    with open(testfilename,'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset,method='ontology')
+    rs = newset['results']
+    assert len(rs) < 4
+
+def test_double_predicates():
+    # This test is based on a kg that looks like
+    #   B
+    #  / \
+    # A  D
+    #  \/
+    #  C
+    # Except all the edges are doubled (there are 2 predicates between each)
+
+    #Create the testing KG
+    nodenames ='ABCD'
+    nodes = [{"id":n, "type":"named_thing"} for n in nodenames]
+    inputedges = ['AB','AC','BD','CD']
+    edges = [{"id":f'r{e}', "source_id":e[0], "target_id":e[1], "type":"related_to"} for e in inputedges]
+    edges += [{"id":f'a{e}', "source_id":e[0], "target_id":e[1], "type":"also_related_to"} for e in inputedges]
+    kg = {'nodes': nodes, 'edges':edges}
+    #Create the QG
+    qnodes = [{'id':'n0','curie':'A','type':'named_thing'},{'id':'n1','type':'named_thing'},
+              {'id':'n2','curie':'D','type':'named_thing'}]
+    qedges = [{'id':'e0','source_id':'n0','target_id':'n1'},
+              {'id':'e1','source_id':'n1','target_id':'n2'}]
+    qg = {'nodes':qnodes, 'edges':qedges}
+    ans = ['ABD','ACD']
+    answers = []
+    for i,a in enumerate(ans):
+        nb = [{'qg_id':f'n{i}', 'kg_id': list(x)} for i,x in enumerate(a)]
+        eb = [{'qg_id':f'e{i}', 'kg_id':[f'r{a[i]}{a[i+1]}',f'a{a[i]}{a[i+1]}']} for i in range(len(a)-1)]
+        assert len(eb) == len(nb) -1
+        answers.append( {'node_bindings':nb, 'edge_bindings':eb, 'score': 10-i})
+    answerset = {'query_graph': qg, 'knowledge_graph':kg, 'results': answers}
+    #Now, this answerset should produce 1 single opportunity
+    groups = snc.identify_coalescent_nodes(answerset)
+    assert len(groups) == 1
+    print(groups)
