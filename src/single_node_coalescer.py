@@ -17,13 +17,12 @@ def coalesce(answerset,method='all'):
     #Look for places to combine
     coalescence_opportunities = identify_coalescent_nodes(answerset)
     patches = []
-    for co in coalescence_opportunities:
-        if method in ['all','property']:
-            patches += coalesce_by_property(coalescence_opportunities)
-        if method in ['all','graph']:
-            patches += coalesce_by_graph(coalescence_opportunities)
-        if method in ['all','ontology']:
-            patches += coalesce_by_ontology(coalescence_opportunities)
+    if method in ['all','property']:
+        patches += coalesce_by_property(coalescence_opportunities)
+    if method in ['all','graph']:
+        patches += coalesce_by_graph(coalescence_opportunities)
+    if method in ['all','ontology']:
+        patches += coalesce_by_ontology(coalescence_opportunities)
     new_answers,updated_qg,updated_kg = patch_answers(answerset,patches)
     new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
     return new_answerset
@@ -123,9 +122,12 @@ def make_answer_hashes(result,graph,question):
 
 def make_answer_hash(bindings,graph,question,qg_id):
     """given a combined node/edge bindings dictionary, plus the knowledge graph it points to and the question graph,
-    create a key that characterizes the answer, except for one of the nodes (and its edges)."""
+    create a key that characterizes the answer, except for one of the nodes (and its edges).
+    The node that we're allowing to vary doesn't enter the hash.  The edges connected to that node, we replace
+    by their types. That will then allow other answers with a different node but the same types of connections to
+    that node to look the same under this hashing function"""
     #for some reason, the bindings are to lists?  Just grabbing the first (and only) element to the new bindings.
-    singlehash = { x:list(y)[0] for x,y in bindings.items() }
+    singlehash = { x:frozenset(y) for x,y in bindings.items() }
     #take out the binding for qg_id
     del singlehash[qg_id]
     #Now figure out which edges hook to qg_id
@@ -135,8 +137,13 @@ def make_answer_hash(bindings,graph,question,qg_id):
     tedges = list(filter( lambda x: x['target_id'] == qg_id, question['edges']))
     #make a map of kg edges to type.  probably move this out of make_answer_hash?
     kg_edgetypes = { edge['id']: edge['type'] for edge in graph['edges']}
-    sedge_types = { se["id"]: kg_edgetypes[singlehash[se["id"]]] for se in sedges }
-    tedge_types = { se["id"]: kg_edgetypes[singlehash[se["id"]]] for se in tedges }
+    #The double comprehension is a bit of a mess, but our singlehash values are sets
+    #What is happening is that a given s or t edge, we want a map from that qgid (the id in sedges) we want to
+    # get the kg edges.  Thats a set, we loop over it, and get the edgetypes from the kg for each, and make
+    # a new set with all those types in it.  At the end, we have a map from an edge qg_id to a frozenset of
+    # types for that edge for this answer.
+    sedge_types = { se["id"]: frozenset([kg_edgetypes[x] for x in singlehash[se['id']]] ) for se in sedges }
+    tedge_types = { se["id"]: frozenset([kg_edgetypes[x] for x in singlehash[se['id']]] ) for se in tedges }
     #Add in the edge types to our hash. this overwrites the qgid -> kgid mapping with type mapping
     singlehash.update(sedge_types)
     singlehash.update(tedge_types)
