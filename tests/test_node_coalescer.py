@@ -444,6 +444,11 @@ def test_unique_ontology():
     newset = snc.coalesce(answerset,method='ontology')
     rs = newset['results']
     assert len(rs) < 4
+    #Also, this should have 4 nodes in the query graph.  The original 3 plus the superclass
+    qg = newset['query_graph']
+    assert len(qg['nodes']) == 4
+    #Also, should have 3 edges in the query graph.  The original 2 plus the superclass
+    assert len(qg['edges']) == 3
 
 def test_double_predicates():
     # This test is based on a kg that looks like
