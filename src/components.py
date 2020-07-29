@@ -89,7 +89,9 @@ class PropertyPatch:
                 node['set'] = True
         #We are going to want to know whether we have aleady added a particular new node/edge.  Then if we are
         # adding it again, we can say, nope, already did it. So let's collect what we have.
-        added_nodes = []
+        #Because of the way that we are constructing new queries, the only thing that will happen is an undirected
+        # edge to self.qg_id.  So we really just need to know if there already is such a thing.
+        qg_updated = False
         for edge in qg['edges']:
             if edge['id'].startswith('extra_'):
                 if edge['source_id'].startswith('extra'):
@@ -103,14 +105,13 @@ class PropertyPatch:
                 #it might be that the oid is not the same one for this patch
                 if oid != self.qg_id:
                     continue
-                for node in qg['nodes']:
-                    if node['id'] == qid:
-                        ntype = node['type']
-                added_nodes.append( (set(ntype), itis) )
+                extra_q_nodes.append(qid)
+                extra_q_edges.append(edge['id'])
+                qg_updated = True
         for newnode in self.added_nodes:
             #First, we need to decide whether this new node is already in there.
             rep = (set(newnode.newnode_type), newnode.newnode_is)
-            if rep in added_nodes:
+            if qg_updated:
                 continue
             #Doesn't seem like it's already here, so Add the new node to the question.
             node_ids = [n['id'] for n in qg['nodes']]

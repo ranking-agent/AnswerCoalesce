@@ -1,8 +1,9 @@
 import pytest
 import src.graph_coalescence.graph_coalescer as gc
-from src.single_node_coalescer import identify_coalescent_nodes
+import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
 from src.graph_coalescence.robokop_messenger import RobokopMessenger
+import os,json
 
 def test_get_node_count():
     # fire up the class
@@ -79,8 +80,6 @@ def test_graph_coalescer():
 
 def test_graph_coalescer_perf_test():
     from src.single_node_coalescer import coalesce
-    import os
-    import json
     import datetime
 
     # get a timestamp
@@ -114,10 +113,24 @@ def test_graph_coalescer_perf_test():
     for n in coalesced['knowledge_graph']['nodes']:
         assert(isinstance(n['type'], list))
 
+def test_graph_coalesce():
+    """Make sure that results are well formed."""
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path,  'famcov.json')
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset, method='graph')
+    for r in newset['results']:
+        nbs = r['node_bindings']
+        extra = False
+        for nb in nbs:
+            if nb['qg_id'].startswith('extra'):
+                extra = True
+        assert extra
+
+
 def test_missing_node_norm():
     from src.single_node_coalescer import coalesce
-    import os
-    import json
     import datetime
 
     # get a timestamp
