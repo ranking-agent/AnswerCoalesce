@@ -70,6 +70,8 @@ class RobokopMessenger:
 
         return links
 
+
+
     def get_hit_node_count(self, newcurie: str, predicate: str, newcurie_is_source: bool, semantic_type: str) -> int:
         """ gets the number of nodes (loaded from the graph database into a local database)
             that share this node, predicate and semantic type """

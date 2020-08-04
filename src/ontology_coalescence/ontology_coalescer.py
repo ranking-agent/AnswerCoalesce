@@ -3,6 +3,9 @@ from scipy.stats import hypergeom
 from src.ontology_coalescence.ubergraph import UberGraph
 from src.components import PropertyPatch
 
+#from datetime import datetime as dt
+#from datetime import timedelta
+
 
 def coalesce_by_ontology(opportunities):
     """
@@ -32,14 +35,11 @@ def coalesce_by_ontology(opportunities):
 def get_shared_superclasses(nodes,prefix):
     """Return the intersection of the superclasses of every node in nodes"""
     ug = UberGraph()
-    sc_to_nodes = defaultdict(set)
-    for node in nodes:
-        superclasses = ug.get_superclasses_of(node)
-        for sc in superclasses:
-            if sc.startswith(prefix):
-                sc_to_nodes[sc].add(node)
+    sc_to_nodes = ug.get_superclasses_of(nodes)
     nodes_to_sc = defaultdict(list)
     for sc,nodes in sc_to_nodes.items():
+        if not sc.startswith(prefix):
+            continue
         if len(nodes) > 1:
             nodes_to_sc[frozenset(nodes)].append(sc)
     return nodes_to_sc
@@ -55,12 +55,16 @@ def get_enriched_superclasses(input_nodes,semantic_type,pcut=1e-6):
     """Get the most enriched superclass for a group of nodes."""
     nodes = filter_class_nodes(input_nodes)
     prefixes = set( [n.split(':')[0] for n in nodes ])
-    if len(prefixes) > 1:
+    if len(prefixes) != 1:
         return []
     prefix = list(prefixes)[0]
     nodeset_to_superclasses = get_shared_superclasses(nodes,prefix)
     ug = UberGraph()
     results = []
+    superclassset = set()
+    for n,superclasses in nodeset_to_superclasses.items():
+        superclassset.update(superclasses)
+    subclasscount = ug.count_subclasses_of(superclassset)
     for nodeset, shared_superclasses in nodeset_to_superclasses.items():
         enriched = []
         for ssc in shared_superclasses:
@@ -71,7 +75,8 @@ def get_enriched_superclasses(input_nodes,semantic_type,pcut=1e-6):
             #  without replacement from the total population (len curies).
             x = len(nodeset)  # draws with the property
             total_node_count = get_total_nodecount(semantic_type,prefix)
-            n = ug.count_subclasses_of(ssc) #total nodes with property of being a subclass of ssc
+            #n = ug.count_subclasses_of(ssc) #total nodes with property of being a subclass of ssc
+            n = subclasscount[ssc] #total nodes with property of being a subclass of ssc
             ndraws = len(nodes)
             enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
             if enrichp < pcut:

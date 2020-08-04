@@ -1,0 +1,32 @@
+To build the redis db, log into robokopdev.renci.org
+
+Find where the neo4j you want is running with
+
+kubectl -n translator-robokop get pods -o wide
+
+Get the bolt (7687) port with
+
+kubectl -n translator-robokop get svc
+
+With those two pieces of information, you can launch cypher shell (you know the password):
+
+cypher-shell -a stars-k6.edc.renci.org:31333 -u neo4j -p XXXXXXXXX
+
+NOTE, you should probably do this in a screen, it takes a long time to run.
+
+APOC needs to be installed (it should be) and then you can run in the shell:
+
+WITH "MATCH path = (a)-[x]->(b)
+      RETURN a.id AS source_id, labels(a) AS source_labels, type(x) AS predicate,
+             b.id AS target_id, labels(b) AS target_labels" AS query
+      CALL apoc.export.csv.query(query, "/data/everything.csv", {})
+      YIELD file, source, format, nodes, relationships, properties, time, rows, batchSize, batches, done, data
+      RETURN file, source, format, nodes, relationships, properties, time, rows, batchSize, batches, done, data;
+
+The path there is local to the database.  /data is mounted on arrival, so you can find everything.csv in
+/mnt/stars-k-nfs/opt/robokop/neo4j_data on that machine.
+
+Then scp it over here.  connect to the renci vpn, then
+scp whoever@arrival.edc.renci.org:/mnt/stars-k-nfs/opt/robokop/neo4j_data/everything.csv
+
+And run build_redis_files.py

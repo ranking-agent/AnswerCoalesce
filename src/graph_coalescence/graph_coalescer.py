@@ -6,6 +6,7 @@ from src.util import LoggingUtil
 import logging
 import os
 
+
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir+'/')
@@ -21,6 +22,31 @@ def coalesce_by_graph(opportunities):
 
     logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
 
+    #Multiple opportunities are going to use the same nodes.  In one random (large) example where there are about
+    # 2k opportunities, there are a total of 577 unique nodes, but with repeats, we'd end up calling messenger 3650
+    # times.  So instead, we will unique the nodes here, call messenger once each, and then pull from that
+    # collected set of info.  If this is still a bottleneck, we will want to either add batching to messenger, or
+    # hit neo4j directly with some batching, or consider making a redis of the whole graph holding just the info
+    # we want for this.
+    allnodes = {}
+    for opportunity in opportunities:
+        kn = opportunity.get_kg_ids()
+        stype = opportunity.get_qg_semantic_type()
+        for node in kn:
+            allnodes[node] = stype
+
+    from datetime import datetime as dt
+    print('start',dt.now())
+    rm = RobokopMessenger()
+    nodes_to_links = {}
+    nodes_type_list = {}
+    for node,stype in allnodes.items():
+        logger.debug(f'start get_links_for({node}, {stype})')
+        links = rm.get_links_for(node, stype, nodes_type_list)
+        logger.debug('end get_links_for()')
+        nodes_to_links[node] = links
+    print('end', dt.now())
+
     for opportunity in opportunities:
         logger.debug('Starting new opportunity')
 
@@ -29,7 +55,7 @@ def coalesce_by_graph(opportunities):
         stype = opportunity.get_qg_semantic_type()
 
         print ('get enriched links')
-        enriched_links = get_enriched_links(nodes, stype)
+        enriched_links = get_enriched_links(nodes, stype, nodes_to_links)
         print ('got enriched links')
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
@@ -85,7 +111,7 @@ def get_shared_links(nodes, stype, nodes_type_list: dict):
 
     return nodes_to_links
 
-def get_enriched_links(nodes, semantic_type, pcut=1e-6):
+def get_enriched_links(nodes, semantic_type, nodes_to_links,pcut=1e-6):
     logger.info (f'{len(nodes)} enriched node links to process.')
 
     # Get the most enriched connected node for a group of nodes.
@@ -94,8 +120,15 @@ def get_enriched_links(nodes, semantic_type, pcut=1e-6):
     ret_nodes_type_list: dict = {}
     nodes_type_list: dict = {}
 
-    nodeset_to_links = get_shared_links(nodes, semantic_type, nodes_type_list)
-
+    #nodeset_to_links = get_shared_links(nodes, semantic_type, nodes_type_list)
+    links_to_nodes = defaultdict(list)
+    for node in nodes:
+        for link in nodes_to_links[node]:
+            links_to_nodes.append(node)
+    nodeset_to_links = defaultdict(list)
+    for link,nodes in links_to_nodes.items():
+        if len(nodes) > 1:
+            nodeset_to_links[frozenset(nodes)].append(link)
     logger.debug ('end get_shared_links()')
 
     logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
