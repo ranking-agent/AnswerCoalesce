@@ -19,7 +19,9 @@ def go():
     nodes_to_links = defaultdict(list)
     with open('everything.csv','r') as inf, open('nodelabels.txt','w') as labelfile:
         reader = csv.DictReader(inf)
+        nl = 0
         for line in reader:
+            nl += 1
             source_id = line['source_id']
             target_id = line['target_id']
             if source_id == '':
@@ -31,8 +33,8 @@ def go():
             nodes_to_links[target_id].append(target_link)
             add_labels(labelfile,source_id,line['source_labels'],wrote_labels)
             add_labels(labelfile,target_id,line['target_labels'],wrote_labels)
-            if len(nodes_to_links) > 10:
-                break
+            if nl % 1000000 == 0:
+                print(nl)
     print('ate the whole thing')
     with open('links.txt','w') as outf:
         for node,links in nodes_to_links.items():
