@@ -35,6 +35,10 @@ def go():
                 if target_id.startswith('UBERON'):
                     if pred == 'affects_expression_of':
                         continue
+            if source_id.startswith('UBERON'):
+                if target_id.startswith('NCBIGene'):
+                    if pred == 'expresses':
+                        continue
             source_link = (target_id,pred,True)
             target_link = (source_id,pred,False)
             nodes_to_links[source_id].append(source_link)
