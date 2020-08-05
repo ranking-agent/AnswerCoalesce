@@ -5,6 +5,9 @@ from src.components import PropertyPatch
 from src.util import LoggingUtil
 import logging
 import os
+import redis
+import json
+import ast
 
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -25,15 +28,17 @@ def coalesce_by_graph(opportunities):
     #Multiple opportunities are going to use the same nodes.  In one random (large) example where there are about
     # 2k opportunities, there are a total of 577 unique nodes, but with repeats, we'd end up calling messenger 3650
     # times.  So instead, we will unique the nodes here, call messenger once each, and then pull from that
-    # collected set of info.  If this is still a bottleneck, we will want to either add batching to messenger, or
-    # hit neo4j directly with some batching, or consider making a redis of the whole graph holding just the info
-    # we want for this.
+    # collected set of info.
+
+
     allnodes = {}
     for opportunity in opportunities:
         kn = opportunity.get_kg_ids()
         stype = opportunity.get_qg_semantic_type()
         for node in kn:
             allnodes[node] = stype
+
+    r = redis.Redis(host='localhost', port=6379, db=0)
 
     from datetime import datetime as dt
     print('start',dt.now())
@@ -42,13 +47,42 @@ def coalesce_by_graph(opportunities):
     nodes_type_list = {}
     for node,stype in allnodes.items():
         logger.debug(f'start get_links_for({node}, {stype})')
-        links = rm.get_links_for(node, stype, nodes_type_list)
+        #links = rm.get_links_for(node, stype, nodes_type_list)
+        linkstring = r.get(node)
+        links = json.loads(linkstring)
         logger.debug('end get_links_for()')
         nodes_to_links[node] = links
     print('end', dt.now())
 
+    #Also crossing all opportunities, we'll need connection information on every node in a link, if it is connected
+    # to at least two nodes in the same opportunity.
+    unique_links = set()
+
+    for opportunity in opportunities:
+        print('new op', dt.now())
+        kn = opportunity.get_kg_ids()
+        print('',len(kn))
+        seen = set()
+        for n in kn:
+            print(' ',len(nodes_to_links[n]))
+            for l in  nodes_to_links[n]:
+                tl = tuple(l)
+                if tl in seen:
+                    unique_links.add(tl)
+                else:
+                    seen.add(tl)
+        print('','end',dt.now())
+
+
+    unique_link_nodes = set()
+    for a,b,c in unique_links:
+        unique_link_nodes.add(a)
+
+    onum = 0
     for opportunity in opportunities:
         logger.debug('Starting new opportunity')
+        print(f'opp {onum} of {len(opportunities)}')
+        onum += 1
 
         nodes = opportunity.get_kg_ids() #this is the list of curies that can be in the given spot
         qg_id = opportunity.get_qg_id()
@@ -124,11 +158,11 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,pcut=1e-6):
     links_to_nodes = defaultdict(list)
     for node in nodes:
         for link in nodes_to_links[node]:
-            links_to_nodes.append(node)
+            links_to_nodes[tuple(link)].append(node)
     nodeset_to_links = defaultdict(list)
-    for link,nodes in links_to_nodes.items():
-        if len(nodes) > 1:
-            nodeset_to_links[frozenset(nodes)].append(link)
+    for link,snodes in links_to_nodes.items():
+        if len(snodes) > 1:
+            nodeset_to_links[frozenset(snodes)].append(link)
     logger.debug ('end get_shared_links()')
 
     logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
@@ -138,6 +172,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,pcut=1e-6):
 
     logger.info(f'{len(nodeset_to_links.items())} possible shared links discovered.')
 
+    typeredis = redis.Redis(host='localhost', port=6379, db=1)
     for nodeset, possible_links in nodeset_to_links.items():
         enriched = []
         for newcurie,predicate,is_source in possible_links:
@@ -169,7 +204,9 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,pcut=1e-6):
             enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
 
             if enrichp < pcut:
-                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, nodes_type_list[newcurie]))
+                nodetypestring = typeredis.get(newcurie)
+                node_types = ast.literal_eval(nodetypestring.decode())
+                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
         if len(enriched) > 0:
             results += enriched
 

@@ -27,12 +27,17 @@ def go():
             if source_id == '':
                 continue
             pred = line['predicate']
+            add_labels(labelfile,source_id,line['source_labels'],wrote_labels)
+            add_labels(labelfile,target_id,line['target_labels'],wrote_labels)
+            #Remove variant/anatomy edges from GTEX.  These are going away in the new load anyway
+            if source_id.startswith('CAID'):
+                if target_id.startswith('UBERON'):
+                    if pred == 'affects_expression_of':
+                        continue
             source_link = (target_id,pred,True)
             target_link = (source_id,pred,False)
             nodes_to_links[source_id].append(source_link)
             nodes_to_links[target_id].append(target_link)
-            add_labels(labelfile,source_id,line['source_labels'],wrote_labels)
-            add_labels(labelfile,target_id,line['target_labels'],wrote_labels)
             if nl % 1000000 == 0:
                 print(nl)
     print('ate the whole thing')
