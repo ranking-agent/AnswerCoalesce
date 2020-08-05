@@ -5,12 +5,16 @@ import json
 #A link is: link = (other_node, predicate, source)
 # source is a boolean that is true if node is the source, and false if other_node is the source
 
-def add_labels(lfile,nid,nlabels,done):
-    if nid in done:
-        return
+def str2list(nlabels):
     x = nlabels[1:-1] #strip [ ]
     parts = x.split(',')
     labs = [ pi[1:-1] for pi in parts] #strip ""
+    return labs
+
+def add_labels(lfile,nid,nlabels,done):
+    if nid in done:
+        return
+    labs = str2list(nlabels)
     lfile.write(f'{nid}\t{labs}\n')
     done.add(nid)
 
@@ -43,9 +47,9 @@ def go():
             target_link = (source_id,pred,False)
             nodes_to_links[source_id].append(source_link)
             nodes_to_links[target_id].append(target_link)
-            for tlabel in line['target_labels'].split(','):
+            for tlabel in str2list(line['target_labels']):
                 edgecounts[ (source_id, pred, True, tlabel) ] += 1
-            for slabel in line['source_labels'].split(','):
+            for slabel in str2list(line['source_labels']):
                 edgecounts[ (target_id, pred, False, slabel) ] += 1
             if nl % 1000000 == 0:
                 print(nl)
