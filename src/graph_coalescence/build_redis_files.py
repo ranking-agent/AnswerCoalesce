@@ -17,6 +17,7 @@ def add_labels(lfile,nid,nlabels,done):
 def go():
     wrote_labels = set()
     nodes_to_links = defaultdict(list)
+    edgecounts = defaultdict(int)
     with open('everything.csv','r') as inf, open('nodelabels.txt','w') as labelfile:
         reader = csv.DictReader(inf)
         nl = 0
@@ -38,12 +39,19 @@ def go():
             target_link = (source_id,pred,False)
             nodes_to_links[source_id].append(source_link)
             nodes_to_links[target_id].append(target_link)
+            for tlabel in line['target_labels'].split(','):
+                edgecounts[ (source_id, pred, True, tlabel) ] += 1
+            for slabel in line['source_labels'].split(','):
+                edgecounts[ (target_id, pred, False, slabel) ] += 1
             if nl % 1000000 == 0:
                 print(nl)
     print('ate the whole thing')
     with open('links.txt','w') as outf:
         for node,links in nodes_to_links.items():
             outf.write(f'{node}\t{json.dumps(links)}\n')
+    with open('backlinks.txt','w') as outf:
+        for key,value in edgecounts.items():
+            outf.write(f'{key}\t{value}\n')
 
 if __name__ == '__main__':
     go()

@@ -30,7 +30,7 @@ def coalesce_by_graph(opportunities):
     # times.  So instead, we will unique the nodes here, call messenger once each, and then pull from that
     # collected set of info.
 
-
+    #Create a dict from node->type(node) for all nodes in every opportunity
     allnodes = {}
     for opportunity in opportunities:
         kn = opportunity.get_kg_ids()
@@ -40,43 +40,61 @@ def coalesce_by_graph(opportunities):
 
     r = redis.Redis(host='localhost', port=6379, db=0)
 
+    #Create a dict from node->links by looking up in redis.  Each link is a potential node to add.
+    # This is across all opportunities as well
+    # Could pipeline
     from datetime import datetime as dt
     print('start',dt.now())
     rm = RobokopMessenger()
     nodes_to_links = {}
     nodes_type_list = {}
     for node,stype in allnodes.items():
-        logger.debug(f'start get_links_for({node}, {stype})')
-        #links = rm.get_links_for(node, stype, nodes_type_list)
         linkstring = r.get(node)
         links = json.loads(linkstring)
-        logger.debug('end get_links_for()')
         nodes_to_links[node] = links
     print('end', dt.now())
 
-    #Also crossing all opportunities, we'll need connection information on every node in a link, if it is connected
-    # to at least two nodes in the same opportunity.
+    #A link might occur for multiple nodes and across different opportunities
+    # Create the total unique set of links
     unique_links = set()
-
+    io = 0
+    lcount = defaultdict(int)
     for opportunity in opportunities:
-        print('new op', dt.now())
+        print('new op', io, dt.now())
+        io += 1
         kn = opportunity.get_kg_ids()
         print('',len(kn))
         seen = set()
         for n in kn:
-            print(' ',len(nodes_to_links[n]))
+            if len(nodes_to_links[n]) > 10000:
+                print(' ',n,len(nodes_to_links[n]),opportunity.get_qg_semantic_type())
             for l in  nodes_to_links[n]:
                 tl = tuple(l)
                 if tl in seen:
                     unique_links.add(tl)
+                    lcount[tl] += 1
                 else:
                     seen.add(tl)
         print('','end',dt.now())
 
-
-    unique_link_nodes = set()
+    #Find the total unique set of linked nodes (i.e. the "other" node from a link)
+    unique_link_nodes = defaultdict(set)
     for a,b,c in unique_links:
-        unique_link_nodes.add(a)
+        unique_link_nodes[a].add( (b,c) )
+
+    #For each link we need the number of nodes that could have matched that link in the database.
+    # This means pulling out and parsing results from redis 0.
+    # Should possibly pipeline
+    # When we are done, backlinkcounts is a dict from link to
+    backlinkcounts = defaultdict(int)
+    for linknode,link_particulars in unique_link_nodes.items():
+        backlinkstring = r.get(linknode)
+        backlinks = json.loads(backlinkstring)
+        for blink in backlinks:
+            if (blink[1], not blink[2]) in link_particulars:
+                backlinkcounts[ (linknode,blink[1],not blink[2])] += 1
+
+
 
     onum = 0
     for opportunity in opportunities:
