@@ -131,7 +131,8 @@ def test_full_coalesce_no_new_node():
     assert len(patches) == 1
     patch = patches[0]
     answers = [ Answer(r,qg,kg) for r in results]
-    new_answer,updated_qg,updated_kg = patch.apply(answers,qg,kg)
+    kg_index={}
+    new_answer,updated_qg,updated_kg,kg_index = patch.apply(answers,qg,kg,kg_index)
     #I want to see that we've updated the kg to include is_a edges.
     is_a_curies = []
     for edge in kg['edges']:

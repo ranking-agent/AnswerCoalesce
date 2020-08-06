@@ -45,13 +45,13 @@ class PropertyPatch:
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
         self.added_nodes.append( NewNode(newnode, newnodetype, edge_type, newnode_is) )
-    def apply(self,answers,question,graph):
+    def apply(self,answers,question,graph,graph_index):
         #Modify the question graph and the knowledge graph
         #If we're not adding a new node, extra_q_node = None, extra_q_edges = extra_k_edges =[]. No bindings to add
         #If we have an added node, the added node is always self.newnode
         # Also we will have an extra_q_node in that case, as well as one extra_q_edge, and 1 or more new k_edges
         question,extra_q_nodes,extra_q_edges = self.update_qg(question)
-        graph,all_extra_k_edges = self.update_kg(graph)
+        graph,all_extra_k_edges,graph_index = self.update_kg(graph,graph_index)
         #Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
         # answers that were originally in the opportunity, but we might have only found commonality
         # among a subset of them
@@ -68,7 +68,7 @@ class PropertyPatch:
         for newnode,extra_q_node,extra_q_edge,extra_k_edges in \
                 zip(self.added_nodes,extra_q_nodes,extra_q_edges,all_extra_k_edges):
             new_answer.add_bindings(extra_q_node, [newnode.newnode], extra_q_edge, extra_k_edges)
-        return new_answer, question, graph
+        return new_answer, question, graph, graph_index
     def isconsistent(self, possibleanswer):
         """
         The patch is constructed from a set of possible answers, but it doesn't have to use all
@@ -135,18 +135,18 @@ class PropertyPatch:
                 qg['edges'].append( {'id': new_edge_id, 'source_id': new_node_id, 'target_id': self.qg_id })
             extra_q_edges.append(new_edge_id)
         return qg, extra_q_nodes, extra_q_edges
-    def update_kg(self,kg):
+    def update_kg(self,kg,kg_index):
+        if len(kg_index) == 0:
+            kg_index['nodes'] = set( [node['id'] for node in kg['nodes']] )
+            kg_index['edges'] = { (edge['source_id'],edge['target_id'],edge['type']):edge['id'] for edge in kg['edges']}
         all_extra_edges = []
         for newnode in self.added_nodes:
             extra_edges=[]
             #See if the newnode is already in the KG, and if not, add it.
             found = False
-            for node in kg['nodes']:
-                if node['id'] == newnode.newnode:
-                    found = True
-                    break
-            if not found:
-                kg['nodes'].append( {'id': newnode.newnode, 'type': newnode.newnode_type})
+            if newnode.newnode not in kg_index['nodes']:
+                kg['nodes'].append({'id': newnode.newnode, 'type': newnode.newnode_type})
+                kg_index['nodes'].add(newnode.newnode)
             #Add new edges
             for curie in self.set_curies: #try to add a new edge from this curie to newnode
                 if curie == newnode.newnode:
@@ -159,21 +159,29 @@ class PropertyPatch:
                     source_id = curie
                     target_id = newnode.newnode
                 eid = None
-                for edge in kg['edges']:
-                    if edge['source_id'] == source_id:
-                        if edge['target_id'] == target_id:
-                            if edge['type'] == newnode.new_edges:
-                                eid = str(edge['id'])
-                                break
-                if eid is None:
-                    #Add the new edge
+                ekey = (source_id, target_id,  newnode.new_edges)
+                if ekey not in kg_index['edges']:
                     edge = { 'source_id': source_id, 'target_id': target_id, 'type': newnode.new_edges }
                     eid = str(hash(frozenset(edge.items())))
                     edge['id'] = eid
                     kg['edges'].append(edge)
+                    kg_index['edges'][ekey] = eid
+                eid = kg_index['edges'][ekey]
+                #for edge in kg['edges']:
+                #    if edge['source_id'] == source_id:
+                #        if edge['target_id'] == target_id:
+                #            if edge['type'] == newnode.new_edges:
+                #                eid = str(edge['id'])
+                #                break
+                #if eid is None:
+                #    #Add the new edge
+                #    edge = { 'source_id': source_id, 'target_id': target_id, 'type': newnode.new_edges }
+                #    eid = str(hash(frozenset(edge.items())))
+                #    edge['id'] = eid
+                #    kg['edges'].append(edge)
                 extra_edges.append(str(eid))
             all_extra_edges.append(extra_edges)
-        return kg,all_extra_edges
+        return kg,all_extra_edges,kg_index
 
 
 
