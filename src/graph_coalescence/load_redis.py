@@ -22,6 +22,7 @@ def write_to(fname,db):
 def go():
     write_to('links.txt',0)
     write_to('nodelabels.txt',1)
+    write_to('backlinks.txt',2)
 
 if __name__ == '__main__':
     go()
