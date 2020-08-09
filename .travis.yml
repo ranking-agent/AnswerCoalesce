@@ -11,6 +11,9 @@ notifications:
 before_install:
   - git lfs pull
 
+services:
+  - redis-server
+
 # command to install dependencies
 install:
   - pip install -r requirements.txt
@@ -21,6 +24,7 @@ env:
 
 # command to run tests
 script:
+  - python src/graph_coalescence/load_redis.py test
   - pytest -p no:warnings tests
 
 after_success:
