@@ -28,7 +28,7 @@ def get_redis_pipeline(dbnum):
     #"redis_password": "",
     jpath = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..','..','config.json')
     with open(jpath,'r') as inf:
-        conf = json.load(jpath)
+        conf = json.load(inf)
     if 'redis_password' in conf and len(conf['redis_password']) > 0:
         typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum, password=conf['redis_password'])
     else:
