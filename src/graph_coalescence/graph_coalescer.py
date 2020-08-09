@@ -132,7 +132,12 @@ def get_link_counts(unique_links):
             p.get(str(ul))
         ns = p.execute()
         for ul, n in zip(ulg, ns):
-            lcounts[ul] = int(n)
+            try:
+                lcounts[ul] = int(n)
+            except:
+                print('Failure')
+                print(ul)
+                raise('error')
     return lcounts
 
 

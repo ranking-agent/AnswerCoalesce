@@ -12,8 +12,7 @@ def load_jsons(input_json):
 def collect_input_nodes():
     #These are curies that are used as the inputs to some graph coalesce test
     test_curies = set(['NCBIGene:106632262', 'NCBIGene:106632263', 'NCBIGene:106632261'])
-    input_jsons = ['famcov.json','bigger.json']
-    back_types = ['gene','named_thing']
+    input_jsons = ['famcov.json','bigger.json','graph_named_thing_issue.json','EdgeIDAsStrAndPerfTest.json']
     for ij in input_jsons:
         test_curies.update( load_jsons(ij) )
     return test_curies
@@ -48,7 +47,8 @@ def filter_types(infname,outfname,idents):
 def go():
     nodes = collect_input_nodes()
     links = filter_links('../src/graph_coalescence/links.txt','test_links.txt',nodes)
-    filter_backlinks('../src/graph_coalescence/backlinks.txt','test_backlinks.txt',set(['gene','named_thing']),links)
+    back_types = set(['gene','named_thing','chemical_substance'])
+    filter_backlinks('../src/graph_coalescence/backlinks.txt','test_backlinks.txt',back_types,links)
     nodes.update(links)
     filter_types('../src/graph_coalescence/nodelabels.txt','test_nodelabels.txt',nodes)
 
