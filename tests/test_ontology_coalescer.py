@@ -131,7 +131,8 @@ def test_full_coalesce_no_new_node():
     assert len(patches) == 1
     patch = patches[0]
     answers = [ Answer(r,qg,kg) for r in results]
-    new_answer,updated_qg,updated_kg = patch.apply(answers,qg,kg)
+    kg_index={}
+    new_answer,updated_qg,updated_kg,kg_index = patch.apply(answers,qg,kg,kg_index)
     #I want to see that we've updated the kg to include is_a edges.
     is_a_curies = []
     for edge in kg['edges']:
@@ -190,3 +191,9 @@ def test_ontology_coalescer_bogus_prefix():
     curies = ['FAKE:1234','MONDO:0024388','MONDO:0006604','MONDO:0004235','MONDO:0000705','MONDO:0001028','MONDO:0005316','MONDO:0006989']
     sc = oc.get_enriched_superclasses(set(curies),'disease',pcut=1e-5)
     assert len(sc) > 0
+
+def test_no_good_prefixes():
+    """If the curies don't have any ontological prefixes, don't crash, ok?"""
+    curies = ['FAKE:1234','FAKE:0024388','FAKE:0006604']
+    sc = oc.get_enriched_superclasses(set(curies),'gene',pcut=1e-5)
+    assert True

@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+#from datetime import datetime as dt
+
 from src.components import Opportunity,Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
@@ -23,6 +25,7 @@ def coalesce(answerset,method='all'):
         patches += coalesce_by_graph(coalescence_opportunities)
     if method in ['all','ontology']:
         patches += coalesce_by_ontology(coalescence_opportunities)
+    print('lets patch')
     new_answers,updated_qg,updated_kg = patch_answers(answerset,patches)
     new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
     return new_answerset
@@ -34,8 +37,15 @@ def patch_answers(answerset,patches):
     kg = answerset['knowledge_graph']
     answers = [ Answer(ans,qg,kg) for ans in answerset['results'] ]
     new_answers = []
+    i = 0
+    #If there are lots of patches, then we end up spending lots of time finding edges and nodes in the kg
+    # as we update it.  kg_indexes are the indexes required to find things quickly.  apply both
+    # looks in there, and updates it
+    kg_indexes = {}
     for patch in patches:
-        new_answer,qg,kg = patch.apply(answers,qg,kg)
+        i += 1
+        print(f'{i} / {len(patches)}')
+        new_answer,qg,kg,kg_indexes = patch.apply(answers,qg,kg,kg_indexes)
         new_answers.append(new_answer.to_json())
     return new_answers,qg,kg
 

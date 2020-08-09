@@ -1,14 +1,40 @@
 from collections import defaultdict
-from scipy.stats import hypergeom
-from src.graph_coalescence.robokop_messenger import RobokopMessenger
+from scipy.stats import hypergeom, poisson, binom, norm
 from src.components import PropertyPatch
 from src.util import LoggingUtil
 import logging
 import os
+import redis
+import json
+import ast
+import itertools
+
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir+'/')
+
+def grouper(n, iterable):
+    it = iter(iterable)
+    while True:
+        chunk = tuple(itertools.islice(it, n))
+        if not chunk:
+            break
+        yield chunk
+
+def get_redis_pipeline(dbnum):
+    #"redis_host": "localhost",
+    #"redis_port": 6379,
+    #"redis_password": "",
+    jpath = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..','..','config.json')
+    with open(jpath,'r') as inf:
+        conf = json.load(inf)
+    if 'redis_password' in conf and len(conf['redis_password']) > 0:
+        typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum, password=conf['redis_password'])
+    else:
+        typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum)
+    p = typeredis.pipeline()
+    return p
 
 
 def coalesce_by_graph(opportunities):
@@ -21,16 +47,31 @@ def coalesce_by_graph(opportunities):
 
     logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
 
+    #Multiple opportunities are going to use the same nodes.  In one random (large) example where there are about
+    # 2k opportunities, there are a total of 577 unique nodes, but with repeats, we'd end up calling messenger 3650
+    # times.  So instead, we will unique the nodes here, call messenger once each, and then pull from that
+    # collected set of info.
+
+    allnodes = create_node_to_type(opportunities)
+    nodes_to_links = create_nodes_to_links(allnodes)
+    unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
+    lcounts = get_link_counts(unique_links)
+    nodetypedict = get_node_types(unique_link_nodes)
+
+    onum = 0
+    #sffile=open('sfcalls.txt','w')
+    #In a test from test_bigs, we can see that we call sf 1.46M times.  But, we only call with 250k unique parametersets
+    # so we're gonna cache those
+    sf_cache = {}
     for opportunity in opportunities:
         logger.debug('Starting new opportunity')
+        onum += 1
 
         nodes = opportunity.get_kg_ids() #this is the list of curies that can be in the given spot
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
 
-        print ('get enriched links')
-        enriched_links = get_enriched_links(nodes, stype)
-        print ('got enriched links')
+        enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts,sf_cache,nodetypedict)
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -67,25 +108,119 @@ def coalesce_by_graph(opportunities):
 
     return patches
 
-def get_shared_links(nodes, stype, nodes_type_list: dict):
-    """Return the intersection of the superclasses of every node in nodes"""
-    rm = RobokopMessenger()
-    links_to_nodes = defaultdict(set)
-    for node in nodes:
-        logger.debug(f'start get_links_for({node}, {stype})')
-        links = rm.get_links_for(node, stype, nodes_type_list)
-        logger.debug('end get_links_for()')
 
-        for link in links:
-            links_to_nodes[link].add(node)
-    nodes_to_links = defaultdict(list)
-    for link,nodes in links_to_nodes.items():
-        if len(nodes) > 1:
-            nodes_to_links[frozenset(nodes)].append(link)
+def get_node_types(unique_link_nodes):
+    p = get_redis_pipeline(1)
+    nodetypedict = {}
+    for ncg in grouper(1000, unique_link_nodes):
+        for newcurie in ncg:
+            p.get(newcurie)
+        all_typestrings = p.execute()
+        for newcurie, nodetypestring in zip(ncg, all_typestrings):
+            node_types = ast.literal_eval(nodetypestring.decode())
+            nodetypedict[newcurie] = node_types
+    return nodetypedict
 
+
+def get_link_counts(unique_links):
+    # Now we are going to hit redis to get the counts for all of the links.
+    # our unique_links are the keys
+    p = get_redis_pipeline(2)
+    lcounts = {}
+    for ulg in grouper(1000, unique_links):
+        for ul in ulg:
+            p.get(str(ul))
+        ns = p.execute()
+        for ul, n in zip(ulg, ns):
+            try:
+                lcounts[ul] = int(n)
+            except:
+                print('Failure')
+                print(ul)
+                raise('error')
+    return lcounts
+
+
+def uniquify_links(nodes_to_links, opportunities):
+    # A link might occur for multiple nodes and across different opportunities
+    # Create the total unique set of links
+    unique_links = set()
+    unique_link_nodes = set()
+    io = 0
+    for opportunity in opportunities:
+        # print('new op', io, dt.now())
+        io += 1
+        kn = opportunity.get_kg_ids()
+        # print('',len(kn))
+        seen = set()
+        for n in kn:
+            # if len(nodes_to_links[n]) > 10000:
+            #    print(' ',n,len(nodes_to_links[n]),opportunity.get_qg_semantic_type())
+            for l in nodes_to_links[n]:
+                # The link as defined uses the input node as is_source, but the lookup into redis uses the
+                # linked node as the is_source, so gotta flip it
+                lplus = l + [opportunity.get_qg_semantic_type()]
+                lplus[2] = not lplus[2]
+                tl = tuple(lplus)
+                if tl in seen:
+                    # if lplus[0] == 'NCBIGene:355':
+                    #    print(io, tl)
+                    unique_links.add(tl)
+                    unique_link_nodes.add(tl[0])
+                else:
+                    seen.add(tl)
+        # print('','end',dt.now())
+    return unique_link_nodes, unique_links
+
+
+def create_nodes_to_links(allnodes):
+    p = get_redis_pipeline(0)
+    # Create a dict from node->links by looking up in redis.  Each link is a potential node to add.
+    # This is across all opportunities as well
+    # Could pipeline
+    nodes_to_links = {}
+    for group in grouper(1000, allnodes.keys()):
+        for node in group:
+            p.get(node)
+        linkstrings = p.execute()
+        for node, linkstring in zip(group, linkstrings):
+            if linkstring is None:
+                print(node)
+            links = json.loads(linkstring)
+            nodes_to_links[node] = links
     return nodes_to_links
 
-def get_enriched_links(nodes, semantic_type, pcut=1e-6):
+
+def create_node_to_type(opportunities):
+    # Create a dict from node->type(node) for all nodes in every opportunity
+    allnodes = {}
+    for opportunity in opportunities:
+        kn = opportunity.get_kg_ids()
+        stype = opportunity.get_qg_semantic_type()
+        for node in kn:
+            allnodes[node] = stype
+    return allnodes
+
+
+#def get_shared_links(nodes, stype, nodes_type_list: dict):
+#    """Return the intersection of the superclasses of every node in nodes"""
+#    rm = RobokopMessenger()
+#    links_to_nodes = defaultdict(set)
+#    for node in nodes:
+#        logger.debug(f'start get_links_for({node}, {stype})')
+#        links = rm.get_links_for(node, stype, nodes_type_list)
+#        logger.debug('end get_links_for()')
+#
+#        for link in links:
+#            links_to_nodes[link].add(node)
+#    nodes_to_links = defaultdict(list)
+#    for link,nodes in links_to_nodes.items():
+#        if len(nodes) > 1:
+#            nodes_to_links[frozenset(nodes)].append(link)
+#
+#    return nodes_to_links
+
+def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, typecache, pcut=1e-6):
     logger.info (f'{len(nodes)} enriched node links to process.')
 
     # Get the most enriched connected node for a group of nodes.
@@ -94,13 +229,20 @@ def get_enriched_links(nodes, semantic_type, pcut=1e-6):
     ret_nodes_type_list: dict = {}
     nodes_type_list: dict = {}
 
-    nodeset_to_links = get_shared_links(nodes, semantic_type, nodes_type_list)
-
+    #nodeset_to_links = get_shared_links(nodes, semantic_type, nodes_type_list)
+    links_to_nodes = defaultdict(list)
+    for node in nodes:
+        for link in nodes_to_links[node]:
+            links_to_nodes[tuple(link)].append(node)
+    nodeset_to_links = defaultdict(list)
+    for link,snodes in links_to_nodes.items():
+        if len(snodes) > 1:
+            nodeset_to_links[frozenset(snodes)].append(link)
     logger.debug ('end get_shared_links()')
 
     logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
 
-    rm = RobokopMessenger()
+    #rm = RobokopMessenger()
     results = []
 
     logger.info(f'{len(nodeset_to_links.items())} possible shared links discovered.')
@@ -124,7 +266,8 @@ def get_enriched_links(nodes, semantic_type, pcut=1e-6):
             newcurie_is_source = not is_source
 
             # logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
-            n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
+            #n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
+            n = lcounts[ (newcurie, predicate, newcurie_is_source, semantic_type) ]
             # logger.debug (f'end get_hit_node_count() = {n}, start get_hit_nodecount_old()')
             # o = rm.get_hit_nodecount_old(newcurie, predicate, newcurie_is_source, semantic_type)
 
@@ -133,10 +276,28 @@ def get_enriched_links(nodes, semantic_type, pcut=1e-6):
 
             ndraws = len(nodes)
 
-            enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
+
+            #The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
+            # For most cases, it is ok to approximate it.  There are multiple levels of approximation as described
+            # here: https://www.vosesoftware.com/riskwiki/ApproximationstotheHypergeometricdistribution.php
+            # Ive tested and each approximation is faster, while the quality decreases.
+            # Norm is a bad approximation for this data
+            # the other three are fine.  Poisson very occassionaly is off by a factor of two or so, but that's not
+            # terribly important here.  It's also almost 2x faster than the hypergeometric.
+            # So we're going to use poisson, but if we have problems with it we should drop back to binom rather than hypergeom
+            args = (x-1,total_node_count,n,ndraws)
+            if args not in sfcache:
+                #sfcache[args] = hypersf(x - 1, total_node_count, n, ndraws)
+                #p_binom = binomsf(x-1,ndraws,n/total_node_count)
+                #p_pois = poissonsf(x-1,n * ndraws / total_node_count)
+                #p_norm = normsf(x-1,n*ndraws/total_node_count, math.sqrt((ndraws*n)*(total_node_count-n))/total_node_count)
+                sfcache[args] =  poisson.sf(x-1,n * ndraws / total_node_count)
+                #sf_out.write(f'{x-1}\t{total_node_count}\t{n}\t{ndraws}\t{sfcache[args]}\t{p_binom}\t{p_pois}\t{p_norm}\n')
+            enrichp = sfcache[args]
 
             if enrichp < pcut:
-                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, nodes_type_list[newcurie]))
+                node_types = typecache[newcurie]
+                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
         if len(enriched) > 0:
             results += enriched
 
@@ -144,6 +305,7 @@ def get_enriched_links(nodes, semantic_type, pcut=1e-6):
 
     logger.debug ('end get_enriched_links()')
     return results
+
 
 def get_total_node_count(semantic_type):
     """In the hypergeometric calculation, you're drawing balls from a bag, and you have
