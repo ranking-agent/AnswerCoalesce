@@ -26,7 +26,16 @@ WITH "MATCH path = (a)-[x]->(b)
 The path there is local to the database.  /data is mounted on arrival, so you can find everything.csv in
 /mnt/stars-k-nfs/opt/robokop/neo4j_data on that machine.
 
-Then scp it over here.  connect to the renci vpn, then
+Building the redis is a 2 step process.  It required a bit of memory, so I have been using a hatteras node like
+sinteractive -m 32000
+
+scp the data
 scp whoever@arrival.edc.renci.org:/mnt/stars-k-nfs/opt/robokop/neo4j_data/everything.csv
 
-And run build_redis_files.py
+python build_redis_files.py
+
+Stand up an empty redis server.  The load code is going assume it's on localhost:6379 with no password.
+
+python load_redis.py
+
+When done, there will be a dump.rdb file.  This can now be fed to the production redis.
