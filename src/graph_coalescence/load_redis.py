@@ -1,3 +1,4 @@
+import sys
 import redis
 
 def get_redis(db):
@@ -20,10 +21,19 @@ def write_to(fname,db):
     pipe.execute()
 
 def go():
-    write_to('links.txt',0)
-    write_to('nodelabels.txt',1)
-    write_to('backlinks.txt',2)
+    write_to('src/graph_coalescence/links.txt',0)
+    write_to('src/graph_coalescence/nodelabels.txt',1)
+    write_to('src/graph_coalescence/backlinks.txt',2)
+
+def go_test():
+    #Is going to run from ac root
+    write_to('tests/test_links.txt',0)
+    write_to('tests/test_nodelabels.txt',1)
+    write_to('tests/test_backlinks.txt',2)
 
 if __name__ == '__main__':
-    go()
+    if len(sys.argv) > 1 and sys.argv[1] == 'test':
+        go_test()
+    else:
+        go()
 

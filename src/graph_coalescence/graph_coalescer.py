@@ -1,7 +1,5 @@
 from collections import defaultdict
 from scipy.stats import hypergeom, poisson, binom, norm
-import math
-from src.graph_coalescence.robokop_messenger import RobokopMessenger
 from src.components import PropertyPatch
 from src.util import LoggingUtil
 import logging
@@ -23,6 +21,21 @@ def grouper(n, iterable):
         if not chunk:
             break
         yield chunk
+
+def get_redis_pipeline(dbnum):
+    #"redis_host": "localhost",
+    #"redis_port": 6379,
+    #"redis_password": "",
+    jpath = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..','..','config.json')
+    with open(jpath,'r') as inf:
+        conf = json.load(jpath)
+    if 'redis_password' in conf and len(conf['redis_password']) > 0:
+        typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum, password=conf['redis_password'])
+    else:
+        typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum)
+    p = typeredis.pipeline()
+    return p
+
 
 def coalesce_by_graph(opportunities):
     """
@@ -97,8 +110,7 @@ def coalesce_by_graph(opportunities):
 
 
 def get_node_types(unique_link_nodes):
-    typeredis = redis.Redis(host='localhost', port=6379, db=1)
-    p = typeredis.pipeline()
+    p = get_redis_pipeline(1)
     nodetypedict = {}
     for ncg in grouper(1000, unique_link_nodes):
         for newcurie in ncg:
@@ -113,8 +125,7 @@ def get_node_types(unique_link_nodes):
 def get_link_counts(unique_links):
     # Now we are going to hit redis to get the counts for all of the links.
     # our unique_links are the keys
-    r = redis.Redis(host='localhost', port=6379, db=2)
-    p = r.pipeline()
+    p = get_redis_pipeline(2)
     lcounts = {}
     for ulg in grouper(1000, unique_links):
         for ul in ulg:
@@ -158,8 +169,7 @@ def uniquify_links(nodes_to_links, opportunities):
 
 
 def create_nodes_to_links(allnodes):
-    r = redis.Redis(host='localhost', port=6379, db=0)
-    p = r.pipeline()
+    p = get_redis_pipeline(0)
     # Create a dict from node->links by looking up in redis.  Each link is a potential node to add.
     # This is across all opportunities as well
     # Could pipeline
