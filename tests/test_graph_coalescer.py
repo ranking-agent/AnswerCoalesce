@@ -2,18 +2,8 @@ import pytest
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
-from src.graph_coalescence.robokop_messenger import RobokopMessenger
 import os,json
 
-def test_get_node_count():
-    # fire up the class
-    rm = RobokopMessenger()
-
-    # call to get the number of nodes
-    n = rm.get_hit_node_count('NCBIGENE:100328933', 'decreases_activity_of', False, 'chemical_substance')
-
-    # get the expected node count
-    assert n == 2
 
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
 def test_graph_coalescer():
