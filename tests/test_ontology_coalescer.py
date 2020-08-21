@@ -162,7 +162,7 @@ def test_unique_coalesce():
     #so we're good at this point, we have  set of unique opportunities.
     patches = oc.coalesce_by_ontology(opps)
     #Even though there are 2 opportunities, the chemical one finds two possible superclasses for different subsets.
-    assert len(patches) == 3
+    assert len(patches) == 4
     #patch = patches[0]
     #answers = [Answer(r, qg, kg) for r in results]
     #new_answer, updated_qg, updated_kg = patch.apply(answers, qg, kg)

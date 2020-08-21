@@ -66,4 +66,4 @@ def test_unique_coalesce():
     ret = json.loads(response.body)
 
     assert('results' in ret)
-    assert( len(ret['results']) < 4 )
+    assert( len(ret['results']) <= 4 )
