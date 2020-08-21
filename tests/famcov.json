@@ -22,7 +22,7 @@
         "source_database": [
           "cord19_scigraph_v7"
         ],
-        "source_id": "CHEBI:29320",
+        "source_id": "CHEBI:22984",
         "target_id": "CHEBI:4975",
         "type": "related_to",
         "weight": 1
@@ -35,7 +35,7 @@
         "relation": "in_clinical_trial_for",
         "relation_label": "in_clinical_trial_for",
         "source_database": "drugbank",
-        "source_id": "CHEBI:29320",
+        "source_id": "CHEBI:22984",
         "target_id": "MONDO:0100096",
         "type": "in_clinical_trial_for",
         "weight": 1
@@ -66,7 +66,7 @@
           "cord19_scibite_v5",
           "cord19_scigraph_v7"
         ],
-        "source_id": "CHEBI:91766",
+        "source_id": "CHEBI:77260",
         "target_id": "CHEBI:4975",
         "type": "related_to",
         "weight": 1
@@ -79,7 +79,7 @@
         "relation": "in_clinical_trial_for",
         "relation_label": "in_clinical_trial_for",
         "source_database": "drugbank",
-        "source_id": "CHEBI:91766",
+        "source_id": "CHEBI:77260",
         "target_id": "MONDO:0100096",
         "type": "in_clinical_trial_for",
         "weight": 1
@@ -1282,7 +1282,7 @@
           "mychem"
         ],
         "source_id": "CHEBI:4975",
-        "target_id": "HP:0012735",
+        "target_id": "HP:0031246",
         "type": "prevents",
         "weight": 1
       },
@@ -1873,7 +1873,7 @@
         "source_database": [
           "cord19_scigraph_v7"
         ],
-        "source_id": "HP:0012735",
+        "source_id": "HP:0031246",
         "target_id": "MONDO:0100096",
         "type": "related_to",
         "weight": 1
@@ -1899,7 +1899,7 @@
         "source_database": [
           "cord19_scigraph_v7"
         ],
-        "source_id": "HP:0012735",
+        "source_id": "HP:0031246",
         "target_id": "MONDO:0100096",
         "type": "related_to",
         "weight": 1
@@ -2349,7 +2349,7 @@
         "publications": [],
         "source_database": "omnicorp",
         "source_id": "CHEBI:4975",
-        "target_id": "HP:0012735",
+        "target_id": "HP:0031246",
         "type": "literature_co-occurrence",
         "weight": 1
       },
@@ -2458,7 +2458,7 @@
         "num_publications": 34,
         "publications": [],
         "source_database": "omnicorp",
-        "source_id": "CHEBI:29320",
+        "source_id": "CHEBI:22984",
         "target_id": "CHEBI:4975",
         "type": "literature_co-occurrence",
         "weight": 1
@@ -2528,7 +2528,7 @@
         ],
         "drugbank.nutraceutical": true,
         "equivalent_identifiers": [
-          "CHEBI:29320",
+          "CHEBI:22984",
           "DRUGBANK:DB01373",
           "MESH:D002118",
           "UNII:SY7Q814VUP",
@@ -2537,7 +2537,7 @@
           "PUBCHEM:5460341"
         ],
         "food_component": true,
-        "id": "CHEBI:29320",
+        "id": "CHEBI:22984",
         "inchi": "InChI=1S/Ca",
         "inchikey": "OYPRJOBELJOOCE-UHFFFAOYSA-N",
         "iupac_name": "calcium",
@@ -2744,13 +2744,13 @@
           "DRUGBANK:DB00338",
           "GTOPDB:4279",
           "HMDB:HMDB0001913",
-          "CHEBI:91766",
+          "CHEBI:77260",
           "CHEBI:77260",
           "KEGG.COMPOUND:C07324"
         ],
         "eukaryotic_metabolite": true,
         "human_metabolite": true,
-        "id": "CHEBI:91766",
+        "id": "CHEBI:77260",
         "inchi": "InChI=1S/C17H19N3O3S/c1-10-8-18-15(11(2)16(10)23-4)9-24(21)17-19-13-6-5-12(22-3)7-14(13)20-17/h5-8H,9H2,1-4H3,(H,19,20)",
         "inchikey": "SUBDBMMJDZJVOS-UHFFFAOYSA-N",
         "inhibitor": true,
@@ -4187,7 +4187,7 @@
           "HP:0031246",
           "UMLS:C0455777",
           "SNOMEDCT:46802002",
-          "HP:0012735",
+          "HP:0031246",
           "UMLS:C0574067",
           "UMLS:C0010201",
           "UMLS:C0742857",
@@ -4198,8 +4198,8 @@
           "MESH:D003371",
           "SNOMEDCT:284523002"
         ],
-        "id": "HP:0012735",
-        "name": "Cough",
+        "id": "HP:0031246",
+        "name": "Nonproductive cough",
         "omnicorp_article_count": 40318,
         "synonyms": [
           "Dry cough",
@@ -5321,7 +5321,7 @@
           "qg_id": "a"
         },
         {
-          "kg_id": "HP:0012735",
+          "kg_id": "HP:0031246",
           "qg_id": "b"
         },
         {
@@ -5569,7 +5569,7 @@
           "qg_id": "a"
         },
         {
-          "kg_id": "CHEBI:29320",
+          "kg_id": "CHEBI:22984",
           "qg_id": "b"
         },
         {
@@ -5763,7 +5763,7 @@
           "qg_id": "a"
         },
         {
-          "kg_id": "CHEBI:91766",
+          "kg_id": "CHEBI:77260",
           "qg_id": "b"
         },
         {
