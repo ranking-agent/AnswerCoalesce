@@ -148,7 +148,7 @@ def test_unique_coalesce():
     """This test is to fix https://github.com/ranking-agent/AnswerCoalesce/issues/13
     The issue is that the ontology coalescer preoduces non-unique results."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,  'famcov.json')
+    testfilename = os.path.join(dir_path,  'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
     opps = identify_coalescent_nodes(answerset)

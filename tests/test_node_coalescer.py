@@ -438,7 +438,7 @@ def xtest_automat_asthma_graph():
     assert rs[0]['node_bindings'][0]['p_value'] < 1e-20
 
 def test_unique_ontology():
-    fn = 'famcov.json'
+    fn = 'famcov_new.json'
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)

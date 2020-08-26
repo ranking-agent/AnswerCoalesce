@@ -7,7 +7,7 @@ from src.components import Opportunity
 
 
 def test_big_ontology():
-    fn = 'bigger.json'
+    fn = 'bigger_new.json'
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
@@ -16,7 +16,7 @@ def test_big_ontology():
     print(len(rs))
 
 def test_big_graphbased():
-    fn = 'bigger.json'
+    fn = 'bigger_new.json'
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)

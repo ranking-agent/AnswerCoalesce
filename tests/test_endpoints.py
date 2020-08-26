@@ -48,7 +48,7 @@ def test_coalesce():
 
 def test_unique_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, 'famcov.json')
+    testfilename = os.path.join(dir_path, 'famcov_new.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)

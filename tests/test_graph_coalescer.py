@@ -59,7 +59,7 @@ def test_graph_coalescer_perf_test():
 def test_graph_coalesce():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,  'famcov.json')
+    testfilename = os.path.join(dir_path,  'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
     newset = snc.coalesce(answerset, method='graph')
