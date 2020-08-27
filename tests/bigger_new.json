@@ -10,12 +10,12 @@
       },
       {
         "id": "b",
-
+        "curie": null,
         "type": "gene"
       },
       {
         "id": "c",
-
+        "curie": null,
         "type": "named_thing"
       },
       {
