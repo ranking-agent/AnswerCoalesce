@@ -5,8 +5,12 @@ def load_jsons(input_json):
     with open(input_json,'r') as inf:
         data = json.load(inf)
     node_ids = set( [node['id'] for node in data['knowledge_graph']['nodes']])
-    qg_node_ids = set( [node['curie'][0] for node in data['query_graph']['nodes'] if 'curie' in node])
+
+    # remove nodes that have empty curies
+    qg_node_ids = set( [node['curie'][0] for node in data['query_graph']['nodes'] if 'curie' in node and node['curie'] is not None])
+
     node_ids.difference_update(qg_node_ids)
+
     return node_ids
 
 def collect_input_nodes():
