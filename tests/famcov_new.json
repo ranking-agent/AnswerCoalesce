@@ -2673,46 +2673,6 @@
         ]
       },
       {
-        "id": "7eebea1a304464128ccfe1e404249f63",
-        "source_id": "MONDO:0100096",
-        "target_id": "MONDO:0100096",
-        "type": "related_to",
-        "relation_label": [
-          "related_to"
-        ],
-        "weight": 1,
-        "rectified": true,
-        "edge_source": [
-          "cord19_scigraph_v12"
-        ],
-        "relation": [
-          "SEMMEDDB:ASSOCIATED_WITH"
-        ],
-        "publications": [],
-        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
-        "num_publications": 2972.641941068292,
-        "enrichment_p": 0.0,
-        "source_database": [
-          "cord19_scigraph_v12"
-        ],
-        "ctime": [
-          1597668521.79813
-        ]
-      },
-      {
-        "id": "c0daa6d354f8f344dff3c0dccf6863ed",
-        "source_id": "CHEBI:4975",
-        "target_id": "MONDO:0100096",
-        "type": "in_clinical_trial_for",
-        "relation_label": "in_clinical_trial_for",
-        "weight": 1,
-        "edge_source": "https://www.drugbank.ca/covid-19",
-        "relation": "in_clinical_trial_for",
-        "predicate_id": "ROBOKOVID:in_clinical_trial_for",
-        "source_database": "drugbank",
-        "count": 1
-      },
-      {
         "id": "04b388385c74f1f389d8edc8a2b76707",
         "source_id": "MONDO:0100096",
         "target_id": "MONDO:0004730",
@@ -2844,7 +2804,7 @@
         ]
       },
       {
-        "id": "ff7677de-04e2-496c-a806-5fa0ff904bb9",
+        "id": "ad94b873-67fb-4fa2-8616-d462b67ee78f",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0005478",
         "type": "literature_co-occurrence",
@@ -2855,7 +2815,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "7a7d2cdc-c499-46d7-b13c-d99b52740066",
+        "id": "e1029fbc-7047-43cf-813c-dd7dbca8239a",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0002258",
         "type": "literature_co-occurrence",
@@ -2866,7 +2826,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "26deae66-589b-4a38-a99f-3106e108ab6b",
+        "id": "04967b37-4fde-4369-abc8-877f88143e03",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0045057",
         "type": "literature_co-occurrence",
@@ -2877,7 +2837,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "314df6c5-bc30-450c-b566-eeaedfba1eb2",
+        "id": "5a3e71f8-8c0c-4494-aea0-cc8264296d60",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0005249",
         "type": "literature_co-occurrence",
@@ -2888,7 +2848,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "970ed204-9d8c-481f-9014-ae1a15fee6aa",
+        "id": "0b012332-9910-4771-9ea7-7189596d89e8",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0003785",
         "type": "literature_co-occurrence",
@@ -2899,7 +2859,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "1e429628-4350-4a0a-8dac-6df7b23f557c",
+        "id": "dd8fc12b-5e8e-454b-8918-73572cd34fa7",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0005252",
         "type": "literature_co-occurrence",
@@ -2910,7 +2870,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "94ded780-b4f4-45fa-ad1a-7ac0cf69e486",
+        "id": "5508e2fc-be9c-49a0-8f2f-521f47f3347b",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0001673",
         "type": "literature_co-occurrence",
@@ -2921,7 +2881,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "c497e32d-6895-4817-b127-27fa51bbff57",
+        "id": "b880b4cd-999d-4f6d-8efe-646e54f481e5",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0001243",
         "type": "literature_co-occurrence",
@@ -2932,7 +2892,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "d5caee7b-1ea9-436d-8329-20c20f51c7a5",
+        "id": "72a1933b-6420-4ade-a7e5-d88614c9bae7",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0005265",
         "type": "literature_co-occurrence",
@@ -2943,7 +2903,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "548b3747-a255-46b2-b5b4-359b69c39785",
+        "id": "653e89b2-271b-4a97-8c98-18a3733911eb",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0004995",
         "type": "literature_co-occurrence",
@@ -2954,7 +2914,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "9622aa3f-0077-4289-8ef5-5992ee33d1b5",
+        "id": "222a6eb5-d1e5-4ba7-89c1-23146f70277b",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0019810",
         "type": "literature_co-occurrence",
@@ -2965,7 +2925,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "8cc72516-e01b-44a2-89dc-348b9a2440ff",
+        "id": "588de277-6fc7-4252-afea-8e59f137ad9e",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0005113",
         "type": "literature_co-occurrence",
@@ -2976,7 +2936,7 @@
         "source_database": "omnicorp"
       },
       {
-        "id": "4521a4e4-f52b-4437-927f-79824a0a0911",
+        "id": "c82d3447-7148-412c-9f5a-290e4b9da771",
         "source_id": "CHEBI:4975",
         "target_id": "MONDO:0006932",
         "type": "literature_co-occurrence",
@@ -3032,7 +2992,7 @@
         },
         {
           "qg_id": "s19",
-          "kg_id": "26deae66-589b-4a38-a99f-3106e108ab6b",
+          "kg_id": "04967b37-4fde-4369-abc8-877f88143e03",
           "weight": 0.002715367498174137
         }
       ],
@@ -3109,44 +3069,13 @@
         },
         {
           "qg_id": "s25",
-          "kg_id": "1e429628-4350-4a0a-8dac-6df7b23f557c",
+          "kg_id": "dd8fc12b-5e8e-454b-8918-73572cd34fa7",
           "weight": 0.003180142818884679
         }
       ],
       "extra_nodes": null,
       "extra_edges": null,
       "score": 0.1181652022155771
-    },
-    {
-      "node_bindings": [
-        {
-          "qg_id": "a",
-          "kg_id": "MONDO:0100096"
-        },
-        {
-          "qg_id": "b",
-          "kg_id": "MONDO:0100096"
-        },
-        {
-          "qg_id": "c",
-          "kg_id": "CHEBI:4975"
-        }
-      ],
-      "edge_bindings": [
-        {
-          "qg_id": "ab",
-          "kg_id": "7eebea1a304464128ccfe1e404249f63",
-          "weight": 1.0
-        },
-        {
-          "qg_id": "bc",
-          "kg_id": "c0daa6d354f8f344dff3c0dccf6863ed",
-          "weight": 0.2679491924311228
-        }
-      ],
-      "extra_nodes": null,
-      "extra_edges": null,
-      "score": 0.11814602960478819
     },
     {
       "node_bindings": [
@@ -3181,7 +3110,7 @@
         },
         {
           "qg_id": "s11",
-          "kg_id": "ff7677de-04e2-496c-a806-5fa0ff904bb9",
+          "kg_id": "ad94b873-67fb-4fa2-8616-d462b67ee78f",
           "weight": 0.0045755789664765345
         }
       ],
@@ -3217,7 +3146,7 @@
         },
         {
           "qg_id": "s45",
-          "kg_id": "4521a4e4-f52b-4437-927f-79824a0a0911",
+          "kg_id": "c82d3447-7148-412c-9f5a-290e4b9da771",
           "weight": 0.00021680922281430703
         }
       ],
@@ -3258,7 +3187,7 @@
         },
         {
           "qg_id": "s29",
-          "kg_id": "94ded780-b4f4-45fa-ad1a-7ac0cf69e486",
+          "kg_id": "5508e2fc-be9c-49a0-8f2f-521f47f3347b",
           "weight": 0.011878609336186896
         }
       ],
@@ -3330,7 +3259,7 @@
         },
         {
           "qg_id": "s21",
-          "kg_id": "314df6c5-bc30-450c-b566-eeaedfba1eb2",
+          "kg_id": "5a3e71f8-8c0c-4494-aea0-cc8264296d60",
           "weight": 0.0038342811209324257
         }
       ],
@@ -3397,7 +3326,7 @@
         },
         {
           "qg_id": "s15",
-          "kg_id": "7a7d2cdc-c499-46d7-b13c-d99b52740066",
+          "kg_id": "e1029fbc-7047-43cf-813c-dd7dbca8239a",
           "weight": 0.000702274323792107
         }
       ],
@@ -3588,7 +3517,7 @@
         },
         {
           "qg_id": "s39",
-          "kg_id": "9622aa3f-0077-4289-8ef5-5992ee33d1b5",
+          "kg_id": "222a6eb5-d1e5-4ba7-89c1-23146f70277b",
           "weight": 0.005649926783491965
         }
       ],
@@ -3624,7 +3553,7 @@
         },
         {
           "qg_id": "s31",
-          "kg_id": "c497e32d-6895-4817-b127-27fa51bbff57",
+          "kg_id": "b880b4cd-999d-4f6d-8efe-646e54f481e5",
           "weight": 0.0017703807035425179
         }
       ],
@@ -3696,7 +3625,7 @@
         },
         {
           "qg_id": "s37",
-          "kg_id": "548b3747-a255-46b2-b5b4-359b69c39785",
+          "kg_id": "653e89b2-271b-4a97-8c98-18a3733911eb",
           "weight": 0.0
         }
       ],
@@ -3732,7 +3661,7 @@
         },
         {
           "qg_id": "s23",
-          "kg_id": "970ed204-9d8c-481f-9014-ae1a15fee6aa",
+          "kg_id": "0b012332-9910-4771-9ea7-7189596d89e8",
           "weight": 0.0003070707819303742
         }
       ],
@@ -3830,7 +3759,7 @@
         },
         {
           "qg_id": "s41",
-          "kg_id": "8cc72516-e01b-44a2-89dc-348b9a2440ff",
+          "kg_id": "588de277-6fc7-4252-afea-8e59f137ad9e",
           "weight": 0.0
         }
       ],
@@ -3928,7 +3857,7 @@
         },
         {
           "qg_id": "s35",
-          "kg_id": "d5caee7b-1ea9-436d-8329-20c20f51c7a5",
+          "kg_id": "72a1933b-6420-4ade-a7e5-d88614c9bae7",
           "weight": 0.0
         }
       ],
