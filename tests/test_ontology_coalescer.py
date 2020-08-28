@@ -152,6 +152,7 @@ def test_unique_coalesce():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
     opps = identify_coalescent_nodes(answerset)
+    assert len(opps) > 1
     #TO check that each of these opportunities is unique, we will check that the
     # kg_ids each identifies are unique
     unique_kg_ids = set()
@@ -160,20 +161,6 @@ def test_unique_coalesce():
         assert aggable_identifiers not in unique_kg_ids
         unique_kg_ids.add(aggable_identifiers)
     #so we're good at this point, we have  set of unique opportunities.
-    patches = oc.coalesce_by_ontology(opps)
-    #Even though there are 2 opportunities, the chemical one finds two possible superclasses for different subsets.
-    assert len(patches) == 4
-    #patch = patches[0]
-    #answers = [Answer(r, qg, kg) for r in results]
-    #new_answer, updated_qg, updated_kg = patch.apply(answers, qg, kg)
-    ## I want to see that we've updated the kg to include is_a edges.
-    #is_a_curies = []
-    #for edge in kg['edges']:
-    #    if edge['target_id'] == 'MONDO:0000771' and edge['type'] == 'is_a':
-    #        is_a_curies.append(edge['source_id'])
-    #assert len(is_a_curies) == 2
-    #assert 'MONDO:0025556' in is_a_curies
-    #assert 'MONDO:0004584' in is_a_curies
 
 
 # print(new_answer.to_json())
