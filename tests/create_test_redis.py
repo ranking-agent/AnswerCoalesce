@@ -7,9 +7,9 @@ def load_jsons(input_json):
     node_ids = set( [node['id'] for node in data['knowledge_graph']['nodes']])
 
     # remove nodes that have empty curies
-    qg_node_ids = set( [node['curie'][0] for node in data['query_graph']['nodes'] if 'curie' in node and node['curie'] is not None])
+    #qg_node_ids = set( [node['curie'][0] for node in data['query_graph']['nodes'] if 'curie' in node and node['curie'] is not None])
 
-    node_ids.difference_update(qg_node_ids)
+    #node_ids.difference_update(qg_node_ids)
 
     return node_ids
 
