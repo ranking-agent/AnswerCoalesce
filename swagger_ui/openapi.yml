@@ -19224,7 +19224,7 @@ info:
     url: https://opensource.org/licenses/MIT
   termsOfService: http://robokop.renci.org:7055/tos?service_long=Answer+Coalesce+service&provider_long=the+Translator+Consortium
   title: Answer Coalesce - A Swagger UI/web service
-  version: 1.0.3
+  version: 1.0.4
 openapi: 3.0.2
 paths:
   /coalesce:
