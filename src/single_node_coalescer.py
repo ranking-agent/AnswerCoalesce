@@ -25,7 +25,7 @@ def coalesce(answerset,method='all'):
         patches += coalesce_by_graph(coalescence_opportunities)
     if method in ['all','ontology']:
         patches += coalesce_by_ontology(coalescence_opportunities)
-    print('lets patch')
+    # print('lets patch')
     new_answers,updated_qg,updated_kg = patch_answers(answerset,patches)
     new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
     return new_answerset
@@ -44,7 +44,7 @@ def patch_answers(answerset,patches):
     kg_indexes = {}
     for patch in patches:
         i += 1
-        print(f'{i} / {len(patches)}')
+        # print(f'{i} / {len(patches)}')
         new_answer,qg,kg,kg_indexes = patch.apply(answers,qg,kg,kg_indexes)
         new_answers.append(new_answer.to_json())
     return new_answers,qg,kg
