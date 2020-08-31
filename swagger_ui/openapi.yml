@@ -19258,6 +19258,6 @@ paths:
           description: 'Example: Returns an array of coalesced results'
       summary: Coalesce Answers related to a Answer.
       tags:
-      - AC
+      - Coalesce
 tags:
-- name: AC
+- name: Coalesce
