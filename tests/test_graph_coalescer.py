@@ -71,6 +71,20 @@ def test_graph_coalesce():
                 extra = True
         assert extra
 
+def test_graph_coalesce_strider():
+    """Make sure that results are well formed."""
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path, 'strider_relay_mouse.json')
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+    newset = snc.coalesce(answerset, method='graph')
+    for r in newset['results']:
+        nbs = r['node_bindings']
+        extra = False
+        for nb in nbs:
+            if nb['qg_id'].startswith('extra'):
+                extra = True
+        assert extra
 
 def test_missing_node_norm():
     from src.single_node_coalescer import coalesce

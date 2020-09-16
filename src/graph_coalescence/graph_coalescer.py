@@ -186,7 +186,10 @@ def create_nodes_to_links(allnodes):
         for node, linkstring in zip(group, linkstrings):
             if linkstring is None:
                 print(node)
-            links = json.loads(linkstring)
+            if linkstring is None:
+                links = []
+            else:
+                links = json.loads(linkstring)
             nodes_to_links[node] = links
     return nodes_to_links
 

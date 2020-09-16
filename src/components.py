@@ -190,7 +190,10 @@ class Answer:
         """Take the json answer and turn it into a more usable structure"""
         #The answer has 3 parts:  Score, a list of node bindings, and a list of edge bindings
         # The edges may be asked for in the question, or they might be extras (support edges)
-        self.score = json_answer['score']
+        if 'score' in json_answer:
+            self.score = json_answer['score']
+        else:
+            self.score = 0.
         self.binding_properties = defaultdict(dict)
         #The node bindings can be in a variety of formats. They're all based on
         # { 'qg_id': "string", 'kg_id': ... }
