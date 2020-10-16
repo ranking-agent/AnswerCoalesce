@@ -38,7 +38,7 @@ docker-compose up -d
 ### Kubernetes configurations
     kubernetes configurations and helm charts for this project can be found at: 
     
-    https://github.com/helxplatform/translator-devops
+    https://github.com/helxplatform/translator-devops/answer-coalesce
     
 ## Usage
 
