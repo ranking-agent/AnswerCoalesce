@@ -35,6 +35,11 @@ docker-compose build
 docker-compose up -d
 ```
 
+### Kubernetes configurations
+    kubernetes configurations and helm charts for this project can be found at: 
+    
+    https://github.com/helxplatform/translator-devops
+    
 ## Usage
 
 http://"host name or IP":"port"/apidocs
