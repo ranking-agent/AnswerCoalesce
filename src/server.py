@@ -34,7 +34,6 @@ APP.add_middleware(
 
 # declare the types of answer coalesce methods
 class MethodName(str, Enum):
-    none = "--"
     all = "all"
     property = "property"
     graph = "graph"
@@ -45,18 +44,15 @@ class MethodName(str, Enum):
 async def coalesce_handler(request: Request, method: MethodName) -> Message:
     """ Answer coalesce operations. You ay choose all, property, graph or ontology analysis. """
 
-    # did we get a good method
-    if method != MethodName.none:
-        # convert the incoming message into a dict
-        message = request.message.dict()
+    # convert the incoming message into a dict
+    message = request.message.dict()
 
-        # call the operation with the request
-        coalesced = coalesce(message, method=method)
+    # call the operation with the request
+    coalesced = coalesce(message, method=method)
 
-        # return the result to the caller
-        return Message(**coalesced)
-    else:
-        return "Invalid method selected"
+    # return the result to the caller
+    return Message(**coalesced)
+
 
 def log_exception(method):
     """Wrap method."""
