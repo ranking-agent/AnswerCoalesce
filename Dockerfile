@@ -1,5 +1,5 @@
 # base this container on python 3.8
-FROM python:3.8.1-buster
+FROM python:3.8.5
 
 # get some credit
 LABEL maintainer="powen@renci.org"
@@ -19,7 +19,8 @@ RUN mkdir /repo
 WORKDIR /repo
 
 # get the latest code
-RUN git clone https://github.com/TranslatorIIPrototypes/AnswerCoalesce.git
+RUN git clone https://github.com/ranking-agent/AnswerCoalesce.git
+RUN git checkout Phil_AC
 
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
@@ -34,4 +35,4 @@ RUN git lfs pull
 EXPOSE 6380
 
 # start the service entry point
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "main.py --bind 0.0.0.0:6380 -w 1 -k uvicorn.workers.UvicornWorker -t 600 src.server-fastapi:APP"]
