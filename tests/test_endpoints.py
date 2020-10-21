@@ -7,6 +7,7 @@ import json
 from fastapi.testclient import TestClient
 from src.server import APP
 
+
 client = TestClient(APP)
 
 def test_coalesce():
