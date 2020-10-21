@@ -38,7 +38,7 @@ def test_unique_coalesce():
         answerset = json.load(tf)
 
     # make a good request
-    response = client.post('/coalesce/ontology', json=answerset
+    response = client.post('/coalesce/ontology', json=answerset)
 
     # was the request successful
     assert(response.status_code == 200)
