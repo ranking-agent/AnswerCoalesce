@@ -449,6 +449,7 @@ def test_unique_ontology():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     newset = snc.coalesce(answerset,method='ontology')
     rs = newset['results']
     assert len(rs) <= 4
