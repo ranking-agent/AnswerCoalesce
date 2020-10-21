@@ -16,4 +16,4 @@ numpy~=1.19.2
 pydantic~=1.6.1
 uvicorn==0.12.2
 git+https://github.com/ranking-agent/reasoner#egg=reasoner
-git+https://github.com/TranslatorSRI/reasoner-pydantic#egg=reasoner-pydantic
+git+https://github.com/PhillipsOwen/reasoner-pydantic.git#egg=reasoner-pydantic
