@@ -14,6 +14,7 @@ def test_bindings():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
     answers = answerset['results']
@@ -30,6 +31,7 @@ def test_hash_one_hop():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
     answers = [Answer(ai,qg,kg) for ai in answerset['results']]
@@ -54,6 +56,7 @@ def test_hash_one_hop_with_different_predicates():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop_many_preds.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
     answers = [Answer(ai,qg,kg) for ai in answerset['results']]
@@ -93,6 +96,7 @@ def x_test_hash_topology():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'robokop_degreaser.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
     answers = answerset['results']
@@ -304,6 +308,7 @@ def test_round_trip():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     newset = snc.coalesce(answerset,method='property')
     qg = json.dumps(newset['query_graph'])
     kg = json.dumps(newset['knowledge_graph'])
@@ -412,6 +417,7 @@ def test_automat_treat_diabetes_properties():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     newset = snc.coalesce(answerset,method='property')
     rs = newset['results']
     assert len(rs) > 10
@@ -428,6 +434,7 @@ def xtest_automat_asthma_graph():
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     newset = snc.coalesce(answerset,method='graph')
     rs = newset['results']
     assert len(rs) > 2

@@ -151,6 +151,7 @@ def test_unique_coalesce():
     testfilename = os.path.join(dir_path,  'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     opps = identify_coalescent_nodes(answerset)
     assert len(opps) > 1
     #TO check that each of these opportunities is unique, we will check that the

@@ -130,6 +130,7 @@ def test_property_coalescer_perf_test():
     # open the file and load it
     with open(test_filename,'r') as tf:
         incoming = json.load(tf)
+        incoming = incoming['message']
 
     # call function that does property coalesce
     coalesced = coalesce(incoming, method='property')
