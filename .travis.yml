@@ -2,11 +2,12 @@ dist: xenial
 
 language: python
 python:
-  - "3.8"
+  - "3.8.5"
 
 notifications:
   email:
-    - bizon@renci.org
+#    - bizon@renci.org
+    - powen@renci.org
 
 before_install:
   - git lfs pull
