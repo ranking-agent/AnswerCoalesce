@@ -17,7 +17,6 @@ services:
 
 # command to install dependencies
 install:
-  - pip uninstall reasoner-pydantic --no-input
   - pip install -r requirements.txt --no-cache-dir
   # - cat requirements.txt
 
