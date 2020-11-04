@@ -58,17 +58,14 @@ def test_schizo_coalesce():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
 
-    # setup some parameters
-    param = {'method': 'graph'}
-
     # make a good request
-    request, response = app.test_client.post('/coalesce', params= param, data=json.dumps(answerset))
+    response = client.post('/coalesce/graph', json=answerset)
 
     # was the request successful
-    assert(response.status == 200)
+    assert(response.status_code == 200)
 
     # convert the response to a json object
-    ret = json.loads(response.body)
+    ret = json.loads(response.content)
 
     #assert('results' in ret)
     #assert( len(ret['results']) <= 4 )
