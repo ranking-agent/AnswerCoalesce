@@ -1,68 +1,67 @@
+""" Answer Coalesce server. """
 import os
-import jsonschema
-import yaml
-import json
-from sanic import Sanic, response
-from sanic.request import Request
-
-from src.apidocs import bp as apidocs_blueprint
+import logging
+from enum import Enum
+from functools import wraps
+from src.util import LoggingUtil
+from reasoner_pydantic import Request, Message
 from src.single_node_coalescer import coalesce
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-""" Sanic server for Answer Coalesce - A Swagger UI/web service. """
+# get the location for the log
+this_dir = os.path.dirname(os.path.realpath(__file__))
 
-# initialize this web app
-app: Sanic = Sanic("Answer Coalesce")
+# init a logger
+logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir+'/')
 
-# suppress access logging
-app.config.ACCESS_LOG = False
+# declare the application and populate some details
+APP = FastAPI(
+    title='Answer coalesce - A FastAPI UI/web service',
+    version='0.1.0',
+    description='A FastAPI UI/web service interface for the Answer Coalesce service',
+)
 
-# init the app using the parameters defined in
-app.blueprint(apidocs_blueprint)
+# declare the cross origin params
+APP.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-@app.post('/coalesce')
-async def coalesce_handler(request: Request) -> json:
-    """ Handler for Answer coalesce operations. """
-    method = request.args.get('method', 'all')
+# declare the types of answer coalesce methods
+class MethodName(str, Enum):
+    all = "all"
+    property = "property"
+    graph = "graph"
+    ontology = "ontology"
 
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
 
-    # load the Translator specification
-    with open(os.path.join(dir_path, 'translator_interchange_0.9.0.yaml')) as f:
-        spec: dict = yaml.load(f, Loader=yaml.SafeLoader)
+@APP.post('/coalesce/{method}')
+async def coalesce_handler(request: Request, method: MethodName) -> Message:
+    """ Answer coalesce operations. You ay choose all, property, graph or ontology analysis. """
 
-    # load the query specification, first get the result node
-    validate_with: dict = spec["components"]["schemas"]["Result"]
+    # convert the incoming message into a dict
+    message = request.message.dict()
 
-    # then get the components in their own array so the relative references are found
-    validate_with["components"] = spec["components"]
+    # call the operation with the request
+    coalesced = coalesce(message, method=method)
 
-    # remove the result node because we already have it at the top
-    validate_with["components"].pop("Result", None)
+    # return the result to the caller
+    return Message(**coalesced)
 
-    try:
-        # load the input into a json object
-        incoming: dict = json.loads(request.body)
 
-        # validate the incoming json against the spec
-        jsonschema.validate(instance=incoming, schema=validate_with)
-
-    # all JSON validation errors are manifested as a thrown exception
-    except (jsonschema.exceptions.ValidationError, json.JSONDecodeError) as error: #
-        # print (f"ERROR: {str(error)}")
-        return response.json({'Result failed validation. Message': str(error)}, status=400)
-
-    coalesced = coalesce(incoming, method=method)
-
-    # try:
-    #     # validate each response item against the spec
-    #     for item in coalesced:
-    #         jsonschema.validate(item, validate_with)
-    #
-    # # all JSON validation errors are manifested as a thrown exception
-    # except jsonschema.exceptions.ValidationError as error:
-    #     return response.json({'Response failed validation. Message': str(error)}, status=400)
-
-    # if we are here the response validated properly
-    return response.json(coalesced, status=200)
+def log_exception(method):
+    """Wrap method."""
+    @wraps(method)
+    async def wrapper(*args, **kwargs):
+        """Log exception encountered in method, then pass."""
+        try:
+            return await method(*args, **kwargs)
+        except Exception as err:  # pylint: disable=broad-except
+            logger.exception(err)
+            raise
+    return wrapper

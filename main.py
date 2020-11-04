@@ -1,13 +1,5 @@
-#!/usr/bin/env python
+from gunicorn.app.wsgiapp import WSGIApplication
 
-""" Run Answer coalesce. """
-import argparse
-from src.server import app
-
-parser = argparse.ArgumentParser(description='Start Answer Coalesce interface.')
-parser.add_argument('--host', default='0.0.0.0', type=str)
-parser.add_argument('--port', default=6380, type=int)
-
-args = parser.parse_args()
-
-app.run(host=args.host, port=args.port, debug=False)
+# --bind 0.0.0.0:6380 -w 1 -k uvicorn.workers.UvicornWorker -t 600 src.server:APP
+app = WSGIApplication()
+app.run()

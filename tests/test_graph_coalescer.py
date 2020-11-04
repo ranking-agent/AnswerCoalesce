@@ -34,6 +34,7 @@ def test_graph_coalescer_perf_test():
     # open the file and load it
     with open(test_filename,'r') as tf:
         incoming = json.load(tf)
+        incoming = incoming['message']
 
     # call function that does property coalesce
     coalesced = coalesce(incoming, method='graph')
@@ -62,6 +63,7 @@ def test_graph_coalesce():
     testfilename = os.path.join(dir_path, 'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     newset = snc.coalesce(answerset, method='graph')
     for r in newset['results']:
         nbs = r['node_bindings']
@@ -77,6 +79,7 @@ def test_graph_coalesce_strider():
     testfilename = os.path.join(dir_path, 'strider_relay_mouse.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        answerset = answerset['message']
     newset = snc.coalesce(answerset, method='graph')
     for r in newset['results']:
         nbs = r['node_bindings']
@@ -99,6 +102,7 @@ def test_missing_node_norm():
     # open the file and load it
     with open(test_filename,'r') as tf:
         incoming = json.load(tf)
+        incoming = incoming['message']
 
     # call function that does property coalesce
     coalesced = coalesce(incoming, method='graph')

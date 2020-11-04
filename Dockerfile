@@ -1,5 +1,5 @@
 # base this container on python 3.8
-FROM python:3.8.1-buster
+FROM python:3.8.5
 
 # get some credit
 LABEL maintainer="powen@renci.org"
@@ -19,13 +19,17 @@ RUN mkdir /repo
 WORKDIR /repo
 
 # get the latest code
-RUN git clone https://github.com/TranslatorIIPrototypes/AnswerCoalesce.git
+RUN git clone https://github.com/ranking-agent/AnswerCoalesce.git
 
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
 
+# RUN git checkout Phil_AC
+
 # install all required packages
 RUN pip install -r requirements.txt
+
+RUN pip install uvicorn
 
 # pull down the large files
 RUN git lfs pull
@@ -34,4 +38,4 @@ RUN git lfs pull
 EXPOSE 6380
 
 # start the service entry point
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["bash", "main.sh"]
