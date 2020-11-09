@@ -42,7 +42,7 @@ class MethodName(str, Enum):
 
 @APP.post('/coalesce/{method}')
 async def coalesce_handler(request: Request, method: MethodName) -> Message:
-    """ Answer coalesce operations. You ay choose all, property, graph or ontology analysis. """
+    """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
 
     # convert the incoming message into a dict
     message = request.message.dict()
