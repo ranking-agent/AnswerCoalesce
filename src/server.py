@@ -40,7 +40,7 @@ class MethodName(str, Enum):
     ontology = "ontology"
 
 
-@APP.post('/coalesce/{method}')
+@APP.post('/coalesce/{method}', response_model=Message, response_model_exclude_none=True)
 async def coalesce_handler(request: Request, method: MethodName) -> Message:
     """ Answer coalesce operations. You ay choose all, property, graph or ontology analysis. """
 
