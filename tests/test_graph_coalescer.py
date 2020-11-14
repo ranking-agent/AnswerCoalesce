@@ -65,12 +65,16 @@ def test_graph_coalesce():
         answerset = json.load(tf)
         answerset = answerset['message']
     newset = snc.coalesce(answerset, method='graph')
+    kgnodes = set([n['id'] for n in newset['knowledge_graph']['nodes']])
     for r in newset['results']:
         nbs = r['node_bindings']
         extra = False
         for nb in nbs:
             if nb['qg_id'].startswith('extra'):
                 extra = True
+            #Every node binding should be found somewhere in the kg nodes
+            for kgid in nb['kg_id']:
+                assert kgid in kgnodes
         assert extra
 
 def test_graph_coalesce_strider():

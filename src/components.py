@@ -225,7 +225,7 @@ class Answer:
         """Serialize the answer back to ReasonerStd JSON"""
         json_node_bindings = [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.node_bindings.items() ]
         json_edge_bindings = [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.question_edge_bindings.items() ]
-        json_node_bindings += [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.support_edge_bindings.items() ]
+        json_edge_bindings += [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.support_edge_bindings.items() ]
         for nb in json_node_bindings:
             nb.update(self.binding_properties[nb['qg_id']])
         for eb in json_edge_bindings:
