@@ -24,8 +24,6 @@ RUN git clone https://github.com/ranking-agent/AnswerCoalesce.git
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
 
-# RUN git checkout Phil_AC
-
 # install all required packages
 RUN pip install -r requirements.txt
 
