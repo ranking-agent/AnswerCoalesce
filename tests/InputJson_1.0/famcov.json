@@ -1,0 +1,2177 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "a": {
+                    "category": "biolink:Disease",
+                    "id": [
+                        "MONDO:0100096"
+                    ]
+                },
+                "b": {
+                    "category": "biolink:NamedThing"
+                },
+                "c": {
+                    "category": "biolink:ChemicalSubstance",
+                    "id": [
+                        "CHEBI:4975"
+                    ]
+                }
+            },
+            "edges": {
+                "ab": {
+                    "subject": "a",
+                    "object": "b"
+                },
+                "bc": {
+                    "subject": "c",
+                    "object": "b"
+                }
+            }
+        },
+        "knowledge_graph": {
+            "nodes": {
+                "HP:0002098": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:DiseaseOrPhenotypicFeature",
+                        "biolink:PhenotypicFeature"
+                    ],
+                    "name": "Respiratory distress"
+                },
+                "CHEBI:22984": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "calcium(0)"
+                },
+                "MONDO:0045057": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "delirium"
+                },
+                "CHEBI:77260": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "6-methoxy-2-[(4-methoxy-3,5-dimethyl-2-pyridinyl)methylsulfinyl]-1H-benzimidazole"
+                },
+                "MONDO:0004900": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "peripheral vertigo"
+                },
+                "CHEBI:27140": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "triplet dioxygen"
+                },
+                "MONDO:0005478": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "torsades de pointes"
+                },
+                "CHEBI:41879": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "dexamethasone"
+                },
+                "CHEBI:135765": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "methylprednisolone succinate"
+                },
+                "MONDO:0005009": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "congestive heart failure"
+                },
+                "MONDO:0021146": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "headache disorder"
+                },
+                "CHEBI:2676": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "amoxicillin"
+                },
+                "MONDO:0021113": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "respiratory failure"
+                },
+                "MONDO:0100096": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "COVID-19"
+                },
+                "MONDO:0001673": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "diarrheal disease"
+                },
+                "CHEBI:16899": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "D-mannitol"
+                },
+                "CHEBI:4975": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "famotidine"
+                },
+                "MONDO:0006502": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "adult respiratory distress syndrome"
+                },
+                "MONDO:0005249": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "pneumonia"
+                },
+                "MONDO:0005379": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "neurotic disorder"
+                },
+                "CHEBI:15365": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "acetylsalicylic acid"
+                },
+                "MONDO:0015137": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "periodic fever syndrome"
+                },
+                "MONDO:0004995": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "cardiovascular disease"
+                },
+                "HP:0031246": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:DiseaseOrPhenotypicFeature",
+                        "biolink:PhenotypicFeature"
+                    ],
+                    "name": "Nonproductive cough"
+                },
+                "CHEBI:8382": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "prednisone"
+                },
+                "MONDO:0003699": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "phobic disorder"
+                },
+                "CHEBI:50275": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "esomeprazole"
+                },
+                "CHEBI:17650": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "cortisol"
+                },
+                "HP:0002094": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:DiseaseOrPhenotypicFeature",
+                        "biolink:PhenotypicFeature"
+                    ],
+                    "name": "Dyspnea"
+                },
+                "HP:0003326": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:DiseaseOrPhenotypicFeature",
+                        "biolink:PhenotypicFeature"
+                    ],
+                    "name": "Myalgia"
+                },
+                "MONDO:0003019": {
+                    "category": [
+                        "biolink:BiologicalEntity",
+                        "biolink:Disease",
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "name": "potassium deficiency disease"
+                }
+            },
+            "edges": {
+                "6495101038d3ebd2aef30675f0bef227": {
+                    "subject": "CHEBI:22984",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "4c4115b44968337424dd20dba4f70e0c": {
+                    "subject": "CHEBI:22984",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "d8680bb5602b6b89d26a25b24e2c095b": {
+                    "subject": "CHEBI:77260",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "421161f1bf8904ea7ee3e2133c21d58c": {
+                    "subject": "CHEBI:77260",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "cb3ea2a62b1f66ce84418e8a3be0e8ef": {
+                    "subject": "CHEBI:27140",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "33c1128df44678aa7e2c4b00bef7ed80": {
+                    "subject": "CHEBI:27140",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "3362f77d3da71d2a78c1fa2c2a377777": {
+                    "subject": "CHEBI:41879",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "ea0ac9ce749f81122601bc5e874f74bc": {
+                    "subject": "CHEBI:41879",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "ebf691afed5e5d1f15efb4c068868544": {
+                    "subject": "CHEBI:135765",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "840140149eadac3be9345260d78fc8be": {
+                    "subject": "CHEBI:135765",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "8af37d23e5428c5a1cb8547385f6772c": {
+                    "subject": "MONDO:0005009",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "97d2d4d898611e086700cdd83d8e97fd": {
+                    "subject": "MONDO:0005009",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "37894ba3dd3eb368addfaa8b2bdd3339": {
+                    "subject": "CHEBI:2676",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "38463c3f2f4fa6107f8ed8e342e9c4b0": {
+                    "subject": "CHEBI:2676",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "6f1af85dfe9fca1dbd398d8eb7fd82ff": {
+                    "subject": "MONDO:0021113",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "21e0fb31f5500329d0e145e1a1c1d73e": {
+                    "subject": "MONDO:0021113",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "c628d14b6df7def8adc0ef83e9b05bf1": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0005478",
+                    "predicate": "biolink:related_to"
+                },
+                "eb2b32c3a22ebcefac4d52819d41db51": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0005478",
+                    "predicate": "biolink:related_to"
+                },
+                "91d70bc5d586a986d737b57b60f58470": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "fab6806d5b0df8e30151ea1996f1801b": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0045057",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "435e08ee81641e965b42ff260d8ff0a2": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0021146",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "68056e92b90c88ad659225911cff2241": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0001673",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "f9ae048208c0ca25ac0944ec49880d80": {
+                    "subject": "MONDO:0100096",
+                    "object": "HP:0002098",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "073a448000db4534afdc5852e8827c6b": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0015137",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "7575a15c9db427fcff8a64e062782e7a": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0004900",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "a36a8e13acb3df3e2fbaa557a64b85c7": {
+                    "subject": "MONDO:0100096",
+                    "object": "HP:0003326",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "e58a3b85f45f7ad8fc9c9865a690d844": {
+                    "subject": "MONDO:0100096",
+                    "object": "HP:0002094",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "9f4df0444db2a3ffc09c25e8b0713578": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0045057",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "39bf57a77e9522c8643e2a4bdb6ccd8f": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0021146",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "449bd7a67b7c8dcec04ed68e60170c65": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0001673",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "621c2897d9cd436ad9d0a0a5d1b7fd44": {
+                    "subject": "MONDO:0100096",
+                    "object": "HP:0002098",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "4b5cc0ba33025b8d27e1ea9c61d24545": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0015137",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "a0ab13c777e2d23b0ea6f82a2d06dd88": {
+                    "subject": "MONDO:0100096",
+                    "object": "MONDO:0004900",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "d28135ab3f9c8ecb3bad81929bd68357": {
+                    "subject": "MONDO:0100096",
+                    "object": "HP:0003326",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "3faaa74ce473aca1932f5d91ff7238db": {
+                    "subject": "MONDO:0100096",
+                    "object": "HP:0002094",
+                    "predicate": "biolink:has_phenotype"
+                },
+                "30fbd2d5b20760ca28f0a501143f2212": {
+                    "subject": "MONDO:0001673",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "11a0002c5b1939093e85a34dd17eec0d": {
+                    "subject": "CHEBI:16899",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "8334c5cbc77f948b76c66df621baa667": {
+                    "subject": "CHEBI:16899",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "7325ed3030aa9e947dd4064104317cfc": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005478",
+                    "predicate": "biolink:contributes_to"
+                },
+                "908ca5052b017f4ea79f769b5c3a5897": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0045057",
+                    "predicate": "biolink:contributes_to"
+                },
+                "1b344638fcb4da3c3c3f84e0fa30fb0b": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0021146",
+                    "predicate": "biolink:contributes_to"
+                },
+                "2fcb26c5435fda1b99c632c3e5e99efd": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005379",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "cc99bb33ef8f58c50731d908ae6e750d": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005478",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "da825870d445b043d8c03cde137e1499": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005249",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "26681dad7296fe33215922a961392821": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0006502",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "1e4dfcec8da6409799fb897f6e02a746": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0045057",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "8872e78619d787c6ebede9c092e74db5": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005009",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "5d1a7a8fad6fa52d4eec8857c540a664": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0003019",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "a72584a4e86423d6d94314f0bce9ddc5": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0021113",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "2df290232bf3d30a27ad874836d05262": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0015137",
+                    "predicate": "biolink:causes_adverse_event"
+                },
+                "7439d7827535887b5a70c9c947bc6450": {
+                    "subject": "CHEBI:4975",
+                    "object": "HP:0003326",
+                    "predicate": "biolink:prevents"
+                },
+                "08fad98cd9189aca091f94ce1263db39": {
+                    "subject": "CHEBI:4975",
+                    "object": "HP:0031246",
+                    "predicate": "biolink:prevents"
+                },
+                "b507d7530765741a28afd91562ad49d1": {
+                    "subject": "CHEBI:4975",
+                    "object": "HP:0002098",
+                    "predicate": "biolink:prevents"
+                },
+                "84aa4a49db52be6a1be71060f32b219c": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0004995",
+                    "predicate": "biolink:prevents"
+                },
+                "8183f213914fbca4a1ada57f34367e93": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0045057",
+                    "predicate": "biolink:prevents"
+                },
+                "ca8fa0f8260433fef4eac6579ef883fc": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0021146",
+                    "predicate": "biolink:prevents"
+                },
+                "a2178d4e628eefdc535e66edd7b15e52": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0003699",
+                    "predicate": "biolink:prevents"
+                },
+                "97ba863e0634a258a7bd4f13f5c2154b": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0004900",
+                    "predicate": "biolink:prevents"
+                },
+                "286175077d57b4f311c121f3a29639c3": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005379",
+                    "predicate": "biolink:prevents"
+                },
+                "c1ceb82427292fa60cd18f538af273b1": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0001673",
+                    "predicate": "biolink:contraindicated_for"
+                },
+                "c0daa6d354f8f344dff3c0dccf6863ed": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "2a2c20ef3a15a0dce005d5e8b1e22a1d": {
+                    "subject": "MONDO:0006502",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "a44804391705f164a5bb9c204716c92c": {
+                    "subject": "MONDO:0006502",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "a32a6ee9ea3aa7d354cd1a77678d0e02": {
+                    "subject": "MONDO:0005249",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "8386cced5413d3602a1e4332437c341f": {
+                    "subject": "MONDO:0005249",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "e143a8681297e111bf172beccaa51605": {
+                    "subject": "MONDO:0005379",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "ad98da8d0cdb2b95e6ca0a652f40569a": {
+                    "subject": "MONDO:0005379",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "c969c528d3617853bb34aa247ed9e95d": {
+                    "subject": "CHEBI:15365",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "37df1bf232ea833789b40a3153d8b555": {
+                    "subject": "CHEBI:15365",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "1c48c41821627f5d739c2c5a487cf59c": {
+                    "subject": "MONDO:0015137",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "1959115ab28102902728ed814b1dc383": {
+                    "subject": "MONDO:0015137",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "4517e987116abb2e00576600b614b253": {
+                    "subject": "MONDO:0015137",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "b8fd8b1f41940990aa64c864bbd11673": {
+                    "subject": "MONDO:0004995",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "3a2a0ef902c24176627a0fe0a4d8b08d": {
+                    "subject": "MONDO:0004995",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "20efb5427532feca8c4414eec5dc08a7": {
+                    "subject": "HP:0031246",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "449ad2390a9c19c7160928c6a90c676e": {
+                    "subject": "HP:0031246",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "c625e04a5df86b5bb725f89028c741ff": {
+                    "subject": "CHEBI:8382",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "76398bba70a95e399d781a961c4fa06a": {
+                    "subject": "CHEBI:8382",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "8da08aa3cec388d5964a17c324bd9c33": {
+                    "subject": "MONDO:0003699",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "9b2d58d2499d827d194969160fd61854": {
+                    "subject": "MONDO:0003699",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "6dfcdcf38aebae004be0134938b718f2": {
+                    "subject": "CHEBI:50275",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "fdf8c945c14dbca6564f969ea567918e": {
+                    "subject": "CHEBI:50275",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "e45b6937a7ccfd5efc48a7f46df2103a": {
+                    "subject": "CHEBI:17650",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "0bec65fb831ddbedf776323dd197cc05": {
+                    "subject": "CHEBI:17650",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:in_clinical_trial_for"
+                },
+                "f674ed3268ec430961a1f6f638e0fd69": {
+                    "subject": "HP:0002094",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "4077f68824a70e18d6f777747c48496e": {
+                    "subject": "HP:0002094",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "c26b88cf20b7f8ee7fe2c6a4ee2ab275": {
+                    "subject": "HP:0002094",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "643fdb270933cd61a955bdd179ad7c73": {
+                    "subject": "HP:0003326",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "c60a718be22bec610056f8783bd29243": {
+                    "subject": "HP:0003326",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "1ab4bb5350a0e315b05708cf61348735": {
+                    "subject": "MONDO:0003019",
+                    "object": "MONDO:0100096",
+                    "predicate": "biolink:related_to"
+                },
+                "6ff38fffa4c6f0dcacc578327d518a21": {
+                    "subject": "MONDO:0003019",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:related_to"
+                },
+                "d4e78c78-a9d2-4d14-a48d-c83400ff4ef9": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005478",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "27ca8f4a-3188-47fb-84fa-f964f0e6a7d7": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0003019",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "9557970d-4046-4501-908d-469582b4e4f8": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005009",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "0b8108ec-1659-43e2-b049-298c694cd25a": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0004995",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "ef1a21ce-90bc-4a94-afe5-4601c34af56a": {
+                    "subject": "CHEBI:4975",
+                    "object": "HP:0003326",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "78f3d378-b424-4c29-a9d7-b6883c331209": {
+                    "subject": "CHEBI:4975",
+                    "object": "HP:0002094",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "55cd21a5-5241-4af9-9c0a-b10f3e2630b5": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0005249",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "c68f887a-d320-41d1-b5c4-e91fa82f4f81": {
+                    "subject": "CHEBI:4975",
+                    "object": "HP:0031246",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "3270244f-8be5-43f1-b85d-4a4801c40c91": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0045057",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "82d2f83e-edbf-49a2-9b63-f20ea55380bf": {
+                    "subject": "CHEBI:4975",
+                    "object": "MONDO:0001673",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "889a6f2d-055f-4cde-8584-cda06bd17ed8": {
+                    "subject": "CHEBI:4975",
+                    "object": "HP:0002098",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "ede49322-26fc-4bcb-881c-e3959ef3dad5": {
+                    "subject": "CHEBI:16899",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "a84c2809-7d01-4748-b84b-e17f15bcc813": {
+                    "subject": "CHEBI:2676",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "4b8b3de0-3361-4f8b-aae8-93e775ed92d8": {
+                    "subject": "CHEBI:4975",
+                    "object": "CHEBI:8382",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "95b2258b-71a5-4902-81cf-794b0fe07789": {
+                    "subject": "CHEBI:4975",
+                    "object": "CHEBI:50275",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "c2a52715-5a8f-4a03-a1a8-c4444fa9f191": {
+                    "subject": "CHEBI:17650",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "0b8cf6dc-23cf-48a4-b318-6f9c23426f35": {
+                    "subject": "CHEBI:15365",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "9035f929-97e1-4191-a80b-0e2e4d2715a9": {
+                    "subject": "CHEBI:22984",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:literature_co_occurrence"
+                },
+                "ca772381-2406-4df1-b4b5-a03f8637050c": {
+                    "subject": "CHEBI:41879",
+                    "object": "CHEBI:4975",
+                    "predicate": "biolink:literature_co_occurrence"
+                }
+            }
+        },
+        "results": [
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0015137"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "1c48c41821627f5d739c2c5a487cf59c",
+                            "kg_id": "1c48c41821627f5d739c2c5a487cf59c",
+                            "weight": 0.9999999993055324
+                        },
+                        {
+                            "id": "4517e987116abb2e00576600b614b253",
+                            "kg_id": "4517e987116abb2e00576600b614b253",
+                            "weight": 0.9999999990037565
+                        },
+                        {
+                            "id": "073a448000db4534afdc5852e8827c6b",
+                            "kg_id": "073a448000db4534afdc5852e8827c6b",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "4b5cc0ba33025b8d27e1ea9c61d24545",
+                            "kg_id": "4b5cc0ba33025b8d27e1ea9c61d24545",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "1959115ab28102902728ed814b1dc383",
+                            "kg_id": "1959115ab28102902728ed814b1dc383",
+                            "weight": 0.4994837042423179
+                        },
+                        {
+                            "id": "2df290232bf3d30a27ad874836d05262",
+                            "kg_id": "2df290232bf3d30a27ad874836d05262",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0005478"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "c628d14b6df7def8adc0ef83e9b05bf1",
+                            "kg_id": "c628d14b6df7def8adc0ef83e9b05bf1",
+                            "weight": 0.658982572337687
+                        },
+                        {
+                            "id": "eb2b32c3a22ebcefac4d52819d41db51",
+                            "kg_id": "eb2b32c3a22ebcefac4d52819d41db51",
+                            "weight": 0.6612624688429676
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "7325ed3030aa9e947dd4064104317cfc",
+                            "kg_id": "7325ed3030aa9e947dd4064104317cfc",
+                            "weight": 0.4999999999999998
+                        },
+                        {
+                            "id": "cc99bb33ef8f58c50731d908ae6e750d",
+                            "kg_id": "cc99bb33ef8f58c50731d908ae6e750d",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s0": [
+                        {
+                            "id": "d4e78c78-a9d2-4d14-a48d-c83400ff4ef9",
+                            "kg_id": "d4e78c78-a9d2-4d14-a48d-c83400ff4ef9",
+                            "weight": 0.00045756105788807844
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0005379"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "e143a8681297e111bf172beccaa51605",
+                            "kg_id": "e143a8681297e111bf172beccaa51605",
+                            "weight": 0.999999699289166
+                        },
+                        {
+                            "id": "ad98da8d0cdb2b95e6ca0a652f40569a",
+                            "kg_id": "ad98da8d0cdb2b95e6ca0a652f40569a",
+                            "weight": 0.9999996872718779
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "2fcb26c5435fda1b99c632c3e5e99efd",
+                            "kg_id": "2fcb26c5435fda1b99c632c3e5e99efd",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "286175077d57b4f311c121f3a29639c3",
+                            "kg_id": "286175077d57b4f311c121f3a29639c3",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "HP:0002094"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "f674ed3268ec430961a1f6f638e0fd69",
+                            "kg_id": "f674ed3268ec430961a1f6f638e0fd69",
+                            "weight": 0.9999824557282981
+                        },
+                        {
+                            "id": "c26b88cf20b7f8ee7fe2c6a4ee2ab275",
+                            "kg_id": "c26b88cf20b7f8ee7fe2c6a4ee2ab275",
+                            "weight": 0.9999769934416685
+                        },
+                        {
+                            "id": "e58a3b85f45f7ad8fc9c9865a690d844",
+                            "kg_id": "e58a3b85f45f7ad8fc9c9865a690d844",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "3faaa74ce473aca1932f5d91ff7238db",
+                            "kg_id": "3faaa74ce473aca1932f5d91ff7238db",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "4077f68824a70e18d6f777747c48496e",
+                            "kg_id": "4077f68824a70e18d6f777747c48496e",
+                            "weight": 0.4852840163699337
+                        }
+                    ],
+                    "s15": [
+                        {
+                            "id": "78f3d378-b424-4c29-a9d7-b6883c331209",
+                            "kg_id": "78f3d378-b424-4c29-a9d7-b6883c331209",
+                            "weight": 0.0
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0045057"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "fab6806d5b0df8e30151ea1996f1801b",
+                            "kg_id": "fab6806d5b0df8e30151ea1996f1801b",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "9f4df0444db2a3ffc09c25e8b0713578",
+                            "kg_id": "9f4df0444db2a3ffc09c25e8b0713578",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "908ca5052b017f4ea79f769b5c3a5897",
+                            "kg_id": "908ca5052b017f4ea79f769b5c3a5897",
+                            "weight": 0.6772190444071822
+                        },
+                        {
+                            "id": "1e4dfcec8da6409799fb897f6e02a746",
+                            "kg_id": "1e4dfcec8da6409799fb897f6e02a746",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "8183f213914fbca4a1ada57f34367e93",
+                            "kg_id": "8183f213914fbca4a1ada57f34367e93",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s30": [
+                        {
+                            "id": "3270244f-8be5-43f1-b85d-4a4801c40c91",
+                            "kg_id": "3270244f-8be5-43f1-b85d-4a4801c40c91",
+                            "weight": 0.0002715374105133339
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:27140"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "33c1128df44678aa7e2c4b00bef7ed80",
+                            "kg_id": "33c1128df44678aa7e2c4b00bef7ed80",
+                            "weight": 0.9982494852993535
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "cb3ea2a62b1f66ce84418e8a3be0e8ef",
+                            "kg_id": "cb3ea2a62b1f66ce84418e8a3be0e8ef",
+                            "weight": 0.49817161404929755
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0001673"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "68056e92b90c88ad659225911cff2241",
+                            "kg_id": "68056e92b90c88ad659225911cff2241",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "449bd7a67b7c8dcec04ed68e60170c65",
+                            "kg_id": "449bd7a67b7c8dcec04ed68e60170c65",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "30fbd2d5b20760ca28f0a501143f2212",
+                            "kg_id": "30fbd2d5b20760ca28f0a501143f2212",
+                            "weight": 0.5608511527910853
+                        },
+                        {
+                            "id": "c1ceb82427292fa60cd18f538af273b1",
+                            "kg_id": "c1ceb82427292fa60cd18f538af273b1",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s34": [
+                        {
+                            "id": "82d2f83e-edbf-49a2-9b63-f20ea55380bf",
+                            "kg_id": "82d2f83e-edbf-49a2-9b63-f20ea55380bf",
+                            "weight": 0.0011879162491723605
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0021146"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "435e08ee81641e965b42ff260d8ff0a2",
+                            "kg_id": "435e08ee81641e965b42ff260d8ff0a2",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "39bf57a77e9522c8643e2a4bdb6ccd8f",
+                            "kg_id": "39bf57a77e9522c8643e2a4bdb6ccd8f",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "1b344638fcb4da3c3c3f84e0fa30fb0b",
+                            "kg_id": "1b344638fcb4da3c3c3f84e0fa30fb0b",
+                            "weight": 0.4999999999999998
+                        },
+                        {
+                            "id": "ca8fa0f8260433fef4eac6579ef883fc",
+                            "kg_id": "ca8fa0f8260433fef4eac6579ef883fc",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0005009"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "8af37d23e5428c5a1cb8547385f6772c",
+                            "kg_id": "8af37d23e5428c5a1cb8547385f6772c",
+                            "weight": 0.47828117028586203
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "97d2d4d898611e086700cdd83d8e97fd",
+                            "kg_id": "97d2d4d898611e086700cdd83d8e97fd",
+                            "weight": 0.4695166361192016
+                        },
+                        {
+                            "id": "8872e78619d787c6ebede9c092e74db5",
+                            "kg_id": "8872e78619d787c6ebede9c092e74db5",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s5": [
+                        {
+                            "id": "9557970d-4046-4501-908d-469582b4e4f8",
+                            "kg_id": "9557970d-4046-4501-908d-469582b4e4f8",
+                            "weight": 0.00025229939954596325
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0003019"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "1ab4bb5350a0e315b05708cf61348735",
+                            "kg_id": "1ab4bb5350a0e315b05708cf61348735",
+                            "weight": 0.469920191791352
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "6ff38fffa4c6f0dcacc578327d518a21",
+                            "kg_id": "6ff38fffa4c6f0dcacc578327d518a21",
+                            "weight": 0.3890500296379069
+                        },
+                        {
+                            "id": "5d1a7a8fad6fa52d4eec8857c540a664",
+                            "kg_id": "5d1a7a8fad6fa52d4eec8857c540a664",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s3": [
+                        {
+                            "id": "27ca8f4a-3188-47fb-84fa-f964f0e6a7d7",
+                            "kg_id": "27ca8f4a-3188-47fb-84fa-f964f0e6a7d7",
+                            "weight": 0.0
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "HP:0003326"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "643fdb270933cd61a955bdd179ad7c73",
+                            "kg_id": "643fdb270933cd61a955bdd179ad7c73",
+                            "weight": 0.9979473786958208
+                        },
+                        {
+                            "id": "c60a718be22bec610056f8783bd29243",
+                            "kg_id": "c60a718be22bec610056f8783bd29243",
+                            "weight": 0.9975138775271195
+                        },
+                        {
+                            "id": "a36a8e13acb3df3e2fbaa557a64b85c7",
+                            "kg_id": "a36a8e13acb3df3e2fbaa557a64b85c7",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "d28135ab3f9c8ecb3bad81929bd68357",
+                            "kg_id": "d28135ab3f9c8ecb3bad81929bd68357",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "7439d7827535887b5a70c9c947bc6450",
+                            "kg_id": "7439d7827535887b5a70c9c947bc6450",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s13": [
+                        {
+                            "id": "ef1a21ce-90bc-4a94-afe5-4601c34af56a",
+                            "kg_id": "ef1a21ce-90bc-4a94-afe5-4601c34af56a",
+                            "weight": 8.314966379430189e-06
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0005249"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "a32a6ee9ea3aa7d354cd1a77678d0e02",
+                            "kg_id": "a32a6ee9ea3aa7d354cd1a77678d0e02",
+                            "weight": 1.0
+                        },
+                        {
+                            "id": "8386cced5413d3602a1e4332437c341f",
+                            "kg_id": "8386cced5413d3602a1e4332437c341f",
+                            "weight": 0.9999999999999996
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "da825870d445b043d8c03cde137e1499",
+                            "kg_id": "da825870d445b043d8c03cde137e1499",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s19": [
+                        {
+                            "id": "55cd21a5-5241-4af9-9c0a-b10f3e2630b5",
+                            "kg_id": "55cd21a5-5241-4af9-9c0a-b10f3e2630b5",
+                            "weight": 0.0003834299723359802
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "91d70bc5d586a986d737b57b60f58470",
+                            "kg_id": "91d70bc5d586a986d737b57b60f58470",
+                            "weight": 1.0
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "c0daa6d354f8f344dff3c0dccf6863ed",
+                            "kg_id": "c0daa6d354f8f344dff3c0dccf6863ed",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "HP:0031246"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "20efb5427532feca8c4414eec5dc08a7",
+                            "kg_id": "20efb5427532feca8c4414eec5dc08a7",
+                            "weight": 0.9999999999992633
+                        },
+                        {
+                            "id": "449ad2390a9c19c7160928c6a90c676e",
+                            "kg_id": "449ad2390a9c19c7160928c6a90c676e",
+                            "weight": 0.9999999999989644
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "08fad98cd9189aca091f94ce1263db39",
+                            "kg_id": "08fad98cd9189aca091f94ce1263db39",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s21": [
+                        {
+                            "id": "c68f887a-d320-41d1-b5c4-e91fa82f4f81",
+                            "kg_id": "c68f887a-d320-41d1-b5c4-e91fa82f4f81",
+                            "weight": 0.0
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0003699"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "8da08aa3cec388d5964a17c324bd9c33",
+                            "kg_id": "8da08aa3cec388d5964a17c324bd9c33",
+                            "weight": 0.9999988488031701
+                        },
+                        {
+                            "id": "9b2d58d2499d827d194969160fd61854",
+                            "kg_id": "9b2d58d2499d827d194969160fd61854",
+                            "weight": 0.9999988262825834
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "a2178d4e628eefdc535e66edd7b15e52",
+                            "kg_id": "a2178d4e628eefdc535e66edd7b15e52",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0004995"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "b8fd8b1f41940990aa64c864bbd11673",
+                            "kg_id": "b8fd8b1f41940990aa64c864bbd11673",
+                            "weight": 0.9999936132029088
+                        },
+                        {
+                            "id": "3a2a0ef902c24176627a0fe0a4d8b08d",
+                            "kg_id": "3a2a0ef902c24176627a0fe0a4d8b08d",
+                            "weight": 0.9999946722219595
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "84aa4a49db52be6a1be71060f32b219c",
+                            "kg_id": "84aa4a49db52be6a1be71060f32b219c",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s9": [
+                        {
+                            "id": "0b8108ec-1659-43e2-b049-298c694cd25a",
+                            "kg_id": "0b8108ec-1659-43e2-b049-298c694cd25a",
+                            "weight": 0.0
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0006502"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "2a2c20ef3a15a0dce005d5e8b1e22a1d",
+                            "kg_id": "2a2c20ef3a15a0dce005d5e8b1e22a1d",
+                            "weight": 0.9999533081482188
+                        },
+                        {
+                            "id": "a44804391705f164a5bb9c204716c92c",
+                            "kg_id": "a44804391705f164a5bb9c204716c92c",
+                            "weight": 0.9999570821148334
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "26681dad7296fe33215922a961392821",
+                            "kg_id": "26681dad7296fe33215922a961392821",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0021113"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "6f1af85dfe9fca1dbd398d8eb7fd82ff",
+                            "kg_id": "6f1af85dfe9fca1dbd398d8eb7fd82ff",
+                            "weight": 0.9999097379714201
+                        },
+                        {
+                            "id": "21e0fb31f5500329d0e145e1a1c1d73e",
+                            "kg_id": "21e0fb31f5500329d0e145e1a1c1d73e",
+                            "weight": 0.99991370285779
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "a72584a4e86423d6d94314f0bce9ddc5",
+                            "kg_id": "a72584a4e86423d6d94314f0bce9ddc5",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "HP:0002098"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "f9ae048208c0ca25ac0944ec49880d80",
+                            "kg_id": "f9ae048208c0ca25ac0944ec49880d80",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "621c2897d9cd436ad9d0a0a5d1b7fd44",
+                            "kg_id": "621c2897d9cd436ad9d0a0a5d1b7fd44",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "b507d7530765741a28afd91562ad49d1",
+                            "kg_id": "b507d7530765741a28afd91562ad49d1",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "s36": [
+                        {
+                            "id": "889a6f2d-055f-4cde-8584-cda06bd17ed8",
+                            "kg_id": "889a6f2d-055f-4cde-8584-cda06bd17ed8",
+                            "weight": 5.283676206091492e-05
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "MONDO:0004900"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "7575a15c9db427fcff8a64e062782e7a",
+                            "kg_id": "7575a15c9db427fcff8a64e062782e7a",
+                            "weight": 0.2679491924311228
+                        },
+                        {
+                            "id": "a0ab13c777e2d23b0ea6f82a2d06dd88",
+                            "kg_id": "a0ab13c777e2d23b0ea6f82a2d06dd88",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "97ba863e0634a258a7bd4f13f5c2154b",
+                            "kg_id": "97ba863e0634a258a7bd4f13f5c2154b",
+                            "weight": 0.2679491924311228
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:22984"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "4c4115b44968337424dd20dba4f70e0c",
+                            "kg_id": "4c4115b44968337424dd20dba4f70e0c",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "6495101038d3ebd2aef30675f0bef227",
+                            "kg_id": "6495101038d3ebd2aef30675f0bef227",
+                            "weight": 0.4779289848884183
+                        }
+                    ],
+                    "s56": [
+                        {
+                            "id": "9035f929-97e1-4191-a80b-0e2e4d2715a9",
+                            "kg_id": "9035f929-97e1-4191-a80b-0e2e4d2715a9",
+                            "weight": 0.00012210997097827914
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:135765"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "840140149eadac3be9345260d78fc8be",
+                            "kg_id": "840140149eadac3be9345260d78fc8be",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "ebf691afed5e5d1f15efb4c068868544",
+                            "kg_id": "ebf691afed5e5d1f15efb4c068868544",
+                            "weight": 0.4776283954419569
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:50275"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "fdf8c945c14dbca6564f969ea567918e",
+                            "kg_id": "fdf8c945c14dbca6564f969ea567918e",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "6dfcdcf38aebae004be0134938b718f2",
+                            "kg_id": "6dfcdcf38aebae004be0134938b718f2",
+                            "weight": 0.46747458127322883
+                        }
+                    ],
+                    "s50": [
+                        {
+                            "id": "95b2258b-71a5-4902-81cf-794b0fe07789",
+                            "kg_id": "95b2258b-71a5-4902-81cf-794b0fe07789",
+                            "weight": 0.0009535233993085424
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:15365"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "37df1bf232ea833789b40a3153d8b555",
+                            "kg_id": "37df1bf232ea833789b40a3153d8b555",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "c969c528d3617853bb34aa247ed9e95d",
+                            "kg_id": "c969c528d3617853bb34aa247ed9e95d",
+                            "weight": 0.43892684441131413
+                        }
+                    ],
+                    "s54": [
+                        {
+                            "id": "0b8cf6dc-23cf-48a4-b318-6f9c23426f35",
+                            "kg_id": "0b8cf6dc-23cf-48a4-b318-6f9c23426f35",
+                            "weight": 0.0045732571755316975
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:8382"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "76398bba70a95e399d781a961c4fa06a",
+                            "kg_id": "76398bba70a95e399d781a961c4fa06a",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "c625e04a5df86b5bb725f89028c741ff",
+                            "kg_id": "c625e04a5df86b5bb725f89028c741ff",
+                            "weight": 0.44068712947256294
+                        }
+                    ],
+                    "s48": [
+                        {
+                            "id": "4b8b3de0-3361-4f8b-aae8-93e775ed92d8",
+                            "kg_id": "4b8b3de0-3361-4f8b-aae8-93e775ed92d8",
+                            "weight": 4.390150301292195e-06
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:41879"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "ea0ac9ce749f81122601bc5e874f74bc",
+                            "kg_id": "ea0ac9ce749f81122601bc5e874f74bc",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "3362f77d3da71d2a78c1fa2c2a377777",
+                            "kg_id": "3362f77d3da71d2a78c1fa2c2a377777",
+                            "weight": 0.4397435799825604
+                        }
+                    ],
+                    "s58": [
+                        {
+                            "id": "ca772381-2406-4df1-b4b5-a03f8637050c",
+                            "kg_id": "ca772381-2406-4df1-b4b5-a03f8637050c",
+                            "weight": 0.0006769336758347677
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:77260"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "421161f1bf8904ea7ee3e2133c21d58c",
+                            "kg_id": "421161f1bf8904ea7ee3e2133c21d58c",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "d8680bb5602b6b89d26a25b24e2c095b",
+                            "kg_id": "d8680bb5602b6b89d26a25b24e2c095b",
+                            "weight": 0.41980448462512765
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:2676"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "38463c3f2f4fa6107f8ed8e342e9c4b0",
+                            "kg_id": "38463c3f2f4fa6107f8ed8e342e9c4b0",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "37894ba3dd3eb368addfaa8b2bdd3339",
+                            "kg_id": "37894ba3dd3eb368addfaa8b2bdd3339",
+                            "weight": 0.40845165563794494
+                        }
+                    ],
+                    "s44": [
+                        {
+                            "id": "a84c2809-7d01-4748-b84b-e17f15bcc813",
+                            "kg_id": "a84c2809-7d01-4748-b84b-e17f15bcc813",
+                            "weight": 0.002129237798704775
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:17650"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "0bec65fb831ddbedf776323dd197cc05",
+                            "kg_id": "0bec65fb831ddbedf776323dd197cc05",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "e45b6937a7ccfd5efc48a7f46df2103a",
+                            "kg_id": "e45b6937a7ccfd5efc48a7f46df2103a",
+                            "weight": 0.41010208546283833
+                        }
+                    ],
+                    "s52": [
+                        {
+                            "id": "c2a52715-5a8f-4a03-a1a8-c4444fa9f191",
+                            "kg_id": "c2a52715-5a8f-4a03-a1a8-c4444fa9f191",
+                            "weight": 0.0
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "a": [
+                        {
+                            "id": "MONDO:0100096"
+                        }
+                    ],
+                    "b": [
+                        {
+                            "id": "CHEBI:16899"
+                        }
+                    ],
+                    "c": [
+                        {
+                            "id": "CHEBI:4975"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "ab": [
+                        {
+                            "id": "8334c5cbc77f948b76c66df621baa667",
+                            "kg_id": "8334c5cbc77f948b76c66df621baa667",
+                            "weight": 0.2679491924311228
+                        }
+                    ],
+                    "bc": [
+                        {
+                            "id": "11a0002c5b1939093e85a34dd17eec0d",
+                            "kg_id": "11a0002c5b1939093e85a34dd17eec0d",
+                            "weight": 0.396633700107472
+                        }
+                    ],
+                    "s40": [
+                        {
+                            "id": "ede49322-26fc-4bcb-881c-e3959ef3dad5",
+                            "kg_id": "ede49322-26fc-4bcb-881c-e3959ef3dad5",
+                            "weight": 0.00023048937941405612
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}
