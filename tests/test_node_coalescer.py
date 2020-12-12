@@ -11,7 +11,7 @@ def test_bindings():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -28,7 +28,7 @@ def test_hash_one_hop():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -53,7 +53,7 @@ def test_hash_one_hop_with_different_predicates():
     we should end up with as many classes as combinations of predicates when n0 is the variable node
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop_many_preds.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','asthma_one_hop_many_preds.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -64,19 +64,20 @@ def test_hash_one_hop_with_different_predicates():
     #We need to know how many predicate combinations are in the answers.  So a-[type1]-b is one,
     # and a-[type1,type2]-b (two edges between and and b with types type1,type2) is a different one.
     #how many preds in the kg?
-    types = { e['id']: e['type'] for e in kg['edges']}
+    types = { e_id: e['predicate'] for e_id,e in kg['edges'].items()}
     preds = set()
     for result in answerset['results']:
         ebs = result['edge_bindings']
         ps = set()
-        for eb in ebs:
+        for eb_id,eblist in ebs.items():
             #all the qg_id should be e1, but just in case
-            if eb['qg_id'] != 'e1':
+            if eb_id != 'e1':
                 continue
-            et = types[ eb['kg_id']]
-            if et == 'literature_cooccurence':
-                continue
-            ps.add(et)
+            for eb in eblist:
+                et = types[ eb['id'] ]
+                if et == 'literature_cooccurence':
+                    continue
+                ps.add(et)
         predset = frozenset( ps )
         preds.add(predset)
     for a in answers:
@@ -93,7 +94,7 @@ def x_test_hash_topology():
     change.  The other gene spot varies, and has related process variation.  Most variations
     include only one gene, but there are a couple that include 2"""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'robokop_degreaser.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','robokop_degreaser.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -135,26 +136,22 @@ def make_answer_set():
 
     #Create the testing KG
     nodenames ='ABCDEFG'
-    nodes = [{"id":n, "type":"named_thing"} for n in nodenames]
+    nodes = {n: {"category":"biolink:NamedThing"} for n in nodenames}
     inputedges = ['AB','AC','BD','BE','BF','CE','CF','DG','EG','FG']
-    edges = [{"id":e, "source_id":e[0], "target_id":e[1], "type":"related_to"} for e in inputedges]
+    edges = {e:{ "subject":e[0], "object":e[1], "predicate":"biolink:related_to"} for e in inputedges}
     kg = {'nodes': nodes, 'edges':edges}
     #Create the QG
-    qnodes = [{'id':'n0','curie':'A','type':'named_thing'},{'id':'n1','type':'named_thing'},
-              {'id':'n2','type':'named_thing'},{'id':'n3','curie':'D','type':'named_thing'}]
-    qedges = [{'id':'e0','source_id':'n0','target_id':'n1'},
-              {'id':'e1','source_id':'n1','target_id':'n2'},
-              {'id':'e2','source_id':'n2','target_id':'n3'}]
+    qnodes = {'n0':{'id':'A','category':'biolink:NamedThing'},'n1':{'category':'biolink:NamedThing'},
+              'n2':{'category':'biolink:NamedThing'},'n3':{'id':'D','category':'biolink:NamedThing'}}
+    qedges = {'e0':{'subject':'n0','object':'n1'},
+              'e1':{'subject':'n1','object':'n2'},
+              'e2':{'subject':'n2','object':'n3'}}
     qg = {'nodes':qnodes, 'edges':qedges}
     ans = ['ABEG','ABDG','ABFG','ACFG','ACEG']
     answers = []
     for i,a in enumerate(ans):
-        #These are for the old-style (robokop) bindings:
-        #nb =  {f'n{i}':list(x) for i,x in enumerate(a) }
-        #eb =  {f'e{i}':[f'{a[i]}{a[i+1]}'] for i in range(len(a)-1) }
-        #These are the new-style (messenger) bindings:
-        nb = [{'qg_id':f'n{i}', 'kg_id': list(x)} for i,x in enumerate(a)]
-        eb = [{'qg_id':f'e{i}', 'kg_id':[f'{a[i]}{a[i+1]}']} for i in range(len(a)-1)]
+        nb = {f'n{i}': [ {'id': xi} for xi in x] for i,x in enumerate(a)}
+        eb = {f'e{i}': [{'id':f'{a[i]}{a[i+1]}'}] for i in range(len(a)-1)}
         assert len(eb) == len(nb) -1
         answers.append( {'node_bindings':nb, 'edge_bindings':eb, 'score': 10-i})
     answerset = {'query_graph': qg, 'knowledge_graph':kg, 'results': answers}
@@ -198,14 +195,16 @@ def test_apply_property_patches():
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     assert len(new_answers) == 1
     na = new_answers[0]
-    node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
-    assert len(node_binding['kg_id']) == 2
-    assert 'E' in node_binding[ 'kg_id' ]
-    assert 'F' in node_binding[ 'kg_id' ]
-    assert node_binding['new1'] == 'test'
-    assert len(node_binding['new2']) == 3
-    edge_bindings_1 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e1' ][0]
-    edge_bindings_2 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
+    node_binding = na['node_bindings']['n2']
+    assert len(node_binding) == 2
+    nb_kgids = [ nb['id'] for nb in node_binding ]
+    assert 'E' in nb_kgids
+    assert 'F' in nb_kgids
+    for nb in node_binding:
+        assert nb['new1'] == 'test'
+        assert len(nb['new2']) == 3
+    edge_bindings_1 = [n['id'] for n in na['edge_bindings']['e1']]
+    edge_bindings_2 = [n['id'] for n in na['edge_bindings']['e2']]
     assert len(edge_bindings_1) == 2
     assert 'BE' in edge_bindings_1
     assert 'BF' in edge_bindings_1
@@ -245,31 +244,36 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     assert len(kg_edges) == 10
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     #This is the new line:
-    patch.add_extra_node("E",'named_thing','is_a',newnode_is='target')
+    patch.add_extra_node("E",'named_thing','biolink:is_a',newnode_is='target')
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     #Did we patch the question correctly?
     assert len(updated_qg['nodes']) == 5 #started as 4
     assert len(updated_qg['edges']) == 4 #started as 3
     #n2 should now be a set in the question
-    vnode = [x for x in updated_qg['nodes'] if x['id'] == 'n2'][0]
+    vnode = updated_qg['nodes']['n2']
     assert vnode['set']
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
     na = new_answers[0]
-    node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
-    assert len(node_binding['kg_id']) == 2
-    assert 'E' in node_binding[ 'kg_id' ]
-    assert 'F' in node_binding[ 'kg_id' ]
-    assert node_binding['new1'] == 'test'
-    assert len(node_binding['new2']) == 3
+    node_binding = na['node_bindings']['n2']
+    assert len(node_binding) == 2
+    nbids = [nb['id'] for nb in node_binding]
+    assert 'E' in nbids
+    assert 'F' in nbids
+    for nb in node_binding:
+        assert nb['new1'] == 'test'
+        assert len(nb['new2']) == 3
     #take advantage of node_bindings being a list.  it's a little hinky
-    extra_nb = na['node_bindings'][-1]
-    assert extra_nb['qg_id'].startswith('extra')
-    assert len(extra_nb['kg_id']) == 1
-    assert extra_nb['kg_id'][0] == 'E'
+    found_extra = False
+    for nb_id, nbs in na['node_bindings'].items():
+        if nb_id.startswith('extra'):
+            found_extra = True
+            assert len(nbs) == 1
+            assert nbs[0]['id'] == 'E'
+    assert found_extra
     #edge bindings
-    edge_bindings_1 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e1' ][0]
-    edge_bindings_2 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
+    edge_bindings_1 = [x['id'] for x in na['edge_bindings']['e1'] ]
+    edge_bindings_2 = [x['id'] for x in na['edge_bindings']['e2'] ]
     assert len(edge_bindings_1) == 2
     assert 'BE' in edge_bindings_1
     assert 'BF' in edge_bindings_1
@@ -281,23 +285,23 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     updated_kg_edges = updated_kg['edges']
     assert len(updated_kg_nodes) == len(kg_nodes) #shouldn't add a node
     assert len(updated_kg_edges) == 1 + len(kg_edges) #added 1 is_a edge
-    idm = set([ x['id'] for x in kg_edges] )
-    uidm = { x['id']: x for x in updated_kg_edges }
+    idm = set(kg_edges.keys() )
     found = False
-    for eid in uidm:
+    for eid in updated_kg_edges:
         if eid not in idm:
-            new_edge = uidm[eid]
-            assert new_edge['type'] == 'is_a'
-            assert new_edge['source_id'] == 'F'
-            assert new_edge['target_id'] == 'E'
+            new_edge = updated_kg_edges[eid]
+            assert new_edge['predicate'] == 'biolink:is_a'
+            assert new_edge['subject'] == 'F'
+            assert new_edge['object'] == 'E'
             found = True
     assert found
-    # Again, use the somewhat accidental fact that the new bindings are at the end of the list
-    extra_eb = na['edge_bindings'][-1]
-    print(extra_eb)
-    assert extra_eb['qg_id'].startswith('extra') #mostly checking to see we got the right edge
-    assert len(extra_eb['kg_id'])== 1 #is it pointing to the new kg_id edge?
-    assert extra_eb['kg_id'][0] == eid #is it pointing to the new
+    found_extra_edges = False
+    for edge_id, edge_binding in na['edge_bindings'].items():
+        if edge_id.startswith('extra'):
+            found_extra_edges = True
+            assert len(edge_binding)== 1 #is it pointing to the new kg_id edge?
+            assert edge_binding[0]['id'] == eid #is it pointing to the new
+    assert found_extra_edges
     #edge_bindings_isa = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
 
 def test_round_trip():
@@ -305,7 +309,7 @@ def test_round_trip():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -344,34 +348,41 @@ def test_apply_property_patches_add_two_new_nodes():
     assert len(kg_edges) == 10
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     #This is the new line:
-    patch.add_extra_node("Q",'named_thing','part_of',newnode_is='target')
-    patch.add_extra_node("R",'named_thing','interacts_with',newnode_is='source')
+    patch.add_extra_node("Q",'biolink:NamedThing','biolink:part_of',newnode_is='target')
+    patch.add_extra_node("R",'biolink:NamedThing','biolink:interacts_with',newnode_is='source')
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     #Did we patch the question correctly?
     assert len(updated_qg['nodes']) == 6 #started as 4
     assert len(updated_qg['edges']) == 5 #started as 3
     #n2 should now be a set in the question
-    vnode = [x for x in updated_qg['nodes'] if x['id'] == 'n2'][0]
+    vnode = updated_qg['nodes']['n2']
     assert vnode['set']
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
     na = new_answers[0]
-    node_binding = [ x for x in na[ 'node_bindings' ] if x['qg_id'] == 'n2' ][0]
-    assert len(node_binding['kg_id']) == 2
-    assert 'E' in node_binding[ 'kg_id' ]
-    assert 'F' in node_binding[ 'kg_id' ]
-    assert node_binding['new1'] == 'test'
-    assert len(node_binding['new2']) == 3
+    node_binding = na['node_bindings']['n2']
+    assert len(node_binding) == 2
+    bound_ids = [ nb['id'] for nb in node_binding ]
+    assert 'E' in bound_ids
+    assert 'F' in bound_ids
+    for nb in node_binding:
+        assert nb['new1'] == 'test'
+        assert len(nb['new2']) == 3
     #take advantage of node_bindings being a list.  it's a little hinky
-    for extra_nb in na['node_bindings'][-2:]:
-        assert extra_nb['qg_id'].startswith('extra')
-        assert len(extra_nb['kg_id']) == 1
-    extras = [enb['kg_id'][0] for enb in na['node_bindings'][-2:]]
-    assert 'Q' in extras
-    assert 'R' in extras
+    found_R = False
+    found_Q = False
+    for nb_id, nbs in na['node_bindings'].items():
+        if nb_id.startswith('extra'):
+            assert len(nbs) == 1
+            if nbs[0]['id'] == 'R':
+                found_R = True
+            if nbs[0]['id'] == 'Q':
+                found_Q = True
+    assert found_R
+    assert found_Q
     #edge bindings
-    edge_bindings_1 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e1' ][0]
-    edge_bindings_2 = [ x['kg_id'] for x in na[ 'edge_bindings' ] if x['qg_id'] == 'e2' ][0]
+    edge_bindings_1 = [ x['id'] for x in na['edge_bindings']['e1'] ]
+    edge_bindings_2 = [ x['id'] for x in na['edge_bindings']['e2'] ]
     assert len(edge_bindings_1) == 2
     assert 'BE' in edge_bindings_1
     assert 'BF' in edge_bindings_1
@@ -385,44 +396,37 @@ def test_apply_property_patches_add_two_new_nodes():
     assert len(updated_kg_edges) == 4 + len(kg_edges) #added 1 is_a edge
     #There should be 2 (E,F)-[part_of]->Q
     # and 2 (E,F)<-[interacts_with]-R
-    idm = set([ x['id'] for x in kg_edges] )
-    uidm = { x['id']: x for x in updated_kg_edges }
+    idm = set( kg_edges.keys() )
     found = False
     countsQ = []
     countsR = []
-    for eid in uidm:
+    for eid in updated_kg_edges:
         if eid not in idm:
-            new_edge = uidm[eid]
-            if new_edge['source_id'] == 'R':
-                countsR.append(new_edge['target_id'])
-                assert new_edge['type'] == 'interacts_with'
+            new_edge = updated_kg_edges[eid]
+            if new_edge['subject'] == 'R':
+                countsR.append(new_edge['object'])
+                assert new_edge['predicate'] == 'biolink:interacts_with'
             else:
-                assert new_edge['target_id'] == 'Q'
-                countsQ.append(new_edge['source_id'])
+                assert new_edge['object'] == 'Q'
+                countsQ.append(new_edge['subject'])
     assert 'E' in countsQ
     assert 'E' in countsR
     assert 'F' in countsQ
     assert 'F' in countsR
-    # Again, use the somewhat accidental fact that the new bindings are at the end of the list
-    for extra_eb in na['edge_bindings'][-2:]:
-        assert extra_eb['qg_id'].startswith('extra') #mostly checking to see we got the right edge
-        assert len(extra_eb['kg_id'])== 2 #is it pointing to the new kg_id edge?
-        #assert extra_eb['kg_id'][0] == eid #is it pointing to the new
 
 def test_automat_treat_diabetes_properties():
     """Load up the answer in
     It contains the robokop answer for
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     fn = 'mychem_treats_diabetes.json'
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0',fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
     newset = snc.coalesce(answerset,method='property')
     rs = newset['results']
     assert len(rs) > 10
-    print(rs[0]['node_bindings'][1])
-    assert rs[0]['node_bindings'][1]['p_values'][0] < 1e-20
+    assert rs[0]['node_bindings']['n1'][0]['p_values'][0] < 1e-20
 
 #Need to update this json file in line with the new graph
 def xtest_automat_asthma_graph():
@@ -446,7 +450,7 @@ def xtest_automat_asthma_graph():
 
 def test_unique_ontology():
     fn = 'famcov_new.json'
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0',fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -470,22 +474,22 @@ def test_double_predicates():
 
     #Create the testing KG
     nodenames ='ABCD'
-    nodes = [{"id":n, "type":"named_thing"} for n in nodenames]
+    nodes = { n:{"category":"biolink:NamedThing"} for n in nodenames}
     inputedges = ['AB','AC','BD','CD']
-    edges = [{"id":f'r{e}', "source_id":e[0], "target_id":e[1], "type":"related_to"} for e in inputedges]
-    edges += [{"id":f'a{e}', "source_id":e[0], "target_id":e[1], "type":"also_related_to"} for e in inputedges]
+    edges = {f'r{e}': {"subject":e[0], "object":e[1], "predicate":"biolink:related_to"} for e in inputedges}
+    edges.update({f'a{e}':{ "subject":e[0], "object":e[1], "predicate":"biolink:also_related_to"} for e in inputedges})
     kg = {'nodes': nodes, 'edges':edges}
     #Create the QG
-    qnodes = [{'id':'n0','curie':'A','type':'named_thing'},{'id':'n1','type':'named_thing'},
-              {'id':'n2','curie':'D','type':'named_thing'}]
-    qedges = [{'id':'e0','source_id':'n0','target_id':'n1'},
-              {'id':'e1','source_id':'n1','target_id':'n2'}]
+    qnodes = {'n0':{'id':'A','category':'biolink:NamedThing'},'n1':{'category':'biolink:NamedThing'},
+              'n2':{'id':'D','category':'biolink:NamedThing'}}
+    qedges = {'e0':{'subject':'n0','object':'n1'},
+              'e1':{'subject':'n1','object':'n2'}}
     qg = {'nodes':qnodes, 'edges':qedges}
     ans = ['ABD','ACD']
     answers = []
     for i,a in enumerate(ans):
-        nb = [{'qg_id':f'n{i}', 'kg_id': list(x)} for i,x in enumerate(a)]
-        eb = [{'qg_id':f'e{i}', 'kg_id':[f'r{a[i]}{a[i+1]}',f'a{a[i]}{a[i+1]}']} for i in range(len(a)-1)]
+        nb = {f'n{i}': [{'id': x}] for i,x in enumerate(a)}
+        eb = {f'e{i}': [{'id':f'r{a[i]}{a[i+1]}'},{'id':f'a{a[i]}{a[i+1]}'}] for i in range(len(a)-1)}
         assert len(eb) == len(nb) -1
         answers.append( {'node_bindings':nb, 'edge_bindings':eb, 'score': 10-i})
     answerset = {'query_graph': qg, 'knowledge_graph':kg, 'results': answers}

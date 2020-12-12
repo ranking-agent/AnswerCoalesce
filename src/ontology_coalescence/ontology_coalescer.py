@@ -28,7 +28,7 @@ def coalesce_by_ontology(opportunities):
                         'p_value': enrichp,
                         'superclass': superclass}
             patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
-            patch.add_extra_node(superclass,stype,edge_type='is_a',newnode_is='target')
+            patch.add_extra_node(superclass,stype,edge_type='biolink:is_a',newnode_is='target')
             patches.append(patch)
     return patches
 

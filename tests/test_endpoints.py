@@ -10,11 +10,13 @@ from src.server import APP
 
 client = TestClient(APP)
 
+jsondir= 'InputJson_1.0'
+
 def test_coalesce():
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
 
-    testfilename = os.path.join(dir_path, 'asthma_one_hop.json')
+    testfilename = os.path.join(dir_path,jsondir,'asthma_one_hop.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
@@ -34,7 +36,7 @@ def test_coalesce():
 
 def test_unique_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, 'famcov_new.json')
+    testfilename = os.path.join(dir_path,jsondir,'famcov_new.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
@@ -53,7 +55,7 @@ def test_unique_coalesce():
 
 def test_schizo_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, 'schizo.json')
+    testfilename = os.path.join(dir_path,jsondir, 'schizo.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)

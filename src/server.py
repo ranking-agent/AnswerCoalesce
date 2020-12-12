@@ -4,7 +4,7 @@ import logging
 from enum import Enum
 from functools import wraps
 from src.util import LoggingUtil
-from reasoner_pydantic import Request, Message
+from reasoner_pydantic import Response, Message
 from src.single_node_coalescer import coalesce
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,11 +41,11 @@ class MethodName(str, Enum):
 
 
 @APP.post('/coalesce/{method}', response_model=Message, response_model_exclude_none=True)
-async def coalesce_handler(request: Request, method: MethodName) -> Message:
+async def coalesce_handler(response: Response, method: MethodName) -> Response:
     """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
 
     # convert the incoming message into a dict
-    message = request.message.dict()
+    message = response.message.dict()
 
     # call the operation with the request
     coalesced = coalesce(message, method=method)

@@ -4,6 +4,7 @@ import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
 import os,json
 
+jsondir='InputJson_1.0'
 
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
 def test_graph_coalescer():
@@ -29,7 +30,7 @@ def test_graph_coalescer_perf_test():
     t1 = datetime.datetime.now()
 
     # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'EdgeIDAsStrAndPerfTest.json')
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),jsondir,'EdgeIDAsStrAndPerfTest.json')
 
     # open the file and load it
     with open(test_filename,'r') as tf:
@@ -60,7 +61,7 @@ def test_graph_coalescer_perf_test():
 def test_graph_coalesce():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, 'famcov_new.json')
+    testfilename = os.path.join(dir_path,jsondir, 'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -80,7 +81,7 @@ def test_graph_coalesce():
 def test_graph_coalesce_strider():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, 'strider_relay_mouse.json')
+    testfilename = os.path.join(dir_path,jsondir,'strider_relay_mouse.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -101,7 +102,7 @@ def test_missing_node_norm():
     t1 = datetime.datetime.now()
 
     # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'graph_named_thing_issue.json')
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),jsondir,'graph_named_thing_issue.json')
 
     # open the file and load it
     with open(test_filename,'r') as tf:
