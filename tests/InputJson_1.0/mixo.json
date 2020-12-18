@@ -1,0 +1,897 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "n0": {
+                    "category": "biolink:ChemicalSubstance",
+                    "id": "CHEBI:50729"
+                },
+                "n1": {
+                    "category": "biolink:Gene"
+                }
+            },
+            "edges": {
+                "e0": {
+                    "subject": "n1",
+                    "object": "n0",
+                    "predicate": "biolink:affects_response_to"
+                }
+            }
+        },
+        "knowledge_graph": {
+            "nodes": {
+                "NCBIGene:51019": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "WASHC3"
+                },
+                "NCBIGene:133015": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "PACRGL"
+                },
+                "NCBIGene:55213": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "RCBTB1"
+                },
+                "NCBIGene:28231": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "SLCO4A1"
+                },
+                "NCBIGene:104": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "ADARB1"
+                },
+                "NCBIGene:4725": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "NDUFS5"
+                },
+                "NCBIGene:5332": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "PLCB4"
+                },
+                "NCBIGene:2578": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "GAGE6"
+                },
+                "NCBIGene:5921": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "RASA1"
+                },
+                "NCBIGene:147184": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "TMEM99"
+                },
+                "NCBIGene:1207": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "CLNS1A"
+                },
+                "NCBIGene:2576": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "GAGE4"
+                },
+                "NCBIGene:55366": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "LGR4"
+                },
+                "NCBIGene:22794": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "CASC3"
+                },
+                "NCBIGene:3127": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "HLA-DRB5"
+                },
+                "NCBIGene:2135": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "EXTL2"
+                },
+                "NCBIGene:221496": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "LEMD2"
+                },
+                "CHEBI:50729": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:ChemicalSubstance",
+                        "biolink:MolecularEntity"
+                    ],
+                    "name": "mitoxantrone"
+                },
+                "NCBIGene:729447": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "GAGE2A"
+                },
+                "NCBIGene:22894": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "DIS3"
+                },
+                "NCBIGene:4059": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "BCAM"
+                },
+                "NCBIGene:1389": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "CREBL2"
+                },
+                "NCBIGene:23767": {
+                    "category": [
+                        "biolink:NamedThing",
+                        "biolink:BiologicalEntity",
+                        "biolink:MolecularEntity",
+                        "biolink:Gene",
+                        "biolink:GeneOrGeneProduct",
+                        "biolink:MacromolecularMachine",
+                        "biolink:GenomicEntity"
+                    ],
+                    "name": "FLRT3"
+                }
+            },
+            "edges": {
+                "ae282cc63afd38a0b1c3ef978a39a468": {
+                    "subject": "NCBIGene:28231",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "1c5d6a9706cbd7aa0e08d08085c1ab60": {
+                    "subject": "NCBIGene:4059",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "aa8c1b110f186282ba6ee4b2dff2be36": {
+                    "subject": "NCBIGene:3127",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "6cb11dc68b5820152f1701ae7c9695b7": {
+                    "subject": "NCBIGene:2576",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "31e8de62feb5ee9b927df26cc29f31fa": {
+                    "subject": "NCBIGene:1389",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "e3d18bdfdeebc7f1604e500c05fa206f": {
+                    "subject": "NCBIGene:4725",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "0735b17967a0a4caf2f2da19d660d2ac": {
+                    "subject": "NCBIGene:5332",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "2f2173e46f61ff489c7896fd0c75fd34": {
+                    "subject": "NCBIGene:147184",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "e1eab62563f6b759f9b325489a592ad6": {
+                    "subject": "NCBIGene:1207",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "17b5c788e729c553b32d44b2e66354df": {
+                    "subject": "NCBIGene:221496",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "814ae3e4c985e351fc49f0491b4d3ad1": {
+                    "subject": "NCBIGene:2578",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "e8ce67b00fa1f173c179313b81b6685e": {
+                    "subject": "NCBIGene:55366",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "3e589fd7934ba4c03c14baea465cc375": {
+                    "subject": "NCBIGene:5921",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "dbc77129c0cc7864f113b2017a10bb92": {
+                    "subject": "NCBIGene:51019",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "7c433ef318571dde55dbbc17b6d7b4d8": {
+                    "subject": "NCBIGene:2135",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "5a82da995f4ec0d095dda41da9da693c": {
+                    "subject": "NCBIGene:133015",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "42cd16f01cbd95818f185f6ed4b0ef16": {
+                    "subject": "NCBIGene:23767",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "7d9fab8b3ed6eaba56d5ab9e4833927c": {
+                    "subject": "NCBIGene:22894",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "6f8df55e85a16d570103c96e742bf10c": {
+                    "subject": "NCBIGene:55213",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "58bea7544e0cb6ed399f29c7239ad33e": {
+                    "subject": "NCBIGene:104",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "61b1ed957d6d708b2982fd79dc62ff94": {
+                    "subject": "NCBIGene:729447",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                },
+                "bdc8dcf7b9564c23dd3c644fc57c39a7": {
+                    "subject": "NCBIGene:22794",
+                    "object": "CHEBI:50729",
+                    "predicate": "biolink:affects_response_to"
+                }
+            }
+        },
+        "results": [
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:104"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "58bea7544e0cb6ed399f29c7239ad33e",
+                            "kg_id": "58bea7544e0cb6ed399f29c7239ad33e"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:221496"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "17b5c788e729c553b32d44b2e66354df",
+                            "kg_id": "17b5c788e729c553b32d44b2e66354df"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:28231"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "ae282cc63afd38a0b1c3ef978a39a468",
+                            "kg_id": "ae282cc63afd38a0b1c3ef978a39a468"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:729447"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "61b1ed957d6d708b2982fd79dc62ff94",
+                            "kg_id": "61b1ed957d6d708b2982fd79dc62ff94"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:5921"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "3e589fd7934ba4c03c14baea465cc375",
+                            "kg_id": "3e589fd7934ba4c03c14baea465cc375"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:55366"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "e8ce67b00fa1f173c179313b81b6685e",
+                            "kg_id": "e8ce67b00fa1f173c179313b81b6685e"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:51019"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "dbc77129c0cc7864f113b2017a10bb92",
+                            "kg_id": "dbc77129c0cc7864f113b2017a10bb92"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:2576"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "6cb11dc68b5820152f1701ae7c9695b7",
+                            "kg_id": "6cb11dc68b5820152f1701ae7c9695b7"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:23767"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "42cd16f01cbd95818f185f6ed4b0ef16",
+                            "kg_id": "42cd16f01cbd95818f185f6ed4b0ef16"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:1389"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "31e8de62feb5ee9b927df26cc29f31fa",
+                            "kg_id": "31e8de62feb5ee9b927df26cc29f31fa"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:147184"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "2f2173e46f61ff489c7896fd0c75fd34",
+                            "kg_id": "2f2173e46f61ff489c7896fd0c75fd34"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:3127"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "aa8c1b110f186282ba6ee4b2dff2be36",
+                            "kg_id": "aa8c1b110f186282ba6ee4b2dff2be36"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:5332"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "0735b17967a0a4caf2f2da19d660d2ac",
+                            "kg_id": "0735b17967a0a4caf2f2da19d660d2ac"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:4059"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "1c5d6a9706cbd7aa0e08d08085c1ab60",
+                            "kg_id": "1c5d6a9706cbd7aa0e08d08085c1ab60"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:4725"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "e3d18bdfdeebc7f1604e500c05fa206f",
+                            "kg_id": "e3d18bdfdeebc7f1604e500c05fa206f"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:2578"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "814ae3e4c985e351fc49f0491b4d3ad1",
+                            "kg_id": "814ae3e4c985e351fc49f0491b4d3ad1"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:133015"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "5a82da995f4ec0d095dda41da9da693c",
+                            "kg_id": "5a82da995f4ec0d095dda41da9da693c"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:22894"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "7d9fab8b3ed6eaba56d5ab9e4833927c",
+                            "kg_id": "7d9fab8b3ed6eaba56d5ab9e4833927c"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:22794"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "bdc8dcf7b9564c23dd3c644fc57c39a7",
+                            "kg_id": "bdc8dcf7b9564c23dd3c644fc57c39a7"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:2135"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "7c433ef318571dde55dbbc17b6d7b4d8",
+                            "kg_id": "7c433ef318571dde55dbbc17b6d7b4d8"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:1207"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "e1eab62563f6b759f9b325489a592ad6",
+                            "kg_id": "e1eab62563f6b759f9b325489a592ad6"
+                        }
+                    ]
+                }
+            },
+            {
+                "node_bindings": {
+                    "n0": [
+                        {
+                            "id": "CHEBI:50729"
+                        }
+                    ],
+                    "n1": [
+                        {
+                            "id": "NCBIGene:55213"
+                        }
+                    ]
+                },
+                "edge_bindings": {
+                    "e0": [
+                        {
+                            "id": "6f8df55e85a16d570103c96e742bf10c",
+                            "kg_id": "6f8df55e85a16d570103c96e742bf10c"
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+}

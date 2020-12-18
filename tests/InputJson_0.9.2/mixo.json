@@ -1,0 +1,1300 @@
+{
+  "message":{
+  "query_graph": {
+    "nodes": [
+      {
+        "id": "n0",
+        "type": "chemical_substance",
+        "curie": "CHEBI:50729"
+      },
+      {
+        "id": "n1",
+        "type": "gene"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e0",
+        "source_id": "n1",
+        "target_id": "n0",
+        "type": "affects_response_to"
+      }
+    ]
+  },
+  "results": [
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "58bea7544e0cb6ed399f29c7239ad33e",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:104",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "17b5c788e729c553b32d44b2e66354df",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:221496",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "ae282cc63afd38a0b1c3ef978a39a468",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:28231",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "61b1ed957d6d708b2982fd79dc62ff94",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:729447",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "3e589fd7934ba4c03c14baea465cc375",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:5921",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e8ce67b00fa1f173c179313b81b6685e",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:55366",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "dbc77129c0cc7864f113b2017a10bb92",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:51019",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "6cb11dc68b5820152f1701ae7c9695b7",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:2576",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "42cd16f01cbd95818f185f6ed4b0ef16",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:23767",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "31e8de62feb5ee9b927df26cc29f31fa",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:1389",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "2f2173e46f61ff489c7896fd0c75fd34",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:147184",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "aa8c1b110f186282ba6ee4b2dff2be36",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:3127",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "0735b17967a0a4caf2f2da19d660d2ac",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:5332",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "1c5d6a9706cbd7aa0e08d08085c1ab60",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:4059",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e3d18bdfdeebc7f1604e500c05fa206f",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:4725",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "814ae3e4c985e351fc49f0491b4d3ad1",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:2578",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "5a82da995f4ec0d095dda41da9da693c",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:133015",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "7d9fab8b3ed6eaba56d5ab9e4833927c",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:22894",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "bdc8dcf7b9564c23dd3c644fc57c39a7",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:22794",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "7c433ef318571dde55dbbc17b6d7b4d8",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:2135",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e1eab62563f6b759f9b325489a592ad6",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:1207",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "6f8df55e85a16d570103c96e742bf10c",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "CHEBI:50729",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "NCBIGene:55213",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    }
+  ],
+  "knowledge_graph": {
+    "nodes": [
+      {
+        "name": "WASHC3",
+        "id": "NCBIGene:51019",
+        "equivalent_identifiers": [
+          "HGNC:24256",
+          "ENSEMBL:ENSG00000120860",
+          "UniProtKB:Q9Y3C0",
+          "NCBIGene:51019",
+          "NCBIGene:51019"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "PACRGL",
+        "id": "NCBIGene:133015",
+        "equivalent_identifiers": [
+          "HGNC:28442",
+          "ENSEMBL:ENSG00000163138",
+          "UniProtKB:Q8N7B6",
+          "NCBIGene:133015",
+          "NCBIGene:133015"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "RCBTB1",
+        "id": "NCBIGene:55213",
+        "equivalent_identifiers": [
+          "NCBIGene:55213",
+          "NCBIGene:55213",
+          "UniProtKB:Q8NDN9",
+          "ENSEMBL:ENSG00000136144",
+          "HGNC:18243"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "SLCO4A1",
+        "id": "NCBIGene:28231",
+        "equivalent_identifiers": [
+          "IUPHAR:1226",
+          "NCBIGene:28231",
+          "HGNC:10953",
+          "NCBIGene:28231",
+          "UniProtKB:Q96BD0",
+          "ENSEMBL:ENSG00000101187"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "synonyms": [],
+        "name": "ADARB1",
+        "id": "NCBIGene:104",
+        "equivalent_identifiers": [
+          "UniProtKB:P78563",
+          "NCBIGene:104",
+          "NCBIGene:104",
+          "ENSEMBL:ENSG00000197381",
+          "HGNC:226"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "synonyms": [],
+        "name": "NDUFS5",
+        "id": "NCBIGene:4725",
+        "equivalent_identifiers": [
+          "ENSEMBL:ENSG00000168653",
+          "NCBIGene:4725",
+          "UniProtKB:O43920",
+          "NCBIGene:4725",
+          "HGNC:7712"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "PLCB4",
+        "id": "NCBIGene:5332",
+        "equivalent_identifiers": [
+          "UniProtKB:Q15147",
+          "NCBIGene:5332",
+          "IUPHAR:1406",
+          "ENSEMBL:ENSG00000101333",
+          "NCBIGene:5332",
+          "HGNC:9059"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "GAGE6",
+        "id": "NCBIGene:2578",
+        "equivalent_identifiers": [
+          "HGNC:4103",
+          "NCBIGene:2578",
+          "UniProtKB:Q13070",
+          "NCBIGene:2578"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "RASA1",
+        "id": "NCBIGene:5921",
+        "equivalent_identifiers": [
+          "HGNC:9871",
+          "NCBIGene:5921",
+          "UniProtKB:P20936",
+          "ENSEMBL:ENSG00000145715",
+          "NCBIGene:5921"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "TMEM99",
+        "id": "NCBIGene:147184",
+        "equivalent_identifiers": [
+          "NCBIGene:147184",
+          "UniProtKB:Q8N816",
+          "ENSEMBL:ENSG00000167920",
+          "NCBIGene:147184",
+          "HGNC:28305"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "synonyms": [],
+        "name": "CLNS1A",
+        "id": "NCBIGene:1207",
+        "equivalent_identifiers": [
+          "NCBIGene:1207",
+          "HGNC:2080",
+          "ENSEMBL:ENSG00000074201",
+          "UniProtKB:P54105",
+          "NCBIGene:1207"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "GAGE4",
+        "id": "NCBIGene:2576",
+        "equivalent_identifiers": [
+          "HGNC:4101",
+          "NCBIGene:2576",
+          "NCBIGene:2576"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "LGR4",
+        "id": "NCBIGene:55366",
+        "equivalent_identifiers": [
+          "IUPHAR:147",
+          "UniProtKB:Q9BXB1",
+          "ENSEMBL:ENSG00000205213",
+          "HGNC:13299",
+          "NCBIGene:55366",
+          "NCBIGene:55366"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "synonyms": [],
+        "name": "CASC3",
+        "id": "NCBIGene:22794",
+        "equivalent_identifiers": [
+          "HGNC:17040",
+          "NCBIGene:22794",
+          "NCBIGene:22794",
+          "ENSEMBL:ENSG00000108349",
+          "UniProtKB:O15234"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "HLA-DRB5",
+        "id": "NCBIGene:3127",
+        "equivalent_identifiers": [
+          "HGNC:4953",
+          "NCBIGene:3127",
+          "UniProtKB:Q30154",
+          "NCBIGene:3127",
+          "ENSEMBL:ENSG00000198502"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "EXTL2",
+        "id": "NCBIGene:2135",
+        "equivalent_identifiers": [
+          "NCBIGene:2135",
+          "ENSEMBL:ENSG00000162694",
+          "UniProtKB:Q9UBQ6",
+          "NCBIGene:2135",
+          "HGNC:3516"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "LEMD2",
+        "id": "NCBIGene:221496",
+        "equivalent_identifiers": [
+          "UniProtKB:Q8NC56",
+          "ENSEMBL:ENSG00000161904",
+          "NCBIGene:221496",
+          "NCBIGene:221496",
+          "HGNC:21244"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "synonyms": [
+          "1,4-dihydroxy-5,8-bis({2-[(2-hydroxyethyl)amino]ethyl}amino)anthracene-9,10-dione",
+          "Mitoxantrone",
+          "1,4-DIHYDROXY-5,8-BIS({2-[(2-HYDROXYETHYL)AMINO]ETHYL}AMINO)-9,10-ANTHRACENEDIONE",
+          "mitoxantrona",
+          "mitoxantrone",
+          "mitoxantronum"
+        ],
+        "name": "mitoxantrone",
+        "id": "CHEBI:50729",
+        "equivalent_identifiers": [
+          "GTOPDB:7242",
+          "MESH:D008942",
+          "CHEMBL.COMPOUND:CHEMBL58",
+          "KEGG.COMPOUND:C11195",
+          "INCHIKEY:QNPPKDKWSZVWSH-UHFFFAOYSA-N",
+          "UNII:BZ114NVM5P",
+          "DRUGBANK:DB01204",
+          "PUBCHEM:4212",
+          "CHEBI:50729",
+          "HMDB:HMDB0015335"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "chemical_substance",
+          "molecular_entity"
+        ]
+      },
+      {
+        "name": "GAGE2A",
+        "id": "NCBIGene:729447",
+        "equivalent_identifiers": [
+          "NCBIGene:729447",
+          "NCBIGene:729447",
+          "HGNC:4099",
+          "ENSEMBL:ENSG00000189064",
+          "UniProtKB:Q6NT46"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "DIS3",
+        "id": "NCBIGene:22894",
+        "equivalent_identifiers": [
+          "ENSEMBL:ENSG00000083520",
+          "UniProtKB:Q9Y2L1",
+          "NCBIGene:22894",
+          "NCBIGene:22894",
+          "HGNC:20604"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "synonyms": [],
+        "name": "BCAM",
+        "id": "NCBIGene:4059",
+        "equivalent_identifiers": [
+          "NCBIGene:4059",
+          "HGNC:6722",
+          "UniProtKB:P50895",
+          "NCBIGene:4059",
+          "ENSEMBL:ENSG00000187244"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "synonyms": [],
+        "name": "CREBL2",
+        "id": "NCBIGene:1389",
+        "equivalent_identifiers": [
+          "UniProtKB:O60519",
+          "NCBIGene:1389",
+          "ENSEMBL:ENSG00000111269",
+          "NCBIGene:1389",
+          "HGNC:2350"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      },
+      {
+        "name": "FLRT3",
+        "id": "NCBIGene:23767",
+        "equivalent_identifiers": [
+          "UniProtKB:Q9NZU0",
+          "NCBIGene:23767",
+          "ENSEMBL:ENSG00000125848",
+          "NCBIGene:23767",
+          "HGNC:3762"
+        ],
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3082256,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "ae282cc63afd38a0b1c3ef978a39a468",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:28231",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.309226,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "1c5d6a9706cbd7aa0e08d08085c1ab60",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:4059",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3085063,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "aa8c1b110f186282ba6ee4b2dff2be36",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:3127",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.307645,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "6cb11dc68b5820152f1701ae7c9695b7",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:2576",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3054852,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "31e8de62feb5ee9b927df26cc29f31fa",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:1389",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.309616,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "e3d18bdfdeebc7f1604e500c05fa206f",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:4725",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3103654,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "0735b17967a0a4caf2f2da19d660d2ac",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:5332",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3055923,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "2f2173e46f61ff489c7896fd0c75fd34",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16044152"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:147184",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3053148,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "e1eab62563f6b759f9b325489a592ad6",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:1207",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.306643,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "17b5c788e729c553b32d44b2e66354df",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16044152"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:221496",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3076968,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "814ae3e4c985e351fc49f0491b4d3ad1",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:2578",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3108356,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "e8ce67b00fa1f173c179313b81b6685e",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:55366",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3111382,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "3e589fd7934ba4c03c14baea465cc375",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16044152"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:5921",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3099847,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "dbc77129c0cc7864f113b2017a10bb92",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:51019",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.306463,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "7c433ef318571dde55dbbc17b6d7b4d8",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:2135",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3054345,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "5a82da995f4ec0d095dda41da9da693c",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16044152"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:133015",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3074863,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "42cd16f01cbd95818f185f6ed4b0ef16",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:23767",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3070626,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "7d9fab8b3ed6eaba56d5ab9e4833927c",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:22894",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3107312,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "6f8df55e85a16d570103c96e742bf10c",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:55213",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3046145,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "58bea7544e0cb6ed399f29c7239ad33e",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:104",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3122573,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "61b1ed957d6d708b2982fd79dc62ff94",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16217747"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:729447",
+        "target_id": "CHEBI:50729"
+      },
+      {
+        "relation_label": "affects response to",
+        "predicate_id": "biolink:affects_response_to",
+        "edge_source": "ctd.drug_to_gene_expanded",
+        "description": "affects response to",
+        "ctime": 1583360106.3068385,
+        "taxon": "taxon:ncbitaxon:9606",
+        "id": "bdc8dcf7b9564c23dd3c644fc57c39a7",
+        "source_database": "ctd",
+        "relation": "CTD:affects_response_to",
+        "publications": [
+          "PMID:16044152"
+        ],
+        "type": "affects_response_to",
+        "source_id": "NCBIGene:22794",
+        "target_id": "CHEBI:50729"
+      }
+    ]
+  }
+}}

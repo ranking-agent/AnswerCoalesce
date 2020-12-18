@@ -194,12 +194,18 @@ def create_nodes_to_links(allnodes):
     return nodes_to_links
 
 
+import re
 def create_node_to_type(opportunities):
     # Create a dict from node->type(node) for all nodes in every opportunity
     allnodes = {}
     for opportunity in opportunities:
         kn = opportunity.get_kg_ids()
         stype = opportunity.get_qg_semantic_type()
+        #We're in a situation where there are databases using old style types but the input will be new style, and
+        #for a moment we need to translate.  This will go away.
+        if stype.startswith('biolink'):
+            pascal = stype.split(':')[1]
+            stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
         for node in kn:
             allnodes[node] = stype
     return allnodes

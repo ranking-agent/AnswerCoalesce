@@ -5,16 +5,16 @@ from time import sleep
 
 
 def make_disease_chem_question(disease_id):
-    question = { 'nodes': [{'id':'n0', 'type':'disease', 'curie':disease_id},
-                          {'id': 'n1', 'type':'chemical_substance'}],
-                 'edges': [ {'id': 'e0', 'source_id': 'n1', 'target_id': 'n0', 'type': 'treats'}]}
+    question = { 'nodes': {'n0':{'id':disease_id, 'category':'biolink:Disease'},
+                           'n1': {'category':'biolink:ChemicalSubstance'}},
+                 'edges': { 'e0': {'subject': 'n1', 'object': 'n0', 'predicate': 'biolink:treats'}}}
     message = {'query_graph': question}
     return message
 
 def make_chem_gene_question(c_id):
-    question = { 'nodes': [{'id':'n0', 'type':'chemical_substance', 'curie':c_id},
-                          {'id': 'n1', 'type':'gene'}],
-                 'edges': [ {'id': 'e1', 'source_id': 'n0', 'target_id': 'n1', 'type':'decreases_degradation_of'}]}
+    question = { 'nodes': {'n0':{'category':'biolink:ChemicalSubstance', id:c_id},
+                           'n1': {'category':'biolink:Gene'}},
+                 'edges': { 'e1': {'subject': 'n0', 'object': 'n1', 'predicate':'biolink:decreases_degradation_of'}}}
     message = {'query_graph': question}
     return message
 

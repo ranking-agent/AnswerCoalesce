@@ -104,25 +104,25 @@ def test_full_coalesce_no_new_node():
     # Question goes (start)-disease-(end)
     # All 3 paths are given as answers
     curies = ['MONDO:0025556', 'MONDO:0004584', 'MONDO:0000771']
-    nodes = [{"id":"start", "type":"phenotypic_feature"}, {"id":"end", "type":"phenotypic_feature"}]
+    nodes = {"start":{ "category":"biolink:PhenotypicFeature"}, "end":{ "category":"biolink:PhenotypicFeature"}}
     for c in curies:
-        nodes.append({'id': c, 'type': 'disease'})
-    edges = []
+        nodes.update({ c: {'category': 'biolink:Disease'}})
+    edges = {}
     for si,source in enumerate(curies):
         for ti,target in enumerate(['start','end']):
-            edges.append({"id":f'e_{si}_{ti}', "source_id": source, "target_id": target, 'type': 'has_phenotype'})
+            edges.update({f'e_{si}_{ti}': {"subject": source, "object": target, 'predicate': 'biolink:has_phenotype'}})
     kg = {'nodes': nodes, 'edges':edges}
     #Create the QG
-    qnodes = [{'id':'n0','curie':'start','type':'phenotypic_feature'},{'id':'n1','type':'disease'},
-              {'id':'n2','curie':'end','type':'phenotypic_feature'}]
-    qedges = [{'id':'e0','source_id':'n1','target_id':'n0','type':'has_phenotype'},
-              {'id':'e1','source_id':'n1','target_id':'n1','type':'has_phenotype'}]
+    qnodes = {'n0':{'id':'start','category':'biolink:PhenotypicFeature'},'n1':{'category':'biolink:Disease'},
+              'n2':{'id':'end','category':'biolink:PhenotypicFeature'}}
+    qedges = {'e0':{'subject':'n1','object':'n0','predicate':'biolink:has_phenotype'},
+              'e1':{'subject':'n1','object':'n1','predicate':'biooink:has_phenotype'}}
     qg = {'nodes':qnodes, 'edges':qedges}
     results = []
     for i,c in enumerate(curies):
-        #These are the new-style (messenger) bindings:
-        nb = [{'qg_id':'n0', 'kg_id':'start'},{'qg_id':'n2', 'kg_id':'end'},{'qg_id':'n1', 'kg_id':c}]
-        eb = [{'qg_id':'e0', 'kg_id':f'e_{i}_{0}'}, {'qg_id':'e1', 'kg_id':f'e_{i}_{1}'}]
+        #These are the new-style (TRAPI 1.0) bindings:
+        nb = {'n0': [{'id':'start'}], 'n2':[{'id':'end'}],'n1': [{'id':c}] }
+        eb = {'e0': [{'id':f'e_{i}_{0}'}], 'e1': [{'id':f'e_{i}_{1}'}]}
         results.append( {'node_bindings':nb, 'edge_bindings':eb, 'score': 10-i})
     answerset = {'query_graph': qg, 'knowledge_graph':kg, 'results': results}
     opps =  identify_coalescent_nodes(answerset)
@@ -135,9 +135,9 @@ def test_full_coalesce_no_new_node():
     new_answer,updated_qg,updated_kg,kg_index = patch.apply(answers,qg,kg,kg_index)
     #I want to see that we've updated the kg to include is_a edges.
     is_a_curies = []
-    for edge in kg['edges']:
-        if edge['target_id'] == 'MONDO:0000771' and edge['type'] == 'is_a':
-            is_a_curies.append(edge['source_id'])
+    for edge_id,edge in kg['edges'].items():
+        if edge['object'] == 'MONDO:0000771' and edge['predicate'] == 'biolink:is_a':
+            is_a_curies.append(edge['subject'])
     assert len(is_a_curies) == 2
     assert 'MONDO:0025556' in is_a_curies
     assert 'MONDO:0004584' in is_a_curies
@@ -148,7 +148,7 @@ def test_unique_coalesce():
     """This test is to fix https://github.com/ranking-agent/AnswerCoalesce/issues/13
     The issue is that the ontology coalescer preoduces non-unique results."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,  'famcov_new.json')
+    testfilename = os.path.join(dir_path, 'InputJson_1.0','famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']

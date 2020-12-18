@@ -125,7 +125,7 @@ def test_property_coalescer_perf_test():
     t1 = datetime.datetime.now()
 
     # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'EdgeIDAsStrAndPerfTest.json')
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','EdgeIDAsStrAndPerfTest.json')
 
     # open the file and load it
     with open(test_filename,'r') as tf:
@@ -141,13 +141,6 @@ def test_property_coalescer_perf_test():
     # it should be less than this
     assert(diff.seconds < 60)
 
-    # loop through the query_graph return and insure that edge ids are strs
-    for n in coalesced['query_graph']['edges']:
-        assert(isinstance(n['id'], str))
-
-    # loop through the knowledge_graph return and insure that edge ids are strs
-    for n in coalesced['knowledge_graph']['edges']:
-        assert(isinstance(n['id'], str))
 
 
 

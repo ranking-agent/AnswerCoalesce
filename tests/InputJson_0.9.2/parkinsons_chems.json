@@ -1,0 +1,166 @@
+{
+  "message":{
+  "query_graph": {
+    "nodes": [
+      {
+        "id": "n0",
+        "curie": "MONDO:0005180",
+        "type": "disease"
+      },
+      {
+        "id": "n1",
+        "curie": null,
+        "type": "chemical_substance"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e0",
+        "type": "contributes_to",
+        "source_id": "n1",
+        "target_id": "n0"
+      }
+    ]
+  },
+  "knowledge_graph": {
+    "nodes": [
+      {
+        "id": "MONDO:0005180",
+        "name": "Parkinson disease",
+        "type": [
+          "named_thing",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C0030567",
+          "UMLS:C0270729",
+          "UMLS:C0542165",
+          "SNOMEDCT:155000006",
+          "UMLS:C0853008",
+          "SNOMEDCT:155002003",
+          "DOID:14330",
+          "UMLS:C4049471",
+          "MESH:D010300",
+          "UMLS:C0235960",
+          "SNOMEDCT:155001005",
+          "SNOMEDCT:192831003",
+          "SNOMEDCT:192825001",
+          "MONDO:0005180",
+          "MEDDRA:10034010",
+          "SNOMEDCT:4223005",
+          "SNOMEDCT:154999006",
+          "MEDDRA:10061536",
+          "NCIT:C26845",
+          "SNOMEDCT:49049000"
+        ]
+      },
+      {
+        "id": "CHEBI:39300",
+        "name": "propargite",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "chemical_substance",
+          "molecular_entity"
+        ],
+        "equivalent_identifiers": [
+          "KEGG.COMPOUND:C18602",
+          "CHEBI:39300",
+          "CHEMBL.COMPOUND:CHEMBL1416084",
+          "INCHIKEY:QLZCGVNMWSCDIC-UHFFFAOYSA-N",
+          "PUBCHEM:4936",
+          "MESH:C002771"
+        ]
+      },
+      {
+        "id": "MESH:C084924",
+        "name": "1,2,3,4-tetrahydro-1-(phenylmethyl)isoquinoline",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "chemical_substance",
+          "molecular_entity"
+        ],
+        "equivalent_identifiers": [
+          "MESH:C084924",
+          "UNII:X4S06GK4KN"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "id": "013231a9a173a01620331cffbde23535",
+        "type": "contributes_to",
+        "source_id": "CHEBI:39300",
+        "target_id": "MONDO:0005180",
+        "predicate_id": "RO:0002326",
+        "relation_label": "marker_mechanism",
+        "edge_source": "ctd.disease_to_chemical",
+        "ctime": "1583896561.4053473",
+        "source_database": "ctd",
+        "relation": "CTD:marker_mechanism",
+        "publications": [
+          "PMID:20049211"
+        ]
+      },
+      {
+        "id": "33cc3972cb8a9aa6d40e074dc02499dd",
+        "type": "contributes_to",
+        "source_id": "MESH:C084924",
+        "target_id": "MONDO:0005180",
+        "predicate_id": "RO:0002326",
+        "relation_label": "marker_mechanism",
+        "edge_source": "ctd.disease_to_chemical",
+        "ctime": "1583896561.3991098",
+        "source_database": "ctd",
+        "relation": "CTD:marker_mechanism",
+        "publications": [
+          "PMID:15114628"
+        ]
+      }
+    ]
+  },
+  "results": [
+    {
+      "node_bindings": [
+        {
+          "qg_id": "n0",
+          "kg_id": "MONDO:0005180"
+        },
+        {
+          "qg_id": "n1",
+          "kg_id": "CHEBI:39300"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "e0",
+          "kg_id": "013231a9a173a01620331cffbde23535"
+        }
+      ],
+      "score": 3.781932327586207,
+      "timestamp": 1584217835.977325
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "n0",
+          "kg_id": "MONDO:0005180"
+        },
+        {
+          "qg_id": "n1",
+          "kg_id": "MESH:C084924"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "e0",
+          "kg_id": "33cc3972cb8a9aa6d40e074dc02499dd"
+        }
+      ],
+      "score": 1.0,
+      "timestamp": 1584217836.0665915
+    }
+  ]
+}}
