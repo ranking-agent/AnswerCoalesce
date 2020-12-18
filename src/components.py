@@ -20,12 +20,30 @@ class Opportunity:
     def get_qg_id(self):
         return self.qg_id
     def get_qg_semantic_type(self):
-        return self.qg_semantic_type
+        import re
+        stype = self.qg_semantic_type
+        #This will go away when we  update the databases to use the new style types
+        if stype.startswith('biolink'):
+            pascal = stype.split(':')[1]
+            stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        return stype
     def get_answer_indices(self):
         return self.answer_indices
 
+def pascal_to_snake(nnt):
+    if not nnt.startswith('biolink:'):
+        newnodetype = ''.join(word.title() for word in nnt.split('_'))
+        newnodetype = 'biolink:' + newnodetype
+        return newnodetype
+    return nnt
+
 class NewNode:
     def __init__(self,newnode, newnodetype, edge_type, newnode_is):
+        #right now we're sometimes getting node types in old style.  This will go away when the databases get updated
+        if isinstance(newnodetype,str):
+            newnodetype = pascal_to_snake(newnodetype)
+        else:
+            newnodetype = [ pascal_to_snake(n) for n in newnodetype]
         self.newnode = newnode
         self.newnode_type = newnodetype
         self.new_edges = edge_type
