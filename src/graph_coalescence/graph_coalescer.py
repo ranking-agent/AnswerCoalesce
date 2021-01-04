@@ -95,6 +95,9 @@ def coalesce_by_graph(opportunities):
             for e in best_enrichments:
                 newcurie = e[1]
                 etype = e[2]
+                #This is here because the current db are old style but we need the results newstyle.
+                if not etype.startswith('biolink'):
+                    etype = f'biolink:{etype}'
                 if e[3]:
                     nni = 'target'
                 else:

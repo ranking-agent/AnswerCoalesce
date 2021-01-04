@@ -57,7 +57,7 @@ def test_unique_coalesce():
 
 def test_schizo_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,jsondir, 'schizo.json')
+    testfilename = os.path.join(dir_path,jsondir, 'famcov_new.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
