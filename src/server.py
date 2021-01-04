@@ -1,6 +1,7 @@
 """ Answer Coalesce server. """
 import os
 import logging
+import requests
 from enum import Enum
 from functools import wraps
 from src.util import LoggingUtil
@@ -40,7 +41,7 @@ class MethodName(str, Enum):
     ontology = "ontology"
 
 
-@APP.post('/coalesce/{method}', response_model=Message, response_model_exclude_none=True)
+@APP.post('/coalesce/{method}', response_model=Response, response_model_exclude_none=True)
 async def coalesce_handler(response: Response, method: MethodName) -> Response:
     """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
 
@@ -49,9 +50,14 @@ async def coalesce_handler(response: Response, method: MethodName) -> Response:
 
     # call the operation with the request
     coalesced = coalesce(message, method=method)
+    import json
+    with open('junk.json','w') as junk:
+        json.dump(coalesced,junk)
 
-    # return the result to the caller
-    return Message(**coalesced)
+    normed = normalize( {'message': coalesced } )
+
+    # normalize and return the result to the caller
+    return Response(**normed)
 
 
 def log_exception(method):
@@ -65,3 +71,36 @@ def log_exception(method):
             logger.exception(err)
             raise
     return wrapper
+
+def post(name, url, message, params=None):
+    """
+    launches a post request, returns the response.
+    :param name: name of service
+    :param url: the url of the service
+    :param message: the message to post to the service
+    :param params: the parameters passed to the service
+    :return: dict, the result
+    """
+    if params is None:
+        response = requests.post(url, json=message)
+    else:
+        response = requests.post(url, json=message, params=params)
+
+    if not response.status_code == 200:
+        logger.error(f'Error response from {name}, status code: {response.status_code}')
+        return {}
+
+    return response.json()
+
+
+def normalize(message):
+    """
+    Calls node normalizer
+    :param message:
+    :return:
+    """
+    url = 'https://nodenormalization-sri.renci.org/response'
+
+    normalized_message = post('Node Normalizer', url, message)
+
+    return normalized_message

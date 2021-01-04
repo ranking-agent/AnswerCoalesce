@@ -28,9 +28,10 @@ def test_coalesce():
     assert(response.status_code == 200)
 
     # convert the response to a json object
-    ret = json.loads(response.content)
+    jret = json.loads(response.content)
 
     # check the data
+    ret = jret['message']
     assert(len(ret) == 3)
     assert( len(ret['results']) == 118 )
 
@@ -48,8 +49,9 @@ def test_unique_coalesce():
     assert(response.status_code == 200)
 
     # convert the response to a json object
-    ret = json.loads(response.content)
+    jret = json.loads(response.content)
 
+    ret = jret['message']
     assert('results' in ret)
     assert( len(ret['results']) <= 4 )
 
@@ -67,7 +69,7 @@ def test_schizo_coalesce():
     assert(response.status_code == 200)
 
     # convert the response to a json object
-    ret = json.loads(response.content)
+    jret = json.loads(response.content)
 
     #assert('results' in ret)
     #assert( len(ret['results']) <= 4 )
