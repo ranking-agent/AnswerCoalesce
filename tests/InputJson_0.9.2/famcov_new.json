@@ -1,0 +1,3901 @@
+{
+  "message":{
+  "query_graph": {
+    "nodes": [
+      {
+        "id": "a",
+        "curie": [
+          "MONDO:0100096"
+        ],
+        "type": "disease"
+      },
+      {
+        "id": "b",
+        "curie": null,
+        "type": "named_thing"
+      },
+      {
+        "id": "c",
+        "curie": [
+          "CHEBI:4975"
+        ],
+        "type": "chemical_substance"
+      }
+    ],
+    "edges": [
+      {
+        "id": "ab",
+        "source_id": "a",
+        "target_id": "b",
+        "type": null
+      },
+      {
+        "id": "bc",
+        "source_id": "c",
+        "target_id": "b",
+        "type": null
+      }
+    ]
+  },
+  "knowledge_graph": {
+    "nodes": [
+      {
+        "id": "MONDO:0100096",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "SNOMEDCT:840539006",
+          "MONDO:0100096",
+          "DOID:0080600"
+        ],
+        "omnicorp_article_count": 0,
+        "synonyms": [],
+        "name": "COVID-19"
+      },
+      {
+        "id": "NCBITaxon:2697049",
+        "type": [
+          "named_thing",
+          "ontology_class",
+          "organism_taxon"
+        ],
+        "equivalent_identifiers": [
+          "NCBITaxon:2697049",
+          "MESH:C000656484"
+        ],
+        "omnicorp_article_count": 0,
+        "name": "Severe acute respiratory syndrome coronavirus 2"
+      },
+      {
+        "id": "CHEBI:4975",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "chemical_substance",
+          "molecular_entity"
+        ],
+        "antagonist": true,
+        "anti_ulcer_drug": true,
+        "oral": true,
+        "synonyms": [
+          "N'-(aminosulfonyl)-3-[({2-[(diaminomethylidene)amino]-1,3-thiazol-4-yl}methyl)sulfanyl]propanimidamide",
+          "(1-Amino-3-(((2-((diaminomethylene)amino)-4-thiazolyl)methyl)thio)propylidene)sulfamide",
+          "3-(((2-((Aminoiminomethyl)amino)-4-thiazolyl)methyl)thio)-N-(aminosulfonyl)propanimidamide",
+          "3-(((2-((Diaminomethylene)amino)-4-thiazolyl)methyl)thio)-N(sup 2)-sulfamoylpropionamidine",
+          "famotidina",
+          "famotidine",
+          "famotidinum",
+          "N-Sulfamoyl-3-((2-guanidinothiazol-4-yl)methylthio)propionamide",
+          "Pepcid"
+        ],
+        "pharmacological_role": true,
+        "biochemical_role": true,
+        "biological_role": true,
+        "pharmaceutical": true,
+        "therapeutic_flag": true,
+        "application": true,
+        "topical": false,
+        "drugbank.accession_number": "APRD00296",
+        "drug": true,
+        "drugbank.categories": [
+          "Acid Reducers",
+          "Alimentary Tract and Metabolism",
+          "Anti-Ulcer Agents",
+          "Drugs for Acid Related Disorders",
+          "Drugs for Peptic Ulcer and Gastro-Oesophageal Reflux Disease (Gord)",
+          "Gastric Acid Lowering Agents",
+          "Gastrointestinal Agents",
+          "Histamine Agents",
+          "Histamine Antagonists",
+          "Histamine H2 Antagonists",
+          "Neurotransmitter Agents",
+          "OAT3/SLC22A8 Inhibitors",
+          "OAT3/SLC22A8 Substrates",
+          "OCT2 Inhibitors",
+          "Potential QTc-Prolonging Agents",
+          "QTc Prolonging Agents",
+          "Sulfur Compounds",
+          "Thiazoles"
+        ],
+        "molecule_properties": "{'alogp': '-0.77', 'aromatic_rings': 1, 'cx_logd': '-2.67', 'cx_logp': '-1.95', 'cx_most_apka': '9.29', 'cx_most_bpka': '8.38', 'full_molformula': 'C8H15N7O2S3', 'full_mwt': '337.46', 'hba': 6, 'hba_lipinski': 9, 'hbd': 4, 'hbd_lipinski': 8, 'heavy_atoms': 20, 'molecular_species': 'NEUTRAL', 'mw_freebase': '337.46', 'mw_monoisotopic': '337.0449', 'num_lipinski_ro5_violations': 1, 'num_ro5_violations': 0, 'psa': '175.83', 'qed_weighted': '0.29', 'ro3_pass': 'N', 'rtb': 7}",
+        "withdrawn_flag": false,
+        "P450_inhibitor": true,
+        "parenteral": true,
+        "role": true,
+        "histamine_antagonist": true,
+        "natural_product": 1,
+        "EC_1.14.*_(oxidoreductase_acting_on_paired_donors__with_incorporation_or_reduction_of_molecular_oxygen)_inhibitor": true,
+        "prodrug": 0,
+        "EC_1.*_(oxidoreductase)_inhibitor": true,
+        "H2_receptor_antagonist": true,
+        "EC_1.14.14.*_(oxidoreductase_acting_on_paired_donors__incorporating_of_1_atom_of_oxygen__with_reduced_flavin_or_flavoprotein_as_one_donor)_inhibitor": true,
+        "name": "famotidine",
+        "inhibitor": true,
+        "equivalent_identifiers": [
+          "PUBCHEM.COMPOUND:5353622",
+          "INCHIKEY:NJTQENWDJVHUOX-GXDHUFHOSA-N",
+          "UNII:5QZO15J2Z8",
+          "MESH:D015738",
+          "gtpo:7074",
+          "PUBCHEM.COMPOUND:5702160",
+          "DRUGBANK:DB00927",
+          "PUBCHEM.COMPOUND:3325",
+          "CHEMBL.COMPOUND:CHEMBL902",
+          "CHEBI:4975",
+          "HMDB:HMDB0001919"
+        ],
+        "omnicorp_article_count": 2181,
+        "neurotransmitter_agent": true,
+        "EC_1.14.14.1_(unspecific_monooxygenase)_inhibitor": true,
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "molecule_type": "Small molecule",
+        "histaminergic_drug": true
+      },
+      {
+        "id": "MONDO:0056821",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "SNOMEDCT:68409003",
+          "MONDO:0056821",
+          "UMLS:C2747929",
+          "UMLS:C0264383",
+          "MEDDRA:10067472"
+        ],
+        "omnicorp_article_count": 1404,
+        "synonyms": [
+          "organized pneumonia",
+          "BOOP",
+          "constrictive bronchiolitis",
+          "organizing pneumonia"
+        ],
+        "name": "bronchiolitis obliterans organizing pneumonia"
+      },
+      {
+        "id": "MONDO:0019737",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C2717961",
+          "MESH:D057049",
+          "SNOMEDCT:126729006",
+          "MONDO:0019737",
+          "ORPHANET:93573",
+          "MEDDRA:10043645",
+          "NCIT:C62605"
+        ],
+        "omnicorp_article_count": 3086,
+        "synonyms": [],
+        "name": "thrombotic microangiopathy"
+      },
+      {
+        "id": "MONDO:0015796",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "MEDDRA:10069351",
+          "NCIT:C155766",
+          "SNOMEDCT:315345002",
+          "EFO:0004610",
+          "MESH:D055371",
+          "UMLS:C0242488",
+          "ORPHANET:178320",
+          "MONDO:0015796"
+        ],
+        "omnicorp_article_count": 12502,
+        "synonyms": [],
+        "name": "acute lung injury"
+      },
+      {
+        "id": "NCBIGene:7124",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "molecular_entity",
+          "gene",
+          "gene_or_gene_product",
+          "macromolecular_machine",
+          "genomic_entity"
+        ],
+        "equivalent_identifiers": [
+          "HGNC:11892",
+          "NCBIGene:7124",
+          "UniProtKB:P01375",
+          "NCBIGene:7124",
+          "ENSEMBL:ENSG00000232810"
+        ],
+        "location": "6p21.33",
+        "gene_family_id": [
+          781
+        ],
+        "omnicorp_article_count": 0,
+        "name": "TNF",
+        "taxon": 9606,
+        "synonyms": [],
+        "start_position": 31575565,
+        "chromosome": "6",
+        "ensembl_name": "TNF",
+        "locus_group": "protein-coding gene",
+        "description": "tumor necrosis factor [Source:HGNC Symbol;Acc:HGNC:11892]",
+        "gene_biotype": "protein_coding",
+        "gene_family": [
+          "Tumor necrosis factor superfamily"
+        ],
+        "end_position": 31578336
+      },
+      {
+        "id": "MONDO:0005478",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "MONDO:0005478",
+          "MESH:D016171",
+          "MEDDRA:10044066",
+          "UMLS:C1328584",
+          "HP:0001664",
+          "NCIT:C50779",
+          "SNOMEDCT:31722008",
+          "UMLS:C0040479"
+        ],
+        "omnicorp_article_count": 4291,
+        "synonyms": [],
+        "name": "torsades de pointes"
+      },
+      {
+        "id": "MONDO:0004652",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "MESH:D018410",
+          "EFO:1001272",
+          "DOID:874",
+          "UMLS:C2189270",
+          "UMLS:C4727977",
+          "MEDDRA:10060946",
+          "SNOMEDCT:53084003",
+          "UMLS:C0375327",
+          "NCIT:C26704",
+          "UMLS:C4727975",
+          "UMLS:C0004626",
+          "MONDO:0004652",
+          "UMLS:C4727976"
+        ],
+        "omnicorp_article_count": 3605,
+        "synonyms": [],
+        "name": "bacterial pneumonia"
+      },
+      {
+        "id": "MONDO:0002258",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "MEDDRA:10043521",
+          "SNOMEDCT:405737000",
+          "UMLS:C0031350",
+          "SNOMEDCT:162400007",
+          "UMLS:C3854543",
+          "UMLS:C0858940",
+          "SNOMEDCT:284207003",
+          "UMLS:C0242429",
+          "UMLS:C0241381",
+          "UMLS:C0863112",
+          "UMLS:C0858941",
+          "MONDO:0002258",
+          "UMLS:C4087337",
+          "UMLS:C2363731",
+          "UMLS:C0542075",
+          "SNOMEDCT:162397003",
+          "UMLS:C0562057",
+          "UMLS:C3854544",
+          "DOID:2275",
+          "UMLS:C0858938",
+          "MESH:D010612",
+          "MEDDRA:10068319",
+          "NCIT:C50747",
+          "UMLS:C0700184",
+          "NCIT:C26851"
+        ],
+        "omnicorp_article_count": 12474,
+        "synonyms": [],
+        "name": "pharyngitis"
+      },
+      {
+        "id": "MONDO:0001208",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "acute_disease": true,
+        "equivalent_identifiers": [
+          "UMLS:C4285915",
+          "SNOMEDCT:65710008",
+          "MEDDRA:10001053",
+          "UMLS:C0748352",
+          "MONDO:0001208",
+          "NCIT:C27043",
+          "SNOMEDCT:67905004",
+          "UMLS:C0865850",
+          "UMLS:C0264490",
+          "UMLS:C0264491"
+        ],
+        "omnicorp_article_count": 5931,
+        "synonyms": [
+          "acute respiratory failure",
+          "respiratory failure, acute"
+        ],
+        "name": "acute respiratory failure"
+      },
+      {
+        "id": "MONDO:0045057",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "NCIT:C121627",
+          "UMLS:C3203501",
+          "UMLS:C0683369",
+          "SNOMEDCT:40917007",
+          "SNOMEDCT:112077003",
+          "NCIT:C37928",
+          "SNOMEDCT:231440006",
+          "MESH:D003221",
+          "UMLS:C0813178",
+          "UMLS:C3203503",
+          "UMLS:C0857386",
+          "UMLS:C0338642",
+          "UMLS:C1306588",
+          "UMLS:C0751054",
+          "SNOMEDCT:191492000",
+          "MEDDRA:10012219",
+          "UMLS:C0858855",
+          "UMLS:C0154596",
+          "UMLS:C0152124",
+          "UMLS:C0154333",
+          "MEDDRA:10010305",
+          "UMLS:C0422893",
+          "MEDDRA:10013395",
+          "EFO:0009267",
+          "SNOMEDCT:2776000",
+          "NCIT:C92639",
+          "UMLS:C0860621",
+          "SNOMEDCT:231439009",
+          "UMLS:C0029221",
+          "UMLS:C0235071",
+          "UMLS:C0011206",
+          "MEDDRA:10012373",
+          "NCIT:C78253",
+          "MESH:D003244",
+          "UMLS:C0549249",
+          "SNOMEDCT:40673001",
+          "NCIT:C2981",
+          "UMLS:C0234983",
+          "UMLS:C0542207",
+          "UMLS:C0233407",
+          "SNOMEDCT:191678001",
+          "NCIT:C34868",
+          "UMLS:C0751053",
+          "UMLS:C0860623",
+          "UMLS:C0009792",
+          "UMLS:C1142436",
+          "UMLS:C0041862",
+          "UMLS:C0338644",
+          "UMLS:C0860622",
+          "SNOMEDCT:286933003",
+          "UMLS:C0858851",
+          "UMLS:C0859069",
+          "UMLS:C0235070",
+          "SNOMEDCT:62476001",
+          "UMLS:C0541890",
+          "UMLS:C1142529",
+          "MESH:D003693",
+          "MEDDRA:10031077",
+          "UMLS:C0856071",
+          "UMLS:C0877609",
+          "UMLS:C0751055",
+          "UMLS:C0338664",
+          "UMLS:C0009676",
+          "SNOMEDCT:609585002",
+          "MEDDRA:10012218",
+          "UMLS:C0154326",
+          "HP:0001289",
+          "UMLS:C0877450",
+          "UMLS:C1285577",
+          "UMLS:C1737242",
+          "UMLS:C3203502",
+          "UMLS:C0857152",
+          "UMLS:C0857042",
+          "UMLS:C4285867",
+          "MONDO:0045057"
+        ],
+        "omnicorp_article_count": 13344,
+        "psychiatric_disorder": true,
+        "synonyms": [
+          "organic brain syndrome"
+        ],
+        "name": "delirium"
+      },
+      {
+        "id": "MONDO:0005249",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "SNOMEDCT:233604007",
+          "UMLS:C3714636",
+          "MONDO:0005249",
+          "HP:0002090",
+          "MESH:D011014",
+          "UMLS:C0887898",
+          "UMLS:C2074898",
+          "UMLS:C0032285",
+          "NCIT:C3333",
+          "EFO:0003106",
+          "MEDDRA:10035742",
+          "DOID:552"
+        ],
+        "omnicorp_article_count": 94661,
+        "synonyms": [],
+        "name": "pneumonia"
+      },
+      {
+        "id": "MONDO:0003785",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "MESH:D007970",
+          "UMLS:C0023530",
+          "MEDDRA:10024384",
+          "DOID:615",
+          "MONDO:0003785",
+          "HP:0001882",
+          "EFO:0004233",
+          "NCIT:C26816",
+          "SNOMEDCT:84828003"
+        ],
+        "omnicorp_article_count": 19821,
+        "synonyms": [],
+        "name": "leukopenia"
+      },
+      {
+        "id": "MONDO:0005252",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C1959583",
+          "UMLS:CN236639",
+          "MONDO:0005252",
+          "UMLS:C1961112",
+          "MESH:D006333",
+          "SNOMEDCT:84114007",
+          "NCIT:C50577"
+        ],
+        "omnicorp_article_count": 157881,
+        "synonyms": [
+          "cardiac failure",
+          "cardiac insufficiency",
+          "failure, heart",
+          "heart failure",
+          "insufficiency, Cardiac"
+        ],
+        "name": "heart failure"
+      },
+      {
+        "id": "MONDO:0024355",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "SNOMEDCT:54150009",
+          "UMLS:C0863094",
+          "MONDO:0024355",
+          "UMLS:C0035243",
+          "UMLS:C0041912",
+          "UMLS:C4759838",
+          "MEDDRA:10024970",
+          "MEDDRA:10062352",
+          "UMLS:C3544325",
+          "MESH:D012141",
+          "SNOMEDCT:275498002",
+          "MEDDRA:10046306",
+          "HP:0011947"
+        ],
+        "omnicorp_article_count": 6753,
+        "synonyms": [],
+        "name": "respiratory tract infectious disease"
+      },
+      {
+        "id": "MONDO:0001673",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "MESH:D003967",
+          "DOID:13250",
+          "UMLS:C1290807",
+          "NCIT:C2987",
+          "UMLS:C0011991",
+          "SNOMEDCT:267060006",
+          "HP:0002014",
+          "SNOMEDCT:62315008",
+          "MONDO:0001673",
+          "SNOMEDCT:128333008"
+        ],
+        "omnicorp_article_count": 98281,
+        "synonyms": [
+          "diarrhea",
+          "diarrheal disease",
+          "diarrheal disorder",
+          "diarrhoea",
+          "frequent stools",
+          "loose stools",
+          "diarrhea of presumed infectious origin"
+        ],
+        "name": "diarrheal disease"
+      },
+      {
+        "id": "MONDO:0001243",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "NCIT:C2992",
+          "MONDO:0001243",
+          "MESH:D004211",
+          "SNOMEDCT:67406007",
+          "DOID:11247",
+          "UMLS:C0860217",
+          "MEDDRA:10013442",
+          "NCIT:C131658",
+          "UMLS:C1868936",
+          "HP:0005521",
+          "UMLS:C4321305",
+          "UMLS:C0012739"
+        ],
+        "omnicorp_article_count": 18147,
+        "synonyms": [],
+        "name": "disseminated intravascular coagulation"
+      },
+      {
+        "id": "MONDO:0021146",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C0744648",
+          "SNOMEDCT:230461009",
+          "UMLS:C0948396",
+          "UMLS:C1328569",
+          "NCIT:C34661",
+          "SNOMEDCT:162308004",
+          "SNOMEDCT:162299003",
+          "SNOMEDCT:712831003",
+          "HP:0002315",
+          "UMLS:C0751190",
+          "UMLS:C0239888",
+          "UMLS:C0876980",
+          "UMLS:C4285864",
+          "EFO:0009550",
+          "UMLS:C1168188",
+          "UMLS:C0393735",
+          "UMLS:C0239886",
+          "MESH:D020773",
+          "UMLS:C0858898",
+          "MESH:D006261",
+          "SNOMEDCT:712826000",
+          "UMLS:C0751187",
+          "UMLS:C0857361",
+          "UMLS:C0423622",
+          "UMLS:C0423623",
+          "UMLS:C0474366",
+          "UMLS:C0857492",
+          "SNOMEDCT:162304002",
+          "UMLS:C0751192",
+          "UMLS:C0423621",
+          "UMLS:C0239885",
+          "MONDO:0021146",
+          "UMLS:C0018681",
+          "MEDDRA:10019211",
+          "SNOMEDCT:267096005",
+          "MEDDRA:10019231",
+          "MEDDRA:10060854",
+          "SNOMEDCT:445511002",
+          "UMLS:C0151293",
+          "UMLS:C0751189",
+          "UMLS:C0752149",
+          "UMLS:C1868934",
+          "SNOMEDCT:41413006",
+          "UMLS:C0856864",
+          "UMLS:C0751186",
+          "SNOMEDCT:86925001",
+          "SNOMEDCT:25064002",
+          "SNOMEDCT:162301005",
+          "UMLS:C0231613",
+          "UMLS:C0857471",
+          "UMLS:C0877781",
+          "SNOMEDCT:330007",
+          "UMLS:C1262010",
+          "UMLS:C0423618",
+          "UMLS:C0028838",
+          "SNOMEDCT:458241000124102",
+          "UMLS:C0858248",
+          "UMLS:C0752147"
+        ],
+        "omnicorp_article_count": 4917,
+        "synonyms": [
+          "headache disorder",
+          "cephalgia syndrome",
+          "cephalgia syndromes",
+          "chronic daily headache",
+          "chronic daily headaches",
+          "chronic headache",
+          "chronic headaches",
+          "daily headache, chronic",
+          "daily headaches, chronic",
+          "headache syndrome",
+          "headache syndromes",
+          "headache, chronic",
+          "headache, chronic daily",
+          "headache, intractable",
+          "headaches, chronic",
+          "headaches, chronic daily",
+          "headaches, intractable",
+          "intractable headache",
+          "intractable headaches",
+          "syndrome, headache"
+        ],
+        "name": "headache disorder"
+      },
+      {
+        "id": "MONDO:0005265",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C0021390",
+          "MONDO:0005265",
+          "SNOMEDCT:302168000",
+          "MESH:D015212",
+          "NCIT:C3138",
+          "SNOMEDCT:24526004",
+          "HP:0002037",
+          "UMLS:C0578878",
+          "DOID:0050589",
+          "MEDDRA:10021972",
+          "EFO:0003767"
+        ],
+        "omnicorp_article_count": 46420,
+        "synonyms": [],
+        "name": "inflammatory bowel disease"
+      },
+      {
+        "id": "MONDO:0004995",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C0859057",
+          "MONDO:0004995",
+          "MEDDRA:10007649",
+          "DOID:1287",
+          "UMLS:C0728936",
+          "SNOMEDCT:49601007",
+          "UMLS:C0007222",
+          "NCIT:C2931",
+          "MESH:D002318",
+          "UMLS:C0243050",
+          "HP:0001626",
+          "UMLS:C0549406",
+          "UMLS:C0859056",
+          "MESH:D018376"
+        ],
+        "omnicorp_article_count": 226519,
+        "synonyms": [],
+        "name": "cardiovascular disease"
+      },
+      {
+        "id": "MONDO:0019810",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "MONDO:0019810",
+          "SNOMEDCT:768962006",
+          "ORPHANET:95455",
+          "UMLS:C0014518",
+          "UMLS:C0858685",
+          "EFO:0004775",
+          "NCIT:C79777",
+          "SNOMEDCT:23067006",
+          "MEDDRA:10044223",
+          "UMLS:C0151626",
+          "MESH:D004816"
+        ],
+        "omnicorp_article_count": 277908,
+        "synonyms": [],
+        "name": "toxic epidermal necrolysis"
+      },
+      {
+        "id": "MONDO:0005113",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C0858746",
+          "DOID:104",
+          "UMLS:C1096600",
+          "UMLS:C1096747",
+          "SNOMEDCT:87628006",
+          "UMLS:C0085423",
+          "MESH:D001424",
+          "EFO:0000771",
+          "UMLS:C1096601",
+          "NCIT:C2890",
+          "MEDDRA:10060945",
+          "UMLS:C0004623",
+          "MONDO:0005113"
+        ],
+        "omnicorp_article_count": 95023,
+        "synonyms": [],
+        "name": "bacterial infectious disease"
+      },
+      {
+        "id": "MONDO:0005263",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C0856923",
+          "MONDO:0005263",
+          "UMLS:C0041696",
+          "MEDDRA:10012378",
+          "UMLS:C0541868",
+          "UMLS:C0541869",
+          "UMLS:C0154437",
+          "UMLS:C1386135",
+          "SNOMEDCT:192080009",
+          "HP:0000716",
+          "MEDDRA:10012401",
+          "NCIT:C35094",
+          "UMLS:C0581391",
+          "UMLS:C0859997",
+          "SNOMEDCT:712823008",
+          "UMLS:C0011581",
+          "UMLS:C0011570",
+          "UMLS:C1868899",
+          "SNOMEDCT:21061000119107",
+          "UMLS:C0349218",
+          "UMLS:C0235876"
+        ],
+        "omnicorp_article_count": 40610,
+        "psychiatric_disorder": true,
+        "synonyms": [],
+        "name": "unipolar depression"
+      },
+      {
+        "id": "MONDO:0006932",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "acute_disease": true,
+        "equivalent_identifiers": [
+          "DOID:11396",
+          "UMLS:C0034063",
+          "NCIT:C26868",
+          "EFO:1001134",
+          "UMLS:C1736185",
+          "MEDDRA:10037424",
+          "MONDO:0006932",
+          "UMLS:C0856142",
+          "UMLS:C0748123",
+          "HP:0100598",
+          "MESH:D011654",
+          "UMLS:C2939069",
+          "MEDDRA:10037423",
+          "SNOMEDCT:19242006"
+        ],
+        "omnicorp_article_count": 21499,
+        "synonyms": [],
+        "name": "pulmonary edema"
+      },
+      {
+        "id": "MONDO:0015137",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "SNOMEDCT:386661006",
+          "SNOMEDCT:50177009",
+          "UMLS:C0860192",
+          "UMLS:C0015967",
+          "UMLS:C1709787",
+          "SNOMEDCT:704425001",
+          "ORPHANET:101995",
+          "MESH:D005334",
+          "UMLS:C0743842",
+          "NCIT:C35292",
+          "UMLS:C0743971",
+          "UMLS:C2830450",
+          "UMLS:C0856281",
+          "MESH:D005335",
+          "SNOMEDCT:102496004",
+          "UMLS:C0858754",
+          "NCIT:C118240",
+          "HP:0011134",
+          "NCIT:C34608",
+          "MONDO:0015137",
+          "UMLS:C4324354",
+          "SNOMEDCT:7520000",
+          "SNOMEDCT:274640006",
+          "MEDDRA:10037660",
+          "UMLS:C3889979",
+          "NCIT:C50720",
+          "UMLS:C1096446",
+          "MEDDRA:10034533",
+          "HP:0001945",
+          "UMLS:C0235723",
+          "UMLS:C0424781",
+          "UMLS:C0015974",
+          "NCIT:C26921",
+          "UMLS:C0015970",
+          "UMLS:C0239574",
+          "NCIT:C3038",
+          "UMLS:C1397229",
+          "SNOMEDCT:304213008",
+          "UMLS:C1699202",
+          "UMLS:C1504566",
+          "UMLS:C0085594"
+        ],
+        "omnicorp_article_count": 270,
+        "syndromic_disease": true,
+        "synonyms": [],
+        "name": "periodic fever syndrome"
+      },
+      {
+        "id": "MONDO:0021113",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "NCIT:C50594",
+          "MEDDRA:10038678",
+          "UMLS:C0858971",
+          "SNOMEDCT:31515003",
+          "SNOMEDCT:80954004",
+          "MESH:D007040",
+          "HP:0002093",
+          "SNOMEDCT:15993004",
+          "UMLS:C4020855",
+          "MEDDRA:10038695",
+          "MEDDRA:10009126",
+          "MESH:D012131",
+          "HP:0002791",
+          "NCIT:C116314",
+          "SNOMEDCT:409623005",
+          "UMLS:C4087530",
+          "UMLS:C1145670",
+          "EFO:0009686",
+          "UMLS:C3203358",
+          "MONDO:0021113",
+          "UMLS:C0264492",
+          "UMLS:C0398353",
+          "UMLS:C0948755",
+          "SNOMEDCT:709109004",
+          "MEDDRA:10021133",
+          "UMLS:C3805211",
+          "SNOMEDCT:409622000",
+          "HP:0002878",
+          "UMLS:C0035229",
+          "UMLS:C4324356",
+          "UMLS:C2363912",
+          "NCIT:C26872",
+          "UMLS:C0235063",
+          "DOID:11162",
+          "SNOMEDCT:39871006"
+        ],
+        "omnicorp_article_count": 25204,
+        "synonyms": [],
+        "name": "respiratory failure"
+      },
+      {
+        "id": "MONDO:0004730",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "UMLS:C0751513",
+          "SNOMEDCT:62415009",
+          "SNOMEDCT:229751001",
+          "SNOMEDCT:69577009",
+          "HP:0000750",
+          "UMLS:C0233728",
+          "MEDDRA:10013931",
+          "HP:0002167",
+          "SNOMEDCT:29164008",
+          "UMLS:C4280574",
+          "UMLS:C0009090",
+          "UMLS:C0042940",
+          "MESH:D013064",
+          "SNOMEDCT:50219008",
+          "UMLS:C0542257",
+          "UMLS:C1527344",
+          "UMLS:C0019825",
+          "MEDDRA:10024796",
+          "UMLS:C0858568",
+          "UMLS:C3248383",
+          "UMLS:C1854348",
+          "UMLS:C3495145",
+          "UMLS:C0454644",
+          "HP:0001609",
+          "HP:0001618",
+          "MESH:D006685",
+          "UMLS:C0857508",
+          "MEDDRA:10013952",
+          "SNOMEDCT:47004009",
+          "UMLS:C0860619",
+          "HP:0002465",
+          "UMLS:C0233726",
+          "UMLS:C0751514",
+          "NCIT:C86950",
+          "SNOMEDCT:63416000",
+          "UMLS:C0860617",
+          "UMLS:C0454655",
+          "SNOMEDCT:449191001",
+          "SNOMEDCT:37732008",
+          "UMLS:C0860618",
+          "UMLS:C1527347",
+          "UMLS:C0855216",
+          "MESH:D007805",
+          "UMLS:C0541975",
+          "MONDO:0004730",
+          "UMLS:C4728001",
+          "UMLS:C3854685",
+          "UMLS:C0023014",
+          "UMLS:C0751201",
+          "SNOMEDCT:16617009",
+          "UMLS:C0854299",
+          "NCIT:C5041",
+          "UMLS:C0858567",
+          "DOID:92",
+          "UMLS:C0860616",
+          "UMLS:C0751512",
+          "UMLS:C3854612",
+          "UMLS:C0856983",
+          "UMLS:C1168248",
+          "UMLS:C1848207",
+          "UMLS:C0233715",
+          "MEDDRA:10041466",
+          "UMLS:C0037822",
+          "NCIT:C47813",
+          "SNOMEDCT:229721007",
+          "SNOMEDCT:162294008",
+          "UMLS:C0241210",
+          "UMLS:C0859023",
+          "UMLS:C0023012"
+        ],
+        "omnicorp_article_count": 11732,
+        "psychiatric_disorder": true,
+        "synonyms": [
+          "speech impediment or impairment"
+        ],
+        "name": "speech disorder"
+      },
+      {
+        "id": "MONDO:0004900",
+        "type": [
+          "named_thing",
+          "biological_entity",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ],
+        "equivalent_identifiers": [
+          "NCIT:C118255",
+          "DOID:9847",
+          "UMLS:C0476207",
+          "UMLS:C0522359",
+          "MESH:D014717",
+          "SNOMEDCT:399153001",
+          "UMLS:C0220870",
+          "UMLS:C0857226",
+          "UMLS:C0042571",
+          "UMLS:C0012833",
+          "SNOMEDCT:248223005",
+          "UMLS:C0857314",
+          "SNOMEDCT:386705008",
+          "UMLS:C0522351",
+          "MEDDRA:10047340",
+          "UMLS:C0857087",
+          "MONDO:0004900",
+          "SNOMEDCT:103284002",
+          "SNOMEDCT:63024004",
+          "UMLS:C0155501",
+          "UMLS:C0853898",
+          "UMLS:C0581879",
+          "UMLS:C0234757",
+          "SNOMEDCT:50438001",
+          "SNOMEDCT:50041000",
+          "SNOMEDCT:315018008",
+          "HP:0002321",
+          "NCIT:C38057",
+          "HP:0010532",
+          "UMLS:C3854599",
+          "UMLS:C0852858",
+          "UMLS:C0413281",
+          "SNOMEDCT:399090003",
+          "UMLS:C0149746",
+          "UMLS:C0549239",
+          "MESH:D004244",
+          "SNOMEDCT:51568001",
+          "UMLS:C0234750",
+          "UMLS:C0271487",
+          "SNOMEDCT:162271007",
+          "SNOMEDCT:103292006",
+          "SNOMEDCT:103290003",
+          "UMLS:C0522357",
+          "UMLS:C0751573",
+          "UMLS:C0522349",
+          "UMLS:C0857011",
+          "MEDDRA:10013573",
+          "SNOMEDCT:404640003",
+          "UMLS:C1739421",
+          "SNOMEDCT:103282003",
+          "NCIT:C37943",
+          "SNOMEDCT:271789005",
+          "SNOMEDCT:87118001"
+        ],
+        "omnicorp_article_count": 195,
+        "synonyms": [],
+        "name": "peripheral vertigo"
+      }
+    ],
+    "edges": [
+      {
+        "id": "f7ba96a2d5c606323e97d07af7eaa18b",
+        "source_id": "MONDO:0100096",
+        "target_id": "NCBITaxon:2697049",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 2972.641941068292,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.79813
+        ]
+      },
+      {
+        "id": "aff80436570aaf17f95b5acf1c5c0f7b",
+        "source_id": "CHEBI:4975",
+        "target_id": "NCBITaxon:2697049",
+        "type": "in_clinical_trial_for",
+        "relation_label": "in_clinical_trial_for",
+        "weight": 1,
+        "rectified": true,
+        "edge_source": "https://www.drugbank.ca/covid-19",
+        "relation": "in_clinical_trial_for",
+        "predicate_id": "ROBOKOVID:in_clinical_trial_for",
+        "source_database": "drugbank",
+        "count": 1
+      },
+      {
+        "id": "2280d6cddf5f10a8fd58de70f404b987",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0056821",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.43356351282442374,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.7023969
+        ]
+      },
+      {
+        "id": "14174cce99ff32ab8c288ae1ef54257f",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0056821",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.9620799999999998,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 20,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.9622099999999998,
+        "ctime": [
+          1595082617.1515436
+        ]
+      },
+      {
+        "id": "be11439ec57dcefc9f15abe6d1e762b9",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0019737",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.2317097301209472,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.7003188
+        ]
+      },
+      {
+        "id": "812246ae2940eeefbd72ab73666c01fe",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0019737",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.7465700000000002,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 39,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.7467599999999999,
+        "ctime": [
+          1595082617.1429114
+        ]
+      },
+      {
+        "id": "653fde0eee33086441d5077a731d974b",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0015796",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 2.4819251004707166,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.7007806
+        ]
+      },
+      {
+        "id": "c303bbb38a2ec460a39ed06817d03073",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0015796",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 3.40205,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 7,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 3.40217,
+        "ctime": [
+          1595082617.1714506
+        ]
+      },
+      {
+        "id": "7c7423ae1957fd581b156b0421d23294",
+        "source_id": "MONDO:0100096",
+        "target_id": "NCBIGene:7124",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.28975843838407,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.5879529
+        ]
+      },
+      {
+        "id": "60c62cc42ccdd831a8a428633584aa73",
+        "source_id": "CHEBI:4975",
+        "target_id": "NCBIGene:7124",
+        "type": "increases_secretion_of",
+        "relation_label": [
+          "increases secretion of",
+          "increases secretion of"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "ctd.gene_to_drug_expanded",
+          "ctd.drug_to_gene_expanded"
+        ],
+        "taxon": "taxon:ncbitaxon:10116",
+        "publications": [
+          "PMID:17698507"
+        ],
+        "relation": [
+          "CTD:increases_secretion_of",
+          "CTD:increases_secretion_of"
+        ],
+        "predicate_id": "biolink:increases_secretion_of",
+        "source_database": [
+          "ctd",
+          "ctd"
+        ],
+        "description": "increases secretion of",
+        "ctime": [
+          1585074891.331755,
+          1593820253.5950353
+        ]
+      },
+      {
+        "id": "eb2b32c3a22ebcefac4d52819d41db51",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0005478",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.2899790346415031,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.586854
+        ]
+      },
+      {
+        "id": "7325ed3030aa9e947dd4064104317cfc",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005478",
+        "type": "contributes_to",
+        "relation_label": [
+          "marker_mechanism"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "ctd.disease_to_chemical"
+        ],
+        "relation": [
+          "CTD:marker_mechanism"
+        ],
+        "publications": [
+          "PMID:19358226"
+        ],
+        "predicate_id": "biolink:contributes_to",
+        "source_database": [
+          "ctd"
+        ],
+        "ctime": [
+          1585042796.1710408
+        ]
+      },
+      {
+        "id": "cc99bb33ef8f58c50731d908ae6e750d",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005478",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 2.45513,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 86,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 2.4559599999999997,
+        "ctime": [
+          1595082617.1368022
+        ]
+      },
+      {
+        "id": "109061a2db0cad5009e55fc1cab09575",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0004652",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.5380427775446814,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.466953
+        ]
+      },
+      {
+        "id": "ec2db97f8fc49b086acffa6f4f22dbc8",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0004652",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 3.56028,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 86,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 3.5617400000000004,
+        "ctime": [
+          1595082617.1368558
+        ]
+      },
+      {
+        "id": "c952240b0e55a98a7d4eb53656b348f1",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0002258",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 8.500365898189639,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.468371
+        ]
+      },
+      {
+        "id": "4cf89334ad046b12f517e13367c341bd",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0002258",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.69686,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 129,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.6966,
+        "ctime": [
+          1595082617.1346278
+        ]
+      },
+      {
+        "id": "a9c76d8e36531364d25cb3f83572c806",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0001208",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 2.1990756687937174,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.4688883
+        ]
+      },
+      {
+        "id": "3784d2f2916dc24cfda753828b01269d",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0001208",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.72403,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 121,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.7246099999999998,
+        "ctime": [
+          1595082617.1350465
+        ]
+      },
+      {
+        "id": "5036689d55b8f9f9e8d2c35fdfb3e258",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0045057",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 2.3080327136180716,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.4670088
+        ]
+      },
+      {
+        "id": "9f4df0444db2a3ffc09c25e8b0713578",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0045057",
+        "type": "has_phenotype",
+        "relation_label": [
+          "has_phenotype"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "covid_phenotypes_csv"
+        ],
+        "relation": [
+          "RO:0002200"
+        ],
+        "publications": [],
+        "predicate_id": "RO:0002200",
+        "source_database": [
+          "covid_phenotypes_csv"
+        ],
+        "notes": "Covid symptom tracker",
+        "ctime": [
+          1597669781.6380565
+        ]
+      },
+      {
+        "id": "908ca5052b017f4ea79f769b5c3a5897",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0045057",
+        "type": "contributes_to",
+        "relation_label": [
+          "marker_mechanism"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "ctd.disease_to_chemical"
+        ],
+        "relation": [
+          "CTD:marker_mechanism"
+        ],
+        "publications": [
+          "PMID:3243179",
+          "PMID:9545163"
+        ],
+        "predicate_id": "biolink:contributes_to",
+        "source_database": [
+          "ctd"
+        ],
+        "ctime": [
+          1585042672.8032074
+        ]
+      },
+      {
+        "id": "1e4dfcec8da6409799fb897f6e02a746",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0045057",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 2.34115,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 366,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 2.34441,
+        "ctime": [
+          1595082617.1313725
+        ]
+      },
+      {
+        "id": "8183f213914fbca4a1ada57f34367e93",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0045057",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.76758,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 424,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.7669199999999999,
+        "ctime": [
+          1595082617.1311233
+        ]
+      },
+      {
+        "id": "c7ce253a2de06705ce6c6c9e2155ab4a",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0005249",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 47.804438938838985,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.3126245
+        ]
+      },
+      {
+        "id": "da825870d445b043d8c03cde137e1499",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005249",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.35095,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 90,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.3511600000000001,
+        "ctime": [
+          1595082617.1365345
+        ]
+      },
+      {
+        "id": "d1b2d3715085b8d8fade58301abb1dc2",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0003785",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.6977123972321031,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.313787
+        ]
+      },
+      {
+        "id": "1173aa8a4bf2e0a4d42adcad4fbec00a",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0003785",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.3303399999999999,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 236,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.33086,
+        "ctime": [
+          1595082617.1325479
+        ]
+      },
+      {
+        "id": "dbf99209970155864e61a71189d26623",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0005252",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.2681206679802892,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.312418
+        ]
+      },
+      {
+        "id": "8a06a374968eb4b52fc312e9bc10a0b9",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005252",
+        "type": "treats",
+        "relation_label": [
+          "therapeutic"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "ctd.disease_to_chemical"
+        ],
+        "relation": [
+          "CTD:therapeutic"
+        ],
+        "publications": [
+          "PMID:1544289",
+          "PMID:17010798",
+          "PMID:20852875"
+        ],
+        "predicate_id": "biolink:treats",
+        "source_database": [
+          "ctd"
+        ],
+        "ctime": [
+          1593809169.6174777
+        ]
+      },
+      {
+        "id": "c6ad4bcfc2f9404760353d0c6e14a757",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0024355",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 7.588895773457411,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.3132632
+        ]
+      },
+      {
+        "id": "1846fe0ab4733cbf57cf1e1c450a555a",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0024355",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.57917,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 31,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.57909,
+        "ctime": [
+          1595082617.1450992
+        ]
+      },
+      {
+        "id": "e17690f475384c9eb9cff97ea02656db",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0001673",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 3.770681305021099,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.3122118
+        ]
+      },
+      {
+        "id": "449bd7a67b7c8dcec04ed68e60170c65",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0001673",
+        "type": "has_phenotype",
+        "relation_label": [
+          "has_phenotype"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "covid_phenotypes_csv"
+        ],
+        "relation": [
+          "RO:0002200"
+        ],
+        "publications": [],
+        "predicate_id": "RO:0002200",
+        "source_database": [
+          "covid_phenotypes_csv"
+        ],
+        "notes": "Covid symptom tracker",
+        "ctime": [
+          1597669781.6328878
+        ]
+      },
+      {
+        "id": "c1ceb82427292fa60cd18f538af273b1",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0001673",
+        "type": "contraindicated_for",
+        "relation_label": [
+          "contraindication"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_drugcentral"
+        ],
+        "relation": [
+          "DrugCentral:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:contraindicated_for",
+        "source_database": [
+          "mychem"
+        ],
+        "ctime": [
+          1595082653.605976
+        ]
+      },
+      {
+        "id": "94c0e06a30513062fcee89e3ca7363bb",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0001243",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 1.3764078752377535,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.3133678
+        ]
+      },
+      {
+        "id": "5230997850fea7af82071c758253bfd6",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0001243",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 4.59804,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 384,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 4.60723,
+        "ctime": [
+          1595082617.13126
+        ]
+      },
+      {
+        "id": "02a3b9d04dc8f00baad56f1d3c2eb0ae",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0021146",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 2.186082212892646,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668521.3104324
+        ]
+      },
+      {
+        "id": "39bf57a77e9522c8643e2a4bdb6ccd8f",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0021146",
+        "type": "has_phenotype",
+        "relation_label": [
+          "has_phenotype"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "covid_phenotypes_csv"
+        ],
+        "relation": [
+          "RO:0002200"
+        ],
+        "publications": [],
+        "predicate_id": "RO:0002200",
+        "source_database": [
+          "covid_phenotypes_csv"
+        ],
+        "notes": "https://www.cebm.net/covid-19/covid-19-signs-and-symptoms-tracker/",
+        "ctime": [
+          1597669781.7502682
+        ]
+      },
+      {
+        "id": "1b344638fcb4da3c3c3f84e0fa30fb0b",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0021146",
+        "type": "contributes_to",
+        "relation_label": [
+          "marker_mechanism"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "ctd.disease_to_chemical"
+        ],
+        "relation": [
+          "CTD:marker_mechanism"
+        ],
+        "publications": [
+          "PMID:2563629"
+        ],
+        "predicate_id": "biolink:contributes_to",
+        "source_database": [
+          "ctd"
+        ],
+        "ctime": [
+          1585046178.4621778
+        ]
+      },
+      {
+        "id": "ca8fa0f8260433fef4eac6579ef883fc",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0021146",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.69191,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 867,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.69012,
+        "ctime": [
+          1595082617.1300611
+        ]
+      },
+      {
+        "id": "7f29d713370c8aacab232c743ee3987a",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0005265",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.1433512542767214,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1217892
+        ]
+      },
+      {
+        "id": "d573cb39419143de1dc2d84a0206eb30",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005265",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.50979,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 13,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.50975,
+        "ctime": [
+          1595082617.159443
+        ]
+      },
+      {
+        "id": "cee8f061f83713bca61cc0f7ca083f4e",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0004995",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 1.1426585682349704,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1226285
+        ]
+      },
+      {
+        "id": "84aa4a49db52be6a1be71060f32b219c",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0004995",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.72951,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 65,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.72939,
+        "ctime": [
+          1595082617.138634
+        ]
+      },
+      {
+        "id": "0c55c26d87be113f70e4dda7cbd75d85",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0019810",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 1.3338588941015523,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1227813
+        ]
+      },
+      {
+        "id": "360a39b818b2e4df83794bc95e083724",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0019810",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.9297099999999998,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 122,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.9304599999999998,
+        "ctime": [
+          1595082617.1348677
+        ]
+      },
+      {
+        "id": "bbaaff34c1aa38d09cbb1ea3b971c359",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0005113",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.3003483637779578,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1224134
+        ]
+      },
+      {
+        "id": "6d7efc3a7025d38ea53fc918545ff336",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005113",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.44011,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 83,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.44035,
+        "ctime": [
+          1595082617.137105
+        ]
+      },
+      {
+        "id": "9cafac13235b8ae745a7930a4c9436cf",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0005263",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.25105850319591044,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1188874
+        ]
+      },
+      {
+        "id": "68727deb8a51a89077d0dbf040f34025",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005263",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.87187,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 690,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.8712799999999999,
+        "ctime": [
+          1595082617.1303983
+        ]
+      },
+      {
+        "id": "c26987f51ee73278e67a0c91d835d0af",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0006932",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 0.6038386484244452,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1213186
+        ]
+      },
+      {
+        "id": "9d61bda4fbdcc44ba2cb202c801a1e2d",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0006932",
+        "type": "treats",
+        "relation_label": [
+          "therapeutic"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "ctd.disease_to_chemical"
+        ],
+        "relation": [
+          "CTD:therapeutic"
+        ],
+        "publications": [
+          "PMID:17010798"
+        ],
+        "predicate_id": "biolink:treats",
+        "source_database": [
+          "ctd"
+        ],
+        "ctime": [
+          1585043720.6093643
+        ]
+      },
+      {
+        "id": "2c23784201bbecd03ac2d95c7670b817",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0015137",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 22.831258761733164,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1195087
+        ]
+      },
+      {
+        "id": "4b5cc0ba33025b8d27e1ea9c61d24545",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0015137",
+        "type": "has_phenotype",
+        "relation_label": [
+          "has_phenotype"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "covid_phenotypes_csv"
+        ],
+        "relation": [
+          "RO:0002200"
+        ],
+        "publications": [],
+        "predicate_id": "RO:0002200",
+        "source_database": [
+          "covid_phenotypes_csv"
+        ],
+        "notes": "Covid symptom tracker",
+        "ctime": [
+          1597669781.5215757
+        ]
+      },
+      {
+        "id": "2df290232bf3d30a27ad874836d05262",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0015137",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.4644,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 1555,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.4692399999999999,
+        "ctime": [
+          1595082617.1298354
+        ]
+      },
+      {
+        "id": "6b637092c75966e1c35ee55ef62219fc",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0021113",
+        "type": "related_to",
+        "relation_label": [
+          "related_to"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "cord19_scigraph_v12"
+        ],
+        "relation": [
+          "SEMMEDDB:ASSOCIATED_WITH"
+        ],
+        "publications": [],
+        "predicate_id": "SEMMEDDB:ASSOCIATED_WITH",
+        "num_publications": 9.388897074387794,
+        "enrichment_p": 0.0,
+        "source_database": [
+          "cord19_scigraph_v12"
+        ],
+        "ctime": [
+          1597668519.1211047
+        ]
+      },
+      {
+        "id": "a72584a4e86423d6d94314f0bce9ddc5",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0021113",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 1.59875,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 524,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 1.60084,
+        "ctime": [
+          1595082617.1307194
+        ]
+      },
+      {
+        "id": "04b388385c74f1f389d8edc8a2b76707",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0004730",
+        "type": "has_phenotype",
+        "relation_label": [
+          "has_phenotype"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "covid_phenotypes_csv"
+        ],
+        "relation": [
+          "RO:0002200"
+        ],
+        "publications": [],
+        "predicate_id": "RO:0002200",
+        "source_database": [
+          "covid_phenotypes_csv"
+        ],
+        "notes": "Covid symptom tracker",
+        "ctime": [
+          1597669781.585789
+        ]
+      },
+      {
+        "id": "52a00428d863733171ef71ec9f0de00b",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0004730",
+        "type": "causes_adverse_event",
+        "relation_label": [
+          "causes_or_contributes_to"
+        ],
+        "prr": 5.4210400000000005,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 19,
+        "relation": [
+          "Aeolus:0000001"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:causes_adverse_event",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 5.4216,
+        "ctime": [
+          1595082617.1524408
+        ]
+      },
+      {
+        "id": "c9605cdaf3cf404cd43bb7b2f70167f5",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0004730",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.8306399999999999,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 126,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.8305,
+        "ctime": [
+          1595082617.1347628
+        ]
+      },
+      {
+        "id": "a0ab13c777e2d23b0ea6f82a2d06dd88",
+        "source_id": "MONDO:0100096",
+        "target_id": "MONDO:0004900",
+        "type": "has_phenotype",
+        "relation_label": [
+          "has_phenotype"
+        ],
+        "weight": 1,
+        "edge_source": [
+          "covid_phenotypes_csv"
+        ],
+        "relation": [
+          "RO:0002200"
+        ],
+        "publications": [],
+        "predicate_id": "RO:0002200",
+        "source_database": [
+          "covid_phenotypes_csv"
+        ],
+        "notes": "https://www.cebm.net/covid-19/covid-19-signs-and-symptoms-tracker/",
+        "ctime": [
+          1597669781.697194
+        ]
+      },
+      {
+        "id": "97ba863e0634a258a7bd4f13f5c2154b",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0004900",
+        "type": "prevents",
+        "relation_label": [
+          "prevents"
+        ],
+        "prr": 0.76794,
+        "weight": 1,
+        "edge_source": [
+          "mychem.get_adverse_events"
+        ],
+        "case_count": 936,
+        "relation": [
+          "RO:0002599"
+        ],
+        "publications": [],
+        "predicate_id": "biolink:prevents",
+        "source_database": [
+          "mychem"
+        ],
+        "ror": 0.76649,
+        "ctime": [
+          1595082617.1300073
+        ]
+      },
+      {
+        "id": "ad94b873-67fb-4fa2-8616-d462b67ee78f",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005478",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 7,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "e1029fbc-7047-43cf-813c-dd7dbca8239a",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0002258",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 2,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "04967b37-4fde-4369-abc8-877f88143e03",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0045057",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 5,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "5a3e71f8-8c0c-4494-aea0-cc8264296d60",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005249",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 13,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "0b012332-9910-4771-9ea7-7189596d89e8",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0003785",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 2,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "dd8fc12b-5e8e-454b-8918-73572cd34fa7",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005252",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 17,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "5508e2fc-be9c-49a0-8f2f-521f47f3347b",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0001673",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 25,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "b880b4cd-999d-4f6d-8efe-646e54f481e5",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0001243",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 4,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "72a1933b-6420-4ade-a7e5-d88614c9bae7",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005265",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 3,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "653e89b2-271b-4a97-8c98-18a3733911eb",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0004995",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 4,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "222a6eb5-d1e5-4ba7-89c1-23146f70277b",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0019810",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 30,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "588de277-6fc7-4252-afea-8e59f137ad9e",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0005113",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 1,
+        "source_database": "omnicorp"
+      },
+      {
+        "id": "c82d3447-7148-412c-9f5a-290e4b9da771",
+        "source_id": "CHEBI:4975",
+        "target_id": "MONDO:0006932",
+        "type": "literature_co-occurrence",
+        "weight": 1,
+        "edge_source": "omnicorp.term_to_term",
+        "publications": [],
+        "num_publications": 2,
+        "source_database": "omnicorp"
+      }
+    ]
+  },
+  "results": [
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0045057"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "5036689d55b8f9f9e8d2c35fdfb3e258",
+          "weight": 0.7204410299421424
+        },
+        {
+          "qg_id": "ab",
+          "kg_id": "9f4df0444db2a3ffc09c25e8b0713578",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "908ca5052b017f4ea79f769b5c3a5897",
+          "weight": 0.6772190444071822
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "1e4dfcec8da6409799fb897f6e02a746",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "8183f213914fbca4a1ada57f34367e93",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s19",
+          "kg_id": "04967b37-4fde-4369-abc8-877f88143e03",
+          "weight": 0.002715367498174137
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.27259429693149384
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0021146"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "02a3b9d04dc8f00baad56f1d3c2eb0ae",
+          "weight": 0.703939540146167
+        },
+        {
+          "qg_id": "ab",
+          "kg_id": "39bf57a77e9522c8643e2a4bdb6ccd8f",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "1b344638fcb4da3c3c3f84e0fa30fb0b",
+          "weight": 0.4999999999999998
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "ca8fa0f8260433fef4eac6579ef883fc",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.21449157895326032
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0005252"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "dbf99209970155864e61a71189d26623",
+          "weight": 0.33486103129084155
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "8a06a374968eb4b52fc312e9bc10a0b9",
+          "weight": 0.7999999999999998
+        },
+        {
+          "qg_id": "s25",
+          "kg_id": "dd8fc12b-5e8e-454b-8918-73572cd34fa7",
+          "weight": 0.003180142818884679
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.1181652022155771
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0005478"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "eb2b32c3a22ebcefac4d52819d41db51",
+          "weight": 0.34018056065823865
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "7325ed3030aa9e947dd4064104317cfc",
+          "weight": 0.4999999999999998
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "cc99bb33ef8f58c50731d908ae6e750d",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s11",
+          "kg_id": "ad94b873-67fb-4fa2-8616-d462b67ee78f",
+          "weight": 0.0045755789664765345
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.1180896245778146
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0006932"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "c26987f51ee73278e67a0c91d835d0af",
+          "weight": 0.41405815273039237
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "9d61bda4fbdcc44ba2cb202c801a1e2d",
+          "weight": 0.4999999999999998
+        },
+        {
+          "qg_id": "s45",
+          "kg_id": "c82d3447-7148-412c-9f5a-290e4b9da771",
+          "weight": 0.00021680922281430703
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.11326945208529625
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0001673"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "e17690f475384c9eb9cff97ea02656db",
+          "weight": 0.8643468193489441
+        },
+        {
+          "qg_id": "ab",
+          "kg_id": "449bd7a67b7c8dcec04ed68e60170c65",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "c1ceb82427292fa60cd18f538af273b1",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s29",
+          "kg_id": "5508e2fc-be9c-49a0-8f2f-521f47f3347b",
+          "weight": 0.011878609336186896
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.11218842883555613
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0015137"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "2c23784201bbecd03ac2d95c7670b817",
+          "weight": 0.9999958711504491
+        },
+        {
+          "qg_id": "ab",
+          "kg_id": "4b5cc0ba33025b8d27e1ea9c61d24545",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "2df290232bf3d30a27ad874836d05262",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.11060164282263675
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0005249"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "c7ce253a2de06705ce6c6c9e2155ab4a",
+          "weight": 0.9999999999954481
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "da825870d445b043d8c03cde137e1499",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s21",
+          "kg_id": "5a3e71f8-8c0c-4494-aea0-cc8264296d60",
+          "weight": 0.0038342811209324257
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.10685131518209905
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "NCBITaxon:2697049"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "f7ba96a2d5c606323e97d07af7eaa18b",
+          "weight": 1.0
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "aff80436570aaf17f95b5acf1c5c0f7b",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.1056624327025936
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0002258"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "c952240b0e55a98a7d4eb53656b348f1",
+          "weight": 0.9892286174666232
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "4cf89334ad046b12f517e13367c341bd",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s15",
+          "kg_id": "e1029fbc-7047-43cf-813c-dd7dbca8239a",
+          "weight": 0.000702274323792107
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.105637143942387
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0021113"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "6b637092c75966e1c35ee55ef62219fc",
+          "weight": 0.9933746758258188
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "a72584a4e86423d6d94314f0bce9ddc5",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.10551371811305281
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0024355"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "c6ad4bcfc2f9404760353d0c6e14a757",
+          "weight": 0.982290959293364
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "1846fe0ab4733cbf57cf1e1c450a555a",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.10526140474372304
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "NCBIGene:7124"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "7c7423ae1957fd581b156b0421d23294",
+          "weight": 0.34012698346324877
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "60c62cc42ccdd831a8a428633584aa73",
+          "weight": 0.4999999999999998
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.10121296844351615
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0015796"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "653fde0eee33086441d5077a731d974b",
+          "weight": 0.7426315349333443
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "c303bbb38a2ec460a39ed06817d03073",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.09845206556542106
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0001208"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "a9c76d8e36531364d25cb3f83572c806",
+          "weight": 0.7057353164939839
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "3784d2f2916dc24cfda753828b01269d",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.09710599603430226
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0019810"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "0c55c26d87be113f70e4dda7cbd75d85",
+          "weight": 0.5655810872611449
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "360a39b818b2e4df83794bc95e083724",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s39",
+          "kg_id": "222a6eb5-d1e5-4ba7-89c1-23146f70277b",
+          "weight": 0.005649926783491965
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.09219860414067288
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0001243"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "94c0e06a30513062fcee89e3ca7363bb",
+          "weight": 0.573476543904875
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "5230997850fea7af82071c758253bfd6",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s31",
+          "kg_id": "b880b4cd-999d-4f6d-8efe-646e54f481e5",
+          "weight": 0.0017703807035425179
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.09172115804318436
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0004730"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "04b388385c74f1f389d8edc8a2b76707",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "52a00428d863733171ef71ec9f0de00b",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "c9605cdaf3cf404cd43bb7b2f70167f5",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.08931639747704098
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0004995"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "cee8f061f83713bca61cc0f7ca083f4e",
+          "weight": 0.528807115838255
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "84aa4a49db52be6a1be71060f32b219c",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s37",
+          "kg_id": "653e89b2-271b-4a97-8c98-18a3733911eb",
+          "weight": 0.0
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.0889189317800707
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0003785"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "d1b2d3715085b8d8fade58301abb1dc2",
+          "weight": 0.4351902913761012
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "1173aa8a4bf2e0a4d42adcad4fbec00a",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s23",
+          "kg_id": "0b012332-9910-4771-9ea7-7189596d89e8",
+          "weight": 0.0003070707819303742
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.08297895596299835
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0004652"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "109061a2db0cad5009e55fc1cab09575",
+          "weight": 0.39897406432070515
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "ec2db97f8fc49b086acffa6f4f22dbc8",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.08014773608013241
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0056821"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "2280d6cddf5f10a8fd58de70f404b987",
+          "weight": 0.374573621530218
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "14174cce99ff32ab8c288ae1ef54257f",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.07810360754058907
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0005113"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "bbaaff34c1aa38d09cbb1ea3b971c359",
+          "weight": 0.34269650956680997
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "6d7efc3a7025d38ea53fc918545ff336",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s41",
+          "kg_id": "588de277-6fc7-4252-afea-8e59f137ad9e",
+          "weight": 0.0
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.07518701326067975
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0005263"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "9cafac13235b8ae745a7930a4c9436cf",
+          "weight": 0.33069381641594275
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "68727deb8a51a89077d0dbf040f34025",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.07400833196170736
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0019737"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "be11439ec57dcefc9f15abe6d1e762b9",
+          "weight": 0.32595248119313136
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "812246ae2940eeefbd72ab73666c01fe",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.07352959924631997
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0005265"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "7f29d713370c8aacab232c743ee3987a",
+          "weight": 0.30409428907913316
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "d573cb39419143de1dc2d84a0206eb30",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "s35",
+          "kg_id": "72a1933b-6420-4ade-a7e5-d88614c9bae7",
+          "weight": 0.0
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.07121995251702669
+    },
+    {
+      "node_bindings": [
+        {
+          "qg_id": "a",
+          "kg_id": "MONDO:0100096"
+        },
+        {
+          "qg_id": "b",
+          "kg_id": "MONDO:0004900"
+        },
+        {
+          "qg_id": "c",
+          "kg_id": "CHEBI:4975"
+        }
+      ],
+      "edge_bindings": [
+        {
+          "qg_id": "ab",
+          "kg_id": "a0ab13c777e2d23b0ea6f82a2d06dd88",
+          "weight": 0.2679491924311228
+        },
+        {
+          "qg_id": "bc",
+          "kg_id": "97ba863e0634a258a7bd4f13f5c2154b",
+          "weight": 0.2679491924311228
+        }
+      ],
+      "extra_nodes": null,
+      "extra_edges": null,
+      "score": 0.06698729810778069
+    }
+  ]
+}}

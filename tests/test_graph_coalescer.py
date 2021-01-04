@@ -4,6 +4,7 @@ import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
 import os,json
 
+jsondir='InputJson_1.0'
 
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
 def test_graph_coalescer():
@@ -29,7 +30,7 @@ def test_graph_coalescer_perf_test():
     t1 = datetime.datetime.now()
 
     # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'EdgeIDAsStrAndPerfTest.json')
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),jsondir,'EdgeIDAsStrAndPerfTest.json')
 
     # open the file and load it
     with open(test_filename,'r') as tf:
@@ -45,42 +46,31 @@ def test_graph_coalescer_perf_test():
     # it should be less than this
     assert(diff.seconds < 60)
 
-    # loop through the query_graph return and insure that edge ids are strs
-    for n in coalesced['query_graph']['edges']:
-        assert(isinstance(n['id'], str))
-
-    # loop through the knowledge_graph return and insure that edge ids are strs
-    for n in coalesced['knowledge_graph']['edges']:
-        assert(isinstance(n['id'], str))
-
-    # loop through the knowledge_graph return and insure that nodes have a type list
-    for n in coalesced['knowledge_graph']['nodes']:
-        assert(isinstance(n['type'], list))
 
 def test_graph_coalesce():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, 'famcov_new.json')
+    testfilename = os.path.join(dir_path,jsondir, 'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
     newset = snc.coalesce(answerset, method='graph')
-    kgnodes = set([n['id'] for n in newset['knowledge_graph']['nodes']])
+    kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     for r in newset['results']:
         nbs = r['node_bindings']
         extra = False
-        for nb in nbs:
-            if nb['qg_id'].startswith('extra'):
+        for qg_id,nbk in nbs.items():
+            if qg_id.startswith('extra'):
                 extra = True
             #Every node binding should be found somewhere in the kg nodes
-            for kgid in nb['kg_id']:
-                assert kgid in kgnodes
+            for nb in nbk:
+                assert nb['id'] in kgnodes
         assert extra
 
 def test_graph_coalesce_strider():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, 'strider_relay_mouse.json')
+    testfilename = os.path.join(dir_path,jsondir,'strider_relay_mouse.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -101,7 +91,7 @@ def test_missing_node_norm():
     t1 = datetime.datetime.now()
 
     # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'graph_named_thing_issue.json')
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),jsondir,'graph_named_thing_issue.json')
 
     # open the file and load it
     with open(test_filename,'r') as tf:
@@ -117,13 +107,6 @@ def test_missing_node_norm():
     # it should be less than this
     assert(diff.seconds < 60)
 
-    # loop through the query_graph return and insure that edge ids are strs
-    for n in coalesced['query_graph']['edges']:
-        assert(isinstance(n['id'], str))
-
-    # loop through the knowledge_graph return and insure that edge ids are strs
-    for n in coalesced['knowledge_graph']['edges']:
-        assert(isinstance(n['id'], str))
 
 def test_gouper():
     x = 'abcdefghi'

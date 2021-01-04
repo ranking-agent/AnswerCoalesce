@@ -1,0 +1,4054 @@
+{
+  "message":{
+  "query_graph": {
+    "nodes": [
+      {
+        "id": "n0",
+        "type": "disease",
+        "curie": "MONDO:0005148"
+      },
+      {
+        "id": "n1",
+        "type": "chemical_substance"
+      }
+    ],
+    "edges": [
+      {
+        "id": "e0",
+        "source_id": "n1",
+        "target_id": "n0",
+        "type": "treats"
+      }
+    ]
+  },
+  "results": [
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "f250222ce759cc501fc8db08a10ef129",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:9753",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "8ba8f9b1cce29a5b4b5b92037c1fca3d",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:9613",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "4d619257f8c148c470dba0811a7b699a",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:93416",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "ae473b7796d80274ae774e51cdaa0841",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:85078",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "7b7d2245aeb2183efbc8b4749eae5e8b",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:82720",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "6bfa51d92077ce9c2199cbd246c4fdeb",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:73274",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "15551720213af58c59255ba3c0723d07",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:73272",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e1fa568bffad9c6e3997f6c2a7bafc04",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:71193",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "1102029d8841bf0d7c8d2ef47209a14a",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:71272",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "9136d8ff414de9d94ab005b4c689615b",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:72323",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "b70221071b1b7f067c65c19ae2a5a743",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:68610",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "a432be57e752928ba8e8e35c1fffaf6a",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:5384",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e693021f9660437218c35212a02e3317",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:5383",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "47877372020c204be21b831c83b4854c",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:40237",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "44f3354fecc8a6e3ca6d33c44a34e26f",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:31654",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "91e528335a4e68e031f405c5adeda9c8",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:32300",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "2cd8564e4600119ce684f274dfdc53a4",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:31660",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "623c0cb5e42c5892173ed3a7a85498ff",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:31897",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "7da694bbccacb10421ea43adc902b172",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:134725",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "0c69cdeb184a217e9993d669adf4e6d9",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:134715",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "c24c1e06d201269d63c03a4ee44aa0a3",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:134731",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "3b11cb16521e673a49e4f6f96fd302a9",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:134735",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "a5eb2e56c412ca8c99d032d235f8ccb6",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:134724",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e918af17b16fb0f91bc8a46ad2ecb25f",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:135731",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "6333f699b0aeea29493ceaff35365aba",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:135545",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "b7daa0996dde24c1acd04ca2fec6b992",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:136052",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "d7759261541a1e1abce9463a08b136d7",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:135349",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "5c434a9f8d2aee118188d31154201208",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:136043",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "b59f6f77c9932889d9adf3c6c42caaf7",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:136042",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "4f4ad284b25d1e2079f6f0cb39b2348b",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:136041",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "5bc4788d14ac1d7fbee5ca8b6e6846ba",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:135285",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e474d8315636847eed8b28df47bb5e75",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:135118",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e6ea1a1c5f55f6d061072c3bf66e2c87",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:3650",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "3f77dcc07f6db5d36e4a48ce3ec3be2e",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:6935",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "e7d5b5fa7a3f7e167b08b75d2f54c99a",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:8805",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "373496ec172b7dd9006aae33314163e8",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:3209",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "ca7aac7ea5e26e766e749dd6047d0cb3",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:8228",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "81d25c03711d540423bd0a333bab2b8d",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:6801",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "7d4926c7a37ce6f2667eb3c0ce108857",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:27999",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "d569acaeef6b86c245ce7427f55ca90e",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:5441",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "0cd51525ab6609fb980256c685b1c430",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:2376",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    },
+    {
+      "edge_bindings": [
+        {
+          "kg_id": "16b4be0e2c99725cfb05436da8a81951",
+          "qg_id": "e0"
+        }
+      ],
+      "node_bindings": [
+        {
+          "kg_id": "MONDO:0005148",
+          "qg_id": "n0"
+        },
+        {
+          "kg_id": "CHEBI:28052",
+          "qg_id": "n1"
+        }
+      ],
+      "score": 1
+    }
+  ],
+  "knowledge_graph": {
+    "nodes": [
+      {
+        "potassium_channel_blocker": true,
+        "iupac_name": "1-(azepan-1-yl)-3-tosyl-urea",
+        "pharmaceutical": true,
+        "role": true,
+        "inchikey": "OUDSBRTVNLOZBN-UHFFFAOYSA-N",
+        "smiles": "Cc1ccc(S(=O)(=O)NC(=O)NN2CCCCCC2)cc1",
+        "drugbank.accession_number": "APRD01267",
+        "mass": "311.40000",
+        "molecular_weight": 311.4,
+        "potassium_channel_modulator": true,
+        "drug": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "Cc1ccc(S(=O)(=O)NC(=O)NN2CCCCCC2)cc1",
+        "chebi.orig_smiles": "Cc1ccc(cc1)S(=O)(=O)NC(=O)NN1CCCCCC1",
+        "id": "CHEBI:9613",
+        "membrane_transport_modulator": true,
+        "molecular_formula": "C14H21N3O3S",
+        "pubchem.orig_smiles": "CC1=CC=C(C=C1)S(=O)(=O)NC(=O)NN2CCCCCC2",
+        "charge": "0",
+        "biophysical_role": true,
+        "inchi": "InChI=1S/C14H21N3O3S/c1-12-6-8-13(9-7-12)21(19,20)16-14(18)15-17-10-4-2-3-5-11-17/h6-9H,2-5,10-11H2,1H3,(H2,15,16,18)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylurea Compounds",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "synonyms": [
+          "N-(azepan-1-ylcarbamoyl)-4-methylbenzenesulfonamide",
+          "1-(hexahydro-1-azepinyl)-3-p-tolylsulfonylurea",
+          "1-(hexahydro-1H-azepin-1-yl)-3-(p-tolylsulfonyl)urea",
+          "4-(p-tolylsulfonyl)-1,1-hexamethylenesemicarbazide",
+          "BRN 1323565",
+          "CCRIS 591",
+          "Diabewas",
+          "EINECS 214-588-3",
+          "N-(p-toluenesulfonyl)-N'-hexamethyleniminourea",
+          "N-{[(hexahydro-1H-azepin-1-yl)-amino]carbonyl}-4-methylbenzenesulfonamide",
+          "Norglycin",
+          "tolazamida",
+          "tolazamide",
+          "tolazamidum",
+          "Tolinase",
+          "U 17835",
+          "U-17835"
+        ],
+        "equivalent_identifiers": [
+          "INCHIKEY:OUDSBRTVNLOZBN-UHFFFAOYSA-N",
+          "MESH:D014042",
+          "CHEBI:9613",
+          "DRUGBANK:DB00839",
+          "PUBCHEM:5503",
+          "UNII:9LT1BRO48Q",
+          "CHEMBL.COMPOUND:CHEMBL817",
+          "HMDB:HMDB0014977",
+          "GTOPDB:6847"
+        ],
+        "application": true,
+        "name": "tolazamide",
+        "drugbank.investigational": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "311.13036",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C22H30N6OS",
+        "iupac_name": "[(2S,4S)-4-[4-(5-methyl-2-phenyl-pyrazol-3-yl)piperazino]pyrrolidin-2-yl]-thiazolidin-3-yl-methanone",
+        "pubchem.orig_smiles": "CC1=NN(C(=C1)N2CCN(CC2)[C@H]3C[C@H](NC3)C(=O)N4CCSC4)C5=CC=CC=C5",
+        "charge": "0",
+        "inchikey": "WGRQANOPCQRCME-PMACEKPBSA-N",
+        "inchi": "InChI=1S/C22H30N6OS/c1-17-13-21(28(24-17)18-5-3-2-4-6-18)26-9-7-25(8-10-26)19-14-20(23-15-19)22(29)27-11-12-30-16-27/h2-6,13,19-20,23H,7-12,14-16H2,1H3/t19-,20-/m0/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Blood Glucose Lowering Agents",
+          "DPP-IV Inhibitors",
+          "Sulfur Compounds",
+          "Thiazoles"
+        ],
+        "smiles": "Cc1cc(N2CCN([C@@H]3CN[C@H](C(=O)N4CCSC4)C3)CC2)n(-c2ccccc2)n1",
+        "synonyms": [
+          "tenelia",
+          "teneligliptin hydrobromide",
+          "teneligliptin hydrobromide hydrate"
+        ],
+        "mass": "426.580",
+        "molecular_weight": 426.6,
+        "equivalent_identifiers": [
+          "UNII:28ZHI4CF9C",
+          "CHEMBL.COMPOUND:CHEMBL2147777",
+          "GTOPDB:9906",
+          "MESH:C579035",
+          "DRUGBANK:DB11950",
+          "INCHIKEY:WGRQANOPCQRCME-PMACEKPBSA-N",
+          "PUBCHEM:11949652",
+          "CHEBI:136042"
+        ],
+        "simple_smiles": "Cc1cc(N2CCN(C3CNC(C(=O)N4CCSC4)C3)CC2)n(-c2ccccc2)n1",
+        "name": "teneligliptin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C1CN(CCN1[C@]2(C[C@](NC2)(C(=O)N3CSCC3)[H])[H])C4=CC(=NN4C5=CC=CC=C5)C",
+        "monoisotopic_mass": "426.22018",
+        "id": "CHEBI:136042",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "1-(4-chlorophenyl)sulfonyl-3-propyl-urea",
+        "pharmaceutical": true,
+        "inchikey": "RKWGIWYCVPQPMF-UHFFFAOYSA-N",
+        "role": true,
+        "drugbank.accession_number": "APRD00029",
+        "smiles": "CCCNC(=O)NS(=O)(=O)c1ccc(Cl)cc1",
+        "mass": "276.74000",
+        "secretagogue": true,
+        "molecular_weight": 276.74,
+        "biochemical_role": true,
+        "drug": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CCCNC(=O)NS(=O)(=O)c1ccc(Cl)cc1",
+        "chebi.orig_smiles": "CCCNC(=O)NS(=O)(=O)c1ccc(Cl)cc1",
+        "id": "CHEBI:3650",
+        "insulin_secretagogue": true,
+        "molecular_formula": "C10H13ClN2O3S",
+        "pubchem.orig_smiles": "CCCNC(=O)NS(=O)(=O)C1=CC=C(C=C1)Cl",
+        "charge": "0",
+        "inchi": "InChI=1S/C10H13ClN2O3S/c1-2-7-12-10(14)13-17(15,16)9-5-3-8(11)4-6-9/h3-6H,2,7H2,1H3,(H2,12,13,14)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "OAT1/SLC22A6 inhibitors",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylurea Compounds",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "synonyms": [
+          "CHLORPROPAMIDE",
+          "1-(p-chlorobenzenesulfonyl)-3-propylurea",
+          "1-(p-chlorophenylsulfonyl)-3-propylurea",
+          "1-propyl-3-(p-chlorobenzenesulfonyl)urea",
+          "4-chloro-N-((propylamino)carbonyl)benzenesulfonamide",
+          "4-chloro-N-[(propylamino)carbonyl]benzenesulfonamide",
+          "chlorpropamide",
+          "chlorpropamidum",
+          "clorpropamida",
+          "N-(4-chlorophenylsulfonyl)-N'-propylurea",
+          "N-(p-chlorobenzenesulfonyl)-N'-propylurea",
+          "n-propyl-N'-(p-chlorobenzenesulfonyl)urea",
+          "n-propyl-N'-p-chlorophenylsulfonylcarbamide"
+        ],
+        "equivalent_identifiers": [
+          "HMDB:HMDB0014810",
+          "GTOPDB:6801",
+          "PUBCHEM:2727",
+          "DRUGBANK:DB00672",
+          "CHEMBL.COMPOUND:CHEMBL498",
+          "MESH:D002747",
+          "INCHIKEY:RKWGIWYCVPQPMF-UHFFFAOYSA-N",
+          "CHEBI:3650",
+          "UNII:WTM2C3IL2X"
+        ],
+        "application": true,
+        "name": "chlorpropamide",
+        "drugbank.investigational": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "276.03354",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "N-[2-[4-(cyclohexylcarbamoylsulfamoyl)phenyl]ethyl]-5-methyl-pyrazinamide",
+        "pharmaceutical": true,
+        "inchikey": "ZJJXGWJIGJFDTL-UHFFFAOYSA-N",
+        "role": true,
+        "drugbank.accession_number": "APRD00436",
+        "smiles": "Cc1cnc(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)NC3CCCCC3)cc2)cn1",
+        "mass": "445.53500",
+        "EC_2.7.1.*_(phosphotransferases_with_an_alcohol_group_as_acceptor)_inhibitor": true,
+        "secretagogue": true,
+        "molecular_weight": 445.5,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "Cc1cnc(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)NC3CCCCC3)cc2)cn1",
+        "chebi.orig_smiles": "Cc1cnc(cn1)C(=O)NCCc1ccc(cc1)S(=O)(=O)NC(=O)NC1CCCCC1",
+        "EC_2.*_(transferase)_inhibitor": true,
+        "id": "CHEBI:5384",
+        "insulin_secretagogue": true,
+        "molecular_formula": "C21H27N5O4S",
+        "pubchem.orig_smiles": "CC1=CN=C(C=N1)C(=O)NCCC2=CC=C(C=C2)S(=O)(=O)NC(=O)NC3CCCCC3",
+        "charge": "0",
+        "inchi": "InChI=1S/C21H27N5O4S/c1-15-13-24-19(14-23-15)20(27)22-12-11-16-7-9-18(10-8-16)31(29,30)26-21(28)25-17-5-3-2-4-6-17/h7-10,13-14,17H,2-6,11-12H2,1H3,(H,22,27)(H2,25,26,28)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "BSEP/ABCB11 Substrates",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylurea Compounds",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "UGT1A1 Substrates",
+          "Urea"
+        ],
+        "synonyms": [
+          "N-(2-{4-[(cyclohexylcarbamoyl)sulfamoyl]phenyl}ethyl)-5-methylpyrazine-2-carboxamide",
+          "1-cyclohexyl-3-({p-[2-(5-methylpyrazinecarboxamido)ethyl]phenyl}sulfonyl)urea",
+          "Aldiab",
+          "CP 28,720",
+          "CP 28720",
+          "CP-28,720",
+          "Digrin",
+          "Dipazide",
+          "Glibenese",
+          "Glibetin",
+          "Glican",
+          "Glidiab",
+          "Glipid",
+          "glipizida",
+          "glipizide",
+          "glipizidum",
+          "Gluco-Rite",
+          "Glucolip",
+          "Glucotrol",
+          "Glucozide",
+          "Glupitel",
+          "Glupizide",
+          "Glyde",
+          "Glydiazinamide",
+          "K 4024",
+          "Melizide",
+          "Mindiab",
+          "Minidab",
+          "Minidiab",
+          "Minodiab",
+          "N-{4-[beta-(5-methylpyrazine-2-carboxamido)ethyl]benzenesulphonyl}-N'-cyclohexylurea",
+          "Napizide",
+          "Ozidia",
+          "Sucrazide"
+        ],
+        "EC_2.7.1.33_(pantothenate_kinase)_inhibitor": true,
+        "EC_2.7.*_(P_containing_group_transferase)_inhibitor": true,
+        "equivalent_identifiers": [
+          "GTOPDB:6821",
+          "CHEBI:5384",
+          "INCHIKEY:ZJJXGWJIGJFDTL-UHFFFAOYSA-N",
+          "HMDB:HMDB0015200",
+          "UNII:X7WDT95N5C",
+          "MESH:D005913",
+          "DRUGBANK:DB01067",
+          "PUBCHEM:3478",
+          "CHEMBL.COMPOUND:CHEMBL1073"
+        ],
+        "application": true,
+        "name": "glipizide",
+        "drugbank.investigational": true,
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "445.17838",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "8-[(3R)-3-aminopiperidino]-7-but-2-ynyl-3-methyl-1-[(4-methylquinazolin-2-yl)methyl]xanthine",
+        "pharmaceutical": true,
+        "inchikey": "LTXREWYXXSTFRX-QGZVFWFLSA-N",
+        "role": true,
+        "smiles": "CC#CCn1c(N2CCC[C@@H](N)C2)nc2c1c(=O)n(Cc1nc(C)c3ccccc3n1)c(=O)n2C",
+        "mass": "472.54220",
+        "molecular_weight": 472.5,
+        "EC_3.4.14.*_(dipeptidyl__and_tripeptidyl_peptidases)_inhibitor": true,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CC#CCn1c(N2CCCC(N)C2)nc2c1c(=O)n(Cc1nc(C)c3ccccc3n1)c(=O)n2C",
+        "chebi.orig_smiles": "CC#CCn1c(nc2n(C)c(=O)n(Cc3nc(C)c4ccccc4n3)c(=O)c12)N1CCC[C@@H](N)C1",
+        "id": "CHEBI:68610",
+        "molecular_formula": "C25H28N8O2",
+        "pubchem.orig_smiles": "CC#CCN1C2=C(N=C1N3CCC[C@H](C3)N)N(C(=O)N(C2=O)CC4=NC5=CC=CC=C5C(=N4)C)C",
+        "charge": "0",
+        "inchi": "InChI=1S/C25H28N8O2/c1-4-5-13-32-21-22(29-24(32)31-12-8-9-17(26)14-31)30(3)25(35)33(23(21)34)15-20-27-16(2)18-10-6-7-11-19(18)28-20/h6-7,10-11,17H,8-9,12-15,26H2,1-3H3/t17-/m1/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP3A Inhibitors",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Inhibitors",
+          "Cytochrome P-450 CYP3A4 Inhibitors (moderate)",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Cytochrome P-450 Enzyme Inhibitors",
+          "DPP-IV Inhibitors",
+          "Drugs Used in Diabetes",
+          "Enzyme Inhibitors",
+          "Hormones",
+          "Hormones, Hormone Substitutes, and Hormone Antagonists",
+          "Incretins",
+          "OCT1 inhibitors",
+          "OCT2 Inhibitors",
+          "OCT2 Substrates",
+          "OCT2 substrates with narrow therapeutic index",
+          "Oral Hypoglycemics",
+          "P-glycoprotein/ABCB1 Inhibitors",
+          "P-glycoprotein/ABCB1 Substrates",
+          "Protease Inhibitors",
+          "Purines",
+          "Quinazolines"
+        ],
+        "synonyms": [
+          "8-[(3R)-3-aminopiperidin-1-yl]-7-(but-2-yn-1-yl)-3-methyl-1-[(4-methylquinazolin-2-yl)methyl]-3,7-dihydro-1H-purine-2,6-dione",
+          "(R)-8-(3-aminopiperidin-1-yl)-7-but-2-ynyl-3-methyl-1-(4-methylquinazolin-2-ylmethyl)-3,7-dihydro-purine-2,6-dione",
+          "BI 1356",
+          "linagliptin",
+          "Tradjenta"
+        ],
+        "EC_3.*_(hydrolase)_inhibitor": true,
+        "EC_3.4.14.5_(dipeptidyl_peptidase_IV)_inhibitor": true,
+        "equivalent_identifiers": [
+          "CHEMBL.COMPOUND:CHEMBL237500",
+          "GTOPDB:6318",
+          "INCHIKEY:LTXREWYXXSTFRX-QGZVFWFLSA-N",
+          "UNII:3X29ZEJ4R2",
+          "CHEBI:68610",
+          "DRUGBANK:DB08882",
+          "MESH:C568794",
+          "PUBCHEM:10096344"
+        ],
+        "application": true,
+        "EC_3.4.*_(hydrolases_acting_on_peptide_bond)_inhibitor": true,
+        "name": "linagliptin",
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "472.23352",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "(2S,3R,4R,5S,6R)-2-[4-chloro-3-(4-ethoxybenzyl)phenyl]-6-methylol-tetrahydropyran-3,4,5-triol",
+        "pharmaceutical": true,
+        "inchikey": "JVHXJTBJCFBINQ-ADAARDCZSA-N",
+        "role": true,
+        "smiles": "CCOc1ccc(Cc2cc([C@@H]3O[C@H](CO)[C@@H](O)[C@H](O)[C@H]3O)ccc2Cl)cc1",
+        "mass": "408.87300",
+        "molecular_weight": 408.9,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CCOc1ccc(Cc2cc(C3OC(CO)C(O)C(O)C3O)ccc2Cl)cc1",
+        "chebi.orig_smiles": "CCOc1ccc(Cc2cc(ccc2Cl)[C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)cc1",
+        "id": "CHEBI:85078",
+        "molecular_formula": "C21H25ClO6",
+        "pubchem.orig_smiles": "CCOC1=CC=C(C=C1)CC2=C(C=CC(=C2)[C@H]3[C@@H]([C@H]([C@@H]([C@H](O3)CO)O)O)O)Cl",
+        "charge": "0",
+        "inchi": "InChI=1S/C21H25ClO6/c1-2-27-15-6-3-12(4-7-15)9-14-10-13(5-8-16(14)22)21-20(26)19(25)18(24)17(11-23)28-21/h3-8,10,17-21,23-26H,2,9,11H2,1H3/t17-,18-,19+,20-,21+/m1/s1",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Benzene Derivatives",
+          "Blood Glucose Lowering Agents",
+          "Carbohydrates",
+          "Cytochrome P-450 CYP1A2 Inhibitors",
+          "Cytochrome P-450 CYP1A2 Inhibitors (unknown strength)",
+          "Cytochrome P-450 CYP1A2 Substrates",
+          "Cytochrome P-450 CYP2A6 Substrates",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Cytochrome P-450 CYP2D6 Substrates",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Diuretics",
+          "Drugs Used in Diabetes",
+          "Glycosides",
+          "Hypotensive Agents",
+          "Oral Hypoglycemics",
+          "P-glycoprotein/ABCB1 Substrates",
+          "Sodium-glucose co-transporter 2 (SGLT2) inhibitors",
+          "Sodium-glucose Cotransporter 2 (SGLT2) Inhibitors",
+          "Sodium-Glucose Transport Proteins, antagonists & inhibitors",
+          "Sodium-Glucose Transporter 2 Inhibitors",
+          "UGT1A9 Substrates",
+          "UGT2B7 substrates"
+        ],
+        "synonyms": [
+          "(1S)-1,5-anhydro-1-[4-chloro-3-(4-ethoxybenzyl)phenyl]-D-glucitol",
+          "(2S,3R,4R,5S,6R)-2-(4-Chloro-3-(4-ethoxybenzyl)phenyl)-6- (hydroxymethyl)tetrahydro-2H-pyran-3,4,5-triol",
+          "BMS 512148",
+          "BMS-512148",
+          "dapagliflozin"
+        ],
+        "equivalent_identifiers": [
+          "INCHIKEY:JVHXJTBJCFBINQ-ADAARDCZSA-N",
+          "CHEMBL.COMPOUND:CHEMBL429910",
+          "UNII:1ULL0QJ8UC",
+          "MESH:C529054",
+          "DRUGBANK:DB06292",
+          "CHEBI:85078",
+          "PUBCHEM:9887712",
+          "GTOPDB:4594"
+        ],
+        "sodium_glucose_transport_protein_subtype_2_inhibitor": true,
+        "application": true,
+        "name": "dapagliflozin",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "408.13397",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C17H25N3O2",
+        "iupac_name": "(2S)-1-[2-[(3-hydroxy-1-adamantyl)amino]acetyl]pyrrolidine-2-carbonitrile",
+        "pubchem.orig_smiles": "C1C[C@H](N(C1)C(=O)CNC23CC4CC(C2)CC(C4)(C3)O)C#N",
+        "charge": "0",
+        "inchikey": "SYOKIDBDQMKNDQ-XWTIBIIYSA-N",
+        "inchi": "InChI=1S/C17H25N3O2/c18-9-14-2-1-3-20(14)15(21)10-19-16-5-12-4-13(6-16)8-17(22,7-12)11-16/h12-14,19,22H,1-8,10-11H2/t12?,13?,14-,16?,17?/m0/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cycloparaffins",
+          "DPP-IV Inhibitors",
+          "Drugs Used in Diabetes",
+          "Enzyme Inhibitors",
+          "Glucagon-Like Peptide 1",
+          "Oral Hypoglycemics",
+          "Protease Inhibitors"
+        ],
+        "smiles": "N#C[C@@H]1CCCN1C(=O)CNC12CC3CC(CC(O)(C3)C1)C2",
+        "synonyms": [
+          "galvus",
+          "jalra",
+          "NVP-LAF237",
+          "vildagliptin HCl",
+          "vildagliptin hydrochloride",
+          "xiliarx"
+        ],
+        "mass": "303.400",
+        "molecular_weight": 303.4,
+        "equivalent_identifiers": [
+          "CHEMBL.COMPOUND:CHEMBL142703",
+          "PUBCHEM:6918537",
+          "DRUGBANK:DB04876",
+          "HMDB:HMDB0015596",
+          "MESH:C502012",
+          "INCHIKEY:SYOKIDBDQMKNDQ-XWTIBIIYSA-N",
+          "GTOPDB:6310",
+          "UNII:I6B4B2U96P",
+          "CHEBI:135285"
+        ],
+        "simple_smiles": "N#CC1CCCN1C(=O)CNC12CC3CC(CC(O)(C3)C1)C2",
+        "name": "vildagliptin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C1C2CC3(CC1(NCC(N4CCC[C@H]4C#N)=O)CC(C3)C2)O",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "303.19468",
+        "id": "CHEBI:135285",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "3-(diaminomethylene)-1,1-dimethyl-guanidine",
+        "pharmaceutical": true,
+        "inchikey": "XZWYZXLIPXDOLR-UHFFFAOYSA-N",
+        "role": true,
+        "drugbank.accession_number": "APRD01099",
+        "smiles": "CN(C)C(=N)N=C(N)N",
+        "mass": "129.16384",
+        "xenobiotic": true,
+        "molecular_weight": [
+          "129.1636"
+        ],
+        "drug": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CN(C)C(=N)N=C(N)N",
+        "chebi.orig_smiles": "CN(C)C(=N)NC(N)=N",
+        "environmental_contaminant": true,
+        "id": "CHEBI:6801",
+        "molecular_formula": [
+          "C4H11N5"
+        ],
+        "pubchem.orig_smiles": "CN(C)C(=N)N=C(N)N",
+        "charge": "0",
+        "inchi": "InChI=1S/C4H11N5/c1-9(2)4(7)8-3(5)6/h1-2H3,(H5,5,6,7,8)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Amidines",
+          "Biguanides",
+          "Blood Glucose Lowering Agents",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Guanidines",
+          "MATE 1 Substrates",
+          "MATE 2 Substrates",
+          "MATE substrates",
+          "OCT1 substrates",
+          "OCT2 Inhibitors",
+          "OCT2 Substrates",
+          "OCT2 substrates with narrow therapeutic index",
+          "Oral Hypoglycemics"
+        ],
+        "synonyms": [
+          "Metformin",
+          "N,N-dimethylimidodicarbonimidic diamide",
+          "1,1-Dimethylbiguanide"
+        ],
+        "equivalent_identifiers": [
+          "UNII:9100L32L2N",
+          "KEGG.COMPOUND:C07151",
+          "DRUGBANK:DB00331",
+          "HMDB:HMDB0001921",
+          "INCHIKEY:XZWYZXLIPXDOLR-UHFFFAOYSA-N",
+          "GTOPDB:4779",
+          "MESH:D008687",
+          "CHEBI:6801",
+          "CHEMBL.COMPOUND:CHEMBL1431",
+          "PUBCHEM:4091"
+        ],
+        "application": true,
+        "chemical_role": true,
+        "name": "metformin",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "129.10145",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C18H20FN5O2",
+        "iupac_name": "2-[[6-[(3R)-3-aminopiperidino]-2,4-diketo-3-methyl-pyrimidin-1-yl]methyl]-4-fluoro-benzonitrile",
+        "pubchem.orig_smiles": "CN1C(=O)C=C(N(C1=O)CC2=C(C=CC(=C2)F)C#N)N3CCC[C@H](C3)N",
+        "charge": "0",
+        "inchikey": "IWYJYHUNXVAVAA-OAHLLOKOSA-N",
+        "inchi": "InChI=1S/C18H20FN5O2/c1-22-17(25)8-16(23-6-2-3-15(21)11-23)24(18(22)26)10-13-7-14(19)5-4-12(13)9-20/h4-5,7-8,15H,2-3,6,10-11,21H2,1H3/t15-/m1/s1",
+        "smiles": "Cn1c(=O)cc(N2CCC[C@@H](N)C2)n(Cc2cc(F)ccc2C#N)c1=O",
+        "synonyms": [
+          "SYR-472",
+          "SYR111472",
+          "trelagliptin succinate",
+          "zafatek"
+        ],
+        "mass": "357.383",
+        "molecular_weight": 357.4,
+        "equivalent_identifiers": [
+          "CHEMBL.COMPOUND:CHEMBL1650443",
+          "MESH:C000595449",
+          "INCHIKEY:IWYJYHUNXVAVAA-OAHLLOKOSA-N",
+          "CHEBI:134715",
+          "UNII:Q836OWG55H",
+          "PUBCHEM:15983988"
+        ],
+        "simple_smiles": "Cn1c(=O)cc(N2CCCC(N)C2)n(Cc2cc(F)ccc2C#N)c1=O",
+        "name": "trelagliptin",
+        "chebi.orig_smiles": "C1(=CC=C(C=C1CN2C(N(C(C=C2N3CCC[C@H](C3)N)=O)C)=O)F)C#N",
+        "monoisotopic_mass": "357.16010",
+        "id": "CHEBI:134715",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "pharmaceutical": true,
+        "role": true,
+        "inchikey": "WIGIZIANZCJQQY-RUCARUNLSA-N",
+        "smiles": "CCC1=C(C)CN(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)N[C@H]3CC[C@H](C)CC3)cc2)C1=O",
+        "drugbank.accession_number": "APRD00381",
+        "mass": "490.61600",
+        "secretagogue": true,
+        "biochemical_role": true,
+        "drug": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CCC1=C(C)CN(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)NC3CCC(C)CC3)cc2)C1=O",
+        "chebi.orig_smiles": "CCC1=C(C)CN(C(=O)NCCc2ccc(cc2)S(=O)(=O)NC(=O)N[C@H]2CC[C@H](C)CC2)C1=O",
+        "id": "CHEBI:5383",
+        "insulin_secretagogue": true,
+        "molecular_formula": "C24H34N4O5S",
+        "charge": "0",
+        "inchi": "InChI=1S/C24H34N4O5S/c1-4-21-17(3)15-28(22(21)29)24(31)25-14-13-18-7-11-20(12-8-18)34(32,33)27-23(30)26-19-9-5-16(2)6-10-19/h7-8,11-12,16,19H,4-6,9-10,13-15H2,1-3H3,(H,25,31)(H2,26,27,30)/t16-,19-",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Antiarrhythmic agents",
+          "Blood Glucose Lowering Agents",
+          "BSEP/ABCB11 Substrates",
+          "Cardiovascular Agents",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "Immunosuppressive Agents",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylureas",
+          "Sulfur Compounds"
+        ],
+        "synonyms": [
+          "3-ethyl-4-methyl-N-[2-(4-{[(trans-4-methylcyclohexyl)carbamoyl]sulfamoyl}phenyl)ethyl]-2-oxo-2,5-dihydro-1H-pyrrole-1-carboxamide",
+          "1-((p-(2-(3-Ethyl-4-methyl-2-oxo-3-pyrroline-1-carboxamido)ethyl)phenyl)sulfonyl)-3-(trans-4-methylcyclohexyl)urea",
+          "1-{[4-(2-{[(3-ethyl-4-methyl-2-oxo-2,5-dihydro-1H-pyrrol-1-yl)carbonyl]amino}ethyl)phenyl]sulfonyl}-3-(trans-4-methylcyclohexyl)urea",
+          "Amaryl",
+          "gimepiride",
+          "glimepirida",
+          "glimepiride",
+          "glimepiridum"
+        ],
+        "equivalent_identifiers": [
+          "MESH:C057619",
+          "CHEMBL.COMPOUND:CHEMBL1481",
+          "INCHIKEY:WIGIZIANZCJQQY-RUCARUNLSA-N",
+          "CHEBI:5383",
+          "GTOPDB:6820",
+          "DRUGBANK:DB00222",
+          "UNII:6KY687524K"
+        ],
+        "application": true,
+        "name": "glimepiride",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "490.22499",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C23H30O6S",
+        "iupac_name": "(2S,3R,4R,5S,6R)-2-[5-(4-ethoxybenzyl)-2-methoxy-4-methyl-phenyl]-6-methylol-tetrahydrothiopyran-3,4,5-triol",
+        "pubchem.orig_smiles": "CCOC1=CC=C(C=C1)CC2=CC(=C(C=C2C)OC)[C@H]3[C@@H]([C@H]([C@@H]([C@H](S3)CO)O)O)O",
+        "charge": "0",
+        "inchikey": "WHSOLWOTCHFFBK-ZQGJOIPISA-N",
+        "inchi": "InChI=1S/C23H30O6S/c1-4-29-16-7-5-14(6-8-16)10-15-11-17(18(28-3)9-13(15)2)23-22(27)21(26)20(25)19(12-24)30-23/h5-9,11,19-27H,4,10,12H2,1-3H3/t19-,20-,21+,22-,23+/m1/s1",
+        "drugbank.categories": [
+          "Alcohols",
+          "Carbohydrates",
+          "Sugar Alcohols"
+        ],
+        "smiles": "CCOc1ccc(Cc2cc([C@@H]3S[C@H](CO)[C@@H](O)[C@H](O)[C@H]3O)c(OC)cc2C)cc1",
+        "synonyms": [
+          "lusefi",
+          "luseogliflozin hydrate",
+          "TS-071"
+        ],
+        "mass": "434.548",
+        "molecular_weight": 434.5,
+        "equivalent_identifiers": [
+          "MESH:C549343",
+          "UNII:C596HWF74Z",
+          "DRUGBANK:DB12214",
+          "INCHIKEY:WHSOLWOTCHFFBK-ZQGJOIPISA-N",
+          "CHEMBL.COMPOUND:CHEMBL1093423",
+          "PUBCHEM:11988953",
+          "CHEBI:134725"
+        ],
+        "simple_smiles": "CCOc1ccc(Cc2cc(C3SC(CO)C(O)C(O)C3O)c(OC)cc2C)cc1",
+        "name": "luseogliflozin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C1=CC(=CC=C1CC2=C(C=C(C(=C2)[C@H]3[C@@H]([C@H]([C@@H]([C@H](S3)CO)O)O)O)OC)C)OCC",
+        "monoisotopic_mass": "434.17631",
+        "id": "CHEBI:134725",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": [
+          "C27H36N2O4"
+        ],
+        "iupac_name": "2-ethoxy-4-[2-keto-2-[[(1S)-3-methyl-1-(2-piperidinophenyl)butyl]amino]ethyl]benzoic acid",
+        "pubchem.orig_smiles": "CCOC1=C(C=CC(=C1)CC(=O)N[C@@H](CC(C)C)C2=CC=CC=C2N3CCCCC3)C(=O)O",
+        "charge": "0",
+        "inchikey": "FAEKWTJYAYMJKF-QHCPKHFHSA-N",
+        "inchi": "InChI=1S/C27H36N2O4/c1-4-33-25-17-20(12-13-22(25)27(31)32)18-26(30)28-23(16-19(2)3)21-10-6-7-11-24(21)29-14-8-5-9-15-29/h6-7,10-13,17,19,23H,4-5,8-9,14-16,18H2,1-3H3,(H,28,30)(H,31,32)/t23-/m0/s1",
+        "drugbank.categories": [
+          "Acids, Acyclic",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "BSEP/ABCB11 Substrates",
+          "Cytochrome P-450 CYP2C8 Substrates",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Drugs Used in Diabetes",
+          "Glinide",
+          "Hypoglycemia-Associated Agents",
+          "Meglitinides",
+          "OATP1B1/SLCO1B1 Substrates",
+          "Oral Hypoglycemics",
+          "Potassium Channel Antagonists",
+          "Stereoisomerism"
+        ],
+        "smiles": "CCOc1cc(CC(=O)N[C@@H](CC(C)C)c2ccccc2N2CCCCC2)ccc1C(=O)O",
+        "drugbank.accession_number": "APRD00439",
+        "synonyms": [
+          "Repaglinide",
+          "(S)-(+)-Repaglinide",
+          "enyglid",
+          "surepost"
+        ],
+        "mass": "452.587",
+        "molecular_weight": [
+          "452.5857"
+        ],
+        "equivalent_identifiers": [
+          "DRUGBANK:DB00912",
+          "CHEBI:8805",
+          "INCHIKEY:FAEKWTJYAYMJKF-QHCPKHFHSA-N",
+          "CHEMBL.COMPOUND:CHEMBL1272",
+          "KEGG.COMPOUND:C07670",
+          "HMDB:HMDB0015048",
+          "MESH:C072379",
+          "GTOPDB:6841",
+          "UNII:668Z8C33LU",
+          "PUBCHEM:65981"
+        ],
+        "simple_smiles": "CCOc1cc(CC(=O)NC(CC(C)C)c2ccccc2N2CCCCC2)ccc1C(=O)O",
+        "name": "Repaglinide",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "CCOc1cc(CC(=O)N[C@@H](CC(C)C)c2ccccc2N2CCCCC2)ccc1C(O)=O",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "452.26751",
+        "id": "CHEBI:8805",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "5-[4-[(6-hydroxy-2,5,7,8-tetramethyl-chroman-2-yl)methoxy]benzyl]thiazolidine-2,4-quinone",
+        "pharmaceutical": true,
+        "role": true,
+        "inchikey": "GXPHKUHSUJUWKP-UHFFFAOYSA-N",
+        "smiles": "Cc1c(C)c2c(c(C)c1O)CCC(C)(COc1ccc(CC3SC(=O)NC3=O)cc1)O2",
+        "drugbank.accession_number": "APRD00488",
+        "mass": "441.54000",
+        "vasodilator_agent": true,
+        "anticoagulant": true,
+        "molecular_weight": 441.5,
+        "drug": true,
+        "central_nervous_system_drug": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "Cc1c(C)c2c(c(C)c1O)CCC(C)(COc1ccc(CC3SC(=O)NC3=O)cc1)O2",
+        "hematologic_agent": true,
+        "cardiovascular_drug": true,
+        "chebi.orig_smiles": "Cc1c(C)c2OC(C)(CCc2c(C)c1O)COc1ccc(CC2SC(=O)NC2=O)cc1",
+        "antineoplastic_agent": true,
+        "id": "CHEBI:9753",
+        "molecular_formula": "C24H27NO5S",
+        "pubchem.orig_smiles": "CC1=C(C2=C(CCC(O2)(C)COC3=CC=C(C=C3)CC4C(=O)NC(=O)S4)C(=C1O)C)C",
+        "antioxidant": true,
+        "charge": "0",
+        "inchi": "InChI=1S/C24H27NO5S/c1-13-14(2)21-18(15(3)20(13)26)9-10-24(4,30-21)12-29-17-7-5-16(6-8-17)11-19-22(27)25-23(28)31-19/h5-8,19,26H,9-12H2,1-4H3,(H,25,27,28)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Benzopyrans",
+          "Blood Glucose Lowering Agents",
+          "BSEP/ABCB11 Inhibitors",
+          "Chemically-Induced Disorders",
+          "Cytochrome P-450 CYP2B6 Inducers",
+          "Cytochrome P-450 CYP2B6 Inducers (strength unknown)",
+          "Cytochrome P-450 CYP2C19 Inhibitors",
+          "Cytochrome P-450 CYP2C19 inhibitors (unknown strength)",
+          "Cytochrome P-450 CYP2C8 Inhibitors",
+          "Cytochrome P-450 CYP2C8 Inhibitors (strong)",
+          "Cytochrome P-450 CYP2C8 Substrates",
+          "Cytochrome P-450 CYP2C9 Inhibitors",
+          "Cytochrome P-450 CYP2C9 Inhibitors (moderate)",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Cytochrome P-450 CYP3A Inducers",
+          "Cytochrome P-450 CYP3A Inhibitors",
+          "Cytochrome P-450 CYP3A4 Inducers",
+          "Cytochrome P-450 CYP3A4 Inducers (strength unknown)",
+          "Cytochrome P-450 CYP3A5 Inhibitors",
+          "Cytochrome P-450 CYP3A5 Inhibitors (strength unknown)",
+          "Cytochrome P-450 CYP3A7 Inhibitors",
+          "Cytochrome P-450 CYP3A7 Inhibitors (strength unknown)",
+          "Cytochrome P-450 Enzyme Inducers",
+          "Cytochrome P-450 Enzyme Inhibitors",
+          "Drugs Used in Diabetes",
+          "OATP1B1/SLCO1B1 Inhibitors",
+          "Oral Hypoglycemics",
+          "Peroxisome Proliferator-Activated Receptors, agonists",
+          "Pyrans",
+          "Sulfur Compounds",
+          "Thiazoles",
+          "Thiazolidinediones",
+          "UGT1A1 Substrates",
+          "UGT1A3 substrates",
+          "UGT1A4 substrates",
+          "UGT1A6 Inhibitors",
+          "UGT1A6 substrate",
+          "UGT1A9 Substrates",
+          "UGT2B7 substrates"
+        ],
+        "anticonvulsant": true,
+        "synonyms": [
+          "5-{4-[(6-hydroxy-2,5,7,8-tetramethyl-3,4-dihydro-2H-chromen-2-yl)methoxy]benzyl}-1,3-thiazolidine-2,4-dione",
+          "Troglitazone",
+          "(+-)-all-rac-5-(p-((6-Hydroxy-2,5,7,8-tetramethyl-2-chromanyl)methoxy)benzyl)-2,4-thiazolidinedione",
+          "5-(4-(6-Hydroxy-2,5,7,8-tetramethylchroman-2-ylmethoxy)benzyl)thiazolidine-2,4-dione",
+          "Rezulin (TN)",
+          "Romglizone",
+          "troglitazona",
+          "troglitazone",
+          "troglitazonum"
+        ],
+        "platelet_aggregation_inhibitor": true,
+        "equivalent_identifiers": [
+          "CHEMBL.COMPOUND:CHEMBL408",
+          "GTOPDB:2693",
+          "INCHIKEY:GXPHKUHSUJUWKP-UHFFFAOYSA-N",
+          "UNII:I66ZZ0ZN0E",
+          "DRUGBANK:DB00197",
+          "PUBCHEM:5591",
+          "CHEBI:9753",
+          "MESH:C057693"
+        ],
+        "application": true,
+        "central_nervous_system_depressant": true,
+        "chemical_role": true,
+        "drugbank.withdrawn": true,
+        "name": "troglitazone",
+        "drugbank.investigational": true,
+        "monoisotopic_mass": "441.16099",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "(2S,3R,4R,5S,6R)-2-[3-[[5-(4-fluorophenyl)-2-thienyl]methyl]-4-methyl-phenyl]-6-methylol-tetrahydropyran-3,4,5-triol",
+        "pharmaceutical": true,
+        "inchikey": "XTNGUQKDFGDXSJ-ZXGKGEBGSA-N",
+        "role": true,
+        "smiles": "Cc1ccc([C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)cc1Cc1ccc(-c2ccc(F)cc2)s1",
+        "mass": "444.518",
+        "molecular_weight": 444.5,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "Cc1ccc(C2OC(CO)C(O)C(O)C2O)cc1Cc1ccc(-c2ccc(F)cc2)s1",
+        "chebi.orig_smiles": "[C@@H]1([C@@H]([C@H]([C@@](O[C@@H]1CO)(C2=CC=C(C(=C2)CC=3SC(=CC3)C4=CC=C(C=C4)F)C)[H])O)O)O",
+        "id": "CHEBI:73274",
+        "molecular_formula": "C24H25FO5S",
+        "pubchem.orig_smiles": "CC1=C(C=C(C=C1)[C@H]2[C@@H]([C@H]([C@@H]([C@H](O2)CO)O)O)O)CC3=CC=C(S3)C4=CC=C(C=C4)F",
+        "charge": "0",
+        "inchi": "InChI=1S/C24H25FO5S/c1-13-2-3-15(24-23(29)22(28)21(27)19(12-26)30-24)10-16(13)11-18-8-9-20(31-18)14-4-6-17(25)7-5-14/h2-10,19,21-24,26-29H,11-12H2,1H3/t19-,21-,22+,23-,24+/m1/s1",
+        "drugbank.categories": [
+          "Agents causing hyperkalemia",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Diuretics",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Glucosides",
+          "Hypotensive Agents",
+          "Oral Hypoglycemics",
+          "P-glycoprotein/ABCB1 Inhibitors",
+          "P-glycoprotein/ABCB1 Substrates",
+          "Sodium-glucose co-transporter 2 (SGLT2) inhibitors",
+          "Sodium-glucose Cotransporter 2 (SGLT2) Inhibitors",
+          "Sulfur Compounds",
+          "Thiophenes",
+          "UGT1A9 Substrates"
+        ],
+        "synonyms": [
+          "(1S)-1,5-anhydro-1-(3-{[5-(4-fluorophenyl)-2-thienyl]methyl}-4-methylphenyl)-D-glucitol",
+          "1-(Glucopyranosyl)-4-methyl-3-(5-(4-fluorophenyl)-2-thienylmethyl)benzene"
+        ],
+        "equivalent_identifiers": [
+          "CHEBI:73274",
+          "DRUGBANK:DB08907",
+          "INCHIKEY:XTNGUQKDFGDXSJ-ZXGKGEBGSA-N",
+          "CHEMBL.COMPOUND:CHEMBL2048484",
+          "GTOPDB:4582",
+          "PUBCHEM:24812758",
+          "UNII:6S49DGR869"
+        ],
+        "sodium_glucose_transport_protein_subtype_2_inhibitor": true,
+        "application": true,
+        "name": "canagliflozin",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "444.14067",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C18H26N2O4S",
+        "iupac_name": "1-[(1S,2S,3R,4R)-3-hydroxy-4,7,7-trimethyl-norbornan-2-yl]-3-tosyl-urea",
+        "pubchem.orig_smiles": "CC1=CC=C(C=C1)S(=O)(=O)NC(=O)N[C@H]2[C@H]3CC[C@@]([C@H]2O)(C3(C)C)C",
+        "charge": "0",
+        "inchikey": "RMTYNAPTNBJHQI-LLDVTBCESA-N",
+        "inchi": "InChI=1S/C18H26N2O4S/c1-11-5-7-12(8-6-11)25(23,24)20-16(22)19-14-13-9-10-18(4,15(14)21)17(13,2)3/h5-8,13-15,21H,9-10H2,1-4H3,(H2,19,20,22)/t13-,14+,15+,18+/m1/s1",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Drugs Used in Diabetes",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "smiles": "Cc1ccc(S(=O)(=O)NC(=O)N[C@H]2[C@H]3CC[C@@](C)([C@H]2O)C3(C)C)cc1",
+        "synonyms": [
+          "glibornurid",
+          "gluboride",
+          "Ro-6-4563"
+        ],
+        "mass": "366.477",
+        "molecular_weight": 366.5,
+        "equivalent_identifiers": [
+          "DRUGBANK:DB08962",
+          "UNII:VP83E7434R",
+          "CHEMBL.COMPOUND:CHEMBL529888",
+          "INCHIKEY:RMTYNAPTNBJHQI-LLDVTBCESA-N",
+          "PUBCHEM:12818200",
+          "MESH:C073323",
+          "CHEBI:135545"
+        ],
+        "simple_smiles": "Cc1ccc(S(=O)(=O)NC(=O)NC2C3CCC(C)(C2O)C3(C)C)cc1",
+        "drugbank.withdrawn": true,
+        "name": "glibornuride",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C[C@@]12C(C)(C)[C@@H]([C@@H]([C@@H]1O)NC(NS(=O)(=O)C3=CC=C(C=C3)C)=O)CC2",
+        "monoisotopic_mass": "366.16133",
+        "id": "CHEBI:135545",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "(3R,4R,5S,6R)-5-[(2R,3R,4R,5S,6R)-5-[(2R,3R,4S,5S,6R)-3,4-dihydroxy-6-methyl-5-[[(1S,4R,5S,6S)-4,5,6-trihydroxy-3-methylol-cyclohex-2-en-1-yl]amino]tetrahydropyran-2-yl]oxy-3,4-dihydroxy-6-methylol-tetrahydropyran-2-yl]oxy-6-methylol-tetrahydropyran-2,3,4-triol",
+        "pharmaceutical": true,
+        "inchikey": "XUFXOAAUWZOOIT-UGEKTDRHSA-N",
+        "role": true,
+        "smiles": "C[C@H]1O[C@H](O[C@@H]2[C@@H](CO)O[C@H](O[C@@H]3[C@@H](CO)OC(O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2O)[C@H](O)[C@@H](O)[C@@H]1N[C@H]1C=C(CO)[C@@H](O)[C@H](O)[C@H]1O",
+        "mass": "645.60480",
+        "molecular_weight": [
+          "645.6048"
+        ],
+        "drug": true,
+        "biochemical_role": true,
+        "EC_3.2.1.*_(glycosidase)_inhibitor": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CC1OC(OC2C(CO)OC(OC3C(CO)OC(O)C(O)C3O)C(O)C2O)C(O)C(O)C1NC1C=C(CO)C(O)C(O)C1O",
+        "chebi.orig_smiles": "C[C@H]1O[C@H](O[C@@H]2[C@@H](CO)O[C@H](O[C@@H]3[C@@H](CO)OC(O)[C@H](O)[C@H]3O)[C@H](O)[C@H]2O)[C@H](O)[C@@H](O)[C@@H]1N[C@H]1C=C(CO)[C@@H](O)[C@H](O)[C@H]1O",
+        "id": "CHEBI:2376",
+        "molecular_formula": [
+          "C25H43NO18"
+        ],
+        "EC_3.2.*_(glycosylase)_inhibitor": true,
+        "pubchem.orig_smiles": "C[C@@H]1[C@H]([C@@H]([C@H]([C@H](O1)O[C@@H]2[C@H](O[C@@H]([C@@H]([C@H]2O)O)O[C@@H]3[C@H](OC([C@@H]([C@H]3O)O)O)CO)CO)O)O)N[C@H]4C=C([C@H]([C@@H]([C@H]4O)O)O)CO",
+        "charge": "0",
+        "inchi": "InChI=1S/C25H43NO18/c1-6-11(26-8-2-7(3-27)12(30)15(33)13(8)31)14(32)19(37)24(40-6)43-22-10(5-29)42-25(20(38)17(22)35)44-21-9(4-28)41-23(39)18(36)16(21)34/h2,6,8-39H,3-5H2,1H3/t6-,8+,9-,10-,11-,12-,13+,14+,15+,16-,17-,18-,19-,20-,21-,22-,23?,24-,25-/m1/s1",
+        "synonyms": [
+          "4,6-dideoxy-4-{[(1S,4R,5S,6S)-4,5,6-trihydroxy-3-(hydroxymethyl)cyclohex-2-en-1-yl]amino}-alpha-D-glucopyranosyl-(1->4)-alpha-D-glucopyranosyl-(1->4)-D-glucopyranose",
+          "Acarbose",
+          "acarbosa",
+          "acarbose",
+          "acarbosum",
+          "Glucobay",
+          "Precose"
+        ],
+        "EC_3.*_(hydrolase)_inhibitor": true,
+        "EC_3.2.1.20_(alpha_glucosidase)_inhibitor": true,
+        "equivalent_identifiers": [
+          "CHEBI:2376",
+          "KEGG.COMPOUND:C06802",
+          "INCHIKEY:XUFXOAAUWZOOIT-UGEKTDRHSA-N",
+          "CHEMBL.COMPOUND:CHEMBL404271",
+          "PUBCHEM:41774"
+        ],
+        "application": true,
+        "EC_3.2.1.1_(alpha_amylase)_inhibitor": true,
+        "name": "acarbose",
+        "enzyme_inhibitor": true,
+        "monoisotopic_mass": "645.24801",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C24H24N4O5S",
+        "iupac_name": "5-[4-[2-[[6-(4-methoxyphenoxy)pyrimidin-4-yl]-methyl-amino]ethoxy]benzyl]thiazolidine-2,4-quinone",
+        "pubchem.orig_smiles": "CN(CCOC1=CC=C(C=C1)CC2C(=O)NC(=O)S2)C3=CC(=NC=N3)OC4=CC=C(C=C4)OC",
+        "charge": "0",
+        "inchikey": "CHHXEZSCHQVSRE-UHFFFAOYSA-N",
+        "inchi": "InChI=1S/C24H24N4O5S/c1-28(21-14-22(26-15-25-21)33-19-9-7-17(31-2)8-10-19)11-12-32-18-5-3-16(4-6-18)13-20-23(29)27-24(30)34-20/h3-10,14-15,20H,11-13H2,1-2H3,(H,27,29,30)",
+        "drugbank.categories": [
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP1A2 Inhibitors",
+          "Cytochrome P-450 CYP1A2 Inhibitors (moderate)",
+          "Cytochrome P-450 CYP2C19 Inhibitors",
+          "Cytochrome P-450 CYP2C19 inhibitors (unknown strength)",
+          "Cytochrome P-450 CYP2C8 Substrates",
+          "Cytochrome P-450 CYP2C9 Inhibitors",
+          "Cytochrome P-450 CYP2C9 Inhibitors (strength unknown)",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Cytochrome P-450 Enzyme Inhibitors",
+          "OATP1B1/SLCO1B1 Inhibitors",
+          "PPAR alpha, agonists",
+          "PPAR gamma, agonists",
+          "Sulfur Compounds",
+          "Thiazoles",
+          "Thiazolidinediones"
+        ],
+        "smiles": "COc1ccc(Oc2cc(N(C)CCOc3ccc(CC4SC(=O)NC4=O)cc3)ncn2)cc1",
+        "synonyms": [
+          "CKD-501",
+          "duvie",
+          "lobeglitazone sulfate"
+        ],
+        "mass": "480.538",
+        "molecular_weight": 480.5,
+        "drugbank.experimental": true,
+        "equivalent_identifiers": [
+          "DRUGBANK:DB09198",
+          "INCHIKEY:CHHXEZSCHQVSRE-UHFFFAOYSA-N",
+          "CHEBI:136052",
+          "CHEMBL.COMPOUND:CHEMBL3585580",
+          "PUBCHEM:9826451"
+        ],
+        "simple_smiles": "COc1ccc(Oc2cc(N(C)CCOc3ccc(CC4SC(=O)NC4=O)cc3)ncn2)cc1",
+        "name": "lobeglitazone",
+        "chebi.orig_smiles": "C1=C(C=CC(=C1)OC2=CC(=NC=N2)N(CCOC3=CC=C(C=C3)CC4(C(NC(S4)=O)=O)[H])C)OC",
+        "monoisotopic_mass": "480.14674",
+        "id": "CHEBI:136052",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C21H21FO5S",
+        "iupac_name": "(2S,3R,4R,5S,6R)-2-[3-(benzothiophen-2-ylmethyl)-4-fluoro-phenyl]-6-methylol-tetrahydropyran-3,4,5-triol",
+        "pubchem.orig_smiles": "C1=CC=C2C(=C1)C=C(S2)CC3=C(C=CC(=C3)[C@H]4[C@@H]([C@H]([C@@H]([C@H](O4)CO)O)O)O)F",
+        "charge": "0",
+        "inchikey": "AHFWIQIYAXSLBA-RQXATKFSSA-N",
+        "inchi": "InChI=1S/C21H21FO5S/c22-15-6-5-12(21-20(26)19(25)18(24)16(10-23)27-21)7-13(15)9-14-8-11-3-1-2-4-17(11)28-14/h1-8,16,18-21,23-26H,9-10H2/t16-,18-,19+,20-,21+/m1/s1",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Carbohydrates",
+          "Drugs Used in Diabetes",
+          "Glycosides",
+          "Sodium-glucose co-transporter 2 (SGLT2) inhibitors",
+          "Sulfur Compounds"
+        ],
+        "smiles": "OC[C@H]1O[C@@H](c2ccc(F)c(Cc3cc4ccccc4s3)c2)[C@H](O)[C@@H](O)[C@@H]1O",
+        "synonyms": [
+          "ASP1941",
+          "ipragliflozin L-proline",
+          "suglat"
+        ],
+        "mass": "404.454",
+        "molecular_weight": 404.5,
+        "equivalent_identifiers": [
+          "UNII:3N2N8OOR7X",
+          "MESH:C572941",
+          "INCHIKEY:AHFWIQIYAXSLBA-RQXATKFSSA-N",
+          "CHEMBL.COMPOUND:CHEMBL2018096",
+          "GTOPDB:9394",
+          "CHEBI:134724",
+          "PUBCHEM:10453870",
+          "DRUGBANK:DB11698"
+        ],
+        "simple_smiles": "OCC1OC(c2ccc(F)c(Cc3cc4ccccc4s3)c2)C(O)C(O)C1O",
+        "name": "ipragliflozin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C1=CC=CC2=C1C=C(S2)CC3=C(C=CC(=C3)[C@H]4[C@@H]([C@H]([C@@H]([C@H](O4)CO)O)O)O)F",
+        "monoisotopic_mass": "404.10937",
+        "id": "CHEBI:134724",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "potassium_channel_blocker": true,
+        "iupac_name": "1-butyl-3-tosyl-urea",
+        "pharmaceutical": true,
+        "role": true,
+        "inchikey": "JLRGJRBPOGGCBT-UHFFFAOYSA-N",
+        "smiles": "CCCCNC(=O)NS(=O)(=O)c1ccc(C)cc1",
+        "drugbank.accession_number": "APRD00267",
+        "mass": "270.34800",
+        "secretagogue": true,
+        "mammalian_metabolite": true,
+        "molecular_weight": [
+          "270.3479"
+        ],
+        "potassium_channel_modulator": true,
+        "biochemical_role": true,
+        "drug": true,
+        "metabolite": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CCCCNC(=O)NS(=O)(=O)c1ccc(C)cc1",
+        "chebi.orig_smiles": "CCCCNC(=O)NS(=O)(=O)c1ccc(C)cc1",
+        "id": "CHEBI:27999",
+        "insulin_secretagogue": true,
+        "membrane_transport_modulator": true,
+        "molecular_formula": [
+          "C12H18N2O3S"
+        ],
+        "pubchem.orig_smiles": "CCCCNC(=O)NS(=O)(=O)C1=CC=C(C=C1)C",
+        "animal_metabolite": true,
+        "charge": "0",
+        "biophysical_role": true,
+        "inchi": "InChI=1S/C12H18N2O3S/c1-3-4-9-13-12(15)14-18(16,17)11-7-5-10(2)6-8-11/h5-8H,3-4,9H2,1-2H3,(H2,13,14,15)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C18 Substrates",
+          "Cytochrome P-450 CYP2C8 Substrates",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Diagnostic Agents",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "OAT1/SLC22A6 inhibitors",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylurea Compounds",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Tests for Diabetes",
+          "Urea"
+        ],
+        "synonyms": [
+          "N-[(butylamino)carbonyl]-4-methylbenzenesulfonamide",
+          "Tolbutamide",
+          "1-Butyl-3-(p-methylphenylsulfonyl)urea",
+          "1-Butyl-3-(p-tolylsulfonyl)urea",
+          "1-Butyl-3-tosylurea",
+          "1-p-Toluenesulfonyl-3-butylurea",
+          "3-(p-Tolyl-4-sulfonyl)-1-butylurea",
+          "N-(4-Methylbenzenesulfonyl)-N'-butylurea",
+          "N-(4-Methylphenylsulfonyl)-N'-butylurea",
+          "N-(p-Methylbenzenesulfonyl)-N'-butylurea",
+          "N-(Sulfonyl-p-methylbenzene)-N'-N-butylurea",
+          "N-Butyl-N'-(4-methylphenylsulfonyl)urea",
+          "N-Butyl-N'-(p-tolylsulfonyl)urea",
+          "N-Butyl-N'-p-toluenesulfonylurea",
+          "N-n-Butyl-N'-tosylurea",
+          "Orinase (TN)",
+          "tolbutamida",
+          "tolbutamide",
+          "tolbutamidum",
+          "Tolylsulfonylbutylurea"
+        ],
+        "equivalent_identifiers": [
+          "MESH:D014044",
+          "CHEBI:27999",
+          "UNII:982XCM1FOI",
+          "DRUGBANK:DB01124",
+          "INCHIKEY:JLRGJRBPOGGCBT-UHFFFAOYSA-N",
+          "PUBCHEM:5505",
+          "KEGG.COMPOUND:C07148",
+          "GTOPDB:6848",
+          "CHEMBL.COMPOUND:CHEMBL782",
+          "HMDB:HMDB0015256"
+        ],
+        "application": true,
+        "human_metabolite": true,
+        "name": "tolbutamide",
+        "drugbank.investigational": true,
+        "eukaryotic_metabolite": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "270.10381",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "2-[[6-[(3R)-3-aminopiperidino]-2,4-diketo-3-methyl-pyrimidin-1-yl]methyl]benzonitrile",
+        "pharmaceutical": true,
+        "inchikey": "ZSBOMTDTBDDKMP-OAHLLOKOSA-N",
+        "role": true,
+        "Bronsted_base": true,
+        "smiles": "Cn1c(=O)cc(N2CCC[C@@H](N)C2)n(Cc2ccccc2C#N)c1=O",
+        "mass": "339.39160",
+        "molecular_weight": 339.4,
+        "EC_3.4.14.*_(dipeptidyl__and_tripeptidyl_peptidases)_inhibitor": true,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "Cn1c(=O)cc(N2CCCC(N)C2)n(Cc2ccccc2C#N)c1=O",
+        "chebi.orig_smiles": "Cn1c(=O)cc(N2CCC[C@@H](N)C2)n(Cc2ccccc2C#N)c1=O",
+        "id": "CHEBI:72323",
+        "molecular_formula": "C18H21N5O2",
+        "pubchem.orig_smiles": "CN1C(=O)C=C(N(C1=O)CC2=CC=CC=C2C#N)N3CCC[C@H](C3)N",
+        "charge": "0",
+        "inchi": "InChI=1S/C18H21N5O2/c1-21-17(24)9-16(22-8-4-7-15(20)12-22)23(18(21)25)11-14-6-3-2-5-13(14)10-19/h2-3,5-6,9,15H,4,7-8,11-12,20H2,1H3/t15-/m1/s1",
+        "acceptor": true,
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2D6 Substrates",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "DPP-IV Inhibitors",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Enzyme Inhibitors",
+          "Hormones",
+          "Hormones, Hormone Substitutes, and Hormone Antagonists",
+          "Incretins",
+          "Oral Hypoglycemics",
+          "Pyrimidines",
+          "Pyrimidinones"
+        ],
+        "synonyms": [
+          "2-({6-[(3R)-3-aminopiperidin-1-yl]-3-methyl-2,4-dioxo-3,4-dihydropyrimidin-1(2H)-yl}methyl)benzonitrile",
+          "alogliptin",
+          "alogliptina",
+          "alogliptine",
+          "alogliptinum"
+        ],
+        "EC_3.*_(hydrolase)_inhibitor": true,
+        "EC_3.4.14.5_(dipeptidyl_peptidase_IV)_inhibitor": true,
+        "equivalent_identifiers": [
+          "CHEBI:72323",
+          "DRUGBANK:DB06203",
+          "GTOPDB:6319",
+          "MESH:C520853",
+          "INCHIKEY:ZSBOMTDTBDDKMP-OAHLLOKOSA-N",
+          "UNII:JHC049LO86",
+          "CHEMBL.COMPOUND:CHEMBL376359",
+          "PUBCHEM:11450633"
+        ],
+        "application": true,
+        "chemical_role": true,
+        "EC_3.4.*_(hydrolases_acting_on_peptide_bond)_inhibitor": true,
+        "name": "alogliptin",
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "339.16952",
+        "base": true,
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": [
+          "C8H17NO5"
+        ],
+        "iupac_name": "(2R,3R,4R,5S)-1-(2-hydroxyethyl)-2-methylol-piperidine-3,4,5-triol",
+        "pubchem.orig_smiles": "C1[C@@H]([C@H]([C@@H]([C@H](N1CCO)CO)O)O)O",
+        "charge": "0",
+        "inchikey": "IBAQFPQHRJAVAV-ULAWRXDQSA-N",
+        "inchi": "InChI=1S/C8H17NO5/c10-2-1-9-3-6(12)8(14)7(13)5(9)4-11/h5-8,10-14H,1-4H2/t5-,6+,7-,8-/m1/s1",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Alkaloids",
+          "Blood Glucose Lowering Agents",
+          "Carbohydrates",
+          "Drugs Used in Diabetes",
+          "Enzyme Inhibitors",
+          "Glycoside Hydrolase Inhibitors",
+          "Hypoglycemia-Associated Agents",
+          "Imines",
+          "Imino Pyranoses",
+          "Imino Sugars",
+          "Monosaccharides",
+          "Oral Hypoglycemics",
+          "Piperidines"
+        ],
+        "smiles": "OCCN1C[C@H](O)[C@@H](O)[C@H](O)[C@H]1CO",
+        "drugbank.accession_number": "APRD01117",
+        "synonyms": [
+          "Miglitol",
+          "diastabol",
+          "glyset",
+          "seibule"
+        ],
+        "mass": "207.225",
+        "molecular_weight": [
+          "207.2243"
+        ],
+        "equivalent_identifiers": [
+          "CHEBI:6935",
+          "HMDB:HMDB0014634",
+          "KEGG.COMPOUND:C07708",
+          "UNII:0V5436JAQW",
+          "MESH:C045621",
+          "PUBCHEM:441314",
+          "GTOPDB:4842",
+          "INCHIKEY:IBAQFPQHRJAVAV-ULAWRXDQSA-N",
+          "CHEMBL.COMPOUND:CHEMBL1561",
+          "DRUGBANK:DB00491"
+        ],
+        "simple_smiles": "OCCN1CC(O)C(O)C(O)C1CO",
+        "name": "Miglitol",
+        "chebi.orig_smiles": "OCCN1C[C@H](O)[C@@H](O)[C@H](O)[C@H]1CO",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "207.11067",
+        "id": "CHEBI:6935",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "(3R)-3-amino-1-[3-(trifluoromethyl)-6,8-dihydro-5H-[1,2,4]triazolo[4,3-a]pyrazin-7-yl]-4-(2,4,5-trifluorophenyl)butan-1-one",
+        "pharmaceutical": true,
+        "inchikey": "MFFMDFFZMYYVKS-SECBINFHSA-N",
+        "role": true,
+        "drugbank.accession_number": "DB07214",
+        "smiles": "N[C@@H](CC(=O)N1CCn2c(nnc2C(F)(F)F)C1)Cc1cc(F)c(F)cc1F",
+        "mass": "407.31382",
+        "xenobiotic": true,
+        "molecular_weight": 407.31,
+        "EC_3.4.14.*_(dipeptidyl__and_tripeptidyl_peptidases)_inhibitor": true,
+        "biochemical_role": true,
+        "drug": true,
+        "protease_inhibitor": true,
+        "serine_proteinase_inhibitor": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "NC(CC(=O)N1CCn2c(nnc2C(F)(F)F)C1)Cc1cc(F)c(F)cc1F",
+        "chebi.orig_smiles": "N[C@@H](CC(=O)N1CCn2c(C1)nnc2C(F)(F)F)Cc1cc(F)c(F)cc1F",
+        "environmental_contaminant": true,
+        "id": "CHEBI:40237",
+        "molecular_formula": "C16H15F6N5O",
+        "pubchem.orig_smiles": "C1CN2C(=NN=C2C(F)(F)F)CN1C(=O)C[C@@H](CC3=CC(=C(C=C3F)F)F)N",
+        "charge": "0",
+        "inchi": "InChI=1S/C16H15F6N5O/c17-10-6-12(19)11(18)4-8(10)3-9(23)5-14(28)26-1-2-27-13(7-26)24-25-15(27)16(20,21)22/h4,6,9H,1-3,5,7,23H2/t9-/m1/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C8 Substrates",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "DPP-IV Inhibitors",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Enzyme Inhibitors",
+          "Hormones",
+          "Hormones, Hormone Substitutes, and Hormone Antagonists",
+          "Hypoglycemia-Associated Agents",
+          "Incretins",
+          "OAT3/SLC22A8 Substrates",
+          "Oral Hypoglycemics",
+          "P-glycoprotein/ABCB1 Substrates",
+          "Protease Inhibitors",
+          "Triazoles"
+        ],
+        "synonyms": [
+          "(3R)-3-amino-1-[3-(trifluoromethyl)-5,6-dihydro[1,2,4]triazolo[4,3-a]pyrazin-7(8H)-yl]-4-(2,4,5-trifluorophenyl)butan-1-one",
+          "(2R)-4-OXO-4-[3-(TRIFLUOROMETHYL)-5,6-DIHYDRO[1,2,4]TRIAZOLO[4,3-A]PYRAZIN-7(8H)-YL]-1-(2,4,5-TRIFLUOROPHENYL)BUTAN-2-AMINE",
+          "MK-0431",
+          "sitagliptin",
+          "sitagliptina",
+          "sitagliptine",
+          "sitagliptinum"
+        ],
+        "EC_3.*_(hydrolase)_inhibitor": true,
+        "EC_3.4.14.5_(dipeptidyl_peptidase_IV)_inhibitor": true,
+        "equivalent_identifiers": [
+          "MESH:C496398",
+          "CHEBI:40237",
+          "UNII:QFP0P1DV7Z",
+          "INCHIKEY:MFFMDFFZMYYVKS-SECBINFHSA-N",
+          "DRUGBANK:DB01261",
+          "HMDB:HMDB0015390",
+          "PUBCHEM:4369359",
+          "CHEMBL.COMPOUND:CHEMBL1422",
+          "GTOPDB:6286"
+        ],
+        "application": true,
+        "chemical_role": true,
+        "EC_3.4.*_(hydrolases_acting_on_peptide_bond)_inhibitor": true,
+        "name": "sitagliptin",
+        "drugbank.investigational": true,
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "407.11808",
+        "EC_3.4.21.*_(serine_endopeptidase)_inhibitor": true,
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C19H25NO3",
+        "iupac_name": "(2S)-4-[(3aR,7aS)-1,3,3a,4,5,6,7,7a-octahydroisoindol-2-yl]-2-benzyl-4-keto-butyric acid",
+        "pubchem.orig_smiles": "C1CC[C@H]2CN(C[C@H]2C1)C(=O)C[C@H](CC3=CC=CC=C3)C(=O)O",
+        "charge": "0",
+        "inchikey": "WPGGHFDDFPHPOB-BBWFWOEESA-N",
+        "role": true,
+        "inchi": "InChI=1S/C19H25NO3/c21-18(20-12-15-8-4-5-9-16(15)13-20)11-17(19(22)23)10-14-6-2-1-3-7-14/h1-3,6-7,15-17H,4-5,8-13H2,(H,22,23)/t15-,16+,17-/m0/s1",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Drugs Used in Diabetes",
+          "Oral Hypoglycemics",
+          "UGT1A3 substrates",
+          "UGT2B7 substrates"
+        ],
+        "smiles": "O=C(O)[C@H](CC(=O)N1C[C@H]2CCCC[C@H]2C1)Cc1ccccc1",
+        "synonyms": [
+          "KAD-1229",
+          "mitiglinide calcium",
+          "mitiglinide calcium hydrate",
+          "S 21403"
+        ],
+        "mass": "315.407",
+        "molecular_weight": 315.4,
+        "Bronsted_acid": true,
+        "equivalent_identifiers": [
+          "CHEBI:135349",
+          "UNII:D86I0XLB13",
+          "MESH:C087255",
+          "INCHIKEY:WPGGHFDDFPHPOB-BBWFWOEESA-N",
+          "CHEMBL.COMPOUND:CHEMBL471498",
+          "PUBCHEM:121891",
+          "DRUGBANK:DB01252"
+        ],
+        "acid": true,
+        "donor": true,
+        "simple_smiles": "O=C(O)C(CC(=O)N1CC2CCCCC2C1)Cc1ccccc1",
+        "chemical_role": true,
+        "name": "mitiglinide",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C(C[C@H](CC1=CC=CC=C1)C(O)=O)(=O)N2C[C@]3([C@@](C2)(CCCC3)[H])[H]",
+        "monoisotopic_mass": "315.18344",
+        "id": "CHEBI:135349",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "5-[4-[2-(5-ethyl-2-pyridyl)ethoxy]benzyl]thiazolidine-2,4-quinone",
+        "pharmaceutical": true,
+        "inchikey": "HYAFETHFCAUJAY-UHFFFAOYSA-N",
+        "role": true,
+        "drugbank.accession_number": "APRD00653",
+        "smiles": "CCc1ccc(CCOc2ccc(CC3SC(=O)NC3=O)cc2)nc1",
+        "mass": "356.43978",
+        "EC_2.7.1.*_(phosphotransferases_with_an_alcohol_group_as_acceptor)_inhibitor": true,
+        "xenobiotic": true,
+        "molecular_weight": [
+          "356.4387"
+        ],
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CCc1ccc(CCOc2ccc(CC3SC(=O)NC3=O)cc2)nc1",
+        "chebi.orig_smiles": "CCc1ccc(CCOc2ccc(CC3SC(=O)NC3=O)cc2)nc1",
+        "EC_2.*_(transferase)_inhibitor": true,
+        "id": "CHEBI:8228",
+        "pharmacological_role": true,
+        "molecular_formula": [
+          "C19H20N2O3S"
+        ],
+        "pubchem.orig_smiles": "CCC1=CN=C(C=C1)CCOC2=CC=C(C=C2)CC3C(=O)NC(=O)S3",
+        "charge": "0",
+        "inchi": "InChI=1S/C19H20N2O3S/c1-2-13-3-6-15(20-12-13)9-10-24-16-7-4-14(5-8-16)11-17-18(22)21-19(23)25-17/h3-8,12,17H,2,9-11H2,1H3,(H,21,22,23)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C8 Inhibitors",
+          "Cytochrome P-450 CYP2C8 Inhibitors (moderate)",
+          "Cytochrome P-450 CYP2C8 Substrates",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Cytochrome P-450 CYP3A Inducers",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Inducers",
+          "Cytochrome P-450 CYP3A4 Inducers (strength unknown)",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Cytochrome P-450 Enzyme Inducers",
+          "Cytochrome P-450 Enzyme Inhibitors",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "OATP1B1/SLCO1B1 Inhibitors",
+          "OATP1B3 inhibitors",
+          "Oral Hypoglycemics",
+          "Peroxisome Proliferator Receptor alpha Agonist",
+          "Peroxisome Proliferator Receptor gamma Agonist",
+          "Peroxisome Proliferator-activated Receptor Activity",
+          "Sulfur Compounds",
+          "Thiazoles",
+          "Thiazolidinediones"
+        ],
+        "synonyms": [
+          "5-{4-[2-(5-ethylpyridin-2-yl)ethoxy]benzyl}-1,3-thiazolidine-2,4-dione",
+          "Pioglitazone",
+          "(+-)-5-((4-(2-(5-ethyl-2-pyridinyl)ethoxy)phenyl)methyl)-2,4-thiazolidinedione",
+          "pioglitazona",
+          "pioglitazone",
+          "pioglitazonum"
+        ],
+        "EC_2.7.1.33_(pantothenate_kinase)_inhibitor": true,
+        "agonist": true,
+        "EC_2.7.*_(P_containing_group_transferase)_inhibitor": true,
+        "equivalent_identifiers": [
+          "GTOPDB:2694",
+          "KEGG.COMPOUND:C07675",
+          "DRUGBANK:DB01132",
+          "HMDB:HMDB0015264",
+          "MESH:D000077205",
+          "UNII:X4OV71U42S",
+          "INCHIKEY:HYAFETHFCAUJAY-UHFFFAOYSA-N",
+          "CHEBI:8228",
+          "PUBCHEM:4829",
+          "CHEMBL.COMPOUND:CHEMBL595"
+        ],
+        "application": true,
+        "PPAR_modulator": true,
+        "name": "pioglitazone",
+        "drugbank.investigational": true,
+        "insulin_sensitizing_drug": true,
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "356.11946",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": [
+          "C6H15N5"
+        ],
+        "iupac_name": "2-butyl-1-(diaminomethylene)guanidine",
+        "pubchem.orig_smiles": "CCCCN=C(N)N=C(N)N",
+        "pharmaceutical": true,
+        "inchikey": "XSEUMFJMFFMCIU-UHFFFAOYSA-N",
+        "role": true,
+        "inchi": "InChI=1S/C6H15N5/c1-2-3-4-10-6(9)11-5(7)8/h2-4H2,1H3,(H6,7,8,9,10,11)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Amidines",
+          "Biguanides",
+          "Blood Glucose Lowering Agents",
+          "Drugs Used in Diabetes",
+          "Guanidines",
+          "OCT1 substrates",
+          "Oral Hypoglycemics"
+        ],
+        "smiles": "CCCCN=C(N)N=C(N)N",
+        "synonyms": [
+          "Buformin",
+          "1-Butylbiguanide",
+          "buformin HCl",
+          "buformin hydrochloride",
+          "buformine",
+          "butformin",
+          "butylbiguanide",
+          "butyldiguanide"
+        ],
+        "molecular_weight": [
+          "157.2168"
+        ],
+        "equivalent_identifiers": [
+          "MESH:D002026",
+          "PUBCHEM:2468",
+          "UNII:W2115E9C7B",
+          "KEGG.COMPOUND:C07674",
+          "CHEBI:3209",
+          "DRUGBANK:DB04830",
+          "INCHIKEY:XSEUMFJMFFMCIU-UHFFFAOYSA-N",
+          "CHEMBL.COMPOUND:CHEMBL39736"
+        ],
+        "drug": true,
+        "application": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CCCCN=C(N)N=C(N)N",
+        "drugbank.withdrawn": true,
+        "name": "Buformin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "CCCCNC(=N)NC(N)=N",
+        "id": "CHEBI:3209",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "nutritional_or_metabolic_disease": true,
+        "synonyms": [
+          "NIDDM",
+          "Non-insulin dependent diabetes",
+          "Type 2 diabetes",
+          "Type II diabetes",
+          "Diabetes mellitus Type II",
+          "Diabetes mellitus, noninsulin-dependent",
+          "NIDDM diabetes mellitus",
+          "Noninsulin dependent diabetes mellitus",
+          "Noninsulin-dependent diabetes",
+          "Diabetes mellitus type 2",
+          "Noninsulin-dependent diabetes mellitus",
+          "adult onset diabetes",
+          "adult-onset diabetes",
+          "diabetes mellitis type 2",
+          "diabetes mellitis type II",
+          "diabetes, type 2",
+          "non-insulin dependent diabetes",
+          "non-insulin dependent diabetes mellitus",
+          "non-insulin-dependent diabetes mellitus",
+          "noninsulin dependent diabetes",
+          "T2DM - type 2 diabetes mellitus",
+          "type 2 diabetes",
+          "type 2 diabetes mellitus",
+          "type 2 diabetes mellitus non-insulin dependent",
+          "type II diabetes",
+          "type II diabetes mellitus"
+        ],
+        "name": "type 2 diabetes mellitus",
+        "id": "MONDO:0005148",
+        "equivalent_identifiers": [
+          "MEDDRA:10012611",
+          "MEDDRA:10029402",
+          "EFO:0001360",
+          "MONDO:0005148",
+          "SNOMEDCT:44054006",
+          "DOID:9352",
+          "UMLS:CN244395",
+          "MEDDRA:10045242",
+          "NCIT:C26747",
+          "MESH:D003924",
+          "MEDDRA:10012612",
+          "MEDDRA:10026947",
+          "MEDDRA:10012613",
+          "MEDDRA:10067585",
+          "MedDRA:10067585",
+          "UMLS:C0011860",
+          "HP:0005978",
+          "MEDDRA:10029505"
+        ],
+        "type": [
+          "named_thing",
+          "disease",
+          "disease_or_phenotypic_feature"
+        ]
+      },
+      {
+        "iupac_name": "(2S,3R,4R,5S,6R)-2-[3-[[5-(4-fluorophenyl)-2-thienyl]methyl]-4-methyl-phenyl]-6-methylol-tetrahydropyran-3,4,5-triol;hydrate",
+        "pharmaceutical": true,
+        "inchikey": "VHOFTEAWFCUTOS-TUGBYPPCSA-N",
+        "role": true,
+        "smiles": "Cc1ccc([C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)cc1Cc1ccc(-c2ccc(F)cc2)s1.Cc1ccc([C@@H]2O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)cc1Cc1ccc(-c2ccc(F)cc2)s1.O",
+        "mass": "907.04700",
+        "molecular_weight": 907,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "Cc1ccc(C2OC(CO)C(O)C(O)C2O)cc1Cc1ccc(-c2ccc(F)cc2)s1",
+        "chebi.orig_smiles": "O.[H][C@]1(O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O)c1ccc(C)c(Cc2ccc(s2)-c2ccc(F)cc2)c1.[H][C@]1(O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O)c1ccc(C)c(Cc2ccc(s2)-c2ccc(F)cc2)c1",
+        "id": "CHEBI:73272",
+        "molecular_formula": "C48H52F2O11S2",
+        "pubchem.orig_smiles": "CC1=C(C=C(C=C1)[C@H]2[C@@H]([C@H]([C@@H]([C@H](O2)CO)O)O)O)CC3=CC=C(S3)C4=CC=C(C=C4)F.CC1=C(C=C(C=C1)[C@H]2[C@@H]([C@H]([C@@H]([C@H](O2)CO)O)O)O)CC3=CC=C(S3)C4=CC=C(C=C4)F.O",
+        "charge": "0",
+        "inchi": "InChI=1S/2C24H25FO5S.H2O/c2*1-13-2-3-15(24-23(29)22(28)21(27)19(12-26)30-24)10-16(13)11-18-8-9-20(31-18)14-4-6-17(25)7-5-14;/h2*2-10,19,21-24,26-29H,11-12H2,1H3;1H2/t2*19-,21-,22+,23-,24+;/m11./s1",
+        "synonyms": [
+          "(1S)-1,5-anhydro-1-(3-{[5-(4-fluorophenyl)-2-thienyl]methyl}-4-methylphenyl)-D-glucitol--water (2/1)",
+          "(1S)-1,5-Anhydro-1-(3-((5-(4-fluorophenyl)-2-thienyl)methyl)-4-methylphenyl)-D-glucitol hemihydrate",
+          "canagliflozin",
+          "canagliflozin hemihydrate",
+          "Invokana",
+          "JNJ-28431754",
+          "TA-7284"
+        ],
+        "equivalent_identifiers": [
+          "CHEMBL.COMPOUND:CHEMBL2103841",
+          "INCHIKEY:VHOFTEAWFCUTOS-TUGBYPPCSA-N",
+          "CHEBI:73272",
+          "PUBCHEM:24997615",
+          "MESH:D000068896",
+          "UNII:0SAC974Z85"
+        ],
+        "sodium_glucose_transport_protein_subtype_2_inhibitor": true,
+        "application": true,
+        "name": "canagliflozin hydrate",
+        "monoisotopic_mass": "906.29191",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C22H26O6",
+        "iupac_name": "(1S,3'R,4'S,5'S,6'R)-6-(4-ethylbenzyl)-6'-methylol-spiro[phthalan-1,2'-tetrahydropyran]-3',4',5'-triol",
+        "pubchem.orig_smiles": "CCC1=CC=C(C=C1)CC2=CC3=C(CO[C@@]34[C@@H]([C@H]([C@@H]([C@H](O4)CO)O)O)O)C=C2",
+        "charge": "0",
+        "inchikey": "VWVKUNOPTJGDOB-BDHVOXNPSA-N",
+        "inchi": "InChI=1S/C22H26O6/c1-2-13-3-5-14(6-4-13)9-15-7-8-16-12-27-22(17(16)10-15)21(26)20(25)19(24)18(11-23)28-22/h3-8,10,18-21,23-26H,2,9,11-12H2,1H3/t18-,19-,20+,21-,22+/m1/s1",
+        "drugbank.categories": [
+          "Benzene Derivatives",
+          "Carbohydrates",
+          "Glycosides"
+        ],
+        "smiles": "CCc1ccc(Cc2ccc3c(c2)[C@]2(OC3)O[C@H](CO)[C@@H](O)[C@H](O)[C@H]2O)cc1",
+        "synonyms": [
+          "apleway",
+          "CSG452",
+          "deberza",
+          "tofogliflozin hydrate"
+        ],
+        "mass": "386.439",
+        "molecular_weight": 386.4,
+        "equivalent_identifiers": [
+          "UNII:554245W62T",
+          "CHEBI:136041",
+          "DRUGBANK:DB11824",
+          "GTOPDB:9395",
+          "INCHIKEY:VWVKUNOPTJGDOB-BDHVOXNPSA-N",
+          "PUBCHEM:46908929",
+          "CHEMBL.COMPOUND:CHEMBL2110731"
+        ],
+        "simple_smiles": "CCc1ccc(Cc2ccc3c(c2)C2(OC3)OC(CO)C(O)C(O)C2O)cc1",
+        "name": "tofogliflozin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C=1C2=C(C=C(C1)CC3=CC=C(C=C3)CC)[C@]4(OC2)O[C@@H]([C@H]([C@@H]([C@H]4O)O)O)CO",
+        "monoisotopic_mass": "386.17294",
+        "id": "CHEBI:136041",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "5-chloro-N-[2-[4-(cyclohexylcarbamoylsulfamoyl)phenyl]ethyl]-2-methoxy-benzamide",
+        "pharmaceutical": true,
+        "role": true,
+        "inchikey": "ZNNLBTZKUZBEKO-UHFFFAOYSA-N",
+        "smiles": "COc1ccc(Cl)cc1C(=O)NCCc1ccc(S(=O)(=O)NC(=O)NC2CCCCC2)cc1",
+        "drugbank.accession_number": "APRD00233",
+        "mass": "494.00400",
+        "EC_2.7.1.*_(phosphotransferases_with_an_alcohol_group_as_acceptor)_inhibitor": true,
+        "molecular_weight": [
+          "494.0035"
+        ],
+        "biochemical_role": true,
+        "drug": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "COc1ccc(Cl)cc1C(=O)NCCc1ccc(S(=O)(=O)NC(=O)NC2CCCCC2)cc1",
+        "EC_3.6.*_(hydrolases_acting_on_acid_anhydrides)_inhibitor": true,
+        "cardiovascular_drug": true,
+        "chebi.orig_smiles": "COc1ccc(Cl)cc1C(=O)NCCc1ccc(cc1)S(=O)(=O)NC(=O)NC1CCCCC1",
+        "EC_2.*_(transferase)_inhibitor": true,
+        "id": "CHEBI:5441",
+        "molecular_formula": [
+          "C23H28ClN3O5S"
+        ],
+        "pubchem.orig_smiles": "COC1=C(C=C(C=C1)Cl)C(=O)NCCC2=CC=C(C=C2)S(=O)(=O)NC(=O)NC3CCCCC3",
+        "charge": "0",
+        "EC_3.6.3.*_(acid_anhydride_hydrolase_catalysing_transmembrane_movement_of_substances)_inhibitor": true,
+        "inchi": "InChI=1S/C23H28ClN3O5S/c1-32-21-12-9-17(24)15-20(21)22(28)25-14-13-16-7-10-19(11-8-16)33(30,31)27-23(29)26-18-5-3-2-4-6-18/h7-12,15,18H,2-6,13-14H2,1H3,(H,25,28)(H2,26,27,29)",
+        "anti_arrhythmia_drug": true,
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "BCRP/ABCG2 Substrates",
+          "Blood Glucose Lowering Agents",
+          "BSEP/ABCB11 Inhibitors",
+          "BSEP/ABCB11 Substrates",
+          "Cytochrome P-450 CYP2C9 Inhibitors",
+          "Cytochrome P-450 CYP2C9 Inhibitors (strength unknown)",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Cytochrome P-450 CYP3A Inhibitors",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Inhibitors",
+          "Cytochrome P-450 CYP3A4 Inhibitors (weak)",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Cytochrome P-450 Enzyme Inhibitors",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "OAT1/SLC22A6 inhibitors",
+          "Oral Hypoglycemics",
+          "P-glycoprotein/ABCB1 Inhibitors",
+          "Sulfones",
+          "Sulfonylurea Compounds",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "synonyms": [
+          "5-chloro-N-(2-{4-[N-(N-cyclohexylcarbamoyl)sulfamoyl]phenyl}ethyl)-2-methoxybenzamide",
+          "Glyburide",
+          "1-((p-(2-(5-chloro-o-anisamido)ethyl)phenyl)sulfonyl)-3-cyclohexylurea",
+          "1-(p-(2-(5-chloro-2-methoxybenzamido)ethyl)benzenesulfonyl)-3-cyclohexylurea",
+          "5-chloro-N-(2-(4-((((cyclohexylamino)carbonyl)amino)sulfonyl)phenyl)ethyl)-2-methoxybenzamide",
+          "Diabeta",
+          "glibenclamida",
+          "glibenclamide",
+          "glibenclamidum",
+          "Glynase",
+          "Micronase"
+        ],
+        "EC_2.7.1.33_(pantothenate_kinase)_inhibitor": true,
+        "EC_3.*_(hydrolase)_inhibitor": true,
+        "EC_2.7.*_(P_containing_group_transferase)_inhibitor": true,
+        "equivalent_identifiers": [
+          "MESH:D005905",
+          "GTOPDB:2414",
+          "KEGG.COMPOUND:C07022",
+          "HMDB:HMDB0015151",
+          "DRUGBANK:DB01016",
+          "CHEMBL.COMPOUND:CHEMBL472",
+          "INCHIKEY:ZNNLBTZKUZBEKO-UHFFFAOYSA-N",
+          "CHEBI:5441",
+          "UNII:SX6K58TVWC",
+          "PUBCHEM:3488"
+        ],
+        "application": true,
+        "name": "glyburide",
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "493.14382",
+        "EC_3.6.3.49_(channel_conductance_controlling_ATPase)_inhibitor": true,
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "(1S,3S,5S)-2-[(2S)-2-amino-2-(3-hydroxy-1-adamantyl)acetyl]-2-azabicyclo[3.1.0]hexane-3-carbonitrile",
+        "pharmaceutical": true,
+        "inchikey": "QGJUIPDUBHWZPV-SGTAVMJGSA-N",
+        "role": true,
+        "smiles": "N#C[C@@H]1C[C@@H]2C[C@@H]2N1C(=O)[C@@H](N)C12CC3CC(CC(O)(C3)C1)C2",
+        "mass": "315.41000",
+        "molecular_weight": 315.4,
+        "EC_3.4.14.*_(dipeptidyl__and_tripeptidyl_peptidases)_inhibitor": true,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "N#CC1CC2CC2N1C(=O)C(N)C12CC3CC(CC(O)(C3)C1)C2",
+        "chebi.orig_smiles": "[H][C@]12C[C@@H](C#N)N(C(=O)[C@@H](N)C34CC5CC(CC(O)(C5)C3)C4)[C@@]1([H])C2",
+        "id": "CHEBI:71272",
+        "molecular_formula": "C18H25N3O2",
+        "pubchem.orig_smiles": "C1[C@@H]2C[C@@H]2N([C@@H]1C#N)C(=O)[C@H](C34CC5CC(C3)CC(C5)(C4)O)N",
+        "charge": "0",
+        "inchi": "InChI=1S/C18H25N3O2/c19-8-13-2-12-3-14(12)21(13)16(22)15(20)17-4-10-1-11(5-17)7-18(23,6-10)9-17/h10-15,23H,1-7,9,20H2/t10?,11?,12-,13+,14+,15-,17?,18?/m1/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Alimentary Tract and Metabolism",
+          "Amino Acids, Peptides, and Proteins",
+          "Blood Glucose Lowering Agents",
+          "Cycloparaffins",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Cytochrome P-450 CYP3A5 Substrates",
+          "DPP-IV Inhibitors",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Enzyme Inhibitors",
+          "Hormones",
+          "Hormones, Hormone Substitutes, and Hormone Antagonists",
+          "Hypoglycemia-Associated Agents",
+          "Incretins",
+          "OAT3/SLC22A8 Substrates",
+          "Oligopeptides",
+          "Oral Hypoglycemics",
+          "Peptides",
+          "Protease Inhibitors"
+        ],
+        "synonyms": [
+          "(1S,3S,5S)-2-[(2S)-2-amino-2-(3-hydroxyadamantan-1-yl)acetyl]-2-azabicyclo[3.1.0]hexane-3-carbonitrile",
+          "(1S,3S,5S)-2-((2S)-Amino(3-hydroxytricyclo(3.3.1.13,7)dec-1-yl)acetyl)-2-azabicyclo(3.1.0)hexane-3-carbonitrile",
+          "BMS 477118",
+          "BMS-477118",
+          "saxagliptin"
+        ],
+        "EC_3.*_(hydrolase)_inhibitor": true,
+        "EC_3.4.14.5_(dipeptidyl_peptidase_IV)_inhibitor": true,
+        "equivalent_identifiers": [
+          "DRUGBANK:DB06335",
+          "PUBCHEM:11243969",
+          "CHEMBL.COMPOUND:CHEMBL385517",
+          "CHEBI:71272",
+          "HMDB:HMDB0015634",
+          "INCHIKEY:QGJUIPDUBHWZPV-SGTAVMJGSA-N",
+          "GTOPDB:6316"
+        ],
+        "application": true,
+        "EC_3.4.*_(hydrolases_acting_on_peptide_bond)_inhibitor": true,
+        "name": "saxagliptin",
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "315.19468",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "(2S,3R,4R,5S,6R)-2-[4-chloro-3-[4-[(3S)-tetrahydrofuran-3-yl]oxybenzyl]phenyl]-6-methylol-tetrahydropyran-3,4,5-triol",
+        "pharmaceutical": true,
+        "inchikey": "OBWASQILIWPZMG-QZMOQZSNSA-N",
+        "role": true,
+        "smiles": "OC[C@H]1O[C@@H](c2ccc(Cl)c(Cc3ccc(O[C@H]4CCOC4)cc3)c2)[C@H](O)[C@@H](O)[C@@H]1O",
+        "mass": "450.90900",
+        "molecular_weight": 450.9,
+        "drug": true,
+        "biochemical_role": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "OCC1OC(c2ccc(Cl)c(Cc3ccc(OC4CCOC4)cc3)c2)C(O)C(O)C1O",
+        "chebi.orig_smiles": "OC[C@H]1O[C@H]([C@H](O)[C@@H](O)[C@@H]1O)c1ccc(Cl)c(Cc2ccc(O[C@H]3CCOC3)cc2)c1",
+        "id": "CHEBI:82720",
+        "molecular_formula": "C23H27ClO7",
+        "pubchem.orig_smiles": "C1COC[C@H]1OC2=CC=C(C=C2)CC3=C(C=CC(=C3)[C@H]4[C@@H]([C@H]([C@@H]([C@H](O4)CO)O)O)O)Cl",
+        "charge": "0",
+        "inchi": "InChI=1S/C23H27ClO7/c24-18-6-3-14(23-22(28)21(27)20(26)19(11-25)31-23)10-15(18)9-13-1-4-16(5-2-13)30-17-7-8-29-12-17/h1-6,10,17,19-23,25-28H,7-9,11-12H2/t17-,19+,20+,21-,22+,23-/m0/s1",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Benzene Derivatives",
+          "Blood Glucose Lowering Agents",
+          "Carbohydrates",
+          "Diuretics",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Glycosides",
+          "Hypotensive Agents",
+          "Oral Hypoglycemics",
+          "Sodium-glucose co-transporter 2 (SGLT2) inhibitors",
+          "Sodium-glucose Cotransporter 2 (SGLT2) Inhibitors",
+          "Sodium-Glucose Transporter 2 Inhibitors"
+        ],
+        "synonyms": [
+          "(1S)-1,5-anhydro-1-(4-chloro-3-{4-[(3S)-tetrahydrofuran-3-yloxy]benzyl}phenyl)-D-glucitol",
+          "empagliflozin",
+          "(1S)-1,5-anhydro-1-C-{4-chloro-3-((4-{((3S)-oxolan-3-yl)oxy}phenyl)methyl)phenyl}-D-glucitol",
+          "1-chloro-4-(glucopyranos-1-yl)-2-(4-(tetrahydrofuran-3-yloxy)benzyl)benzene",
+          "BI 10773",
+          "BI-10773",
+          "BI10773",
+          "JARDIANCE"
+        ],
+        "equivalent_identifiers": [
+          "INCHIKEY:OBWASQILIWPZMG-QZMOQZSNSA-N",
+          "UNII:HDC1R2M35U",
+          "CHEBI:82720",
+          "MESH:C570240",
+          "DRUGBANK:DB09038",
+          "GTOPDB:4754",
+          "PUBCHEM:11949646",
+          "CHEMBL.COMPOUND:CHEMBL2107830"
+        ],
+        "sodium_glucose_transport_protein_subtype_2_inhibitor": true,
+        "application": true,
+        "name": "empagliflozin",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "450.14453",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C18H19F8N5O2",
+        "iupac_name": "1-[(2S)-2-amino-4-[2,4-bis(trifluoromethyl)-6,8-dihydro-5H-pyrido[3,4-d]pyrimidin-7-yl]-4-keto-butyl]-5,5-difluoro-2-piperidone",
+        "pubchem.orig_smiles": "C1CC(CN(C1=O)C[C@H](CC(=O)N2CCC3=C(C2)N=C(N=C3C(F)(F)F)C(F)(F)F)N)(F)F",
+        "charge": "0",
+        "inchikey": "ZWPRRQZNBDYKLH-VIFPVBQESA-N",
+        "inchi": "InChI=1S/C18H19F8N5O2/c19-16(20)3-1-12(32)31(8-16)6-9(27)5-13(33)30-4-2-10-11(7-30)28-15(18(24,25)26)29-14(10)17(21,22)23/h9H,1-8,27H2/t9-/m0/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Diabetes Mellitus, Type 2, drug therapy",
+          "DPP-IV Inhibitors",
+          "Drugs Used in Diabetes",
+          "Oral Hypoglycemics",
+          "Piperidines"
+        ],
+        "smiles": "N[C@@H](CC(=O)N1CCc2c(nc(C(F)(F)F)nc2C(F)(F)F)C1)CN1CC(F)(F)CCC1=O",
+        "synonyms": [
+          "LC15-0444",
+          "zemiglo"
+        ],
+        "mass": "489.364",
+        "molecular_weight": 489.4,
+        "equivalent_identifiers": [
+          "PUBCHEM:11953153",
+          "UNII:5DHU18M5D6",
+          "MESH:C534891",
+          "DRUGBANK:DB12412",
+          "CHEBI:134731",
+          "INCHIKEY:ZWPRRQZNBDYKLH-VIFPVBQESA-N",
+          "CHEMBL.COMPOUND:CHEMBL3707235"
+        ],
+        "simple_smiles": "NC(CC(=O)N1CCc2c(nc(C(F)(F)F)nc2C(F)(F)F)C1)CN1CC(F)(F)CCC1=O",
+        "name": "gemigliptin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C(F)(F)(F)C1=C2C(CN(C(C[C@@H](CN3CC(F)(F)CCC3=O)N)=O)CC2)=NC(C(F)(F)F)=N1",
+        "monoisotopic_mass": "489.14110",
+        "id": "CHEBI:134731",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C20H27N5O5S",
+        "iupac_name": "N-[2-[4-(azepan-1-ylcarbamoylsulfamoyl)phenyl]ethyl]-5-methyl-isoxazole-3-carboxamide",
+        "pubchem.orig_smiles": "CC1=CC(=NO1)C(=O)NCCC2=CC=C(C=C2)S(=O)(=O)NC(=O)NN3CCCCCC3",
+        "charge": "0",
+        "inchikey": "ZKUDBRCEOBOWLF-UHFFFAOYSA-N",
+        "inchi": "InChI=1S/C20H27N5O5S/c1-15-14-18(23-30-15)19(26)21-11-10-16-6-8-17(9-7-16)31(28,29)24-20(27)22-25-12-4-2-3-5-13-25/h6-9,14H,2-5,10-13H2,1H3,(H,21,26)(H2,22,24,27)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Drugs Used in Diabetes",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "smiles": "Cc1cc(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)NN3CCCCCC3)cc2)no1",
+        "synonyms": [
+          "glisepin",
+          "glisoxepid"
+        ],
+        "mass": "449.526",
+        "molecular_weight": 449.5,
+        "equivalent_identifiers": [
+          "CHEMBL.COMPOUND:CHEMBL2106618",
+          "CHEBI:135731",
+          "INCHIKEY:ZKUDBRCEOBOWLF-UHFFFAOYSA-N",
+          "UNII:H7SC0I332I",
+          "HMDB:HMDB0015406",
+          "MESH:C100171",
+          "PUBCHEM:32778",
+          "DRUGBANK:DB01289"
+        ],
+        "simple_smiles": "Cc1cc(C(=O)NCCc2ccc(S(=O)(=O)NC(=O)NN3CCCCCC3)cc2)no1",
+        "name": "glisoxepide",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "S(NC(NN1CCCCCC1)=O)(=O)(=O)C2=CC=C(C=C2)CCNC(=O)C3=NOC(=C3)C",
+        "monoisotopic_mass": "449.17329",
+        "id": "CHEBI:135731",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C27H33N3O6S",
+        "iupac_name": "1-cyclohexyl-3-[4-[2-(1,3-diketo-7-methoxy-4,4-dimethyl-2-isoquinolyl)ethyl]phenyl]sulfonyl-urea",
+        "pubchem.orig_smiles": "CC1(C2=C(C=C(C=C2)OC)C(=O)N(C1=O)CCC3=CC=C(C=C3)S(=O)(=O)NC(=O)NC4CCCCC4)C",
+        "charge": "0",
+        "inchikey": "LLJFMFZYVVLQKT-UHFFFAOYSA-N",
+        "inchi": "InChI=1S/C27H33N3O6S/c1-27(2)23-14-11-20(36-3)17-22(23)24(31)30(25(27)32)16-15-18-9-12-21(13-10-18)37(34,35)29-26(33)28-19-7-5-4-6-8-19/h9-14,17,19H,4-8,15-16H2,1-3H3,(H2,28,29,33)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Drugs Used in Diabetes",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "smiles": "COc1ccc2c(c1)C(=O)N(CCc1ccc(S(=O)(=O)NC(=O)NC3CCCCC3)cc1)C(=O)C2(C)C",
+        "synonyms": [
+          "beglynor",
+          "gliquidone calcium",
+          "gliquidone monosodium",
+          "gliquidone sodium",
+          "glurenorm"
+        ],
+        "mass": "527.635",
+        "molecular_weight": 527.6,
+        "equivalent_identifiers": [
+          "HMDB:HMDB0015381",
+          "CHEMBL.COMPOUND:CHEMBL383634",
+          "MESH:C010969",
+          "UNII:C7C2QDD75P",
+          "DRUGBANK:DB01251",
+          "CHEBI:93416",
+          "INCHIKEY:LLJFMFZYVVLQKT-UHFFFAOYSA-N",
+          "PUBCHEM:91610"
+        ],
+        "simple_smiles": "COc1ccc2c(c1)C(=O)N(CCc1ccc(S(=O)(=O)NC(=O)NC3CCCCC3)cc1)C(=O)C2(C)C",
+        "name": "1-cyclohexyl-3-[4-[2-(7-methoxy-4,4-dimethyl-1,3-dioxo-2-isoquinolinyl)ethyl]phenyl]sulfonylurea",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "CC1(C2=C(C=C(C=C2)OC)C(=O)N(C1=O)CCC3=CC=C(C=C3)S(=O)(=O)NC(=O)NC4CCCCC4)C",
+        "monoisotopic_mass": "527.20901",
+        "drugbank.approved": true,
+        "id": "CHEBI:93416",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "pharmaceutical": true,
+        "inchikey": "OELFLUMRDSZNSF-BRWVUGGUSA-N",
+        "role": true,
+        "drugbank.accession_number": "APRD00593",
+        "smiles": "CC(C)[C@H]1CC[C@H](C(=O)N[C@H](Cc2ccccc2)C(=O)O)CC1",
+        "mass": "317.42260",
+        "EC_3.4.14.*_(dipeptidyl__and_tripeptidyl_peptidases)_inhibitor": true,
+        "biochemical_role": true,
+        "drug": true,
+        "acid": true,
+        "donor": true,
+        "inhibitor": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CC(C)C1CCC(C(=O)NC(Cc2ccccc2)C(=O)O)CC1",
+        "chebi.orig_smiles": "CC(C)[C@H]1CC[C@@H](CC1)C(=O)N[C@H](Cc1ccccc1)C(O)=O",
+        "id": "CHEBI:31897",
+        "molecular_formula": "C19H27NO3",
+        "charge": "0",
+        "inchi": "InChI=1S/C19H27NO3/c1-13(2)15-8-10-16(11-9-15)18(21)20-17(19(22)23)12-14-6-4-3-5-7-14/h3-7,13,15-17H,8-12H2,1-2H3,(H,20,21)(H,22,23)/t15-,16-,17-/m1/s1",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Amino Acids",
+          "Amino Acids, Aromatic",
+          "Amino Acids, Cyclic",
+          "Amino Acids, Essential",
+          "Amino Acids, Peptides, and Proteins",
+          "Blood Glucose Lowering Agents",
+          "Cycloparaffins",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Cytochrome P-450 CYP2D6 Substrates",
+          "Cytochrome P-450 CYP3A Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates",
+          "Cytochrome P-450 CYP3A4 Substrates (strength unknown)",
+          "Cytochrome P-450 CYP3A5 Substrates",
+          "Cytochrome P-450 CYP3A7 Substrates",
+          "Drugs that are Mainly Renally Excreted",
+          "Drugs Used in Diabetes",
+          "Glinide",
+          "Hypoglycemia-Associated Agents",
+          "OAT1/SLC22A6 inhibitors",
+          "Oral Hypoglycemics",
+          "Potassium Channel Antagonists",
+          "UGT1A9 Substrates"
+        ],
+        "synonyms": [
+          "N-[(trans-4-isopropylcyclohexyl)carbonyl]-D-phenylalanine",
+          "(-)-N-(trans-4-isopropylcyclohexanecarbonyl)-D-phenylalanine",
+          "A 4166",
+          "A-4166",
+          "AY 4166",
+          "AY-4166",
+          "AY4166",
+          "Fastic",
+          "nateglinida",
+          "nateglinide",
+          "nateglinidum",
+          "Starlix",
+          "Starsis",
+          "trans-N-{[4-(1-methylethyl)cyclohexyl]carbonyl}-D-phenylalanine"
+        ],
+        "EC_3.*_(hydrolase)_inhibitor": true,
+        "EC_3.4.14.5_(dipeptidyl_peptidase_IV)_inhibitor": true,
+        "Bronsted_acid": true,
+        "equivalent_identifiers": [
+          "INCHIKEY:OELFLUMRDSZNSF-BRWVUGGUSA-N",
+          "GTOPDB:6833",
+          "DRUGBANK:DB00731",
+          "CHEMBL.COMPOUND:CHEMBL783",
+          "UNII:41X3PWK4O2",
+          "CHEBI:31897",
+          "MESH:D000077715"
+        ],
+        "application": true,
+        "chemical_role": true,
+        "EC_3.4.*_(hydrolases_acting_on_peptide_bond)_inhibitor": true,
+        "name": "nateglinide",
+        "drugbank.investigational": true,
+        "enzyme_inhibitor": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "317.19909",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C11H17N3O3S",
+        "iupac_name": "1-butyl-3-sulfanilyl-urea",
+        "pubchem.orig_smiles": "CCCCNC(=O)NS(=O)(=O)C1=CC=C(C=C1)N",
+        "charge": "0",
+        "inchikey": "VDTNNGKXZGSZIP-UHFFFAOYSA-N",
+        "inchi": "InChI=1S/C11H17N3O3S/c1-2-3-8-13-11(15)14-18(16,17)10-6-4-9(12)5-7-10/h4-7H,2-3,8,12H2,1H3,(H2,13,14,15)",
+        "smiles": "CCCCNC(=O)NS(=O)(=O)c1ccc(N)cc1",
+        "synonyms": [
+          "aminophenurobutane",
+          "bucarban",
+          "burcol",
+          "butisulfina",
+          "butylcarbamide",
+          "carbutamid",
+          "glybutamide",
+          "nadisan",
+          "nadizan",
+          "norboral",
+          "sulfaninylbutylurea"
+        ],
+        "mass": "271.337",
+        "molecular_weight": 271.34,
+        "equivalent_identifiers": [
+          "UNII:E3K8P4869P",
+          "CHEBI:135118",
+          "CHEMBL.COMPOUND:CHEMBL448570",
+          "MESH:D002271",
+          "PUBCHEM:9564",
+          "INCHIKEY:VDTNNGKXZGSZIP-UHFFFAOYSA-N"
+        ],
+        "simple_smiles": "CCCCNC(=O)NS(=O)(=O)c1ccc(N)cc1",
+        "name": "carbutamide",
+        "chebi.orig_smiles": "CCCCNC(=O)NS(=O)(=O)C1=CC=C(N)C=C1",
+        "monoisotopic_mass": "271.09906",
+        "id": "CHEBI:135118",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "1-(4-acetylphenyl)sulfonyl-3-cyclohexyl-urea",
+        "pharmaceutical": true,
+        "inchikey": "VGZSUPCWNCWDAN-UHFFFAOYSA-N",
+        "role": true,
+        "drugbank.accession_number": "APRD00773",
+        "smiles": "CC(=O)c1ccc(S(=O)(=O)NC(=O)NC2CCCCC2)cc1",
+        "mass": "324.39500",
+        "secretagogue": true,
+        "molecular_weight": [
+          "324.3953"
+        ],
+        "drug": true,
+        "biochemical_role": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "CC(=O)c1ccc(S(=O)(=O)NC(=O)NC2CCCCC2)cc1",
+        "chebi.orig_smiles": "CC(=O)c1ccc(cc1)S(=O)(=O)NC(=O)NC1CCCCC1",
+        "id": "CHEBI:28052",
+        "insulin_secretagogue": true,
+        "molecular_formula": [
+          "C15H20N2O4S"
+        ],
+        "pubchem.orig_smiles": "CC(=O)C1=CC=C(C=C1)S(=O)(=O)NC(=O)NC2CCCCC2",
+        "charge": "0",
+        "inchi": "InChI=1S/C15H20N2O4S/c1-11(18)12-7-9-14(10-8-12)22(20,21)17-15(19)16-13-5-3-2-4-6-13/h7-10,13H,2-6H2,1H3,(H2,16,17,19)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Drugs Used in Diabetes",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylurea Compounds",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "synonyms": [
+          "4-acetyl-N-(cyclohexylcarbamoyl)benzene-1-sulfonamide",
+          "1-((p-Acetylphenyl)sulfonyl)-3-cyclohexylurea",
+          "4-Acetyl-N-((cyclohexylamino)carbonyl)benzenesulfonamide",
+          "acetohexamida",
+          "acetohexamide",
+          "acetohexamidum",
+          "Dymelor",
+          "N-(p-Acetylphenylsulfonyl)-N'-cyclohexylurea"
+        ],
+        "equivalent_identifiers": [
+          "CHEBI:28052",
+          "CHEMBL.COMPOUND:CHEMBL1589",
+          "PUBCHEM:1989",
+          "HMDB:HMDB0014558",
+          "KEGG.COMPOUND:C06806",
+          "UNII:QGC8W08I6I",
+          "GTOPDB:6793",
+          "INCHIKEY:VGZSUPCWNCWDAN-UHFFFAOYSA-N",
+          "MESH:D000092",
+          "DRUGBANK:DB00414"
+        ],
+        "application": true,
+        "drugbank.withdrawn": true,
+        "name": "acetohexamide",
+        "drugbank.investigational": true,
+        "drugbank.approved": true,
+        "monoisotopic_mass": "324.11438",
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "1-(3,3a,4,5,6,6a-hexahydro-1H-cyclopenta[c]pyrrol-2-yl)-3-tosyl-urea",
+        "pharmaceutical": true,
+        "inchikey": "BOVGTQGAOIONJV-UHFFFAOYSA-N",
+        "role": true,
+        "drugbank.accession_number": "APRD00460",
+        "smiles": "Cc1ccc(S(=O)(=O)NC(=O)NN2CC3CCCC3C2)cc1",
+        "mass": "323.41100",
+        "secretagogue": true,
+        "molecular_weight": 323.4,
+        "drug": true,
+        "biochemical_role": true,
+        "hypoglycemic_agent": true,
+        "simple_smiles": "Cc1ccc(S(=O)(=O)NC(=O)NN2CC3CCCC3C2)cc1",
+        "chebi.orig_smiles": "Cc1ccc(cc1)S(=O)(=O)NC(=O)NN1CC2CCCC2C1",
+        "id": "CHEBI:31654",
+        "insulin_secretagogue": true,
+        "molecular_formula": "C15H21N3O3S",
+        "pubchem.orig_smiles": "CC1=CC=C(C=C1)S(=O)(=O)NC(=O)NN2CC3CCCC3C2",
+        "antioxidant": true,
+        "charge": "0",
+        "inchi": "InChI=1S/C15H21N3O3S/c1-11-5-7-14(8-6-11)22(20,21)17-15(19)16-18-9-12-3-2-4-13(12)10-18/h5-8,12-13H,2-4,9-10H2,1H3,(H2,16,17,19)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Cytochrome P-450 CYP2C19 Inhibitors",
+          "Cytochrome P-450 CYP2C19 inhibitors (unknown strength)",
+          "Cytochrome P-450 CYP2C9 Substrates",
+          "Cytochrome P-450 Enzyme Inhibitors",
+          "Drugs Used in Diabetes",
+          "Hypoglycemia-Associated Agents",
+          "Oral Hypoglycemics",
+          "Sulfones",
+          "Sulfonylurea Compounds",
+          "Sulfonylureas",
+          "Sulfur Compounds",
+          "Urea"
+        ],
+        "synonyms": [
+          "Gliclazide",
+          "N-(hexahydrocyclopenta[c]pyrrol-2(1H)-ylcarbamoyl)-4-methylbenzenesulfonamide",
+          "1-(3-azabicyclo(3.3.0)oct-3-yl)-3-(p-tolylsulfonyl)urea",
+          "1-(hexahydrocyclopenta(c)pyrrol-2(1H)-yl)-3-(p-tolylsulfonyl)urea",
+          "Glimicron"
+        ],
+        "equivalent_identifiers": [
+          "INCHIKEY:BOVGTQGAOIONJV-UHFFFAOYSA-N",
+          "CHEMBL.COMPOUND:CHEMBL427216",
+          "DRUGBANK:DB01120",
+          "CHEBI:31654",
+          "HMDB:HMDB0015252",
+          "PUBCHEM:3475"
+        ],
+        "application": true,
+        "chemical_role": true,
+        "name": "gliclazide",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "323.13036",
+        "radical_scavenger": true,
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C13H15N3O4S",
+        "iupac_name": "N-[5-(2-methoxyethoxy)pyrimidin-2-yl]benzenesulfonamide",
+        "pubchem.orig_smiles": "COCCOC1=CN=C(N=C1)NS(=O)(=O)C2=CC=CC=C2",
+        "charge": "0",
+        "inchikey": "QFWPJPIVLCBXFJ-UHFFFAOYSA-N",
+        "inchi": "InChI=1S/C13H15N3O4S/c1-19-7-8-20-11-9-14-13(15-10-11)16-21(17,18)12-5-3-2-4-6-12/h2-6,9-10H,7-8H2,1H3,(H,14,15,16)",
+        "drugbank.categories": [
+          "Alimentary Tract and Metabolism",
+          "Amides",
+          "Blood Glucose Lowering Agents",
+          "Drugs Used in Diabetes",
+          "Genito Urinary System and Sex Hormones",
+          "Gynecological Antiinfectives and Antiseptics",
+          "Oral Hypoglycemics",
+          "Sulfonamides",
+          "Sulfones",
+          "Sulfur Compounds"
+        ],
+        "smiles": "COCCOc1cnc(NS(=O)(=O)c2ccccc2)nc1",
+        "synonyms": [
+          "glymidine sodium",
+          "Glymidine sodium",
+          "glidiazine",
+          "glycodiazine",
+          "glycodiazine sodium",
+          "gondafon"
+        ],
+        "mass": "309.342",
+        "molecular_weight": 309.34,
+        "equivalent_identifiers": [
+          "HMDB:HMDB0015461",
+          "CHEBI:31660",
+          "DRUGBANK:DB01382",
+          "UNII:4C5I4BQZ8F",
+          "PUBCHEM:9565",
+          "CHEMBL.COMPOUND:CHEMBL1697838",
+          "MESH:C073263",
+          "INCHIKEY:QFWPJPIVLCBXFJ-UHFFFAOYSA-N"
+        ],
+        "simple_smiles": "COCCOc1cnc(NS(=O)(=O)c2ccccc2)nc1",
+        "name": "Glymidine sodium",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "S(NC=1N=CC(=CN1)OCCOC)(=O)(=O)C2=CC=CC=C2",
+        "drugbank.approved": true,
+        "monoisotopic_mass": "309.07833",
+        "id": "CHEBI:31660",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "iupac_name": "(2S)-5-[[(5S)-5-[[(2S)-2-[[(2S)-2-[[(2S)-5-amino-2-[[2-[[(2S)-2-[[(2S)-2-[[(2S)-2-[[(2S)-2-[[(2S)-2-[[(2S)-2-[[(2S)-2-[[(2S)-2-[[(2S,3R)-2-[[(2S)-2-[[(2S,3R)-2-[[2-[[(2S)-2-[[(2S)-2-[[(2S)-2-amino-3-(1H-imidazol-5-yl)propanoyl]amino]propanoyl]amino]-4-carboxy-butanoyl]amino]acetyl]amino]-3-hydroxy-butanoyl]amino]-3-phenyl-propanoyl]amino]-3-hydroxy-butanoyl]amino]-3-hydroxy-propanoyl]amino]-3-carboxy-propanoyl]amino]-3-methyl-butanoyl]amino]-3-hydroxy-propanoyl]amino]-3-hydroxy-propanoyl]amino]-3-(4-hydroxyphenyl)propanoyl]amino]-4-methyl-pentanoyl]amino]-4-carboxy-butanoyl]amino]acetyl]amino]-5-keto-pentanoyl]amino]propanoyl]amino]propanoyl]amino]-6-[[(1S)-1-[[(1S)-1-benzyl-2-[[(1S,2S)-1-[[(1S)-2-[[(1S)-2-[[(1S)-1-[[(1S)-1-[[(1S)-1-[[2-[[(1S)-1-(carboxymethylcarbamoyl)-4-guanidino-butyl]amino]-2-keto-ethyl]carbamoyl]-4-guanidino-butyl]carbamoyl]-2-methyl-propyl]carbamoyl]-3-methyl-butyl]amino]-1-(1H-indol-3-ylmethyl)-2-keto-ethyl]amino]-2-keto-1-methyl-ethyl]carbamoyl]-2-methyl-butyl]amino]-2-keto-ethyl]carbamoyl]-3-carboxy-propyl]amino]-6-keto-hexyl]amino]-5-keto-2-palmitamido-valeric acid",
+        "pharmaceutical": true,
+        "inchikey": "YSDQQAXHVYUZIW-QCIJIYAXSA-N",
+        "role": true,
+        "Bronsted_base": true,
+        "smiles": "CCCCCCCCCCCCCCCC(=O)N[C@@H](CCC(=O)NCCCC[C@H](NC(=O)[C@H](C)NC(=O)[C@H](C)NC(=O)[C@H](CCC(N)=O)NC(=O)CNC(=O)[C@H](CCC(=O)O)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@H](CO)NC(=O)[C@H](CO)NC(=O)[C@@H](NC(=O)[C@H](CC(=O)O)NC(=O)[C@H](CO)NC(=O)[C@@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)[C@@H](NC(=O)CNC(=O)[C@H](CCC(=O)O)NC(=O)[C@H](C)NC(=O)[C@@H](N)Cc1cnc[nH]1)[C@@H](C)O)[C@@H](C)O)C(C)C)C(=O)N[C@@H](CCC(=O)O)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@H](C(=O)N[C@@H](C)C(=O)N[C@@H](Cc1c[nH]c2ccccc12)C(=O)N[C@@H](CC(C)C)C(=O)N[C@H](C(=O)N[C@@H](CCCNC(=N)N)C(=O)NCC(=O)N[C@@H](CCCNC(=N)N)C(=O)NCC(=O)O)C(C)C)[C@@H](C)CC)C(=O)O",
+        "mass": "3751.20200",
+        "neuroprotective_agent": true,
+        "molecular_weight": 3751,
+        "drug": true,
+        "simple_smiles": "CCCCCCCCCCCCCCCC(=O)NC(CCC(=O)NCCCCC(NC(=O)C(C)NC(=O)C(C)NC(=O)C(CCC(N)=O)NC(=O)CNC(=O)C(CCC(=O)O)NC(=O)C(CC(C)C)NC(=O)C(Cc1ccc(O)cc1)NC(=O)C(CO)NC(=O)C(CO)NC(=O)C(NC(=O)C(CC(=O)O)NC(=O)C(CO)NC(=O)C(NC(=O)C(Cc1ccccc1)NC(=O)C(NC(=O)CNC(=O)C(CCC(=O)O)NC(=O)C(C)NC(=O)C(N)Cc1cnc[nH]1)C(C)O)C(C)O)C(C)C)C(=O)NC(CCC(=O)O)C(=O)NC(Cc1ccccc1)C(=O)NC(C(=O)NC(C)C(=O)NC(Cc1c[nH]c2ccccc12)C(=O)NC(CC(C)C)C(=O)NC(C(=O)NC(CCCNC(=N)N)C(=O)NCC(=O)NC(CCCNC(=N)N)C(=O)NCC(=O)O)C(C)C)C(C)CC)C(=O)O",
+        "chebi.orig_smiles": "CCCCCCCCCCCCCCCC(=O)N[C@@H](CCC(=O)NCCCC[C@H](NC(=O)[C@H](C)NC(=O)[C@H](C)NC(=O)[C@H](CCC(N)=O)NC(=O)CNC(=O)[C@H](CCC(O)=O)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](Cc1ccc(O)cc1)NC(=O)[C@H](CO)NC(=O)[C@H](CO)NC(=O)[C@@H](NC(=O)[C@H](CC(O)=O)NC(=O)[C@H](CO)NC(=O)[C@@H](NC(=O)[C@H](Cc1ccccc1)NC(=O)[C@@H](NC(=O)CNC(=O)[C@H](CCC(O)=O)NC(=O)[C@H](C)NC(=O)[C@@H](N)Cc1cnc[nH]1)[C@@H](C)O)[C@@H](C)O)C(C)C)C(=O)N[C@@H](CCC(O)=O)C(=O)N[C@@H](Cc1ccccc1)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](C)C(=O)N[C@@H](Cc1c[nH]c2ccccc12)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CCCNC(N)=N)C(=O)NCC(=O)N[C@@H](CCCNC(N)=N)C(=O)NCC(O)=O)C(O)=O",
+        "id": "CHEBI:71193",
+        "protective_agent": true,
+        "pharmacological_role": true,
+        "molecular_formula": "C172H265N43O51",
+        "pubchem.orig_smiles": "CCCCCCCCCCCCCCCC(=O)N[C@@H](CCC(=O)NCCCC[C@@H](C(=O)N[C@@H](CCC(=O)O)C(=O)N[C@@H](CC1=CC=CC=C1)C(=O)N[C@@H]([C@@H](C)CC)C(=O)N[C@@H](C)C(=O)N[C@@H](CC2=CNC3=CC=CC=C32)C(=O)N[C@@H](CC(C)C)C(=O)N[C@@H](C(C)C)C(=O)N[C@@H](CCCNC(=N)N)C(=O)NCC(=O)N[C@@H](CCCNC(=N)N)C(=O)NCC(=O)O)NC(=O)[C@H](C)NC(=O)[C@H](C)NC(=O)[C@H](CCC(=O)N)NC(=O)CNC(=O)[C@H](CCC(=O)O)NC(=O)[C@H](CC(C)C)NC(=O)[C@H](CC4=CC=C(C=C4)O)NC(=O)[C@H](CO)NC(=O)[C@H](CO)NC(=O)[C@H](C(C)C)NC(=O)[C@H](CC(=O)O)NC(=O)[C@H](CO)NC(=O)[C@H]([C@@H](C)O)NC(=O)[C@H](CC5=CC=CC=C5)NC(=O)[C@H]([C@@H](C)O)NC(=O)CNC(=O)[C@H](CCC(=O)O)NC(=O)[C@H](C)NC(=O)[C@H](CC6=CN=CN6)N)C(=O)O",
+        "charge": "0",
+        "inchi": "InChI=1S/C172H265N43O51/c1-18-20-21-22-23-24-25-26-27-28-29-30-37-53-129(224)195-116(170(265)266)59-64-128(223)180-68-41-40-50-111(153(248)199-115(62-67-135(232)233)154(249)204-120(73-100-44-33-31-34-45-100)159(254)214-140(93(11)19-2)167(262)192-97(15)146(241)201-122(76-103-79-183-108-49-39-38-48-106(103)108)157(252)203-118(72-90(5)6)158(253)212-138(91(7)8)165(260)200-110(52-43-70-182-172(177)178)149(244)184-81-130(225)193-109(51-42-69-181-171(175)176)148(243)187-84-137(236)237)196-144(239)95(13)189-143(238)94(12)191-152(247)114(58-63-127(174)222)194-131(226)82-185-151(246)113(61-66-134(230)231)198-155(250)117(71-89(3)4)202-156(251)119(75-102-54-56-105(221)57-55-102)205-162(257)124(85-216)208-164(259)126(87-218)209-166(261)139(92(9)10)213-161(256)123(78-136(234)235)206-163(258)125(86-217)210-169(264)142(99(17)220)215-160(255)121(74-101-46-35-32-36-47-101)207-168(263)141(98(16)219)211-132(227)83-186-150(245)112(60-65-133(228)229)197-145(240)96(14)190-147(242)107(173)77-104-80-179-88-188-104/h31-36,38-39,44-49,54-57,79-80,88-99,107,109-126,138-142,183,216-221H,18-30,37,40-43,50-53,58-78,81-87,173H2,1-17H3,(H2,174,222)(H,179,188)(H,180,223)(H,184,244)(H,185,246)(H,186,245)(H,187,243)(H,189,238)(H,190,242)(H,191,247)(H,192,262)(H,193,225)(H,194,226)(H,195,224)(H,196,239)(H,197,240)(H,198,250)(H,199,248)(H,200,260)(H,201,241)(H,202,251)(H,203,252)(H,204,249)(H,205,257)(H,206,258)(H,207,263)(H,208,259)(H,209,261)(H,210,264)(H,211,227)(H,212,253)(H,213,256)(H,214,254)(H,215,255)(H,228,229)(H,230,231)(H,232,233)(H,234,235)(H,236,237)(H,265,266)(H4,175,176,181)(H4,177,178,182)/t93-,94-,95-,96-,97-,98+,99+,107-,109-,110-,111-,112-,113-,114-,115-,116-,117-,118-,119-,120-,121-,122-,123-,124-,125-,126-,138-,139-,140-,141-,142-/m0/s1",
+        "acceptor": true,
+        "synonyms": [
+          "N2()-(L-histidyl-L-alanyl-L-alpha-glutamylglycyl-L-threonyl-L-phenylalanyl-L-threonyl-L-seryl-L-alpha-aspartyl-L-valyl-L-seryl-L-seryl-L-tyrosyl-L-leucyl-L-alpha-glutamylglycyl-L-glutaminyl-L-alanyl-L-alanyl)-N(6)-(N-hexadecanoyl-L-gamma-glutamyl)-L-lysyl-L-alpha-glutamyl-L-phenylalanyl-L-isoleucyl-L-alanyl-L-tryptophyl-L-leucyl-L-valyl-L-arginylglycyl-L-arginylglycine",
+          "liraglutida",
+          "liraglutide",
+          "liraglutidum",
+          "NN 2211",
+          "NN-2211",
+          "NN2211",
+          "Victoza"
+        ],
+        "agonist": true,
+        "glucagon_like_peptide_1_receptor_agonist": true,
+        "equivalent_identifiers": [
+          "PUBCHEM:16134956",
+          "MESH:D000069450",
+          "CHEMBL.COMPOUND:CHEMBL4084119",
+          "GTOPDB:1133",
+          "UNII:839I73S42A",
+          "INCHIKEY:YSDQQAXHVYUZIW-QCIJIYAXSA-N",
+          "CHEBI:71193"
+        ],
+        "application": true,
+        "chemical_role": true,
+        "name": "liraglutide",
+        "monoisotopic_mass": "3748.94646",
+        "base": true,
+        "biological_role": true,
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C17H20F2N4O3S",
+        "iupac_name": "[(2R,3S,5R)-2-(2,5-difluorophenyl)-5-(2-mesyl-4,6-dihydropyrrolo[3,4-c]pyrazol-5-yl)tetrahydropyran-3-yl]amine",
+        "pubchem.orig_smiles": "CS(=O)(=O)N1C=C2CN(CC2=N1)[C@@H]3C[C@@H]([C@H](OC3)C4=C(C=CC(=C4)F)F)N",
+        "charge": "0",
+        "inchikey": "MKMPWKUAHLTIBJ-ISTRZQFTSA-N",
+        "inchi": "InChI=1S/C17H20F2N4O3S/c1-27(24,25)23-7-10-6-22(8-16(10)21-23)12-5-15(20)17(26-9-12)13-4-11(18)2-3-14(13)19/h2-4,7,12,15,17H,5-6,8-9,20H2,1H3/t12-,15+,17-/m1/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Blood Glucose Lowering Agents",
+          "DPP-IV Inhibitors"
+        ],
+        "smiles": "CS(=O)(=O)n1cc2c(n1)CN([C@H]1CO[C@H](c3cc(F)ccc3F)[C@@H](N)C1)C2",
+        "synonyms": [
+          "marizev",
+          "Mk-3102",
+          "MK3102"
+        ],
+        "mass": "398.429",
+        "molecular_weight": 398.4,
+        "equivalent_identifiers": [
+          "MESH:C587539",
+          "UNII:CVP59Q4JE1",
+          "INCHIKEY:MKMPWKUAHLTIBJ-ISTRZQFTSA-N",
+          "DRUGBANK:DB11992",
+          "CHEBI:134735",
+          "GTOPDB:8402",
+          "PUBCHEM:46209133",
+          "CHEMBL.COMPOUND:CHEMBL2105762"
+        ],
+        "simple_smiles": "CS(=O)(=O)n1cc2c(n1)CN(C1COC(c3cc(F)ccc3F)C(N)C1)C2",
+        "name": "omarigliptin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C1=C(C=CC(=C1[C@H]2OC[C@@H](C[C@@H]2N)N3CC=4C(C3)=NN(C4)S(C)(=O)=O)F)F",
+        "monoisotopic_mass": "398.12242",
+        "id": "CHEBI:134735",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C10H21NO7",
+        "iupac_name": "(1S,2S,3R,4S,5S)-5-[(2-hydroxy-1-methylol-ethyl)amino]-1-methylol-cyclohexane-1,2,3,4-tetrol",
+        "pubchem.orig_smiles": "C1[C@@H]([C@@H]([C@H]([C@@H]([C@]1(CO)O)O)O)O)NC(CO)CO",
+        "charge": "0",
+        "inchikey": "FZNCGRZWXLXZSZ-CIQUZCHMSA-N",
+        "inchi": "InChI=1S/C10H21NO7/c12-2-5(3-13)11-6-1-10(18,4-14)9(17)8(16)7(6)15/h5-9,11-18H,1-4H2/t6-,7-,8+,9-,10-/m0/s1",
+        "drugbank.categories": [
+          "Alcohols",
+          "Alimentary Tract and Metabolism",
+          "Blood Glucose Lowering Agents",
+          "Carbohydrates",
+          "Cyclohexanes",
+          "Cycloparaffins",
+          "Drugs Used in Diabetes",
+          "Enzyme Inhibitors",
+          "Fatty Alcohols",
+          "Glycoside Hydrolase Inhibitors",
+          "Hexanols",
+          "Lipids",
+          "Oral Hypoglycemics",
+          "Sugar Alcohols"
+        ],
+        "smiles": "OCC(CO)N[C@H]1C[C@](O)(CO)[C@@H](O)[C@H](O)[C@H]1O",
+        "synonyms": [
+          "Voglibose",
+          "3,4-Dideoxy-4-[[2-hydroxy-1-(hydroxymethyl)ethyl]amino]-2-C-(hydroxymethyl)-D-epi-inositol",
+          "AO-128",
+          "Basen (TN)",
+          "glustat",
+          "voglistat"
+        ],
+        "mass": "267.277",
+        "molecular_weight": 267.28,
+        "equivalent_identifiers": [
+          "CHEBI:32300",
+          "UNII:S77P977AG8",
+          "MESH:C102817",
+          "CHEMBL.COMPOUND:CHEMBL476960",
+          "INCHIKEY:FZNCGRZWXLXZSZ-CIQUZCHMSA-N",
+          "HMDB:HMDB0015598",
+          "DRUGBANK:DB04878",
+          "PUBCHEM:444020"
+        ],
+        "simple_smiles": "OCC(CO)NC1CC(O)(CO)C(O)C(O)C1O",
+        "name": "Voglibose",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "N(C(CO)CO)[C@H]1C[C@@](CO)(O)[C@H]([C@@H]([C@H]1O)O)O",
+        "monoisotopic_mass": "267.13180",
+        "id": "CHEBI:32300",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      },
+      {
+        "molecular_formula": "C19H25N7O2",
+        "iupac_name": "N-[2-[[2-[(2S)-2-cyanopyrrolidino]-2-keto-ethyl]amino]-2-methyl-propyl]-2-methyl-pyrazolo[1,5-a]pyrimidine-6-carboxamide",
+        "pubchem.orig_smiles": "CC1=NN2C=C(C=NC2=C1)C(=O)NCC(C)(C)NCC(=O)N3CCC[C@H]3C#N",
+        "charge": "0",
+        "inchikey": "LDXYBEHACFJIEL-HNNXBMFYSA-N",
+        "inchi": "InChI=1S/C19H25N7O2/c1-13-7-16-21-9-14(11-26(16)24-13)18(28)22-12-19(2,3)23-10-17(27)25-6-4-5-15(25)8-20/h7,9,11,15,23H,4-6,10,12H2,1-3H3,(H,22,28)/t15-/m0/s1",
+        "drugbank.categories": [
+          "Agents causing angioedema",
+          "Blood Glucose Lowering Agents",
+          "DPP-IV Inhibitors"
+        ],
+        "smiles": "Cc1cc2ncc(C(=O)NCC(C)(C)NCC(=O)N3CCC[C@H]3C#N)cn2n1",
+        "synonyms": [
+          "anagliptin HCl",
+          "anagliptin hydrochloride",
+          "beskoa",
+          "suiny"
+        ],
+        "mass": "383.448",
+        "molecular_weight": 383.4,
+        "equivalent_identifiers": [
+          "MESH:C583175",
+          "DRUGBANK:DB12417",
+          "CHEMBL.COMPOUND:CHEMBL1929396",
+          "PUBCHEM:44513473",
+          "INCHIKEY:LDXYBEHACFJIEL-HNNXBMFYSA-N",
+          "UNII:K726J96838",
+          "CHEBI:136043"
+        ],
+        "simple_smiles": "Cc1cc2ncc(C(=O)NCC(C)(C)NCC(=O)N3CCCC3C#N)cn2n1",
+        "name": "anagliptin",
+        "drugbank.investigational": true,
+        "chebi.orig_smiles": "C1=C(C=NC=2N1N=C(C2)C)C(NCC(NCC(N3[C@@H](CCC3)C#N)=O)(C)C)=O",
+        "monoisotopic_mass": "383.20697",
+        "id": "CHEBI:136043",
+        "type": [
+          "named_thing",
+          "chemical_substance"
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572487646.036501,
+        "id": "7da694bbccacb10421ea43adc902b172",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:134725",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572474582.191362,
+        "id": "e918af17b16fb0f91bc8a46ad2ecb25f",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:135731",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_adverse_events",
+        "ctime": 1572493034.026079,
+        "id": "7b7d2245aeb2183efbc8b4749eae5e8b",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:82720",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_adverse_events",
+        "ctime": 1572495411.3236198,
+        "id": "47877372020c204be21b831c83b4854c",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:40237",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_adverse_events",
+        "ctime": 1572485453.4012928,
+        "id": "d569acaeef6b86c245ce7427f55ca90e",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:5441",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_adverse_events",
+        "ctime": 1572495453.1631253,
+        "id": "a432be57e752928ba8e8e35c1fffaf6a",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:5384",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572496119.2161326,
+        "id": "91e528335a4e68e031f405c5adeda9c8",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:32300",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572472876.4699764,
+        "id": "e6ea1a1c5f55f6d061072c3bf66e2c87",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:3650",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572486756.1467369,
+        "id": "e7d5b5fa7a3f7e167b08b75d2f54c99a",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:8805",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572485735.7566755,
+        "id": "7d4926c7a37ce6f2667eb3c0ce108857",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:27999",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572484754.1161103,
+        "id": "0cd51525ab6609fb980256c685b1c430",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:2376",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572493363.4955935,
+        "id": "6bfa51d92077ce9c2199cbd246c4fdeb",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:73274",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572500279.2517464,
+        "id": "1102029d8841bf0d7c8d2ef47209a14a",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:71272",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572472208.177294,
+        "id": "4f4ad284b25d1e2079f6f0cb39b2348b",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:136041",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572471211.685825,
+        "id": "5bc4788d14ac1d7fbee5ca8b6e6846ba",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:135285",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572487664.3343492,
+        "id": "3b11cb16521e673a49e4f6f96fd302a9",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:134735",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572490859.9585342,
+        "id": "9136d8ff414de9d94ab005b4c689615b",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:72323",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572495450.929644,
+        "id": "e693021f9660437218c35212a02e3317",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:5383",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572485744.8485193,
+        "id": "81d25c03711d540423bd0a333bab2b8d",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:6801",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572464848.170774,
+        "id": "e474d8315636847eed8b28df47bb5e75",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:135118",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_adverse_events",
+        "ctime": 1572493312.4803376,
+        "id": "15551720213af58c59255ba3c0723d07",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:73272",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572494016.9936101,
+        "id": "ae473b7796d80274ae774e51cdaa0841",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:85078",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572487626.1693456,
+        "id": "0c69cdeb184a217e9993d669adf4e6d9",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:134715",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572467950.8625946,
+        "id": "6333f699b0aeea29493ceaff35365aba",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:135545",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572490852.4565017,
+        "id": "4d619257f8c148c470dba0811a7b699a",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:93416",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572495413.7685604,
+        "id": "623c0cb5e42c5892173ed3a7a85498ff",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:31897",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_adverse_events",
+        "ctime": 1572496074.7818449,
+        "id": "b70221071b1b7f067c65c19ae2a5a743",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:68610",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572490918.603386,
+        "id": "44f3354fecc8a6e3ca6d33c44a34e26f",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:31654",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572472213.0732222,
+        "id": "b59f6f77c9932889d9adf3c6c42caaf7",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:136042",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572472629.5796065,
+        "id": "d7759261541a1e1abce9463a08b136d7",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:135349",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572484772.2938235,
+        "id": "16b4be0e2c99725cfb05436da8a81951",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:28052",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572487656.9810417,
+        "id": "c24c1e06d201269d63c03a4ee44aa0a3",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:134731",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572482171.7573428,
+        "id": "b7daa0996dde24c1acd04ca2fec6b992",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:136052",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572486764.7190425,
+        "id": "ca7aac7ea5e26e766e749dd6047d0cb3",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:8228",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572493977.8362367,
+        "id": "e1fa568bffad9c6e3997f6c2a7bafc04",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:71193",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572487644.1295896,
+        "id": "a5eb2e56c412ca8c99d032d235f8ccb6",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:134724",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572490924.459634,
+        "id": "2cd8564e4600119ce684f274dfdc53a4",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:31660",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572486784.416829,
+        "id": "3f77dcc07f6db5d36e4a48ce3ec3be2e",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:6935",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572493518.6533782,
+        "id": "f250222ce759cc501fc8db08a10ef129",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:9753",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572482130.1070402,
+        "id": "5c434a9f8d2aee118188d31154201208",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:136043",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572486763.2394958,
+        "id": "373496ec172b7dd9006aae33314163e8",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:3209",
+        "target_id": "MONDO:0005148"
+      },
+      {
+        "predicate_id": "RO:0002606",
+        "relation_label": "treats",
+        "edge_source": "mychem.get_drugcentral",
+        "ctime": 1572495942.84721,
+        "id": "8ba8f9b1cce29a5b4b5b92037c1fca3d",
+        "source_database": "mychem",
+        "relation": "RO:0002606",
+        "publications": [],
+        "type": "treats",
+        "source_id": "CHEBI:9613",
+        "target_id": "MONDO:0005148"
+      }
+    ]
+  }
+}}
