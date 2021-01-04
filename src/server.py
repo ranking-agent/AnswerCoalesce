@@ -50,13 +50,11 @@ async def coalesce_handler(response: Response, method: MethodName) -> Response:
 
     # call the operation with the request
     coalesced = coalesce(message, method=method)
-    import json
-    with open('junk.json','w') as junk:
-        json.dump(coalesced,junk)
 
+    #Normalize the output
     normed = normalize( {'message': coalesced } )
 
-    # normalize and return the result to the caller
+    # return the result to the caller
     return Response(**normed)
 
 
