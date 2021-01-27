@@ -53,10 +53,10 @@ async def coalesce_handler(response: Response, method: MethodName) -> Response:
     coalesced = coalesce(message, method=method)
 
     # Normalize the output
-    # normed = normalize( {'message': coalesced } )
+    normed = normalize( {'message': coalesced } )
 
     # return the result to the caller
-    return Response(**{'message': coalesced })
+    return Response(**normed)
 
 
 def log_exception(method):
