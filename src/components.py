@@ -102,7 +102,7 @@ class PropertyPatch:
         extra_q_nodes = []
         extra_q_edges = []
         #First add "set":True to our variable node
-        qg['nodes'][self.qg_id]['set'] = True
+        qg['nodes'][self.qg_id]['is_set'] = True
         #for node in qg['nodes']:
         #    if node['id'] == self.qg_id:
         #        node['set'] = True
