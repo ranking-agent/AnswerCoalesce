@@ -251,7 +251,7 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     assert len(updated_qg['edges']) == 4 #started as 3
     #n2 should now be a set in the question
     vnode = updated_qg['nodes']['n2']
-    assert vnode['set']
+    assert vnode['is_set']
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
     na = new_answers[0]
@@ -356,7 +356,7 @@ def test_apply_property_patches_add_two_new_nodes():
     assert len(updated_qg['edges']) == 5 #started as 3
     #n2 should now be a set in the question
     vnode = updated_qg['nodes']['n2']
-    assert vnode['set']
+    assert vnode['is_set']
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
     na = new_answers[0]
