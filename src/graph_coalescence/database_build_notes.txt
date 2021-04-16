@@ -1,12 +1,8 @@
 To build the redis db, log into robokopdev.renci.org
 
-Find where the neo4j you want is running with
+Find where the neo4j you want is running with: kubectl -n translator-robokop get pods -o wide
 
-kubectl -n translator-robokop get pods -o wide
-
-Get the bolt (7687) port with
-
-kubectl -n translator-robokop get svc
+Get the bolt (7687) port with: kubectl -n translator-robokop get svc
 
 With those two pieces of information, you can launch cypher shell (you know the password):
 
@@ -14,7 +10,7 @@ cypher-shell -a stars-k6.edc.renci.org:31333 -u neo4j -p XXXXXXXXX
 
 NOTE, you should probably do this in a screen, it takes a long time to run.
 
-APOC needs to be installed (it should be) and then you can run in the shell:
+Insure APOC is installed (it should be by default) and then you can run in the shell:
 
 WITH "MATCH path = (a)-[x]->(b)
       RETURN a.id AS source_id, labels(a) AS source_labels, type(x) AS predicate,
