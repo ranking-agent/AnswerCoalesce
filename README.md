@@ -3,7 +3,7 @@
 # AnswerCoalesce
 ### A web service and Swagger UI for the Answer Coalesce service for ARAGORN.
 
-This serivce accepts a [translator reasoner standard message](https://github.com/NCATS-Tangerine/NCATS-ReasonerStdAPI) containing answers and returns the same format with answers that have been coalesced.
+This service accepts a [translator reasoner standard message](https://github.com/NCATS-Tangerine/NCATS-ReasonerStdAPI) containing answers and returns the same format with answers that have been coalesced.
 
 ## Demonstration
 
@@ -14,8 +14,6 @@ An example notebook demonstrating the API can be found [here](https://github.com
 ## Deployment
 
 Please download and implement the Docker container located in the Docker hub repo: renciorg\ac.
-
-Kubernetes deployment files are available in the \kubernetes directory.
 
 ### Local Deployment
 
