@@ -79,7 +79,7 @@ def test_graph_coalesce_strider():
         nbs = r['node_bindings']
         extra = False
         for nb in nbs:
-            if nb['qg_id'].startswith('extra'):
+            if nb.startswith('extra'):
                 extra = True
         assert extra
 
