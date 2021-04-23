@@ -33,7 +33,7 @@ def test_coalesce():
     # check the data
     ret = jret['message']
     assert(len(ret) == 3)
-    assert( len(ret['results']) == 118 )
+    assert( len(ret['results'])-len(answerset['message']['results']) == 118 )
 
 def test_unique_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
@@ -53,7 +53,7 @@ def test_unique_coalesce():
 
     ret = jret['message']
     assert('results' in ret)
-    assert( len(ret['results']) <= 4 )
+    assert( len(ret['results'])-len(answerset['message']['results']) <= 4 )
 
 def test_schizo_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))

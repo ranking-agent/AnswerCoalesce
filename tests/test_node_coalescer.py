@@ -454,7 +454,7 @@ def test_unique_ontology():
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset,method='ontology')
+    newset = snc.coalesce(answerset,method='ontology',return_original=False)
     rs = newset['results']
     assert len(rs) <= 4
     #Also, this should have 4 nodes in the query graph.  The original 3 plus the superclass
