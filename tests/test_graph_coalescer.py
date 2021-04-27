@@ -54,7 +54,7 @@ def test_graph_coalesce():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset, method='graph')
+    newset = snc.coalesce(answerset, method='graph',return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     for r in newset['results']:
         nbs = r['node_bindings']
@@ -74,12 +74,12 @@ def test_graph_coalesce_strider():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset, method='graph')
+    newset = snc.coalesce(answerset, method='graph', return_original=False)
     for r in newset['results']:
         nbs = r['node_bindings']
         extra = False
         for nb in nbs:
-            if nb['qg_id'].startswith('extra'):
+            if nb.startswith('extra'):
                 extra = True
         assert extra
 

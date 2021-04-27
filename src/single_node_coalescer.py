@@ -7,7 +7,7 @@ from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 
-def coalesce(answerset,method='all'):
+def coalesce(answerset,method='all',return_original=True):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -27,6 +27,8 @@ def coalesce(answerset,method='all'):
         patches += coalesce_by_ontology(coalescence_opportunities)
     # print('lets patch')
     new_answers,updated_qg,updated_kg = patch_answers(answerset,patches)
+    if return_original:
+        new_answers += answerset['results']
     new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
     return new_answerset
 
