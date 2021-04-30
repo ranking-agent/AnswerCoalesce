@@ -6,14 +6,25 @@ import os.path
 
 from src.components import PropertyPatch
 
+#only needed while fix_stype is around
+import re
+
 class PropertyLookup():
     def __init__(self):
         # Right now, we're going to load the property file, but we should replace with a redis or sqlite
         self.thisdir = os.path.dirname(os.path.realpath(__file__))
         #dbfiles = list(filter(lambda x: x.endswith('.db'), os.listdir(thisdir)))
         #self.propfiles = [f'{thisdir}/{dbf}' for dbf in dbfiles]
+    def fix_stype(self,stype):
+        #We're in a situation where there are databases using old style types but the input will be new style, and
+        #for a moment we need to translate.  This will go away.
+        if stype.startswith('biolink'):
+            pascal = stype.split(':')[1]
+            stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        return stype
     def lookup_property_by_node(self,node,stype):
-        pf = f'{self.thisdir}/{stype}.db'
+        fstype = self.fix_stype(stype)
+        pf = f'{self.thisdir}/{fstype}.db'
         if not os.path.exists(pf):
             return {}
         with sqlite3.connect(pf) as conn:
@@ -27,7 +38,8 @@ class PropertyLookup():
             return literal_eval(r)
         return {}
     def total_nodes_with_property(self,property,stype):
-        pf = f'{self.thisdir}/{stype}.db'
+        fstype = self.fix_stype(stype)
+        pf = f'{self.thisdir}/{fstype}.db'
         if not os.path.exists(pf):
             return 0
         with sqlite3.connect(pf) as conn:
@@ -38,7 +50,8 @@ class PropertyLookup():
             return results[0]['count']
         return 0
     def get_nodecount(self, stype):
-        pf = f'{self.thisdir}/{stype}.db'
+        fstype = self.fix_stype(stype)
+        pf = f'{self.thisdir}/{fstype}.db'
         if not os.path.exists(pf):
             return 0
         with sqlite3.connect(pf) as conn:

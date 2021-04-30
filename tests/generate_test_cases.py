@@ -6,70 +6,62 @@ def create_asthma_chemical_request(edgetype):
     req = {
         "message": {
             "query_graph": {
-                "nodes": [
-                    {
-                       "id": "n0",
-                       "type": "chemical_substance"
+                "nodes": {
+                    'n0': {
+                       "category": "biolink:ChemicalSubstance"
                     },
-                    {
-                       "id": "n1",
-                       "type": "disease",
-                       "curie": ["MONDO:0004979"]
+                    'n1': {
+                       "category ": "biolink:Disease",
+                       "id": ["MONDO:0004979"]
                     }
-                ],
-                "edges": [
-                    {
-                        "id": "e1",
+                },
+                "edges": {
+                    'e1':{
                         #"type": "contributes_to",
-                        "source_id": "n0",
-                        "target_id": "n1"
+                        "subject": "n0",
+                        "object": "n1"
                     }
-                ]
+                }
             }
         }
     }
     if edgetype:
-        req['edges'][0]['type'] = 'contributes_to'
+        req['edges'][0]['predicate'] = 'biolink:contributes_to'
     return req
 
 def create_imatinib_asthma_by_gene():
     request = {
         "message": {
             "query_graph": {
-                "nodes": [
-                  {
-                    "id": "n0",
-                    "type": "chemical_substance",
+                "nodes": {
+                  "n0":{
+                    "category": "biolink:ChemicalSubstance",
                     "name": "imatinib",
-                    "curie": [
+                    "id": [
                       "CHEBI:45783"
                     ]
                   },
-                  {
-                    "id": "n1",
-                    "type": "gene",
+                  "n1":{
+                    "type": "biolink:Gene",
                   },
-                  {
-                    "id": "n2",
-                    "type": "disease",
+                  'n2':{
+                    "category": "biolink:Disease",
                     "name": "Asthma",
-                    "curie": [
+                    "id": [
                       "MONDO:0004979"
                     ]
                   }
-                ],
-                "edges": [
-                  {
-                    "id": "e0",
-                    "source_id": "n0",
-                    "target_id": "n1"
+                },
+                "edges": {
+                  'e0':{
+                    "subject": "n0",
+                    "object": "n1"
                   },
-                  {
-                    "id": "e1",
-                    "source_id": "n1",
-                    "target_id": "n2"
+                  'e1':{
+                    "subject": "n1",
+                    "object": "n2"
                   }
-                ]
+                }
               },
         }
     }

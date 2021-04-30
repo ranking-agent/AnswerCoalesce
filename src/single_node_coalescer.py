@@ -7,7 +7,7 @@ from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 
-def coalesce(answerset,method='all'):
+def coalesce(answerset,method='all',return_original=True):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -27,6 +27,8 @@ def coalesce(answerset,method='all'):
         patches += coalesce_by_ontology(coalescence_opportunities)
     # print('lets patch')
     new_answers,updated_qg,updated_kg = patch_answers(answerset,patches)
+    if return_original:
+        new_answers += answerset['results']
     new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
     return new_answerset
 
@@ -79,7 +81,10 @@ def identify_coalescent_nodes(answerset):
         hashes = make_answer_hashes(answer,graph,question)
         for hash,qg_id,kg_id in hashes:
             varhash_to_answers[hash].append(answer_i)
-            qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
+            #qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
+            qg_type = question['nodes'][qg_id]['category']
+            if isinstance(qg_type,list):
+                qg_type = qg_type[0]
             varhash_to_qg[hash] = (qg_id,qg_type)
             varhash_to_kg[hash].update(kg_id)
             varhash_to_answer_indices[hash].append(answer_i)
@@ -143,17 +148,19 @@ def make_answer_hash(bindings,graph,question,qg_id):
     #Now figure out which edges hook to qg_id
     #Note that we're keeping source and target edges separately.  If the question doesn't define a direction,
     # we might end up with edges pointing either way, and we need to compare that as well.
-    sedges = list(filter( lambda x: x['source_id'] == qg_id, question['edges']))
-    tedges = list(filter( lambda x: x['target_id'] == qg_id, question['edges']))
+    sedges = [ edge_id for edge_id, edge in question['edges'].items() if edge['subject'] == qg_id ]
+    tedges = [ edge_id for edge_id, edge in question['edges'].items() if edge['object'] == qg_id ]
+    #sedges = list(filter( lambda x: x['subject'] == qg_id, question['edges']))
+    #tedges = list(filter( lambda x: x['object'] == qg_id, question['edges']))
     #make a map of kg edges to type.  probably move this out of make_answer_hash?
-    kg_edgetypes = { edge['id']: edge['type'] for edge in graph['edges']}
+    kg_edgetypes = { edge_id: edge['predicate'] for edge_id, edge in graph['edges'].items()}
     #The double comprehension is a bit of a mess, but our singlehash values are sets
     #What is happening is that a given s or t edge, we want a map from that qgid (the id in sedges) we want to
     # get the kg edges.  Thats a set, we loop over it, and get the edgetypes from the kg for each, and make
     # a new set with all those types in it.  At the end, we have a map from an edge qg_id to a frozenset of
     # types for that edge for this answer.
-    sedge_types = { se["id"]: frozenset([kg_edgetypes[x] for x in singlehash[se['id']]] ) for se in sedges }
-    tedge_types = { se["id"]: frozenset([kg_edgetypes[x] for x in singlehash[se['id']]] ) for se in tedges }
+    sedge_types = { se: frozenset([kg_edgetypes[x] for x in singlehash[se]] ) for se in sedges }
+    tedge_types = { se: frozenset([kg_edgetypes[x] for x in singlehash[se]] ) for se in tedges }
     #Add in the edge types to our hash. this overwrites the qgid -> kgid mapping with type mapping
     singlehash.update(sedge_types)
     singlehash.update(tedge_types)

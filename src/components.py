@@ -20,12 +20,30 @@ class Opportunity:
     def get_qg_id(self):
         return self.qg_id
     def get_qg_semantic_type(self):
-        return self.qg_semantic_type
+        import re
+        stype = self.qg_semantic_type
+        #This will go away when we  update the databases to use the new style types
+        if stype.startswith('biolink'):
+            pascal = stype.split(':')[1]
+            stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        return stype
     def get_answer_indices(self):
         return self.answer_indices
 
+def pascal_to_snake(nnt):
+    if not nnt.startswith('biolink:'):
+        newnodetype = ''.join(word.title() for word in nnt.split('_'))
+        newnodetype = 'biolink:' + newnodetype
+        return newnodetype
+    return nnt
+
 class NewNode:
     def __init__(self,newnode, newnodetype, edge_type, newnode_is):
+        #right now we're sometimes getting node types in old style.  This will go away when the databases get updated
+        if isinstance(newnodetype,str):
+            newnodetype = pascal_to_snake(newnodetype)
+        else:
+            newnodetype = [ pascal_to_snake(n) for n in newnodetype]
         self.newnode = newnode
         self.newnode_type = newnodetype
         self.new_edges = edge_type
@@ -84,29 +102,30 @@ class PropertyPatch:
         extra_q_nodes = []
         extra_q_edges = []
         #First add "set":True to our variable node
-        for node in qg['nodes']:
-            if node['id'] == self.qg_id:
-                node['set'] = True
+        qg['nodes'][self.qg_id]['is_set'] = True
+        #for node in qg['nodes']:
+        #    if node['id'] == self.qg_id:
+        #        node['set'] = True
         #We are going to want to know whether we have aleady added a particular new node/edge.  Then if we are
         # adding it again, we can say, nope, already did it. So let's collect what we have.
         #Because of the way that we are constructing new queries, the only thing that will happen is an undirected
         # edge to self.qg_id.  So we really just need to know if there already is such a thing.
         qg_updated = False
-        for edge in qg['edges']:
-            if edge['id'].startswith('extra_'):
-                if edge['source_id'].startswith('extra'):
+        for edge_id,edge in qg['edges'].items():
+            if edge_id.startswith('extra_'):
+                if edge['subject'].startswith('extra'):
                     itis = 'source'
-                    qid = edge['source_id']
-                    oid = edge['target_id']
+                    qid = edge['subject']
+                    oid = edge['object']
                 else:
                     itis = 'target'
-                    qid = edge['target_id']
-                    oid = edge['source_id']
+                    qid = edge['subject']
+                    oid = edge['object']
                 #it might be that the oid is not the same one for this patch
                 if oid != self.qg_id:
                     continue
                 extra_q_nodes.append(qid)
-                extra_q_edges.append(edge['id'])
+                extra_q_edges.append(edge_id)
                 qg_updated = True
         for newnode in self.added_nodes:
             #First, we need to decide whether this new node is already in there.
@@ -114,38 +133,38 @@ class PropertyPatch:
             if qg_updated:
                 continue
             #Doesn't seem like it's already here, so Add the new node to the question.
-            node_ids = [n['id'] for n in qg['nodes']]
+            node_ids = list(qg['nodes'].keys())
             nnid = 0
             new_node_id = f'extra_qn_{nnid}'
             while new_node_id in node_ids:
                 nnid += 1
                 new_node_id = f'extra_qn_{nnid}'
             extra_q_nodes.append(new_node_id)
-            qg['nodes'].append({'id': new_node_id, 'type': newnode.newnode_type})
+            qg['nodes'].update({new_node_id: {'category': newnode.newnode_type}})
             #Add the new edge to the question
-            edge_ids = [ e['id'] for e in qg['edges']]
+            edge_ids = list(qg['edges'].keys())
             neid = 0
             new_edge_id = f'extra_qe_{neid}'
             while new_edge_id in edge_ids:
                 neid += 1
                 new_edge_id = f'extra_qe_{neid}'
             if newnode.newnode_is == 'target':
-                qg['edges'].append( {'id': new_edge_id, 'source_id': self.qg_id, 'target_id': new_node_id })
+                qg['edges'].update( {new_edge_id:{ 'subject': self.qg_id, 'object': new_node_id }})
             else:
-                qg['edges'].append( {'id': new_edge_id, 'source_id': new_node_id, 'target_id': self.qg_id })
+                qg['edges'].update( {new_edge_id:{ 'subject': new_node_id, 'object': self.qg_id }})
             extra_q_edges.append(new_edge_id)
         return qg, extra_q_nodes, extra_q_edges
     def update_kg(self,kg,kg_index):
         if len(kg_index) == 0:
-            kg_index['nodes'] = set( [node['id'] for node in kg['nodes']] )
-            kg_index['edges'] = { (edge['source_id'],edge['target_id'],edge['type']):edge['id'] for edge in kg['edges']}
+            kg_index['nodes'] = set( kg['nodes'].keys() )
+            kg_index['edges'] = { (edge['subject'],edge['object'],edge['predicate']):edge_id for edge_id,edge in kg['edges'].items() }
         all_extra_edges = []
         for newnode in self.added_nodes:
             extra_edges=[]
             #See if the newnode is already in the KG, and if not, add it.
             found = False
             if newnode.newnode not in kg_index['nodes']:
-                kg['nodes'].append({'id': newnode.newnode, 'type': newnode.newnode_type})
+                kg['nodes'].update({ newnode.newnode:{'category': newnode.newnode_type}})
                 kg_index['nodes'].add(newnode.newnode)
             #Add new edges
             for curie in self.set_curies: #try to add a new edge from this curie to newnode
@@ -161,24 +180,12 @@ class PropertyPatch:
                 eid = None
                 ekey = (source_id, target_id,  newnode.new_edges)
                 if ekey not in kg_index['edges']:
-                    edge = { 'source_id': source_id, 'target_id': target_id, 'type': newnode.new_edges }
+                    edge = { 'subject': source_id, 'object': target_id, 'predicate': newnode.new_edges }
                     eid = str(hash(frozenset(edge.items())))
-                    edge['id'] = eid
-                    kg['edges'].append(edge)
+                    edge_id = eid
+                    kg['edges'].update({eid:edge})
                     kg_index['edges'][ekey] = eid
                 eid = kg_index['edges'][ekey]
-                #for edge in kg['edges']:
-                #    if edge['source_id'] == source_id:
-                #        if edge['target_id'] == target_id:
-                #            if edge['type'] == newnode.new_edges:
-                #                eid = str(edge['id'])
-                #                break
-                #if eid is None:
-                #    #Add the new edge
-                #    edge = { 'source_id': source_id, 'target_id': target_id, 'type': newnode.new_edges }
-                #    eid = str(hash(frozenset(edge.items())))
-                #    edge['id'] = eid
-                #    kg['edges'].append(edge)
                 extra_edges.append(str(eid))
             all_extra_edges.append(extra_edges)
         return kg,all_extra_edges,kg_index
@@ -195,42 +202,42 @@ class Answer:
         else:
             self.score = 0.
         self.binding_properties = defaultdict(dict)
-        #The node bindings can be in a variety of formats. They're all based on
-        # { 'qg_id': "string", 'kg_id': ... }
-        # The kg_id could be a string or a list of strings.  There could also be more than one binding wth the same qg_id
+        #The node bindings can be in a variety of formats. In 1.0 they're all based on
+        #"node_bindings": { "n0": [ { "id": "CHEBI:35475" } ], "n1": [ { "id": "MONDO:0004979" } ] },
         self.node_bindings = defaultdict(set)
-        for nb in json_answer['node_bindings']:
-            if isinstance(nb['kg_id'],list):
-                kg_ids = set(nb['kg_id'])
-            else:
-                kg_ids = set([nb['kg_id']])
-            self.node_bindings[ nb['qg_id']].update(kg_ids)
-            props = { k:v for k,v in nb.items() if k not in ('qg_id','kg_id')}
-            self.binding_properties[nb['qg_id']] = props
-        question_edge_ids = set([x['id'] for x in json_question['edges']])
+        for qg_id,kg_bindings in json_answer['node_bindings'].items():
+            kg_ids = set( [x['id'] for x in kg_bindings] )
+            self.node_bindings[ qg_id ].update(kg_ids)
+            #Not sure that this is important re: 1.0?
+            #props = { k:v for k,v in nb.items() if k not in ('qg_id','kg_id')}
+            #self.binding_properties[nb['qg_id']] = props
+            self.binding_properties[qg_id] = defaultdict(dict)
+        question_edge_ids = set(json_question['edges'].keys())
         self.question_edge_bindings = defaultdict(set)
         self.support_edge_bindings = defaultdict(set)
-        for eb in json_answer['edge_bindings']:
-            if isinstance(eb['kg_id'],list):
-                kg_ids = set(eb['kg_id'])
+        for qg_id,kg_bindings in json_answer['edge_bindings'].items():
+            kg_ids = set(x['id'] for x in kg_bindings)
+            if qg_id in question_edge_ids:
+                self.question_edge_bindings[ qg_id].update(kg_ids)
             else:
-                kg_ids = set([eb['kg_id']])
-            if eb['qg_id'] in question_edge_ids:
-                self.question_edge_bindings[ eb['qg_id']].update(kg_ids)
-            else:
-                self.support_edge_bindings[ eb['qg_id']].update(kg_ids)
-            props = { k:v for k,v in eb.items() if k not in ('qg_id','kg_id')}
-            self.binding_properties[eb['qg_id']] = props
+                self.support_edge_bindings[ qg_id].update(kg_ids)
+            #Are these props still relevant for 1.0?
+            #props = { k:v for k,v in eb.items() if k not in ('qg_id','kg_id')}
+            #self.binding_properties[eb['qg_id']] = props
+            self.binding_properties[qg_id] = defaultdict(dict)
     def to_json(self):
-        """Serialize the answer back to ReasonerStd JSON"""
-        json_node_bindings = [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.node_bindings.items() ]
-        json_edge_bindings = [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.question_edge_bindings.items() ]
-        json_node_bindings += [ {'qg_id': q, 'kg_id': list(k)} for q,k in self.support_edge_bindings.items() ]
-        for nb in json_node_bindings:
-            nb.update(self.binding_properties[nb['qg_id']])
-        for eb in json_edge_bindings:
-            eb.update(self.binding_properties[nb['qg_id']])
+        """Serialize the answer back to ReasonerStd JSON 1.0"""
+        json_node_bindings = { q : [ {"id": kid} for kid in k ]  for q,k in self.node_bindings.items() }
+        json_edge_bindings = { q : [ {"id": kid} for kid in k ] for q,k in self.question_edge_bindings.items() }
+        json_edge_bindings.update( {  q: [ {"id": kid} for kid in k ]  for q,k in self.support_edge_bindings.items() } )
+        for qg_id,nb in json_node_bindings.items():
+            for nbi in nb:
+                nbi.update(self.binding_properties[qg_id])
+        for qg_id,eb in json_edge_bindings.items():
+            for ebi in eb:
+                ebi.update(self.binding_properties[qg_id])
         return { 'node_bindings': json_node_bindings, 'edge_bindings': json_edge_bindings, 'score':self.score}
+    #TODO: This is not including edges, which is bad.  But I think it should work if the bindings are made right.
     def make_bindings(self):
         """Return a single bindings map, making sure that the same id is not
         used for both a node and edge. Also remove any edge_bindings that are not part of the question, such
