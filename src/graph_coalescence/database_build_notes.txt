@@ -19,7 +19,7 @@ APOC needs to be installed (it should be) and then you can run in the shell:
 WITH "MATCH path = (a)-[x]->(b)
       RETURN a.id AS source_id, labels(a) AS source_labels, type(x) AS predicate,
              b.id AS target_id, labels(b) AS target_labels" AS query
-      CALL apoc.export.csv.query(query, "/data/everything.csv", {})
+      CALL apoc.export.csv.query(query, "everything.csv", {})
       YIELD file, source, format, nodes, relationships, properties, time, rows, batchSize, batches, done, data
       RETURN file, source, format, nodes, relationships, properties, time, rows, batchSize, batches, done, data;
 
