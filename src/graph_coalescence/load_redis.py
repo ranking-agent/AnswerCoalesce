@@ -6,6 +6,8 @@ def get_redis(db):
     return r
 
 def write_to(fname,db):
+    print(f'Processing {fname}')
+
     r = get_redis(db)
     pipe = r.pipeline()
     n=0
@@ -16,14 +18,15 @@ def write_to(fname,db):
             pipe.set(x[0],x[1])
             n += 1
             if n >= batchsize:
+                print(f'Executing {fname}')
                 pipe.execute()
                 n = 0
     pipe.execute()
 
 def go():
-    write_to('src/graph_coalescence/links.txt',0)
-    write_to('src/graph_coalescence/nodelabels.txt',1)
-    write_to('src/graph_coalescence/backlinks.txt',2)
+    write_to('links.txt',0)
+    write_to('nodelabels.txt',1)
+    write_to('backlinks.txt',2)
 
 def go_test():
     #Is going to run from ac root

@@ -1,4 +1,4 @@
-from neo4j.v1 import GraphDatabase
+from neo4j import GraphDatabase
 from collections import defaultdict
 import os.path
 import argparse
@@ -30,18 +30,38 @@ def create_property_counts(stype,db,pw):
     counts = defaultdict( int )
     thisdir = os.path.dirname(os.path.realpath(__file__) )
     properties_per_node = defaultdict(set)
+    print('opening session')
+    counter: int = 0
+
     with driver.session() as session:
         results = session.run(cypher)
+
         for result in results:
+            counter += 1
+
+            if (counter % 25000) == 0:
+                print(f'processed: {counter}')
+
             node = result['a']
+
             properties = clean_properties(node)
+
             newid = normalize(node['id'])
+
             if newid is None:
                 continue
+
             properties_per_node[newid].update(properties)
+
             for p in properties:
                 counts[p] += 1
+
+    print(f'creating database {stype}')
+
     dbname = initialize_property_dbs(stype)
+
+    print('connecting to database and loading')
+
     with sqlite3.connect(dbname) as conn:
         for newid,properties in properties_per_node.items():
             conn.execute( 'INSERT INTO properties (node ,propertyset) VALUES (?,?)', (newid, str(properties)))
