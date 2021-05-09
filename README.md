@@ -7,7 +7,7 @@ This service accepts a [translator reasoner standard message](https://github.com
 
 ## Demonstration
 
-A live version of the API can be found [here](https://answercoalesce.renci.org/docs/).
+A live version of the API can be found [here](https://answercoalesce.renci.org/docs).
 
 An example notebook demonstrating the API can be found [here](https://github.com/TranslatorIIPrototypes/AnswerCoalesce/blob/master/documentation/AnswerCoalescence.ipynb).
 
