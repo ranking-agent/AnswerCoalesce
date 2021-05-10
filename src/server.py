@@ -111,7 +111,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='0.1.0',
+        version='0.1.3',
         routes=APP.routes
     )
 
@@ -152,4 +152,4 @@ def construct_open_api_schema():
 
     return open_api_schema
 
-#APP.openapi_schema = construct_open_api_schema()
+APP.openapi_schema = construct_open_api_schema()
