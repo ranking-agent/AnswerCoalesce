@@ -21,7 +21,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='0.1.0',
+    version='0.1.3'
 )
 
 # declare the cross origin params
@@ -32,7 +32,6 @@ APP.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # declare the types of answer coalesce methods
 class MethodName(str, Enum):
@@ -53,7 +52,7 @@ async def coalesce_handler(response: Response, method: MethodName) -> Response:
     coalesced = coalesce(message, method=method)
 
     # Normalize the output
-    normed = normalize( {'message': coalesced } )
+    normed = normalize({'message': coalesced })
 
     # return the result to the caller
     return Response(**normed)
@@ -98,7 +97,7 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = 'https://nodenormalization-sri.renci.org/response'
+    url = 'http://localhost:5000/response'  # https://nodenormalization-sri.renci.org/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
