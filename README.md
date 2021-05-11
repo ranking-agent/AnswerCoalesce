@@ -40,4 +40,4 @@ docker-compose up -d
     
 ## Usage
 
-http://"host name or IP":"port"/apidocs
+http://"host name or IP":"port"/docs
