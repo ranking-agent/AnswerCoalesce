@@ -28,9 +28,13 @@ edit the build_redis_files.py file and insure that the path for the input file a
 python build_redis_files.py
 
 Standing up a redis server is easily done using the helm charts to create a new version of the AC deployment. once the new deployment
-is up port-forward the redis DB to the local host. in another session on the same host run the redis loader:
+is up port-forward the redis DB to the local host.
+
+Then in another session on the same host run the redis loader:
 
 python load_redis.py
 
-When done the redis on the new version will be loaded. at that point uninstall the current running version and upgrade the new
-version after adjusting the web server URL.
+when this loading is complete dont forget to do a "redis-cli save" to insure the data is persisted to disk.
+
+When redis has persisted everything to disk on the new version will be ready. at that point "helm uninstall" the current running version and upgrade the new
+version after corrected the web server URL in the values file.
