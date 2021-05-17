@@ -24,6 +24,8 @@ RUN git clone https://github.com/ranking-agent/AnswerCoalesce.git
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
 
+RUN git checkout TRAPI_1.1
+
 # install all required packages
 RUN pip install -r requirements.txt
 
