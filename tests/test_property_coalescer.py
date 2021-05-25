@@ -141,6 +141,22 @@ def test_property_coalescer_perf_test():
     # it should be less than this
     assert(diff.seconds < 60)
 
+def test_property_coalescer_why_no_coalesce():
+    from src.single_node_coalescer import coalesce
+    import os
+    import json
+    import datetime
 
+    # get the path to the test file
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','test_property.json')
 
+    # open the file and load it
+    with open(test_filename,'r') as tf:
+        incoming = json.load(tf)
+        incoming = incoming['message']
+
+    # call function that does property coalesce
+    coalesced = coalesce(incoming, method='all')
+    print(len(coalesced['results']))
+    print('hi')
 

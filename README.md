@@ -7,7 +7,7 @@ This service accepts a [translator reasoner standard message](https://github.com
 
 ## Demonstration
 
-A live version of the API can be found [here](https://answercoalesce.renci.org/apidocs/).
+A live version of the API can be found [here](https://answercoalesce.renci.org/docs).
 
 An example notebook demonstrating the API can be found [here](https://github.com/TranslatorIIPrototypes/AnswerCoalesce/blob/master/documentation/AnswerCoalescence.ipynb).
 
@@ -40,4 +40,4 @@ docker-compose up -d
     
 ## Usage
 
-http://"host name or IP":"port"/apidocs
+http://"host name or IP":"port"/docs
