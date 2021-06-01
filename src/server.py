@@ -33,6 +33,7 @@ APP.add_middleware(
     allow_headers=["*"],
 )
 
+
 # declare the types of answer coalesce methods
 class MethodName(str, Enum):
     all = "all"
@@ -70,6 +71,7 @@ def log_exception(method):
             raise
     return wrapper
 
+
 def post(name, url, message, params=None):
     """
     launches a post request, returns the response.
@@ -97,11 +99,12 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = 'https://nodenormalization-sri.renci.org/1.1/response' # 'http://localhost:5000/response'  #
+    url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5003/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
     return normalized_message
+
 
 def construct_open_api_schema():
 
@@ -152,5 +155,6 @@ def construct_open_api_schema():
         open_api_schema["servers"] = servers_conf
 
     return open_api_schema
+
 
 APP.openapi_schema = construct_open_api_schema()
