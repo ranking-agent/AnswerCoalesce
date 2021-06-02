@@ -3,14 +3,19 @@ import os
 import logging
 import requests
 import yaml
+
 from enum import Enum
 from functools import wraps
+from reasoner_pydantic import Response as PDResponse, LogEntry
+
 from src.util import LoggingUtil
-from reasoner_pydantic import Response
 from src.single_node_coalescer import coalesce
+
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.encoders import jsonable_encoder
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -33,6 +38,7 @@ APP.add_middleware(
     allow_headers=["*"],
 )
 
+
 # declare the types of answer coalesce methods
 class MethodName(str, Enum):
     all = "all"
@@ -41,21 +47,55 @@ class MethodName(str, Enum):
     ontology = "ontology"
 
 
-@APP.post('/coalesce/{method}', tags=["Answer coalesce"], response_model=Response, response_model_exclude_none=True)
-async def coalesce_handler(response: Response, method: MethodName) -> Response:
+@APP.post('/coalesce/{method}', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
+async def coalesce_handler(request: PDResponse, method: MethodName):
     """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
 
     # convert the incoming message into a dict
-    message = response.message.dict()
+    request = request.dict()
 
-    # call the operation with the request
-    coalesced = coalesce(message, method=method)
+    # save the logs for the response (if any)
+    if 'logs' in request:
+        logs = request['logs']
 
-    # Normalize the output
-    normed = normalize({'message': coalesced })
+        # insure that the log timestamp entries are strings
+        for item in logs:
+            item['timestamp'] = str(item['timestamp'])
+    else:
+        logs = []
+
+    # init the status code
+    status_code: int = 200
+
+    # save the message is case there is an exception
+    coalesced = request['message']
+
+    try:
+        # call the operation with the message in the request message
+        coalesced = coalesce(coalesced, method=method)
+
+        # turn it back into a full trapi message
+        coalesced = {'message': coalesced}
+
+        # Normalize the data
+        coalesced = normalize(coalesced)
+
+        # save any log entries
+        coalesced['logs'] = logs
+
+        # validate the response again after normalization
+        coalesced = jsonable_encoder(PDResponse(**coalesced))
+    except Exception as e:
+        # put the error in the response
+        status_code = 500
+
+        # save any log entries
+        coalesced['logs'] = logs
+
+        coalesced['logs'].append({LogEntry.parse_raw(str(e))})
 
     # return the result to the caller
-    return Response(**normed)
+    return JSONResponse(content=coalesced, status_code=status_code)
 
 
 def log_exception(method):
@@ -70,9 +110,11 @@ def log_exception(method):
             raise
     return wrapper
 
+
 def post(name, url, message, params=None):
     """
     launches a post request, returns the response.
+
     :param name: name of service
     :param url: the url of the service
     :param message: the message to post to the service
@@ -97,11 +139,12 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = 'https://nodenormalization-sri.renci.org/1.1/response' # 'http://localhost:5000/response'  #
+    url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5003/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
     return normalized_message
+
 
 def construct_open_api_schema():
 
@@ -152,5 +195,6 @@ def construct_open_api_schema():
         open_api_schema["servers"] = servers_conf
 
     return open_api_schema
+
 
 APP.openapi_schema = construct_open_api_schema()
