@@ -6,10 +6,11 @@ import yaml
 
 from enum import Enum
 from functools import wraps
-from reasoner_pydantic import Response as PDResponse, LogEntry
+from reasoner_pydantic import Response as PDResponse
 
 from src.util import LoggingUtil
 from src.single_node_coalescer import coalesce
+from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -47,28 +48,43 @@ class MethodName(str, Enum):
     ontology = "ontology"
 
 
+def create_log_entry(msg: str, err_level, code=None) -> dict:
+    """
+    Creates a trapi log message
+
+    :param msg:
+    :param err_level:
+    :param code:
+    :return: dict of the data passed
+    """
+    # load the data
+    ret_val = {
+        'timestamp': str(datetime.now()),
+        'level': err_level,
+        'message': msg,
+        'code': code
+    }
+
+    # return to the caller
+    return ret_val
+
+
 @APP.post('/coalesce/{method}', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
 async def coalesce_handler(request: PDResponse, method: MethodName):
     """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
 
     # convert the incoming message into a dict
-    request = request.dict()
+    message = request.dict()
 
     # save the logs for the response (if any)
-    if 'logs' in request:
-        logs = request['logs']
-
-        # insure that the log timestamp entries are strings
-        for item in logs:
-            item['timestamp'] = str(item['timestamp'])
-    else:
-        logs = []
+    if 'logs' not in message or message['logs'] is None:
+        message['logs'] = []
 
     # init the status code
     status_code: int = 200
 
     # save the message is case there is an exception
-    coalesced = request['message']
+    coalesced = message['message']
 
     try:
         # call the operation with the message in the request message
@@ -80,19 +96,12 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # Normalize the data
         coalesced = normalize(coalesced)
 
-        # save any log entries
-        coalesced['logs'] = logs
-
         # validate the response again after normalization
         coalesced = jsonable_encoder(PDResponse(**coalesced))
     except Exception as e:
         # put the error in the response
         status_code = 500
-
-        # save any log entries
-        coalesced['logs'] = logs
-
-        coalesced['logs'].append({LogEntry.parse_raw(str(e))})
+        coalesced['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
 
     # return the result to the caller
     return JSONResponse(content=coalesced, status_code=status_code)
