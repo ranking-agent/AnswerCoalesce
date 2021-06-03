@@ -27,7 +27,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='0.1.3'
+    version='1.0.0'
 )
 
 # declare the cross origin params
@@ -162,7 +162,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='0.1.3',
+        version='1.0.0',
         routes=APP.routes
     )
 
