@@ -74,17 +74,17 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
 
     # convert the incoming message into a dict
-    message = request.dict()
+    in_message = request.dict()
 
     # save the logs for the response (if any)
-    if 'logs' not in message or message['logs'] is None:
-        message['logs'] = []
+    if 'logs' not in in_message or in_message['logs'] is None:
+        in_message['logs'] = []
 
     # init the status code
     status_code: int = 200
 
     # save the message is case there is an exception
-    coalesced = message['message']
+    coalesced = in_message['message']
 
     try:
         # call the operation with the message in the request message
@@ -93,18 +93,25 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # turn it back into a full trapi message
         coalesced = {'message': coalesced}
 
+        # import json
+        # with open('out.json', 'w') as ofile:
+        #     ofile.write(json.dumps(coalesced))
+
         # Normalize the data
         coalesced = normalize(coalesced)
 
+        # save the response in the incoming message
+        in_message['message'] = coalesced['message']
+
         # validate the response again after normalization
-        coalesced = jsonable_encoder(PDResponse(**coalesced))
+        in_message = jsonable_encoder(PDResponse(**in_message))
     except Exception as e:
         # put the error in the response
         status_code = 500
-        coalesced['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
+        in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
 
     # return the result to the caller
-    return JSONResponse(content=coalesced, status_code=status_code)
+    return JSONResponse(content=in_message, status_code=status_code)
 
 
 def log_exception(method):
