@@ -97,7 +97,7 @@ def coalesce_by_graph(opportunities):
                          'value_type_id': 'EDAM:operation_0004'})
 
             attributes.append({'original_attribute_name': 'p_value',
-                               'attribute_type_id': 'biolink:has_count',
+                               'attribute_type_id': 'biolink:has_numeric_value',
                                'value': best_enrich_p,
                                'value_type_id': 'EDAM:data_1669'})
 
