@@ -24,11 +24,9 @@ class Opportunity:
         stype = self.qg_semantic_type
         #This will go away when we  update the databases to use the new style types
         if isinstance(stype, list):
-            for i, item in enumerate(stype):
-                if item.startswith('biolink'):
-                    pascal = item.split(':')[1]
-                    stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
-        elif stype.startswith('biolink'):
+            stype = stype[0]
+
+        if stype.startswith('biolink'):
             pascal = stype.split(':')[1]
             stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
 
