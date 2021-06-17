@@ -83,7 +83,7 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     # init the status code
     status_code: int = 200
 
-    # save the message is case there is an exception
+    # get the message to work on
     coalesced = in_message['message']
 
     try:
@@ -143,8 +143,10 @@ def post(name, url, message, params=None):
         response = requests.post(url, json=message, params=params)
 
     if not response.status_code == 200:
-        logger.error(f'Error response from {name}, status code: {response.status_code}')
-        return {}
+        msg = f'Error response from {name}, status code: {response.status_code}'
+
+        logger.error(msg)
+        return {'errmsg': create_log_entry(msg, 'Warning', code=response.status_code)}
 
     return response.json()
 
@@ -159,7 +161,11 @@ def normalize(message):
 
     normalized_message = post('Node Normalizer', url, message)
 
-    return normalized_message
+    if 'errmsg' in normalized_message:
+        message['logs'].append(normalized_message['errmsg'])
+        return message
+    else:
+        return normalized_message
 
 
 def construct_open_api_schema():
