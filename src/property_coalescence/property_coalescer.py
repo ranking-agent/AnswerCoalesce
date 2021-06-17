@@ -18,7 +18,12 @@ class PropertyLookup():
     def fix_stype(self,stype):
         #We're in a situation where there are databases using old style types but the input will be new style, and
         #for a moment we need to translate.  This will go away.
-        if stype.startswith('biolink'):
+        if isinstance(stype, list):
+            for i, item in enumerate(stype):
+                if item.startswith('biolink'):
+                    pascal = item.split(':')[1]
+                    stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        elif stype.startswith('biolink'):
             pascal = stype.split(':')[1]
             stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
         return stype

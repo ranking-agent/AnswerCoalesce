@@ -23,9 +23,15 @@ class Opportunity:
         import re
         stype = self.qg_semantic_type
         #This will go away when we  update the databases to use the new style types
-        if stype.startswith('biolink'):
+        if isinstance(stype, list):
+            for i, item in enumerate(stype):
+                if item.startswith('biolink'):
+                    pascal = item.split(':')[1]
+                    stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        elif stype.startswith('biolink'):
             pascal = stype.split(':')[1]
             stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+
         return stype
     def get_answer_indices(self):
         return self.answer_indices
@@ -140,6 +146,7 @@ class PropertyPatch:
                 nnid += 1
                 new_node_id = f'extra_qn_{nnid}'
             extra_q_nodes.append(new_node_id)
+
             qg['nodes'].update({new_node_id: {'category': newnode.newnode_type}})
             #Add the new edge to the question
             edge_ids = list(qg['edges'].keys())
