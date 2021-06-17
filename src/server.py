@@ -80,6 +80,23 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     if 'logs' not in in_message or in_message['logs'] is None:
         in_message['logs'] = []
 
+    # these timestamps are causing json serialization issues in call to the normalizer
+    # so here we convert them to strings.
+    for log in in_message['logs']:
+        log['timestamp'] = str(log['timestamp'])
+
+    # make sure there are results to coalesce
+    if 'results' not in in_message['message'] or len(in_message['message']['results']) == 0:
+        status_code = 422
+        in_message['logs'].append(create_log_entry(f'No results to coalesce', "ERROR"))
+
+        return JSONResponse(content=in_message, status_code=status_code)
+    elif 'knowledge_graph' not in in_message['message'] or len(in_message['message']['knowledge_graph']) == 0:
+        status_code = 422
+        in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
+
+        return JSONResponse(content=in_message, status_code=status_code)
+
     # init the status code
     status_code: int = 200
 
@@ -91,14 +108,14 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         coalesced = coalesce(coalesced, method=method)
 
         # turn it back into a full trapi message
-        coalesced = {'message': coalesced}
+        in_message['message'] = coalesced
 
         # import json
-        # with open('out.json', 'w') as ofile:
-        #     ofile.write(json.dumps(coalesced))
+        # with open('ac_out_attributes.json', 'w') as tf:
+        #     tf.write(json.dumps(in_message, default=str))
 
         # Normalize the data
-        coalesced = normalize(coalesced)
+        coalesced = normalize(in_message)
 
         # save the response in the incoming message
         in_message['message'] = coalesced['message']
@@ -157,7 +174,7 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5003/response'
+    url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5000/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
