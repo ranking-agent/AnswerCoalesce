@@ -5,15 +5,15 @@ from time import sleep
 
 
 def make_disease_chem_question(disease_id):
-    question = { 'nodes': {'n0':{'id':disease_id, 'category':'biolink:Disease'},
-                           'n1': {'category':'biolink:ChemicalSubstance'}},
+    question = { 'nodes': {'n0':{'id':disease_id, 'categories':'biolink:Disease'},
+                           'n1': {'categories':'biolink:ChemicalSubstance'}},
                  'edges': { 'e0': {'subject': 'n1', 'object': 'n0', 'predicate': 'biolink:treats'}}}
     message = {'query_graph': question}
     return message
 
 def make_chem_gene_question(c_id):
-    question = { 'nodes': {'n0':{'category':'biolink:ChemicalSubstance', id:c_id},
-                           'n1': {'category':'biolink:Gene'}},
+    question = { 'nodes': {'n0':{'categories':'biolink:ChemicalSubstance', id:c_id},
+                           'n1': {'categories':'biolink:Gene'}},
                  'edges': { 'e1': {'subject': 'n0', 'object': 'n1', 'predicate':'biolink:decreases_degradation_of'}}}
     message = {'query_graph': question}
     return message
