@@ -159,9 +159,8 @@ def get_link_counts(unique_links):
             try:
                 lcounts[ul] = int(n)
             except:
-                print('Failure')
-                print(ul)
-                raise('error')
+                print(f'Failure. ul: {ul}')
+                continue
     return lcounts
 
 
