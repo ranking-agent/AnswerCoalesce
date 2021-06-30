@@ -18,7 +18,12 @@ class PropertyLookup():
     def fix_stype(self,stype):
         #We're in a situation where there are databases using old style types but the input will be new style, and
         #for a moment we need to translate.  This will go away.
-        if stype.startswith('biolink'):
+        if isinstance(stype, list):
+            for i, item in enumerate(stype):
+                if item.startswith('biolink'):
+                    pascal = item.split(':')[1]
+                    stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        elif stype.startswith('biolink'):
             pascal = stype.split(':')[1]
             stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
         return stype
@@ -93,9 +98,29 @@ def coalesce_by_property(opportunities):
             c2e[ep[5]].append(ep)
         #now construct a patch for each curie set.
         for curieset,eps in c2e.items():
-            newprops = {'coalescence_method':'property_enrichment',
-                        'p_values': [x[0] for x in eps],
-                        'properties': [x[1] for x in eps]}
+            # newprops = {'coalescence_method':'property_enrichment',
+            #             'p_values': [x[0] for x in eps],
+            #             'properties': [x[1] for x in eps]}
+
+            attributes = []
+
+            attributes.append({'original_attribute_name': 'coalescence_method',
+                         'attribute_type_id': 'biolink:has_attribute',
+                         'value': 'property_enrichment',
+                         'value_type_id': 'EDAM:operation_0004'})
+
+            attributes.append({'original_attribute_name': 'p_value',
+                               'attribute_type_id': 'biolink:has_numeric_value',
+                               'value': [x[0] for x in eps],
+                               'value_type_id': 'EDAM:data_1669'})
+
+            attributes.append({'original_attribute_name': 'properties',
+                               'attribute_type_id': 'biolink:has_attribute',
+                               'value': [x[1] for x in eps],
+                               'value_type_id': 'EDAM:data_0006'})
+
+            newprops = {'attributes': attributes}
+
             patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
             patches.append(patch)
     return patches

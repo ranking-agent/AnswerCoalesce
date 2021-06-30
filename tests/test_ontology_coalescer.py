@@ -106,15 +106,15 @@ def test_full_coalesce_no_new_node():
     curies = ['MONDO:0025556', 'MONDO:0004584', 'MONDO:0000771']
     nodes = {"start":{ "category":"biolink:PhenotypicFeature"}, "end":{ "category":"biolink:PhenotypicFeature"}}
     for c in curies:
-        nodes.update({ c: {'category': 'biolink:Disease'}})
+        nodes.update({ c: {'categories': 'biolink:Disease'}})
     edges = {}
     for si,source in enumerate(curies):
         for ti,target in enumerate(['start','end']):
             edges.update({f'e_{si}_{ti}': {"subject": source, "object": target, 'predicate': 'biolink:has_phenotype'}})
     kg = {'nodes': nodes, 'edges':edges}
     #Create the QG
-    qnodes = {'n0':{'id':'start','category':'biolink:PhenotypicFeature'},'n1':{'category':'biolink:Disease'},
-              'n2':{'id':'end','category':'biolink:PhenotypicFeature'}}
+    qnodes = {'n0':{'id':'start','categories':'biolink:PhenotypicFeature'},'n1':{'categories':'biolink:Disease'},
+              'n2':{'id':'end','categories':'biolink:PhenotypicFeature'}}
     qedges = {'e0':{'subject':'n1','object':'n0','predicate':'biolink:has_phenotype'},
               'e1':{'subject':'n1','object':'n1','predicate':'biooink:has_phenotype'}}
     qg = {'nodes':qnodes, 'edges':qedges}

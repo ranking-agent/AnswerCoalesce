@@ -88,9 +88,30 @@ def coalesce_by_graph(opportunities):
             #I don't think this is right
             #best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
             best_enrichments = [link] #?
-            newprops = {'coalescence_method':'graph_enrichment',
-                        'p_value': best_enrich_p,
-                        'enriched_nodes': [x[1] for x in best_enrichments]}
+
+            attributes = []
+
+            attributes.append({'original_attribute_name': 'coalescence_method',
+                         'attribute_type_id': 'biolink:has_attribute',
+                         'value': 'graph_enrichment',
+                         'value_type_id': 'EDAM:operation_0004'})
+
+            attributes.append({'original_attribute_name': 'p_value',
+                               'attribute_type_id': 'biolink:has_numeric_value',
+                               'value': best_enrich_p,
+                               'value_type_id': 'EDAM:data_1669'})
+
+            attributes.append({'original_attribute_name': 'enriched_nodes',
+                               'attribute_type_id': 'biolink:has_attribute',
+                               'value': [x[1] for x in best_enrichments],
+                               'value_type_id': 'EDAM:data_0006'})
+
+            newprops = {'attributes': attributes}
+
+            # newprops = {'coalescence_method':'graph_enrichment',
+            #             'p_value': best_enrich_p,
+            #             'enriched_nodes': [x[1] for x in best_enrichments]}
+
             patch = PropertyPatch(qg_id,best_grouping,newprops,opportunity.get_answer_indices())
             for e in best_enrichments:
                 newcurie = e[1]
@@ -138,9 +159,8 @@ def get_link_counts(unique_links):
             try:
                 lcounts[ul] = int(n)
             except:
-                print('Failure')
-                print(ul)
-                raise('error')
+                print(f'Failure. ul: {ul}')
+                continue
     return lcounts
 
 
@@ -206,9 +226,15 @@ def create_node_to_type(opportunities):
         stype = opportunity.get_qg_semantic_type()
         #We're in a situation where there are databases using old style types but the input will be new style, and
         #for a moment we need to translate.  This will go away.
-        if stype.startswith('biolink'):
+        if isinstance(stype, list):
+            for i, item in enumerate(stype):
+                if item.startswith('biolink'):
+                    pascal = item.split(':')[1]
+                    stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        elif stype.startswith('biolink'):
             pascal = stype.split(':')[1]
             stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+
         for node in kn:
             allnodes[node] = stype
     return allnodes

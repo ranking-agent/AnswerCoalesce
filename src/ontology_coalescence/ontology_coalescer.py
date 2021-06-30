@@ -24,9 +24,30 @@ def coalesce_by_ontology(opportunities):
         #enriched_properties = [(enrichp, ssc, ndraws, n, total_node_count, nodeset)]
         for enrichp, superclass, ndraws, nhits, totalndoes, curieset in enriched_properties:
             #patch = [kg_id that is being replaced, curies in the new combined set, props for the new curies, answers being collapsed]
-            newprops = {'coalescence_method':'ontology_enrichment',
-                        'p_value': enrichp,
-                        'superclass': superclass}
+
+            # newprops = {'coalescence_method':'ontology_enrichment',
+            #             'p_value': enrichp,
+            #             'superclass': superclass}
+
+            attributes = []
+
+            attributes.append({'original_attribute_name': 'coalescence_method',
+                         'attribute_type_id': 'biolink:has_attribute',
+                         'value': 'ontology_enrichment',
+                         'value_type_id': 'EDAM:operation_0004'})
+
+            attributes.append({'original_attribute_name': 'p_value',
+                               'attribute_type_id': 'biolink:has_numeric_value',
+                               'value': enrichp,
+                               'value_type_id': 'EDAM:data_1669'})
+
+            attributes.append({'original_attribute_name': 'superclass',
+                               'attribute_type_id': 'biolink:has_attribute',
+                               'value': superclass,
+                               'value_type_id': 'EDAM:data_0006'})
+
+            newprops = {'attributes': attributes}
+
             patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
             patch.add_extra_node(superclass,stype,edge_type='biolink:is_a',newnode_is='target')
             patches.append(patch)

@@ -93,9 +93,11 @@ def identify_coalescent_nodes(answerset):
         for hash_item, qg_id, kg_id in hashes:
             varhash_to_answers[hash_item].append(answer_i)
             # qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
-            qg_type = question['nodes'][qg_id]['category']
+            qg_type = question['nodes'][qg_id]['categories']
             if isinstance(qg_type, list):
-                qg_type = qg_type[0]
+                qg_type = [qg_type[0]]
+            else:
+                qg_type = [qg_type]
             varhash_to_qg[hash_item] = (qg_id, qg_type)
             varhash_to_kg[hash_item].update(kg_id)
             varhash_to_answer_indices[hash_item].append(answer_i)

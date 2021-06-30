@@ -25,8 +25,8 @@ class Strider:
         return r.json()
 
 def make_disease_chem_question(disease_id):
-    question = { 'nodes': {'n0':{'id':disease_id, 'category':'biolink:Disease'},
-                           'n1': {'category':'biolink:ChemicalSubstance'}},
+    question = { 'nodes': {'n0':{'id':disease_id, 'categories':'biolink:Disease'},
+                           'n1': {'categories':'biolink:ChemicalSubstance'}},
                  'edges': { 'e0': {'subject': 'n1', 'object': 'n0', 'predicate': 'biolink:treats'}}}
     message = {'message': {'query_graph': question}}
     return message

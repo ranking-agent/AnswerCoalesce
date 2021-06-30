@@ -27,7 +27,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='1.0.0'
+    version='1.0.1'
 )
 
 # declare the cross origin params
@@ -74,37 +74,61 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
 
     # convert the incoming message into a dict
-    message = request.dict()
+    in_message = request.dict()
 
     # save the logs for the response (if any)
-    if 'logs' not in message or message['logs'] is None:
-        message['logs'] = []
+    if 'logs' not in in_message or in_message['logs'] is None:
+        in_message['logs'] = []
+
+    # these timestamps are causing json serialization issues in call to the normalizer
+    # so here we convert them to strings.
+    for log in in_message['logs']:
+        log['timestamp'] = str(log['timestamp'])
+
+    # make sure there are results to coalesce
+    if 'results' not in in_message['message'] or len(in_message['message']['results']) == 0:
+        status_code = 422
+        in_message['logs'].append(create_log_entry(f'No results to coalesce', "ERROR"))
+
+        return JSONResponse(content=in_message, status_code=status_code)
+    elif 'knowledge_graph' not in in_message['message'] or len(in_message['message']['knowledge_graph']) == 0:
+        status_code = 422
+        in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
+
+        return JSONResponse(content=in_message, status_code=status_code)
 
     # init the status code
     status_code: int = 200
 
-    # save the message is case there is an exception
-    coalesced = message['message']
+    # get the message to work on
+    coalesced = in_message['message']
 
     try:
         # call the operation with the message in the request message
         coalesced = coalesce(coalesced, method=method)
 
         # turn it back into a full trapi message
-        coalesced = {'message': coalesced}
+        in_message['message'] = coalesced
+
+        # import json
+        # with open('ac_out_attributes.json', 'w') as tf:
+        #     tf.write(json.dumps(in_message, default=str))
 
         # Normalize the data
-        coalesced = normalize(coalesced)
+        coalesced = normalize(in_message)
+
+        # save the response in the incoming message
+        in_message['message'] = coalesced['message']
 
         # validate the response again after normalization
-        coalesced = jsonable_encoder(PDResponse(**coalesced))
+        in_message = jsonable_encoder(PDResponse(**in_message))
     except Exception as e:
         # put the error in the response
         status_code = 500
-        coalesced['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
+        in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
 
     # return the result to the caller
-    return JSONResponse(content=coalesced, status_code=status_code)
+    return JSONResponse(content=in_message, status_code=status_code)
 
 
 def log_exception(method):
@@ -136,8 +160,10 @@ def post(name, url, message, params=None):
         response = requests.post(url, json=message, params=params)
 
     if not response.status_code == 200:
-        logger.error(f'Error response from {name}, status code: {response.status_code}')
-        return {}
+        msg = f'Error response from {name}, status code: {response.status_code}'
+
+        logger.error(msg)
+        return {'errmsg': create_log_entry(msg, 'Warning', code=response.status_code)}
 
     return response.json()
 
@@ -148,11 +174,15 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5003/response'
+    url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5000/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
-    return normalized_message
+    if 'errmsg' in normalized_message:
+        message['logs'].append(normalized_message['errmsg'])
+        return message
+    else:
+        return normalized_message
 
 
 def construct_open_api_schema():
@@ -162,7 +192,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='1.0.0',
+        version='1.0.1',
         routes=APP.routes
     )
 

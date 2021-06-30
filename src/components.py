@@ -23,9 +23,13 @@ class Opportunity:
         import re
         stype = self.qg_semantic_type
         #This will go away when we  update the databases to use the new style types
+        if isinstance(stype, list):
+            stype = stype[0]
+
         if stype.startswith('biolink'):
             pascal = stype.split(':')[1]
             stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+
         return stype
     def get_answer_indices(self):
         return self.answer_indices
@@ -140,7 +144,8 @@ class PropertyPatch:
                 nnid += 1
                 new_node_id = f'extra_qn_{nnid}'
             extra_q_nodes.append(new_node_id)
-            qg['nodes'].update({new_node_id: {'category': newnode.newnode_type}})
+
+            qg['nodes'].update({new_node_id: {'categories': newnode.newnode_type}})
             #Add the new edge to the question
             edge_ids = list(qg['edges'].keys())
             neid = 0
@@ -164,7 +169,7 @@ class PropertyPatch:
             #See if the newnode is already in the KG, and if not, add it.
             found = False
             if newnode.newnode not in kg_index['nodes']:
-                kg['nodes'].update({ newnode.newnode:{'category': newnode.newnode_type}})
+                kg['nodes'].update({ newnode.newnode:{'categories': newnode.newnode_type}})
                 kg_index['nodes'].add(newnode.newnode)
             #Add new edges
             for curie in self.set_curies: #try to add a new edge from this curie to newnode
@@ -197,7 +202,7 @@ class Answer:
         """Take the json answer and turn it into a more usable structure"""
         #The answer has 3 parts:  Score, a list of node bindings, and a list of edge bindings
         # The edges may be asked for in the question, or they might be extras (support edges)
-        if 'score' in json_answer:
+        if 'score' in json_answer and json_answer['score'] is not None:
             self.score = json_answer['score']
         else:
             self.score = 0.

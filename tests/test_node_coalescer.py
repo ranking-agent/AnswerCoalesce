@@ -141,8 +141,8 @@ def make_answer_set():
     edges = {e:{ "subject":e[0], "object":e[1], "predicate":"biolink:related_to"} for e in inputedges}
     kg = {'nodes': nodes, 'edges':edges}
     #Create the QG
-    qnodes = {'n0':{'id':'A','category':'biolink:NamedThing'},'n1':{'category':'biolink:NamedThing'},
-              'n2':{'category':'biolink:NamedThing'},'n3':{'id':'D','category':'biolink:NamedThing'}}
+    qnodes = {'n0':{'id':'A','categories':'biolink:NamedThing'},'n1':{'categories':'biolink:NamedThing'},
+              'n2':{'categories':'biolink:NamedThing'},'n3':{'id':'D','categories':'biolink:NamedThing'}}
     qedges = {'e0':{'subject':'n0','object':'n1'},
               'e1':{'subject':'n1','object':'n2'},
               'e2':{'subject':'n2','object':'n3'}}
@@ -480,8 +480,8 @@ def test_double_predicates():
     edges.update({f'a{e}':{ "subject":e[0], "object":e[1], "predicate":"biolink:also_related_to"} for e in inputedges})
     kg = {'nodes': nodes, 'edges':edges}
     #Create the QG
-    qnodes = {'n0':{'id':'A','category':'biolink:NamedThing'},'n1':{'category':'biolink:NamedThing'},
-              'n2':{'id':'D','category':'biolink:NamedThing'}}
+    qnodes = {'n0':{'id':'A','categories':'biolink:NamedThing'},'n1':{'categories':'biolink:NamedThing'},
+              'n2':{'id':'D','categories':'biolink:NamedThing'}}
     qedges = {'e0':{'subject':'n0','object':'n1'},
               'e1':{'subject':'n1','object':'n2'}}
     qg = {'nodes':qnodes, 'edges':qedges}
