@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='Answer Coalesce',
-    version='1.0.0',
+    version='1.1.0',
     author='Chris Bizon',
     author_email='bizon@renci.org',
     url='https://github.com/TranslatorIIPrototypes/AnswerCoalesce',
