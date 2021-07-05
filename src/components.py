@@ -145,6 +145,9 @@ class PropertyPatch:
                 new_node_id = f'extra_qn_{nnid}'
             extra_q_nodes.append(new_node_id)
 
+            if not isinstance(newnode.newnode_type, list):
+                newnode.newnode_type = [newnode.newnode_type]
+
             qg['nodes'].update({new_node_id: {'categories': newnode.newnode_type}})
             #Add the new edge to the question
             edge_ids = list(qg['edges'].keys())
@@ -169,6 +172,10 @@ class PropertyPatch:
             #See if the newnode is already in the KG, and if not, add it.
             found = False
             if newnode.newnode not in kg_index['nodes']:
+
+                if not isinstance(newnode.newnode_type, list):
+                    newnode.newnode_type = [newnode.newnode_type]
+
                 kg['nodes'].update({ newnode.newnode:{'categories': newnode.newnode_type}})
                 kg_index['nodes'].add(newnode.newnode)
             #Add new edges
