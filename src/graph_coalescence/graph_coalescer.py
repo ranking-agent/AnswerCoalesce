@@ -159,8 +159,8 @@ def get_link_counts(unique_links):
             try:
                 lcounts[ul] = int(n)
             except:
-                print(f'Failure. ul: {ul}')
-                continue
+                #print(f'Failure. ul: {ul}')
+                raise Exception(f'Failure getting link counts. ul: {ul}')
     return lcounts
 
 
@@ -336,6 +336,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
             if enrichp < pcut:
                 node_types = typecache[newcurie]
                 enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
+
         if len(enriched) > 0:
             results += enriched
 
