@@ -10,7 +10,7 @@ from src.server import APP
 
 client = TestClient(APP)
 
-jsondir= 'InputJson_1.0'
+jsondir= 'InputJson_1.1'
 
 def test_coalesce():
     # get the location of the Translator specification file
@@ -73,3 +73,22 @@ def test_schizo_coalesce():
 
     #assert('results' in ret)
     #assert( len(ret['results']) <= 4 )
+
+def test_lookup_graph_coalesce():
+    #This file is producing 500's
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path,jsondir, 'strider_out_issue_60.json')
+
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+
+    # make a good request
+    response = client.post('/coalesce/graph', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    original_answers = len(answerset['message']['results'])
+    final_answers    = len(response.json()['message']['results'])
+
+    assert final_answers > original_answers
