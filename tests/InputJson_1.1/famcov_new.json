@@ -9,11 +9,12 @@
                     ]
                 },
                 "b": {
-                    "categories": ["biolink:NamedThing"]
+                    "categories": ["biolink:NamedThing"],
+                    "ids": null
                 },
                 "c": {
                     "categories": ["biolink:ChemicalSubstance"],
-                    "id": [
+                    "ids": [
                         "CHEBI:4975"
                     ]
                 }
@@ -22,19 +23,19 @@
                 "ab": {
                     "subject": "a",
                     "object": "b",
-                    "predicate": null
+                    "predicates": null
                 },
                 "bc": {
                     "subject": "c",
                     "object": "b",
-                    "predicate": null
+                    "predicates": null
                 }
             }
         },
         "knowledge_graph": {
             "nodes": {
                 "MONDO:0100096": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -43,7 +44,7 @@
                     "name": "COVID-19"
                 },
                 "NCBITaxon:2697049": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:OntologyClass",
                         "biolink:OrganismTaxon"
@@ -51,7 +52,7 @@
                     "name": "Severe acute respiratory syndrome coronavirus 2"
                 },
                 "CHEBI:4975": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:ChemicalSubstance",
@@ -60,7 +61,7 @@
                     "name": "famotidine"
                 },
                 "MONDO:0056821": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -69,7 +70,7 @@
                     "name": "bronchiolitis obliterans organizing pneumonia"
                 },
                 "MONDO:0019737": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -78,7 +79,7 @@
                     "name": "thrombotic microangiopathy"
                 },
                 "MONDO:0015796": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -87,7 +88,7 @@
                     "name": "acute lung injury"
                 },
                 "NCBIGene:7124": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:MolecularEntity",
@@ -99,7 +100,7 @@
                     "name": "TNF"
                 },
                 "MONDO:0005478": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -108,7 +109,7 @@
                     "name": "torsades de pointes"
                 },
                 "MONDO:0004652": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -117,7 +118,7 @@
                     "name": "bacterial pneumonia"
                 },
                 "MONDO:0002258": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -126,7 +127,7 @@
                     "name": "pharyngitis"
                 },
                 "MONDO:0001208": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -135,7 +136,7 @@
                     "name": "acute respiratory failure"
                 },
                 "MONDO:0045057": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -144,7 +145,7 @@
                     "name": "delirium"
                 },
                 "MONDO:0005249": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -153,7 +154,7 @@
                     "name": "pneumonia"
                 },
                 "MONDO:0003785": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -162,7 +163,7 @@
                     "name": "leukopenia"
                 },
                 "MONDO:0005252": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -171,7 +172,7 @@
                     "name": "heart failure"
                 },
                 "MONDO:0024355": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -180,7 +181,7 @@
                     "name": "respiratory tract infectious disease"
                 },
                 "MONDO:0001673": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -189,7 +190,7 @@
                     "name": "diarrheal disease"
                 },
                 "MONDO:0001243": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -198,7 +199,7 @@
                     "name": "disseminated intravascular coagulation"
                 },
                 "MONDO:0021146": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -207,7 +208,7 @@
                     "name": "headache disorder"
                 },
                 "MONDO:0005265": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -216,7 +217,7 @@
                     "name": "inflammatory bowel disease"
                 },
                 "MONDO:0004995": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -225,7 +226,7 @@
                     "name": "cardiovascular disease"
                 },
                 "MONDO:0019810": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -234,7 +235,7 @@
                     "name": "toxic epidermal necrolysis"
                 },
                 "MONDO:0005113": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -243,7 +244,7 @@
                     "name": "bacterial infectious disease"
                 },
                 "MONDO:0005263": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -252,7 +253,7 @@
                     "name": "unipolar depression"
                 },
                 "MONDO:0006932": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -261,7 +262,7 @@
                     "name": "pulmonary edema"
                 },
                 "MONDO:0015137": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -270,7 +271,7 @@
                     "name": "periodic fever syndrome"
                 },
                 "MONDO:0021113": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -279,7 +280,7 @@
                     "name": "respiratory failure"
                 },
                 "MONDO:0004730": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
@@ -288,7 +289,7 @@
                     "name": "speech disorder"
                 },
                 "MONDO:0004900": {
-                    "category": [
+                    "categories": [
                         "biolink:NamedThing",
                         "biolink:BiologicalEntity",
                         "biolink:Disease",
