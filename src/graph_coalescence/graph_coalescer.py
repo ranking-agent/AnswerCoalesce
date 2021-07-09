@@ -159,8 +159,8 @@ def get_link_counts(unique_links):
             try:
                 lcounts[ul] = int(n)
             except:
-                #print(f'Failure. ul: {ul}')
-                raise Exception(f'Failure getting link counts. ul: {ul}')
+                #this can happen becuase we're inferring the category type from the qgraph.  But if we have 0 we have 0
+                lcounts[ul] = 0
     return lcounts
 
 
@@ -208,12 +208,14 @@ def create_nodes_to_links(allnodes):
         linkstrings = p.execute()
         for node, linkstring in zip(group, linkstrings):
             if linkstring is None:
-                print(node)
+                #print("No node:",node)
+                pass
             if linkstring is None:
                 links = []
             else:
                 links = json.loads(linkstring)
             nodes_to_links[node] = links
+    #print(len(nodes_to_links))
     return nodes_to_links
 
 

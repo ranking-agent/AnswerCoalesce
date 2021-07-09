@@ -22,6 +22,37 @@ def test_graph_coalescer():
     assert isinstance(p.new_props['enriched_nodes'],list)
     assert len(p.added_nodes)==1
 
+def test_graph_coalescer_double_check():
+    curies = ['NCBIGene:191',
+ 'NCBIGene:55832',
+ 'NCBIGene:645',
+ 'NCBIGene:54884',
+ 'NCBIGene:8239',
+ 'NCBIGene:4175',
+ 'NCBIGene:10469',
+ 'NCBIGene:8120',
+ 'NCBIGene:3840',
+ 'NCBIGene:55705',
+ 'NCBIGene:2597',
+ 'NCBIGene:23066',
+ 'NCBIGene:7514',
+ 'NCBIGene:10128']
+    cts = [i for i in range(len(curies))]
+    opportunity = Opportunity('hash',('qg_0','gene'),curies,cts)
+    opportunities=[opportunity]
+    patches = gc.coalesce_by_graph(opportunities)
+    assert len(patches) == 1
+    #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
+    p = patches[0]
+    assert p.qg_id == 'qg_0'
+    assert len(p.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
+    assert p.new_props['coalescence_method'] == 'graph_enrichment'
+    assert p.new_props['p_value'] < 1e-10
+    assert isinstance(p.new_props['enriched_nodes'],list)
+    assert len(p.added_nodes)==1
+
+
+
 def test_graph_coalescer_perf_test():
     from src.single_node_coalescer import coalesce
     import datetime
