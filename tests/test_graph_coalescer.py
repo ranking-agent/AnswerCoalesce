@@ -4,7 +4,7 @@ import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
 import os,json
 
-jsondir='InputJson_1.0'
+jsondir='InputJson_1.1'
 
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
 def test_graph_coalescer():

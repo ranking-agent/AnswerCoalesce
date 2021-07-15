@@ -10,7 +10,7 @@ from src.server import APP
 
 client = TestClient(APP)
 
-jsondir= 'InputJson_1.0'
+jsondir= 'InputJson_1.1'
 
 def test_coalesce():
     # get the location of the Translator specification file

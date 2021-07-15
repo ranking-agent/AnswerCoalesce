@@ -5,7 +5,7 @@ import src.single_node_coalescer as snc
 import src.ontology_coalescence.ontology_coalescer as oc
 from src.components import Opportunity
 
-input_dir = 'InputJson_1.0'
+input_dir = 'InputJson_1.1'
 
 def test_big_ontology():
     fn = f'{input_dir}/bigger_new.json'
