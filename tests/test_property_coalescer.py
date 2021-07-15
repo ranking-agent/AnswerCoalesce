@@ -125,7 +125,7 @@ def test_property_coalescer_perf_test():
     t1 = datetime.datetime.now()
 
     # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','EdgeIDAsStrAndPerfTest.json')
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1','EdgeIDAsStrAndPerfTest.json')
 
     # open the file and load it
     with open(test_filename,'r') as tf:
@@ -139,7 +139,7 @@ def test_property_coalescer_perf_test():
     diff = datetime.datetime.now() - t1
 
     # it should be less than this
-    assert(diff.seconds < 60)
+    assert(diff.seconds < 120)
 
 def test_property_coalescer_why_no_coalesce():
     from src.single_node_coalescer import coalesce
@@ -148,7 +148,7 @@ def test_property_coalescer_why_no_coalesce():
     import datetime
 
     # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.0','test_property.json')
+    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1','test_property.json')
 
     # open the file and load it
     with open(test_filename,'r') as tf:
