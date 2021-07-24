@@ -85,18 +85,39 @@ def test_graph_coalesce():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
+    #Some of these edges are old, we need to know which ones...
+    original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
+    #now generate new answers
     newset = snc.coalesce(answerset, method='graph',return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
+    kgedges = newset['knowledge_graph']['edges']
     for r in newset['results']:
+        #Make sure each result has at least one extra node binding
         nbs = r['node_bindings']
-        extra = False
+        extra_node = False
         for qg_id,nbk in nbs.items():
             if qg_id.startswith('extra'):
-                extra = True
+                extra_node = True
             #Every node binding should be found somewhere in the kg nodes
             for nb in nbk:
                 assert nb['id'] in kgnodes
-        assert extra
+        assert extra_node
+        #make sure each new result has an extra edge
+        nbs = r['edge_bindings']
+        extra_edge = False
+        for qg_id,nbk in nbs.items():
+            if qg_id.startswith('extra'):
+                extra_edge = True
+                #check that the edges have the provenance we need
+                #Every node binding should be found somewhere in the kg nodes
+                for nb in nbk:
+                    eedge = kgedges[nb['id']]
+                    if nb['id'] in original_edge_ids:
+                        continue
+                    values = [a['value'] for a in eedge['attributes']]
+                    assert 'infores:aragorn' in values
+                    assert 'infores:automat-robokop' in values
+        assert extra_edge
 
 def test_graph_coalesce_strider():
     """Make sure that results are well formed."""
