@@ -192,9 +192,13 @@ class PropertyPatch:
                 eid = None
                 ekey = (source_id, target_id,  newnode.new_edges)
                 if ekey not in kg_index['edges']:
-                    edge = { 'subject': source_id, 'object': target_id, 'predicate': newnode.new_edges }
-                    eid = str(hash(frozenset(edge.items())))
-                    edge_id = eid
+                    edge = { 'subject': source_id, 'object': target_id, 'predicate': newnode.new_edges,
+                             'attributes': [{'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:aragorn'},
+                                            {'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:automat-robokop'}]}
+                    #Need to make a key for the edge, but the attributes make it annoying
+                    ek = deepcopy(edge)
+                    ek['attributes'] = str(ek['attributes'])
+                    eid = str(hash(frozenset(ek.items())))
                     kg['edges'].update({eid:edge})
                     kg_index['edges'][ekey] = eid
                 eid = kg_index['edges'][ekey]
