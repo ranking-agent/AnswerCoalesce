@@ -117,6 +117,7 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # Normalize the data
         coalesced = normalize(in_message)
 
+
         # save the response in the incoming message
         in_message['message'] = coalesced['message']
 
@@ -176,7 +177,14 @@ def normalize(message):
     """
     url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5000/response'
 
-    normalized_message = post('Node Normalizer', url, message)
+    #import json
+    #with open('junk.json','w') as outf:
+    #    json.dump(outf,message,indent=4)
+
+    try:
+        normalized_message = post('Node Normalizer', url, message)
+    except Exception as e:
+        print(e)
 
     if 'errmsg' in normalized_message:
         message['logs'].append(normalized_message['errmsg'])

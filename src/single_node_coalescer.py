@@ -59,7 +59,8 @@ def patch_answers(answerset, patches):
         i += 1
         # print(f'{i} / {len(patches)}')
         new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes)
-        new_answers.append(new_answer.to_json())
+        if new_answer is not None:
+            new_answers.append(new_answer.to_json())
     return new_answers, qg, kg
 
 
