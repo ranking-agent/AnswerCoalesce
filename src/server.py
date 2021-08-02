@@ -117,7 +117,6 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # Normalize the data
         coalesced = normalize(in_message)
 
-
         # save the response in the incoming message
         in_message['message'] = coalesced['message']
 
