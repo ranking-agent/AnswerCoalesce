@@ -68,17 +68,20 @@ class PropertyPatch:
         or away from it (newnode_is = 'source') """
         self.added_nodes.append( NewNode(newnode, newnodetype, edge_type, newnode_is) )
     def apply(self,answers,question,graph,graph_index):
+        # Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
+        # answers that were originally in the opportunity, but we might have only found commonality
+        # among a subset of them
+        possible_answers = [answers[i] for i in self.answer_indices]
+        comb_answers = [a for a in possible_answers if self.isconsistent(a)]
+        #This can happen for weird inputs like double bound nodes
+        if len(comb_answers) < 2:
+            return None,question,graph,graph_index
         #Modify the question graph and the knowledge graph
         #If we're not adding a new node, extra_q_node = None, extra_q_edges = extra_k_edges =[]. No bindings to add
         #If we have an added node, the added node is always self.newnode
         # Also we will have an extra_q_node in that case, as well as one extra_q_edge, and 1 or more new k_edges
         question,extra_q_nodes,extra_q_edges = self.update_qg(question)
         graph,all_extra_k_edges,graph_index = self.update_kg(graph,graph_index)
-        #Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
-        # answers that were originally in the opportunity, but we might have only found commonality
-        # among a subset of them
-        possible_answers = [answers[i] for i in self.answer_indices]
-        comb_answers = [ a for a in possible_answers if self.isconsistent(a) ]
         #Start with some answer
         new_answer = deepcopy(comb_answers[0])
         #Add in the other answers
