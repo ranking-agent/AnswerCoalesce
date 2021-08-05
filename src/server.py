@@ -174,7 +174,7 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = 'https://nodenormalization-sri.renci.org/1.1/response'  # 'http://localhost:5000/response'
+    url = 'https://nodenormalization-sri-dev.renci.org/1.1/response'  # 'http://localhost:5000/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
