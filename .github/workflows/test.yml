@@ -31,7 +31,13 @@ jobs:
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Create a redis DB and load it
+
+      - name: Start Redis
+        uses: supercharge/redis-github-action@1.2.0
+        with:
+          redis-version: 3.5.4
+
+      - name: Load redis
         run: |
           python src/graph_coalescence/load_redis.py test
 
