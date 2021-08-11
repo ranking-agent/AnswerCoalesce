@@ -31,10 +31,10 @@ jobs:
         run: |
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - Create a redis DB and load it
+      - name: Create a redis DB and load it
         run: |
           python src/graph_coalescence/load_redis.py test
 
-      - Run the tests
+      - name: Run the tests
         run: |
           python -m pytest -p no:warnings tests/
