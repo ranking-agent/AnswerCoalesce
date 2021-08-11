@@ -1,0 +1,40 @@
+###############
+# test workflow for Answer coalesce
+# powen, 8/11/2021
+###############
+
+name: 'test'
+
+on: [push]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9]
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: create env params
+        run: |
+          echo "PYTHONPATH=$PWD:$PWD/robokop-genetics" >> $GITHUB_ENV
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - create a redis container and load it
+        run: |
+          python src/graph_coalescence/load_redis.py test
+
+      - run the tests
+        run: |
+          python -m pytest -p no:warnings tests/
