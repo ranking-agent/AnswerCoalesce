@@ -15,5 +15,5 @@ gunicorn==20.0.4
 numpy~=1.19.2
 pydantic~=1.6.1
 uvicorn==0.12.2
-git+https://github.com/ranking-agent/reasoner#egg=reasoner
+git+https://github.com/ranking-agent/reasoner-transpiler.git@main#egg=reasoner
 reasoner-pydantic==1.1.2.1
