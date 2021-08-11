@@ -35,7 +35,7 @@ jobs:
       - name: Start Redis
         uses: supercharge/redis-github-action@1.2.0
         with:
-          redis-version: 3.5.4
+          redis-version: ${{ matrix.redis-version }}
 
       - name: Load redis
         run: |
