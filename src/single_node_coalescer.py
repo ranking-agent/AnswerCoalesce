@@ -89,8 +89,10 @@ def identify_coalescent_nodes(answerset):
     varhash_to_qg = {}
     varhash_to_kg = defaultdict(set)
     varhash_to_answer_indices = defaultdict(list)
+    # make a map of kg edges to type. Is done here globally to save time.
+    kg_edgetypes = {edge_id: edge['predicate'] for edge_id, edge in graph['edges'].items()}
     for answer_i, answer in enumerate(answers):
-        hashes = make_answer_hashes(answer, graph, question)
+        hashes = make_answer_hashes(answer, kg_edgetypes, question)
         for hash_item, qg_id, kg_id in hashes:
             varhash_to_answers[hash_item].append(answer_i)
             # qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
@@ -112,16 +114,15 @@ def identify_coalescent_nodes(answerset):
     return coalescent_nodes
 
 
-def make_answer_hashes(result, graph, question):
+def make_answer_hashes(result, kg_edgetypes, question):
     """Given a single answer, find the hash for each answer node and return it along
     with the answer node that was varied, and the kg node id for that qnode in this answer"""
     # First combine the node and edge bindings into a single dictionary,
     # bindings = make_bindings(question, result)
     bindings = result.make_bindings()
     hashes = []
-    # for qg_id in [x['qg_id'] for x in result['node_bindings']]:
     for qg_id, kg_ids in result.node_bindings.items():
-        newhash = make_answer_hash(bindings, graph, question, qg_id)
+        newhash = make_answer_hash(bindings, kg_edgetypes, question, qg_id)
         hashes.append((newhash, qg_id, kg_ids))
     return hashes
 
@@ -150,7 +151,7 @@ def make_answer_hashes(result, graph, question):
 #    return bindings
 
 
-def make_answer_hash(bindings, graph, question, qg_id):
+def make_answer_hash(bindings, kg_edgetypes, question, qg_id):
     """given a combined node/edge bindings dictionary, plus the knowledge graph it points to and the question graph,
     create a key that characterizes the answer, except for one of the nodes (and its edges).
     The node that we're allowing to vary doesn't enter the hash.  The edges connected to that node, we replace
@@ -167,8 +168,7 @@ def make_answer_hash(bindings, graph, question, qg_id):
     tedges = [edge_id for edge_id, edge in question['edges'].items() if edge['object'] == qg_id]
     # sedges = list(filter( lambda x: x['subject'] == qg_id, question['edges']))
     # tedges = list(filter( lambda x: x['object'] == qg_id, question['edges']))
-    # make a map of kg edges to type.  probably move this out of make_answer_hash?
-    kg_edgetypes = {edge_id: edge['predicate'] for edge_id, edge in graph['edges'].items()}
+
     # The double comprehension is a bit of a mess, but our singlehash values are sets
     # What is happening is that a given s or t edge, we want a map from that qgid (the id in sedges) we want to
     # get the kg edges.  Thats a set, we loop over it, and get the edgetypes from the kg for each, and make
