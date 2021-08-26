@@ -18,7 +18,7 @@ def collect_input_nodes():
     test_curies = set(['NCBIGene:106632262', 'NCBIGene:106632263', 'NCBIGene:106632261'])
     input_jsons = ['famcov_new.json','bigger_new.json','graph_named_thing_issue.json','EdgeIDAsStrAndPerfTest.json']
     for ij in input_jsons:
-        test_curies.update( load_jsons('InputJson1.1/'+ij) )
+        test_curies.update( load_jsons('InputJson_1.1/'+ij) )
     return test_curies
 
 def filter_links(infname,outfname,input_nodes):
