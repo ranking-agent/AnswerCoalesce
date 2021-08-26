@@ -4,7 +4,7 @@ def load_jsons(input_json):
     """Given a json file, find all the kg_ids for nodes, except any that are in the qg"""
     with open(input_json,'r') as inf:
         data = json.load(inf)
-    node_ids = set( [node['id'] for node in data['message']['knowledge_graph']['nodes']])
+    node_ids = set( [node for node in data['message']['knowledge_graph']['nodes']])
 
     # remove nodes that have empty curies
     #qg_node_ids = set( [node['curie'][0] for node in data['query_graph']['nodes'] if 'curie' in node and node['curie'] is not None])
