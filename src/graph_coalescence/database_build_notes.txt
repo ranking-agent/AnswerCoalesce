@@ -1,3 +1,23 @@
+Locate the jsonl files that you want to consume.
+
+edit the build_redis_files.py file and insure that the path for the input file and output files are legit. then run:
+python build_redis_files.py
+
+Standing up a redis server is easily done using the helm charts to create a new version of the AC deployment. once the new deployment
+is up port-forward the redis DB to the local host.
+
+Then in another session on the same host run the redis loader:
+
+python load_redis.py
+
+when this loading is complete dont forget to do a "redis-cli save" to insure the data is persisted to disk.
+
+When redis has persisted everything to disk on the new version will be ready. at that point "helm uninstall" the current running version and upgrade the new
+version after corrected the web server URL in the values file.
+
+################### STOP ##############
+These are the old instructions, but they've been replaced with a simpler approach, starting with the KGX files that
+get loaded into robokop.
 To build the redis db, log into robokopdev.renci.org
 
 Find where the neo4j you want is running with: kubectl -n translator-robokop get pods -o wide
@@ -24,17 +44,4 @@ The path there is local to the database.  you can find everything.csv in /projec
 Building the redis is a 2 step process.  It required a bit of memory, so I have been using a hatteras node like
 sinteractive -m 32000
 
-edit the build_redis_files.py file and insure that the path for the input file and output files are legit. then run:
-python build_redis_files.py
 
-Standing up a redis server is easily done using the helm charts to create a new version of the AC deployment. once the new deployment
-is up port-forward the redis DB to the local host.
-
-Then in another session on the same host run the redis loader:
-
-python load_redis.py
-
-when this loading is complete dont forget to do a "redis-cli save" to insure the data is persisted to disk.
-
-When redis has persisted everything to disk on the new version will be ready. at that point "helm uninstall" the current running version and upgrade the new
-version after corrected the web server URL in the values file.
