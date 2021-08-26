@@ -21,11 +21,11 @@ class Opportunity:
         return self.qg_id
     def get_qg_semantic_type(self):
         stype = self.qg_semantic_type
+        if isinstance(stype, list):
+            stype = stype[0]
         return stype
         #This will go away when we  update the databases to use the new style types
         #import re
-        #if isinstance(stype, list):
-        #    stype = stype[0]
 #
 #        if stype.startswith('biolink'):
 #            pascal = stype.split(':')[1]

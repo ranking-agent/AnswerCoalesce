@@ -183,8 +183,6 @@ def uniquify_links(nodes_to_links, opportunities):
                 lplus[2] = not lplus[2]
                 tl = tuple(lplus)
                 if tl in seen:
-                    # if lplus[0] == 'NCBIGene:355':
-                    #    print(io, tl)
                     unique_links.add(tl)
                     unique_link_nodes.add(tl[0])
                 else:

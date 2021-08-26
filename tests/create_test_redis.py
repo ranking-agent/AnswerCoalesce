@@ -16,6 +16,7 @@ def load_jsons(input_json):
 def collect_input_nodes():
     #These are curies that are used as the inputs to some graph coalesce test
     test_curies = set(['NCBIGene:106632262', 'NCBIGene:106632263', 'NCBIGene:106632261'])
+    test_curies.update( set(['NCBIGene:191', 'NCBIGene:55832', 'NCBIGene:645', 'NCBIGene:54884', 'NCBIGene:8239', 'NCBIGene:4175', 'NCBIGene:10469', 'NCBIGene:8120', 'NCBIGene:3840', 'NCBIGene:55705', 'NCBIGene:2597', 'NCBIGene:23066', 'NCBIGene:7514', 'NCBIGene:10128']))
     input_jsons = ['famcov_new.json','bigger_new.json','graph_named_thing_issue.json','EdgeIDAsStrAndPerfTest.json']
     for ij in input_jsons:
         test_curies.update( load_jsons('InputJson_1.1/'+ij) )

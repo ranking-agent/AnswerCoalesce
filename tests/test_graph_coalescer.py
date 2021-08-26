@@ -9,7 +9,7 @@ jsondir='InputJson_1.1'
 #Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
-    opportunity = Opportunity('hash',('qg_0','gene'),curies,[0,1,2])
+    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,[0,1,2])
     opportunities=[opportunity]
     patches = gc.coalesce_by_graph(opportunities)
     assert len(patches) == 1
@@ -17,9 +17,10 @@ def test_graph_coalescer():
     p = patches[0]
     assert p.qg_id == 'qg_0'
     assert len(p.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
-    assert p.new_props['coalescence_method'] == 'graph_enrichment'
-    assert p.new_props['p_value'] < 1e-10
-    assert isinstance(p.new_props['enriched_nodes'],list)
+    atts=p.new_props['attributes']
+    kv = { x['original_attribute_name']: x['value'] for x in atts}
+    assert kv['coalescence_method'] == 'graph_enrichment'
+    assert kv['p_value'] < 1e-10
     assert len(p.added_nodes)==1
 
 def test_graph_coalescer_double_check():
@@ -38,7 +39,7 @@ def test_graph_coalescer_double_check():
  'NCBIGene:7514',
  'NCBIGene:10128']
     cts = [i for i in range(len(curies))]
-    opportunity = Opportunity('hash',('qg_0','gene'),curies,cts)
+    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,cts)
     opportunities=[opportunity]
     patches = gc.coalesce_by_graph(opportunities)
     assert len(patches) == 1
@@ -46,9 +47,10 @@ def test_graph_coalescer_double_check():
     p = patches[0]
     assert p.qg_id == 'qg_0'
     assert len(p.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
-    assert p.new_props['coalescence_method'] == 'graph_enrichment'
-    assert p.new_props['p_value'] < 1e-10
-    assert isinstance(p.new_props['enriched_nodes'],list)
+    atts=p.new_props['attributes']
+    kv = { x['original_attribute_name']: x['value'] for x in atts}
+    assert kv['coalescence_method'] == 'graph_enrichment'
+    assert kv['p_value'] < 1e-10
     assert len(p.added_nodes)==1
 
 
