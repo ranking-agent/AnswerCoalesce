@@ -42,7 +42,7 @@ def test_graph_coalescer_double_check():
     opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,cts)
     opportunities=[opportunity]
     patches = gc.coalesce_by_graph(opportunities)
-    assert len(patches) == 1
+    assert len(patches) == 15
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
     p = patches[0]
     assert p.qg_id == 'qg_0'
