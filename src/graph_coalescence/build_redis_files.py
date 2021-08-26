@@ -103,9 +103,11 @@ def go():
     ('CAID:CA13418922', 'has_phenotype', True, 'disease_or_phenotypic_feature')     21
     This version reads KGX node and edge json files
     """
+    categories = {}
     with jsonlines.open('nodes.jsonl','r') as nodefile, open('nodelabels.txt','w') as labelfile:
         for node in nodefile:
             labelfile.write(f'{node["id"]}\t{node["category"]}\n')
+            categories[node["id"]] = node["category"]
     nodes_to_links = defaultdict(list)
     edgecounts = defaultdict(int)
     with jsonlines.open('edges.jsonl','r') as inf:
@@ -128,10 +130,10 @@ def go():
             target_link = (source_id,pred,False)
             nodes_to_links[source_id].append(source_link)
             nodes_to_links[target_id].append(target_link)
-            for tlabel in str2list(line['target_labels']):
-                edgecounts[ (source_id, pred, True, tlabel) ] += 1
-            for slabel in str2list(line['source_labels']):
-                edgecounts[ (target_id, pred, False, slabel) ] += 1
+            for tcategory in categories[target_id]:
+                edgecounts[ (source_id, pred, True, tcategory) ] += 1
+            for scategory in categories[source_id]:
+                edgecounts[ (target_id, pred, False, scategory) ] += 1
             if nl % 1000000 == 0:
                 print(nl)
     print('ate the whole thing')
