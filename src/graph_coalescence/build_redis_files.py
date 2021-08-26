@@ -105,7 +105,7 @@ def go():
     """
     with jsonlines.open('nodes.jsonl','r') as nodefile, open('nodelabels.txt','w') as labelfile:
         for node in nodefile:
-            labelfile.write(f'{node["id"]}\t{node["categories"]}\n')
+            labelfile.write(f'{node["id"]}\t{node["category"]}\n')
     nodes_to_links = defaultdict(list)
     edgecounts = defaultdict(int)
     with jsonlines.open('edges.jsonl','r') as inf:
