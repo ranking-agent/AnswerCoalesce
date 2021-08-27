@@ -45,7 +45,6 @@ class MethodName(str, Enum):
     all = "all"
     property = "property"
     graph = "graph"
-    ontology = "ontology"
 
 
 def create_log_entry(msg: str, err_level, code=None) -> dict:
@@ -71,7 +70,7 @@ def create_log_entry(msg: str, err_level, code=None) -> dict:
 
 @APP.post('/coalesce/{method}', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
 async def coalesce_handler(request: PDResponse, method: MethodName):
-    """ Answer coalesce operations. You may choose all, property, graph or ontology analysis. """
+    """ Answer coalesce operations. You may choose all, property, graph. """
 
     # convert the incoming message into a dict
     in_message = request.dict()

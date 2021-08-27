@@ -448,21 +448,6 @@ def xtest_automat_asthma_graph():
 #    print(rs[3]['node_bindings'])
     assert rs[0]['node_bindings'][0]['p_value'] < 1e-20
 
-def test_unique_ontology():
-    fn = 'famcov_new.json'
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1',fn)
-    with open(testfilename,'r') as tf:
-        answerset = json.load(tf)
-        answerset = answerset['message']
-    newset = snc.coalesce(answerset,method='ontology',return_original=False)
-    rs = newset['results']
-    assert len(rs) <= 4
-    #Also, this should have 4 nodes in the query graph.  The original 3 plus the superclass
-    qg = newset['query_graph']
-    assert len(qg['nodes']) == 4
-    #Also, should have 3 edges in the query graph.  The original 2 plus the superclass
-    assert len(qg['edges']) == 3
-
 def test_double_predicates():
     # This test is based on a kg that looks like
     #   B
