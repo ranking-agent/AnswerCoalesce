@@ -3,6 +3,7 @@ import os
 import logging
 import requests
 import yaml
+import json
 
 from enum import Enum
 from functools import wraps
@@ -68,6 +69,10 @@ def create_log_entry(msg: str, err_level, code=None) -> dict:
     # return to the caller
     return ret_val
 
+# load up the config file
+conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','config.json')
+with open(conf_path, 'r') as inf:
+    conf = json.load(inf)
 
 @APP.post('/coalesce/{method}', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
 async def coalesce_handler(request: PDResponse, method: MethodName):
@@ -174,7 +179,7 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = 'https://nodenormalization-sri-dev.renci.org/1.1/response'  # 'http://localhost:5000/response'
+    url = f'{conf["node_normalization_url"]}/response' #  'https://nodenormalization-sri-dev.renci.org/1.1/response'  # 'http://localhost:5000/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
