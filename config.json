@@ -2,5 +2,6 @@
     "redis_host": "localhost",
     "redis_port": 6379,
     "redis_password": "",
-    "test_mode": 0
+    "test_mode": 0,
+    "node_normalization_url": "http://nodenormalization-sri-dev.renci.org/1.1"
 }
