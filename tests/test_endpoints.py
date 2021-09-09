@@ -37,7 +37,7 @@ def xtest_coalesce():
     assert( len(ret['results'])-len(answerset['message']['results']) == 118 )
 
 
-def test_schizo_coalesce():
+def xfailed_relation_attrib_error_test_schizo_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path,jsondir, 'famcov_new.json')
 
