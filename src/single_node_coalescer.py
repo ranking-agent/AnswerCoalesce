@@ -4,7 +4,6 @@ from collections import defaultdict
 
 from src.components import Opportunity, Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
-from src.ontology_coalescence.ontology_coalescer import coalesce_by_ontology
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 
 
@@ -28,9 +27,6 @@ def coalesce(answerset, method='all', return_original=True):
 
     if method in ['all', 'graph']:
         patches += coalesce_by_graph(coalescence_opportunities)
-
-    if method in ['all', 'ontology']:
-        patches += coalesce_by_ontology(coalescence_opportunities)
 
     # print('lets patch')
     new_answers, updated_qg, updated_kg = patch_answers(answerset, patches)
