@@ -13,16 +13,24 @@ import json
 import os
 
 def normalize(old_id):
-    if old_id.startswith('CHEMBL'):
+    if old_id.startswith('CHEMBL:'):
         x = old_id.split(':')
-        old_id = f'CHEMBL.COMPOUND:{x[1]}'
-    result = requests.get(f'https://nodenormalization-sri.renci.org/get_normalized_nodes?curie={old_id}')
+        old_id = f'CHEMBL.COMPOUND:{x[0]}{x[1]}'
+    elif old_id.startswith('gtpo'):
+        x = old_id.split(':')
+        old_id = f'GTOPDB:{x[1]}'
+
+    conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'config.json')
+    with open(conf_path, 'r') as inf:
+        conf = json.load(inf)
+
+    result = requests.get(f'{conf["node_normalization_url"]}/get_normalized_nodes?curie={old_id}')
     try:
         rj = result.json()
         new_id = rj[old_id]['id']['identifier']
         return new_id
     except:
-        print(old_id)
+        print(f'Failed normalization:{old_id}')
         return None
 
 def denormalize(new_id):
