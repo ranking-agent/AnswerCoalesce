@@ -9,6 +9,8 @@
 #
 ##
 import requests
+import json
+import os
 
 def normalize(old_id):
     if old_id.startswith('CHEMBL'):
