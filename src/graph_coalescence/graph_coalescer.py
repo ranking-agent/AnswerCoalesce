@@ -116,9 +116,6 @@ def coalesce_by_graph(opportunities):
             for e in best_enrichments:
                 newcurie = e[1]
                 etype = e[2]
-                #This is here because the current db are old style but we need the results newstyle.
-                if not etype.startswith('biolink'):
-                    etype = f'biolink:{etype}'
                 if e[3]:
                     nni = 'target'
                 else:
@@ -186,8 +183,6 @@ def uniquify_links(nodes_to_links, opportunities):
                 lplus[2] = not lplus[2]
                 tl = tuple(lplus)
                 if tl in seen:
-                    # if lplus[0] == 'NCBIGene:355':
-                    #    print(io, tl)
                     unique_links.add(tl)
                     unique_link_nodes.add(tl[0])
                 else:
@@ -228,15 +223,14 @@ def create_node_to_type(opportunities):
         stype = opportunity.get_qg_semantic_type()
         #We're in a situation where there are databases using old style types but the input will be new style, and
         #for a moment we need to translate.  This will go away.
-        if isinstance(stype, list):
-            for i, item in enumerate(stype):
-                if item.startswith('biolink'):
-                    pascal = item.split(':')[1]
-                    stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
-        elif stype.startswith('biolink'):
-            pascal = stype.split(':')[1]
-            stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
-
+        #if isinstance(stype, list):
+        #    for i, item in enumerate(stype):
+        #        if item.startswith('biolink'):
+        #            pascal = item.split(':')[1]
+        #            stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+        #elif stype.startswith('biolink'):
+        #    pascal = stype.split(':')[1]
+        #    stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
         for node in kn:
             allnodes[node] = stype
     return allnodes
