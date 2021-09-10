@@ -36,14 +36,17 @@ def test_hash_one_hop():
     kg = answerset['knowledge_graph']
     answers = [Answer(ai,qg,kg) for ai in answerset['results']]
     s = set()
+
+    kg_edgetypes = {edge_id: edge['predicate'] for edge_id, edge in kg['edges'].items()}
+
     for a in answers:
         bindings = a.make_bindings()
-        s.add(snc.make_answer_hash(bindings,kg,qg,'n0'))
+        s.add(snc.make_answer_hash(bindings,kg_edgetypes,qg,'n0'))
     assert len(s) == 1
     s = set()
     for a in answers:
         bindings = a.make_bindings()
-        s.add(snc.make_answer_hash(bindings,kg,qg,'n1'))
+        s.add(snc.make_answer_hash(bindings,kg_edgetypes,qg,'n1'))
     assert len(s) == len(answers)
 
 def test_hash_one_hop_with_different_predicates():
@@ -66,6 +69,10 @@ def test_hash_one_hop_with_different_predicates():
     #how many preds in the kg?
     types = { e_id: e['predicate'] for e_id,e in kg['edges'].items()}
     preds = set()
+
+    kg_edgetypes = {edge_id: edge['predicate'] for edge_id, edge in kg['edges'].items()}
+
+
     for result in answerset['results']:
         ebs = result['edge_bindings']
         ps = set()
@@ -82,7 +89,7 @@ def test_hash_one_hop_with_different_predicates():
         preds.add(predset)
     for a in answers:
         bindings = a.make_bindings()
-        s.add(snc.make_answer_hash(bindings,kg,qg,'n0'))
+        s.add(snc.make_answer_hash(bindings,kg_edgetypes,qg,'n0'))
     print(s)
     print(preds)
     assert len(s) == len(preds)
