@@ -3,7 +3,7 @@ contact:
   name: Patrick Wang
   x-id: https://github.com/patrickkwang
   x-role: responsible developer
-description: 'Answer coalesce: This service accepts a TRAPI 1.1.2.1 object containing answers and returns answers that have been coalesced by property, graph or ontology analysis.'
+description: 'Answer coalesce: This service accepts a TRAPI object containing result answers and returns answers that have been coalesced by property, graph or ontology analysis.'
 servers:
 - description: Default server
   url: https://answercoalesce.renci.org
@@ -11,9 +11,17 @@ termsOfService: http://robokop.renci.org:7055/tos?service_long=Answer coalesce&p
 title: Answer coalesce
 tags:
 - name: translator
-- name: ARAGORN
 - name: ARA
+- name: ARAGORN
+- name: trapi
 x-translator:
   component: ARA
   team:
   - Ranking Agent
+x-trapi:
+  version: 1.1.2
+  operations:
+  - coalesce answers
+  - coalesce by ontology
+  - coalesce by graph
+  - coalesce by property

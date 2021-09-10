@@ -16,3 +16,13 @@ def test_big_graphbased():
     rs = newset['results']
     print(len(rs))
 
+def xtest_big_graphbased():
+    """This input is over the github file size limit, so removing the test.  But it's good for profiling"""
+    fn = f'{input_dir}/workflowb_strider_out.json'
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
+    with open(testfilename,'r') as tf:
+        answerset = json.load(tf)
+        answerset = answerset['message']
+    newset = snc.coalesce(answerset,method='graph')
+    rs = newset['results']
+    print(len(rs))

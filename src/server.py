@@ -28,7 +28,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='1.1.3'
+    version='1.1.4'
 )
 
 # declare the cross origin params
@@ -90,15 +90,16 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         log['timestamp'] = str(log['timestamp'])
 
     # make sure there are results to coalesce
+    #0 results is perfectly legal, there's just nothing to do.
     if 'results' not in in_message['message'] or len(in_message['message']['results']) == 0:
-        status_code = 422
-        in_message['logs'].append(create_log_entry(f'No results to coalesce', "ERROR"))
-
+        status_code = 200
+        in_message['logs'].append(create_log_entry(f'No results to coalesce', "WARNING"))
         return JSONResponse(content=in_message, status_code=status_code)
+
     elif 'knowledge_graph' not in in_message['message'] or len(in_message['message']['knowledge_graph']) == 0:
+        #This is a 422 b/c we do have results, but there's no graph to use.
         status_code = 422
         in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
-
         return JSONResponse(content=in_message, status_code=status_code)
 
     # init the status code
@@ -196,7 +197,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='1.1.3',
+        version='1.1.4',
         routes=APP.routes
     )
 

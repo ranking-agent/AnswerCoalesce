@@ -12,8 +12,9 @@ garbage_properties=set(['molecular_formula','iupac_name','pubchem.orig_smiles','
                         'role'])
 
 def initialize_property_dbs(stype):
+    # valid in put is biolink:<node label>. so just use the end part for this
     thisdir = os.path.dirname(os.path.realpath(__file__) )
-    dbname = f'{thisdir}/{stype}.db'
+    dbname = f'{thisdir}/{stype.split(":")[1]}.db'
     if os.path.exists(dbname):
         os.remove(dbname)
     with sqlite3.connect(dbname) as conn:
@@ -26,9 +27,9 @@ def create_property_counts(stype,db,pw):
     # get glommed together in the new norm.
     #So we have to accumulate properties, then write them all out, rather than dump as wel go.
     driver = GraphDatabase.driver(f'bolt://{db}:7687', auth=('neo4j', pw))
-    cypher = f'MATCH (a:{stype}) RETURN a'
+    cypher = f'MATCH (a:`{stype}`) RETURN a'
     counts = defaultdict( int )
-    thisdir = os.path.dirname(os.path.realpath(__file__) )
+
     properties_per_node = defaultdict(set)
     print('opening session')
     counter: int = 0

@@ -3,10 +3,10 @@ from setuptools import setup
 
 setup(
     name='Answer Coalesce',
-    version='1.1.3',
+    version='1.1.4',
     author='Chris Bizon',
     author_email='bizon@renci.org',
-    url='https://github.com/TranslatorIIPrototypes/AnswerCoalesce',
+    url='https://github.com/ranking-agent/AnswerCoalesce',
     description='Answer Coalesce - Offers coalesced answers based on an answer passed in.',
     packages=['ac'],
     include_package_data=True,
