@@ -24,9 +24,11 @@ def write_to(fname,db):
     pipe.execute()
 
 def go():
-    write_to('links.txt',0)
-    write_to('nodelabels.txt',1)
-    write_to('backlinks.txt',2)
+    import os
+    thisdir = os.path.dirname(os.path.realpath(__file__))
+    write_to(os.path.join(thisdir, 'links.txt'),0)
+    write_to(os.path.join(thisdir, 'nodelabels.txt'),1)
+    write_to(os.path.join(thisdir, 'backlinks.txt'),2)
 
 def go_test():
     #Is going to run from ac root
