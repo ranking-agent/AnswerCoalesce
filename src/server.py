@@ -28,7 +28,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='2.0.0'
+    version='2.0.1'
 )
 
 # declare the cross origin params
@@ -120,10 +120,10 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         #     tf.write(json.dumps(in_message, default=str))
 
         # Normalize the data
-        coalesced = normalize(in_message)
-
-        # save the response in the incoming message
-        in_message['message'] = coalesced['message']
+        # coalesced = normalize(in_message)
+        #
+        # # save the response in the incoming message
+        # in_message['message'] = coalesced['message']
 
         # validate the response again after normalization
         in_message = jsonable_encoder(PDResponse(**in_message))
@@ -197,7 +197,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='2.0.0',
+        version='2.0.1',
         routes=APP.routes
     )
 
