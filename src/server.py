@@ -120,10 +120,10 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         #     tf.write(json.dumps(in_message, default=str))
 
         # Normalize the data
-        # coalesced = normalize(in_message)
-        #
-        # # save the response in the incoming message
-        # in_message['message'] = coalesced['message']
+        coalesced = normalize(in_message)
+
+        # save the response in the incoming message
+        in_message['message'] = coalesced['message']
 
         # validate the response again after normalization
         in_message = jsonable_encoder(PDResponse(**in_message))
@@ -183,11 +183,7 @@ def normalize(message):
 
     normalized_message = post('Node Normalizer', url, message)
 
-    if 'errmsg' in normalized_message:
-        message['logs'].append(normalized_message['errmsg'])
-        return message
-    else:
-        return normalized_message
+    return normalized_message
 
 
 def construct_open_api_schema():
