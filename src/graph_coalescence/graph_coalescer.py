@@ -360,16 +360,18 @@ def get_total_node_count(semantic_type):
     we're ignoring variants, because we don't really want to deal with gtex right now, and we
     might need to consider the independently somehow?  These numbers are precomputed using
     the robokopdb2 database march 7, 2020."""
-    stype2counts = {'disease':84000,
-                    'gene':329000,
-                    'phenotypic_feature':74000,
-                    'disease_or_phenotypic_feature':174000,
-                    'chemical_substance':214000,
-                    'anatomical_entity':112000,
-                    'cell':40000,
-                    'biological_process':133000,
-                    'molecular_activity':86000,
-                    'biological_process_or_activity':148000 }
+    stype2counts = {'biolink:Disease':84000,
+                    'biolink:Gene':329000,
+                    'biolink:Protein':329000,
+                    'biolink:PhenotypicFeature':74000,
+                    'biolink:DiseaseOrPhenotypicFeature':174000,
+                    'biolink:ChemicalSubstance':214000,
+                    'biolink:ChemicalEntity':214000,
+                    'biolink:AnatomicalEntity':112000,
+                    'biolink:Cell':40000,
+                    'biolink:BiologicalProcess':133000,
+                    'biolink:MolecularActivity':86000,
+                    'biolink:BiologicalProcessOrActivity':148000 }
     if semantic_type in stype2counts:
         return stype2counts[semantic_type]
     #Give up and return the total number of nodes
