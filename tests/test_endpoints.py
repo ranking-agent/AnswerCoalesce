@@ -36,7 +36,7 @@ def test_basic():
     assert(len(ret) == 3)
     assert( len(ret['results'])-len(answerset['message']['results']) > 0 )
 
-def test_wfa3():
+def xtest_wfa3():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
