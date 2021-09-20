@@ -180,7 +180,7 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = f'{conf["node_normalization_url"]}/response' #  'https://nodenormalization-sri-dev.renci.org/1.1/response'  # 'http://localhost:5000/response'
+    url = f'{conf["node_normalization_url"]}/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
@@ -194,7 +194,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='2.0.3',
+        version='2.1.0',
         routes=APP.routes
     )
 
