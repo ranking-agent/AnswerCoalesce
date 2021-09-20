@@ -184,11 +184,7 @@ def normalize(message):
 
     normalized_message = post('Node Normalizer', url, message)
 
-    if 'errmsg' in normalized_message:
-        message['logs'].append(normalized_message['errmsg'])
-        return message
-    else:
-        return normalized_message
+    return normalized_message
 
 
 def construct_open_api_schema():
@@ -198,7 +194,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='2.0.1',
+        version='2.0.3',
         routes=APP.routes
     )
 
@@ -241,7 +237,8 @@ def construct_open_api_schema():
 
     if servers_conf:
         for s in servers_conf:
-            s['url'] = s['url'] + '/1.2'
+            if s['description'].startswith('Default'):
+                s['url'] = s['url'] + '/1.2'
         open_api_schema["servers"] = servers_conf
 
     return open_api_schema
