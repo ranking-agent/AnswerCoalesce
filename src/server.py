@@ -28,7 +28,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='2.0.3'
+    version='2.1.0'
 )
 
 # declare the cross origin params
@@ -46,6 +46,7 @@ class MethodName(str, Enum):
     all = "all"
     property = "property"
     graph = "graph"
+    set = "set"
 
 
 def create_log_entry(msg: str, err_level, code=None) -> dict:
@@ -179,7 +180,7 @@ def normalize(message):
     :param message:
     :return:
     """
-    url = f'{conf["node_normalization_url"]}/response' #  'https://nodenormalization-sri-dev.renci.org/1.1/response'  # 'http://localhost:5000/response'
+    url = f'{conf["node_normalization_url"]}/response'
 
     normalized_message = post('Node Normalizer', url, message)
 
@@ -193,7 +194,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='2.0.3',
+        version='2.1.0',
         routes=APP.routes
     )
 
