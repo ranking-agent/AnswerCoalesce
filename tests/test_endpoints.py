@@ -10,7 +10,85 @@ from src.server import APP
 
 client = TestClient(APP)
 
-jsondir= 'InputJson_1.1'
+jsondir= 'InputJson_1.2'
+
+def test_basic():
+    """Bring back when properties are working again"""
+    # get the location of the Translator specification file
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+
+    testfilename = os.path.join(dir_path,jsondir,'sr_out_ac_hang.json')
+
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+
+    # make a good request
+    response = client.post('/coalesce/all', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    # convert the response to a json object
+    jret = json.loads(response.content)
+
+    # check the data
+    ret = jret['message']
+    assert(len(ret) == 3)
+    assert( len(ret['results'])-len(answerset['message']['results']) > 0 )
+
+def test_wfa3():
+    """Bring back when properties are working again"""
+    # get the location of the Translator specification file
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+
+    testfilename = os.path.join(dir_path,jsondir,'a3.json')
+
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+
+    # make a good request
+    response = client.post('/coalesce/all', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    # convert the response to a json object
+    jret = json.loads(response.content)
+
+    # check the data
+    ret = jret['message']
+    assert(len(ret) == 3)
+    assert( len(ret['results'])-len(answerset['message']['results']) > 0 )
+
+def test_set_coalesce():
+    """This is a 2 hop query with three answers
+    A B C
+    A B D
+    A E D
+    So it should produce 2 set coalesces: A B (CD), A (BE) D
+    """
+    # get the location of the Translator specification file
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+
+    testfilename = os.path.join(dir_path,jsondir,'twohop.json')
+
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+
+    # make a good request
+    response = client.post('/coalesce/set', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    # convert the response to a json object
+    jret = json.loads(response.content)
+
+    # check the data
+    ret = jret['message']
+    assert(len(ret) == 3)
+    assert( len(ret['results'])-len(answerset['message']['results']) == 2 )
+
 
 def xtest_coalesce():
     """Bring back when properties are working again"""

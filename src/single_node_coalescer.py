@@ -5,6 +5,7 @@ from collections import defaultdict
 from src.components import Opportunity, Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
+from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
 def coalesce(answerset, method='all', return_original=True):
@@ -21,6 +22,9 @@ def coalesce(answerset, method='all', return_original=True):
     coalescence_opportunities = identify_coalescent_nodes(answerset)
 
     patches = []
+
+    if method in ['all', 'set']:
+        patches += coalesce_by_set(coalescence_opportunities)
 
     if method in ['all', 'property']:
         patches += coalesce_by_property(coalescence_opportunities)
