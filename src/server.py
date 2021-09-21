@@ -9,7 +9,7 @@ from enum import Enum
 from functools import wraps
 from reasoner_pydantic import Response as PDResponse
 
-from src.util import LoggingUtil
+from src.util import LoggingUtil, create_log_entry
 from src.single_node_coalescer import coalesce
 from datetime import datetime
 
@@ -28,7 +28,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='2.1.0'
+    version='2.1.1'
 )
 
 # declare the cross origin params
@@ -48,26 +48,6 @@ class MethodName(str, Enum):
     graph = "graph"
     set = "set"
 
-
-def create_log_entry(msg: str, err_level, code=None) -> dict:
-    """
-    Creates a trapi log message
-
-    :param msg:
-    :param err_level:
-    :param code:
-    :return: dict of the data passed
-    """
-    # load the data
-    ret_val = {
-        'timestamp': str(datetime.now()),
-        'level': err_level,
-        'message': msg,
-        'code': code
-    }
-
-    # return to the caller
-    return ret_val
 
 # load up the config file
 conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','config.json')
@@ -126,8 +106,6 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # save the response in the incoming message
         in_message['message'] = coalesced['message']
 
-        # validate the response again after normalization
-        in_message = jsonable_encoder(PDResponse(**in_message))
     except Exception as e:
         # put the error in the response
         status_code = 500
@@ -194,7 +172,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='2.1.0',
+        version='2.1.1',
         routes=APP.routes
     )
 
