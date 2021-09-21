@@ -5,6 +5,7 @@ import yaml
 from collections import namedtuple
 import copy
 from logging.handlers import RotatingFileHandler
+from datetime import datetime
 
 #loggers = {}
 class LoggingUtil(object):
@@ -136,7 +137,6 @@ class Text:
         return f'{p[0].upper()}:{p[1]}'
 
 
-
 class Resource:
     @staticmethod
     def get_resource_path(resource_name):
@@ -224,3 +224,17 @@ class DataStructure:
     @staticmethod
     def to_named_tuple (type_name, d):
         return namedtuple(type_name, d.keys())(**d)
+
+def create_log_entry(msg: str, err_level, code=None) -> dict:
+    now = datetime.now()
+
+    # load the data
+    ret_val = {
+        'time stamp': now.strftime("%m/%d/%Y-%H:%M:%S"),
+        'level': err_level,
+        'message': msg,
+        'code': code
+    }
+
+    # return to the caller
+    return ret_val
