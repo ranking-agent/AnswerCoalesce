@@ -3,6 +3,7 @@ from collections import defaultdict
 import os.path
 import argparse
 import sqlite3
+import jsonlines
 
 from src.node_handling import normalize
 
@@ -14,7 +15,7 @@ garbage_properties=set(['molecular_formula','iupac_name','pubchem.orig_smiles','
 def initialize_property_dbs(stype):
     # valid in put is biolink:<node label>. so just use the end part for this
     thisdir = os.path.dirname(os.path.realpath(__file__) )
-    dbname = f'{thisdir}/{stype.split(":")[1]}.db'
+    dbname = f'{thisdir}/{stype}.db'
     if os.path.exists(dbname):
         os.remove(dbname)
     with sqlite3.connect(dbname) as conn:
@@ -22,6 +23,27 @@ def initialize_property_dbs(stype):
         conn.execute('''CREATE TABLE property_counts (property text, count integer)''')
     return dbname
 
+def create_from_file(stype):
+    counts = defaultdict(int)
+    properties_per_node = defaultdict(set)
+    with jsonlines.open(f'{stype}_properties.jsonl','r') as inf:
+        for line in inf:
+            node = line['id']
+            for p in line:
+                if p not in ['id','name','category','equivalent_identifiers']:
+                    properties_per_node[node].add(p)
+                    counts[p] += 1
+    dbname = initialize_property_dbs(stype)
+    print('connecting to database and loading')
+    with sqlite3.connect(dbname) as conn:
+        for newid, properties in properties_per_node.items():
+            conn.execute('INSERT INTO properties (node ,propertyset) VALUES (?,?)', (newid, str(properties)))
+        for p, c in counts.items():
+            if c > 1:
+                conn.execute('INSERT INTO property_counts (property, count) VALUES (?,?)', (p, c))
+
+
+#We might want this if the props end up all getting into robokopkg, but for now, we're goint to do this a diff way
 def create_property_counts(stype,db,pw):
     #Because we're normalizing stuff from the older db, we sometimes find that multiple nodes from the old db
     # get glommed together in the new norm.
@@ -99,7 +121,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'help',
             formatter_class = argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-t','--type',help='semantic type to collect properties of')
-    parser.add_argument('-d','--database',help='URL of neo4j')
-    parser.add_argument('-p','--password',help='password for neo4j')
+    #parser.add_argument('-d','--database',help='URL of neo4j')
+    #parser.add_argument('-p','--password',help='password for neo4j')
     args = parser.parse_args()
-    create_property_counts(args.type,args.database,args.password)
+    create_from_file(args.type)
