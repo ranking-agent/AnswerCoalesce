@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='Answer Coalesce',
-    version='2.1.0',
+    version='2.2.0',
     author='Chris Bizon',
     author_email='bizon@renci.org',
     url='https://github.com/ranking-agent/AnswerCoalesce',
