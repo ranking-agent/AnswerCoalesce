@@ -24,22 +24,8 @@ class Opportunity:
         if isinstance(stype, list):
             stype = stype[0]
         return stype
-        #This will go away when we  update the databases to use the new style types
-        #import re
-#
-#        if stype.startswith('biolink'):
-#            pascal = stype.split(':')[1]
-#            stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
-#
     def get_answer_indices(self):
         return self.answer_indices
-
-#def pascal_to_snake(nnt):
-#    if not nnt.startswith('biolink:'):
-#        newnodetype = ''.join(word.title() for word in nnt.split('_'))
-#        newnodetype = 'biolink:' + newnodetype
-#        return newnodetype
-#    return nnt
 
 class NewNode:
     def __init__(self,newnode, newnodetype, edge_type, newnode_is):

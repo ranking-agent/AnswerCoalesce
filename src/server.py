@@ -19,6 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.encoders import jsonable_encoder
 
+AC_VERSION = '2.2.0'
+
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -28,7 +30,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 # declare the application and populate some details
 APP = FastAPI(
     title='Answer coalesce - A FastAPI UI/web service',
-    version='2.1.1'
+    version=AC_VERSION
 )
 
 # declare the cross origin params
@@ -172,7 +174,7 @@ def construct_open_api_schema():
 
     open_api_schema = get_openapi(
         title='Answer Coalesce',
-        version='2.1.1',
+        version=AC_VERSION,
         routes=APP.routes
     )
 

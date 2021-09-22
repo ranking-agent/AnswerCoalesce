@@ -6,30 +6,26 @@ import os.path
 
 from src.components import PropertyPatch
 
-#only needed while fix_stype is around
-import re
-
 class PropertyLookup():
     def __init__(self):
         # Right now, we're going to load the property file, but we should replace with a redis or sqlite
         self.thisdir = os.path.dirname(os.path.realpath(__file__))
         #dbfiles = list(filter(lambda x: x.endswith('.db'), os.listdir(thisdir)))
         #self.propfiles = [f'{thisdir}/{dbf}' for dbf in dbfiles]
-    def fix_stype(self,stype):
-        #We're in a situation where there are databases using old style types but the input will be new style, and
-        #for a moment we need to translate.  This will go away.
-        if isinstance(stype, list):
-            for i, item in enumerate(stype):
-                if item.startswith('biolink'):
-                    pascal = item.split(':')[1]
-                    stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
-        elif stype.startswith('biolink'):
-            pascal = stype.split(':')[1]
-            stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
-        return stype
+    #def fix_stype(self,stype):
+    #    #We're in a situation where there are databases using old style types but the input will be new style, and
+    #    #for a moment we need to translate.  This will go away.
+    #    if isinstance(stype, list):
+    #        for i, item in enumerate(stype):
+    #            if item.startswith('biolink'):
+    #                pascal = item.split(':')[1]
+    #                stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+    #    elif stype.startswith('biolink'):
+    #        pascal = stype.split(':')[1]
+    #        stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
+    #    return stype
     def lookup_property_by_node(self,node,stype):
-        fstype = self.fix_stype(stype)
-        pf = f'{self.thisdir}/{fstype}.db'
+        pf = f'{self.thisdir}/{stype}.db'
         if not os.path.exists(pf):
             return {}
         with sqlite3.connect(pf) as conn:
@@ -43,8 +39,7 @@ class PropertyLookup():
             return literal_eval(r)
         return {}
     def total_nodes_with_property(self,property,stype):
-        fstype = self.fix_stype(stype)
-        pf = f'{self.thisdir}/{fstype}.db'
+        pf = f'{self.thisdir}/{stype}.db'
         if not os.path.exists(pf):
             return 0
         with sqlite3.connect(pf) as conn:
@@ -55,8 +50,7 @@ class PropertyLookup():
             return results[0]['count']
         return 0
     def get_nodecount(self, stype):
-        fstype = self.fix_stype(stype)
-        pf = f'{self.thisdir}/{fstype}.db'
+        pf = f'{self.thisdir}/{stype}.db'
         if not os.path.exists(pf):
             return 0
         with sqlite3.connect(pf) as conn:
@@ -126,6 +120,10 @@ def coalesce_by_property(opportunities):
     return patches
 
 def get_enriched_properties(nodes,semantic_type,pcut=1e-4):
+    if semantic_type in ['biolink:SmallMolecule','biolink:MolecularMixture','biolink:Drug']:
+        semantic_type = 'biolink:ChemicalEntity'
+    if semantic_type not in ['biolink:ChemicalEntity']:
+        return []
     property_lookup = PropertyLookup()
     properties = property_lookup.collect_properties(nodes,semantic_type)  # properties = {property: (curies with it)}
     enriched = []
