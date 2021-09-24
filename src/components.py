@@ -28,16 +28,12 @@ class Opportunity:
         return self.answer_indices
 
 class NewNode:
-    def __init__(self,newnode, newnodetype, edge_type, newnode_is):
-        #right now we're sometimes getting node types in old style.  This will go away when the databases get updated
-        #if isinstance(newnodetype,str):
-        #    newnodetype = pascal_to_snake(newnodetype)
-        #else:
-        #    newnodetype = [ pascal_to_snake(n) for n in newnodetype]
+    def __init__(self,newnode, newnodetype, edge_type, newnode_is, newnode_name):
         self.newnode = newnode
         self.newnode_type = newnodetype
         self.new_edges = edge_type
         self.newnode_is = newnode_is
+        self.newnode_name = newnode_name
 
 
 class PropertyPatch:
@@ -47,12 +43,12 @@ class PropertyPatch:
         self.new_props = props
         self.answer_indices = answer_ids
         self.added_nodes = []
-    def add_extra_node(self,newnode, newnodetype, edge_type, newnode_is):
+    def add_extra_node(self,newnode, newnodetype, edge_type, newnode_is,newnode_name):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
-        self.added_nodes.append( NewNode(newnode, newnodetype, edge_type, newnode_is) )
+        self.added_nodes.append( NewNode(newnode, newnodetype, edge_type, newnode_is, newnode_name) )
     def apply(self,answers,question,graph,graph_index):
         # Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
         # answers that were originally in the opportunity, but we might have only found commonality
@@ -165,7 +161,7 @@ class PropertyPatch:
                 if not isinstance(newnode.newnode_type, list):
                     newnode.newnode_type = [newnode.newnode_type]
 
-                kg['nodes'].update({ newnode.newnode:{'categories': newnode.newnode_type}})
+                kg['nodes'].update({ newnode.newnode:{'name': newnode.newnode_name, 'categories': newnode.newnode_type}})
                 kg_index['nodes'].add(newnode.newnode)
             #Add new edges
             for curie in self.set_curies: #try to add a new edge from this curie to newnode

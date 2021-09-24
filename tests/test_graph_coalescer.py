@@ -103,6 +103,8 @@ def test_graph_coalesce():
             #Every node binding should be found somewhere in the kg nodes
             for nb in nbk:
                 assert nb['id'] in kgnodes
+                #And each of these nodes should have a name
+                assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
         assert extra_node
         #make sure each new result has an extra edge
         nbs = r['edge_bindings']

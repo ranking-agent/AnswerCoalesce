@@ -104,10 +104,11 @@ def go():
     This version reads KGX node and edge json files
     """
     categories = {}
-    with jsonlines.open('nodes.jsonl','r') as nodefile, open('nodelabels.txt','w') as labelfile:
+    with jsonlines.open('nodes.jsonl','r') as nodefile, open('nodelabels.txt','w') as labelfile, open('nodenames.txt','w') as namefile:
         for node in nodefile:
             labelfile.write(f'{node["id"]}\t{node["category"]}\n')
             categories[node["id"]] = node["category"]
+            namefile.write(f'{node["id"]}\t{node.get("name","")}\n')
     nodes_to_links = defaultdict(list)
     edgecounts = defaultdict(int)
     with jsonlines.open('edges.jsonl','r') as inf:

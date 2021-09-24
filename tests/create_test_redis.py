@@ -56,6 +56,8 @@ def go():
     filter_backlinks('../src/graph_coalescence/backlinks.txt','test_backlinks.txt',back_types,links)
     nodes.update(links)
     filter_types('../src/graph_coalescence/nodelabels.txt','test_nodelabels.txt',nodes)
+    #names has the same format as types
+    filter_types('../src/graph_coalescence/nodenames.txt','test_nodenames.txt',nodes)
 
 if __name__ == '__main__':
     go()

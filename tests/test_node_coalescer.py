@@ -251,7 +251,7 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     assert len(kg_edges) == 10
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     #This is the new line:
-    patch.add_extra_node("E",'biolink:NamedThing','biolink:is_a',newnode_is='target')
+    patch.add_extra_node("E",'biolink:NamedThing','biolink:is_a',newnode_is='target',newnode_name='newname')
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     #Did we patch the question correctly?
     assert len(updated_qg['nodes']) == 5 #started as 4
@@ -355,8 +355,8 @@ def test_apply_property_patches_add_two_new_nodes():
     assert len(kg_edges) == 10
     patch = PropertyPatch('n2',['E','F'],{'new1':'test','new2':[1,2,3]},ansrs)
     #This is the new line:
-    patch.add_extra_node("Q",'biolink:NamedThing','biolink:part_of',newnode_is='target')
-    patch.add_extra_node("R",'biolink:NamedThing','biolink:interacts_with',newnode_is='source')
+    patch.add_extra_node("Q",'biolink:NamedThing','biolink:part_of',newnode_is='target',newnode_name='targ')
+    patch.add_extra_node("R",'biolink:NamedThing','biolink:interacts_with',newnode_is='source',newnode_name='surc')
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
     #Did we patch the question correctly?
     assert len(updated_qg['nodes']) == 6 #started as 4
