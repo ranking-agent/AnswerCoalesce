@@ -43,6 +43,7 @@ class PropertyPatch:
         self.new_props = props
         self.answer_indices = answer_ids
         self.added_nodes = []
+        self.provmap = {}
     def add_provenance(self,provmap):
         self.provmap = provmap
     def add_extra_node(self,newnode, newnodetype, edge_type, newnode_is,newnode_name):
@@ -179,7 +180,10 @@ class PropertyPatch:
                 eid = None
                 ekey = (source_id, target_id,  newnode.new_edges)
                 if ekey not in kg_index['edges']:
-                    prov = self.provmap[ f'{source_id} {newnode.new_edges} {target_id}']
+                    try:
+                        prov = self.provmap[ f'{source_id} {newnode.new_edges} {target_id}']
+                    except KeyError:
+                        prov = []
                     edge = { 'subject': source_id, 'object': target_id, 'predicate': newnode.new_edges,
                              'attributes': prov + [{'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:aragorn'},
                                             {'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:automat-robokop'}]}

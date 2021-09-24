@@ -189,7 +189,8 @@ def get_provs(edges):
             p.get(edge)
         ns = p.execute()
         for edge, n in zip(edgegroup, ns):
-            prov[edge] = json.loads(n)
+            #Convert the svelte key-value attribute into a fat trapi-style attribute
+            prov[edge] = [ { 'attribute_type_id':k ,'value': v} for k,v in json.loads(n).items() ]
     return prov
 
 def uniquify_links(nodes_to_links, opportunities):
