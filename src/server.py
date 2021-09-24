@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.encoders import jsonable_encoder
 
-AC_VERSION = '2.2.1'
+AC_VERSION = '2.2.2'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -215,10 +215,16 @@ def construct_open_api_schema():
     if title_override:
         open_api_schema["info"]["title"] = title_override
 
+    # adds support to override server root path
+    server_root = os.environ.get('SERVER_ROOT', '/')
+
+    # make sure not to add double slash at the end.
+    server_root = server_root.rstrip('/') + '/'
+
     if servers_conf:
         for s in servers_conf:
             if s['description'].startswith('Default'):
-                s['url'] = s['url'] + '/1.2'
+                s['url'] = server_root + '1.2' if server_root != '/' else s['url']
         open_api_schema["servers"] = servers_conf
 
     return open_api_schema
