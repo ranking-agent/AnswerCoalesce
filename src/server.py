@@ -102,11 +102,11 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # with open('ac_out_attributes.json', 'w') as tf:
         #     tf.write(json.dumps(in_message, default=str))
 
-        # Normalize the data
-        coalesced = normalize(in_message)
-
-        # save the response in the incoming message
-        in_message['message'] = coalesced['message']
+        # # Normalize the data
+        # coalesced = normalize(in_message)
+        #
+        # # save the response in the incoming message
+        # in_message['message'] = coalesced['message']
 
     except Exception as e:
         # put the error in the response
