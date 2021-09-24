@@ -118,9 +118,11 @@ def test_graph_coalesce():
                     eedge = kgedges[nb['id']]
                     if nb['id'] in original_edge_ids:
                         continue
-                    values = [a['value'] for a in eedge['attributes']]
-                    assert 'infores:aragorn' in values
-                    assert 'infores:automat-robokop' in values
+                    keys = [a['attribute_type_id'] for a in eedge['attributes']]
+                    values = set([a['value'] for a in eedge['attributes']])
+                    ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
+                    assert len(values.intersection(ac_prov)) == 2
+                    assert len(ac_prov) > len(values)
         assert extra_edge
 
 def test_graph_coalesce_strider():

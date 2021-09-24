@@ -32,6 +32,7 @@ def go():
     write_to(os.path.join(thisdir, 'nodelabels.txt'),1)
     write_to(os.path.join(thisdir, 'backlinks.txt'),2)
     write_to(os.path.join(thisdir, 'nodenames.txt'),3)
+    write_to(os.path.join(thisdir, 'prov.txt'),4)
 
 def go_test():
     #Is going to run from ac root
@@ -39,6 +40,7 @@ def go_test():
     write_to('tests/test_nodelabels.txt',1)
     write_to('tests/test_backlinks.txt',2)
     write_to('tests/test_nodenames.txt',3)
+    write_to('tests/test_prov.txt',4)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'test':

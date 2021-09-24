@@ -139,7 +139,7 @@ def go():
                 edgecounts[ (target_id, pred, False, scategory) ] += 1
             pkey=f'{source_id} {pred} {target_id}'
             prov = {x:line[x] for x in ['biolink:original_knowledge_source','biolink:aggregator_knowledge_source'] if x in line}
-            provout.write(f'{pkey}\t{prov}\n')
+            provout.write(f'{pkey}\t{json.dumps(prov)}\n')
             if nl % 1000000 == 0:
                 print(nl)
     print('ate the whole thing')
