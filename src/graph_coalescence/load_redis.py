@@ -15,6 +15,8 @@ def write_to(fname,db):
     with open(fname,'r') as inf:
         for line in inf:
             x = line.strip().split('\t')
+            if len(x) == 1:
+                x.append('')
             pipe.set(x[0],x[1])
             n += 1
             if n >= batchsize:

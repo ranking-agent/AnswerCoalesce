@@ -12,7 +12,9 @@ client = TestClient(APP)
 
 jsondir= 'InputJson_1.2'
 
-def test_basic():
+#TODO: This test requires use of the prod databases.  We should add pytest annotations distinguishing tests like this
+# so that the github actions can selectively run them
+def xtest_basic():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
