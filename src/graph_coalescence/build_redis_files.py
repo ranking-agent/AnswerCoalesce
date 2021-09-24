@@ -111,7 +111,7 @@ def go():
             namefile.write(f'{node["id"]}\t{node.get("name","")}\n')
     nodes_to_links = defaultdict(list)
     edgecounts = defaultdict(int)
-    with jsonlines.open('edges.jsonl','r') as inf, jsonlines.open('prov.txt','w') as provout:
+    with jsonlines.open('edges.jsonl','r') as inf, open('prov.txt','w') as provout:
         nl = 0
         for line in inf:
             nl += 1
