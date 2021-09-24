@@ -57,6 +57,8 @@ def coalesce_by_graph(opportunities):
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
     lcounts = get_link_counts(unique_links)
     nodetypedict = get_node_types(unique_link_nodes)
+    nodenamedict = get_node_names(unique_link_nodes)
+
 
     onum = 0
     #sffile=open('sfcalls.txt','w')
@@ -121,7 +123,7 @@ def coalesce_by_graph(opportunities):
                 else:
                     nni = 'source'
                 #Need to get the right node type.
-                patch.add_extra_node(newcurie, e[8], edge_type=etype, newnode_is=nni)
+                patch.add_extra_node(newcurie, e[8], edge_type=etype, newnode_is=nni, newnode_name = nodenamedict[newcurie])
             patches.append(patch)
         logger.debug('end of opportunity')
 
@@ -141,6 +143,18 @@ def get_node_types(unique_link_nodes):
             node_types = ast.literal_eval(nodetypestring.decode())
             nodetypedict[newcurie] = node_types
     return nodetypedict
+
+
+def get_node_names(unique_link_nodes):
+    p = get_redis_pipeline(3)
+    nodenames = {}
+    for ncg in grouper(1000, unique_link_nodes):
+        for newcurie in ncg:
+            p.get(newcurie)
+        all_names = p.execute()
+        for newcurie, name in zip(ncg, all_names):
+            nodenames[newcurie] = name
+    return nodenames
 
 
 def get_link_counts(unique_links):
