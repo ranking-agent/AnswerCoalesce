@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.encoders import jsonable_encoder
 
-AC_VERSION = '2.2.1'
+AC_VERSION = '2.2.2'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -74,12 +74,12 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
 
     # make sure there are results to coalesce
     #0 results is perfectly legal, there's just nothing to do.
-    if 'results' not in in_message['message'] or in_message['message']['results'] is None or len(in_message['message']['results']) == 0:
+    if 'results' not in in_message['message'] or len(in_message['message']['results']) == 0:
         status_code = 200
         in_message['logs'].append(create_log_entry(f'No results to coalesce', "WARNING"))
         return JSONResponse(content=in_message, status_code=status_code)
 
-    elif 'knowledge_graph' not in in_message['message'] or in_message['message']['knowledge_graph'] is None or len(in_message['message']['knowledge_graph']) == 0:
+    elif 'knowledge_graph' not in in_message['message'] or len(in_message['message']['knowledge_graph']) == 0:
         #This is a 422 b/c we do have results, but there's no graph to use.
         status_code = 422
         in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
@@ -102,11 +102,11 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # with open('ac_out_attributes.json', 'w') as tf:
         #     tf.write(json.dumps(in_message, default=str))
 
-        # # Normalize the data
-        # coalesced = normalize(in_message)
-        #
-        # # save the response in the incoming message
-        # in_message['message'] = coalesced['message']
+        # Normalize the data
+        coalesced = normalize(in_message)
+
+        # save the response in the incoming message
+        in_message['message'] = coalesced['message']
 
     except Exception as e:
         # put the error in the response
@@ -215,10 +215,16 @@ def construct_open_api_schema():
     if title_override:
         open_api_schema["info"]["title"] = title_override
 
+    # adds support to override server root path
+    server_root = os.environ.get('SERVER_ROOT', '/')
+
+    # make sure not to add double slash at the end.
+    server_root = server_root.rstrip('/') + '/'
+
     if servers_conf:
         for s in servers_conf:
             if s['description'].startswith('Default'):
-                s['url'] = s['url'] + '/1.2'
+                s['url'] = server_root + '1.2' if server_root != '/' else s['url']
         open_api_schema["servers"] = servers_conf
 
     return open_api_schema
