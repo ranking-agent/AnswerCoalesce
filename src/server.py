@@ -74,12 +74,12 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
 
     # make sure there are results to coalesce
     #0 results is perfectly legal, there's just nothing to do.
-    if 'results' not in in_message['message'] or len(in_message['message']['results']) == 0:
+    if 'results' not in in_message['message'] or in_message['message']['results'] is None or len(in_message['message']['results']) == 0:
         status_code = 200
         in_message['logs'].append(create_log_entry(f'No results to coalesce', "WARNING"))
         return JSONResponse(content=in_message, status_code=status_code)
 
-    elif 'knowledge_graph' not in in_message['message'] or len(in_message['message']['knowledge_graph']) == 0:
+    elif 'knowledge_graph' not in in_message['message'] or in_message['message']['knowledge_graph'] is None or len(in_message['message']['knowledge_graph']) == 0:
         #This is a 422 b/c we do have results, but there's no graph to use.
         status_code = 422
         in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
