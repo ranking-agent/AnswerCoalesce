@@ -35,7 +35,7 @@ def filter_links(infname,outfname,input_nodes):
                 link_ids.update(nodes)
                 edges.update([f'{x[0]} {sl[1]} {sl[0]}' for sl in some_links if sl[2]])
                 edges.update([f'{sl[0]} {sl[1]} {x[0]}' for sl in some_links if not sl[2]])
-    return link_ids
+    return link_ids,edges
 
 def filter_backlinks(infname,outfname,stypes,link_ids):
     with open(infname,'r') as inf, open(outfname,'w') as outf:
