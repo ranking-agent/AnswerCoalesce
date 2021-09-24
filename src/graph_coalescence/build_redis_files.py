@@ -108,7 +108,10 @@ def go():
         for node in nodefile:
             labelfile.write(f'{node["id"]}\t{node["category"]}\n')
             categories[node["id"]] = node["category"]
-            namefile.write(f'{node["id"]}\t{node.get("name","")}\n')
+            name = node.get("name","")
+            if name is not None:
+                name = name.encode('ascii',errors='ignore').decode(encoding="utf-8")
+            namefile.write(f'{node["id"]}\t{name}\n')
     nodes_to_links = defaultdict(list)
     edgecounts = defaultdict(int)
     with jsonlines.open('edges.jsonl','r') as inf, open('prov.txt','w') as provout:
@@ -142,13 +145,17 @@ def go():
             provout.write(f'{pkey}\t{json.dumps(prov)}\n')
             if nl % 1000000 == 0:
                 print(nl)
-    print('ate the whole thing')
+        print('node labels and names done')
+
     with open('links.txt','w') as outf:
         for node,links in nodes_to_links.items():
             outf.write(f'{node}\t{json.dumps(links)}\n')
+        print('links done')
+
     with open('backlinks.txt','w') as outf:
         for key,value in edgecounts.items():
             outf.write(f'{key}\t{value}\n')
+        print('backlinks done')
 
 
 if __name__ == '__main__':
