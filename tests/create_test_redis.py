@@ -24,6 +24,7 @@ def collect_input_nodes():
 
 def filter_links(infname,outfname,input_nodes):
     link_ids = set()
+    edges = set()
     with open(infname,'r') as inf, open(outfname,'w') as outf:
         for line in inf:
             x = line.strip().split('\t')
@@ -32,6 +33,8 @@ def filter_links(infname,outfname,input_nodes):
                 some_links = json.loads(x[1])
                 nodes = [sl[0] for sl in some_links]
                 link_ids.update(nodes)
+                edges.update([f'{x[0]} {sl[1]} {sl[0]}' for sl in some_links if sl[2]])
+                edges.update([f'{sl[0]} {sl[1]} {x[0]}' for sl in some_links if not sl[2]])
     return link_ids
 
 def filter_backlinks(infname,outfname,stypes,link_ids):
@@ -41,6 +44,12 @@ def filter_backlinks(infname,outfname,stypes,link_ids):
             if x[1] in link_ids and x[5] in stypes:
                 outf.write(line)
 
+def filter_prov(infname,outfname,edges):
+    with open(infname,'r') as inf, open(outfname,'w') as outf:
+        for line in inf:
+            x = line.strip().split("\t")
+            if x[0] in edges:
+                outf.write(line)
 
 def filter_types(infname,outfname,idents):
     with open(infname, 'r') as inf, open(outfname, 'w') as outf:
@@ -51,9 +60,10 @@ def filter_types(infname,outfname,idents):
 
 def go():
     nodes = collect_input_nodes()
-    links = filter_links('../src/graph_coalescence/links.txt','test_links.txt',nodes)
+    links,edges = filter_links('../src/graph_coalescence/links.txt','test_links.txt',nodes)
     back_types = set(['biolink:Gene','biolink:NamedThing','biolink:ChemicalEntity'])
     filter_backlinks('../src/graph_coalescence/backlinks.txt','test_backlinks.txt',back_types,links)
+    filter_prov('../src/graph_coalescence/prov.txt','test_prov.txt',edges)
     nodes.update(links)
     filter_types('../src/graph_coalescence/nodelabels.txt','test_nodelabels.txt',nodes)
     #names has the same format as types
