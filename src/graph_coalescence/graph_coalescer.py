@@ -115,15 +115,20 @@ def coalesce_by_graph(opportunities):
             #             'enriched_nodes': [x[1] for x in best_enrichments]}
 
             patch = PropertyPatch(qg_id,best_grouping,newprops,opportunity.get_answer_indices())
+            provkeys = []
             for e in best_enrichments:
                 newcurie = e[1]
                 etype = e[2]
                 if e[3]:
                     nni = 'target'
+                    provkeys += [ f'{bg} {etype} {newcurie}' for bg in best_grouping ]
                 else:
                     nni = 'source'
+                    provkeys += [f'{newcurie} {etype} {bg}' for bg in best_grouping]
                 #Need to get the right node type.
                 patch.add_extra_node(newcurie, e[8], edge_type=etype, newnode_is=nni, newnode_name = nodenamedict[newcurie])
+            provs = get_provs(provkeys)
+            patch.add_provenance(provs)
             patches.append(patch)
         logger.debug('end of opportunity')
 
@@ -174,6 +179,19 @@ def get_link_counts(unique_links):
                 lcounts[ul] = 0
     return lcounts
 
+def get_provs(edges):
+    # Now we are going to hit redis to get the provenances for all of the links.
+    # our unique_links are the keys
+    p = get_redis_pipeline(4)
+    prov = {}
+    for edgegroup in grouper(1000, edges):
+        for edge in edgegroup:
+            p.get(edge)
+        ns = p.execute()
+        for edge, n in zip(edgegroup, ns):
+            #Convert the svelte key-value attribute into a fat trapi-style attribute
+            prov[edge] = [ { 'attribute_type_id':k ,'value': v} for k,v in json.loads(n).items() ]
+    return prov
 
 def uniquify_links(nodes_to_links, opportunities):
     # A link might occur for multiple nodes and across different opportunities

@@ -79,6 +79,15 @@ def test_graph_coalescer_perf_test():
     # it should be less than this
     assert(diff.seconds < 60)
 
+#Used in test_graph_coalesce to extract values from attributes, which can be a list or a string
+def flatten(ll):
+    if isinstance(ll, list):
+        temp = []
+        for ele in ll:
+            temp.extend(flatten(ele))
+        return temp
+    else:
+        return [ll]
 
 def test_graph_coalesce():
     """Make sure that results are well formed."""
@@ -118,9 +127,15 @@ def test_graph_coalesce():
                     eedge = kgedges[nb['id']]
                     if nb['id'] in original_edge_ids:
                         continue
-                    values = [a['value'] for a in eedge['attributes']]
-                    assert 'infores:aragorn' in values
-                    assert 'infores:automat-robokop' in values
+                    keys = [a['attribute_type_id'] for a in eedge['attributes']]
+                    try:
+                        values = set(flatten([a['value'] for a in eedge['attributes']]))
+                    except:
+                        print(eedge)
+                        assert False
+                    ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
+                    assert len(values.intersection(ac_prov)) == 2
+                    assert len(values) > len(ac_prov)
         assert extra_edge
 
 def test_graph_coalesce_strider():

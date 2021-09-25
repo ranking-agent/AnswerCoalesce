@@ -114,7 +114,7 @@ def go():
             namefile.write(f'{node["id"]}\t{name}\n')
     nodes_to_links = defaultdict(list)
     edgecounts = defaultdict(int)
-    with jsonlines.open('edges.jsonl','r') as inf:
+    with jsonlines.open('edges.jsonl','r') as inf, open('prov.txt','w') as provout:
         nl = 0
         for line in inf:
             nl += 1
@@ -140,6 +140,9 @@ def go():
                 edgecounts[ (source_id, pred, True, tcategory) ] += 1
             for scategory in categories[source_id]:
                 edgecounts[ (target_id, pred, False, scategory) ] += 1
+            pkey=f'{source_id} {pred} {target_id}'
+            prov = {x:line[x] for x in ['biolink:original_knowledge_source','biolink:aggregator_knowledge_source'] if x in line}
+            provout.write(f'{pkey}\t{json.dumps(prov)}\n')
             if nl % 1000000 == 0:
                 print(nl)
         print('node labels and names done')
