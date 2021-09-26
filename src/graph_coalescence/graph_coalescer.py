@@ -158,7 +158,10 @@ def get_node_names(unique_link_nodes):
             p.get(newcurie)
         all_names = p.execute()
         for newcurie, name in zip(ncg, all_names):
-            nodenames[newcurie] = name
+            try:
+                nodenames[newcurie] = name.decode('UTF-8')
+            except:
+                nodenames[newcurie] = ''
     return nodenames
 
 
