@@ -30,7 +30,7 @@ RUN pip install -r requirements.txt
 RUN pip install uvicorn
 
 # pull down the large files
-RUN git lfs pull
+#RUN git lfs pull
 
 # expose the default port
 EXPOSE 6380
