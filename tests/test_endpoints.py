@@ -19,7 +19,7 @@ def test_basic():
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
 
-    testfilename = os.path.join(dir_path,jsondir,'D1_strider.json')
+    testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
