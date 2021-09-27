@@ -45,6 +45,7 @@ def coalesce_by_graph(opportunities):
     """
     patches = []
 
+    print(f'{len(opportunities)} opps')
     logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
 
     #Multiple opportunities are going to use the same nodes.  In one random (large) example where there are about
@@ -58,6 +59,7 @@ def coalesce_by_graph(opportunities):
     lcounts = get_link_counts(unique_links)
     nodetypedict = get_node_types(unique_link_nodes)
     nodenamedict = get_node_names(unique_link_nodes)
+    provs = get_provs(nodes_to_links)
 
 
     onum = 0
@@ -127,8 +129,8 @@ def coalesce_by_graph(opportunities):
                     provkeys += [f'{newcurie} {etype} {bg}' for bg in best_grouping]
                 #Need to get the right node type.
                 patch.add_extra_node(newcurie, e[8], edge_type=etype, newnode_is=nni, newnode_name = nodenamedict[newcurie])
-            provs = get_provs(provkeys)
-            patch.add_provenance(provs)
+            pprovs = { pk:provs[pk] for pk in provkeys }
+            patch.add_provenance(pprovs)
             patches.append(patch)
         logger.debug('end of opportunity')
 
@@ -182,9 +184,18 @@ def get_link_counts(unique_links):
                 lcounts[ul] = 0
     return lcounts
 
-def get_provs(edges):
+def get_provs(n2l):
     # Now we are going to hit redis to get the provenances for all of the links.
     # our unique_links are the keys
+    #Convert n2l to edges
+    edges = []
+    for n1,ll in n2l.items():
+        for link in ll:
+            if link[2]:
+                edges.append( f'{n1} {link[1]} {link[0]}')
+            else:
+                edges.append(f'{link[0]} {link[1]} {n1}')
+    #now get the prov for those edges
     p = get_redis_pipeline(4)
     prov = {}
     for edgegroup in grouper(1000, edges):
@@ -192,6 +203,8 @@ def get_provs(edges):
             p.get(edge)
         ns = p.execute()
         for edge, n in zip(edgegroup, ns):
+            if n is None:
+                print(edge)
             #Convert the svelte key-value attribute into a fat trapi-style attribute
             prov[edge] = [ { 'attribute_type_id':k ,'value': v} for k,v in json.loads(n).items() ]
     return prov
@@ -249,23 +262,12 @@ def create_nodes_to_links(allnodes):
     return nodes_to_links
 
 
-import re
 def create_node_to_type(opportunities):
     # Create a dict from node->type(node) for all nodes in every opportunity
     allnodes = {}
     for opportunity in opportunities:
         kn = opportunity.get_kg_ids()
         stype = opportunity.get_qg_semantic_type()
-        #We're in a situation where there are databases using old style types but the input will be new style, and
-        #for a moment we need to translate.  This will go away.
-        #if isinstance(stype, list):
-        #    for i, item in enumerate(stype):
-        #        if item.startswith('biolink'):
-        #            pascal = item.split(':')[1]
-        #            stype[i] = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
-        #elif stype.startswith('biolink'):
-        #    pascal = stype.split(':')[1]
-        #    stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
         for node in kn:
             allnodes[node] = stype
     return allnodes
