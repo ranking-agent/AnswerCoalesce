@@ -114,7 +114,8 @@ def test_graph_coalesce():
                 assert nb['id'] in kgnodes
                 #And each of these nodes should have a name
                 assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
-        assert extra_node
+        #We are no longer updating the qgraph.
+#        assert extra_node
         #make sure each new result has an extra edge
         nbs = r['edge_bindings']
         extra_edge = False
@@ -136,7 +137,8 @@ def test_graph_coalesce():
                     ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
                     assert len(values.intersection(ac_prov)) == 2
                     assert len(values) > len(ac_prov)
-        assert extra_edge
+        #We are no longer updating the qgraph
+#        assert extra_edge
 
 def test_graph_coalesce_strider():
     """Make sure that results are well formed."""

@@ -14,18 +14,18 @@ jsondir= 'InputJson_1.2'
 
 #TODO: This test requires use of the prod databases.  We should add pytest annotations distinguishing tests like this
 # so that the github actions can selectively run them
-def xtest_basic():
+def test_basic():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
 
-    testfilename = os.path.join(dir_path,jsondir,'sr_out_ac_hang.json')
+    testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
 
     # make a good request
-    response = client.post('/coalesce/all', json=answerset)
+    response = client.post('/coalesce/graph', json=answerset)
 
     # was the request successful
     assert(response.status_code == 200)
@@ -36,6 +36,7 @@ def xtest_basic():
     # check the data
     ret = jret['message']
     assert(len(ret) == 3)
+    assert( len(ret['query_graph']['nodes']) < 6)
     assert( len(ret['results'])-len(answerset['message']['results']) > 0 )
 
 def xtest_wfa3():
