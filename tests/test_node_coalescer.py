@@ -253,12 +253,9 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     #This is the new line:
     patch.add_extra_node("E",'biolink:NamedThing','biolink:is_a',newnode_is='target',newnode_name='newname')
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
-    #Did we patch the question correctly?
-    assert len(updated_qg['nodes']) == 5 #started as 4
-    assert len(updated_qg['edges']) == 4 #started as 3
-    #n2 should now be a set in the question
-    vnode = updated_qg['nodes']['n2']
-    assert vnode['is_set']
+    #Did we patch the question correctly? We're not supposed to update it
+    assert len(updated_qg['nodes']) == 4 #started as 4
+    assert len(updated_qg['edges']) == 3 #started as 3
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
     na = new_answers[0]
@@ -273,7 +270,7 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     #take advantage of node_bindings being a list.  it's a little hinky
     found_extra = False
     for nb_id, nbs in na['node_bindings'].items():
-        if nb_id.startswith('extra'):
+        if nb_id.startswith('_n_ac'):
             found_extra = True
             assert len(nbs) == 1
             assert nbs[0]['id'] == 'E'
@@ -304,7 +301,7 @@ def test_apply_property_patches_add_new_node_that_isnt_new():
     assert found
     found_extra_edges = False
     for edge_id, edge_binding in na['edge_bindings'].items():
-        if edge_id.startswith('extra'):
+        if edge_id.startswith('_e_ac'):
             found_extra_edges = True
             assert len(edge_binding)== 1 #is it pointing to the new kg_id edge?
             assert edge_binding[0]['id'] == eid #is it pointing to the new
@@ -358,12 +355,9 @@ def test_apply_property_patches_add_two_new_nodes():
     patch.add_extra_node("Q",'biolink:NamedThing','biolink:part_of',newnode_is='target',newnode_name='targ')
     patch.add_extra_node("R",'biolink:NamedThing','biolink:interacts_with',newnode_is='source',newnode_name='surc')
     new_answers,updated_qg,updated_kg = snc.patch_answers(answerset,[patch])
-    #Did we patch the question correctly?
-    assert len(updated_qg['nodes']) == 6 #started as 4
-    assert len(updated_qg['edges']) == 5 #started as 3
-    #n2 should now be a set in the question
-    vnode = updated_qg['nodes']['n2']
-    assert vnode['is_set']
+    #Did we (not) patch the question correctly?  We are not updating qgraph any more
+    assert len(updated_qg['nodes']) == 4 #started as 4
+    assert len(updated_qg['edges']) == 3 #started as 3
     #Don't want to break any of the stuff that was already working...
     assert len(new_answers) == 1
     na = new_answers[0]
@@ -379,7 +373,7 @@ def test_apply_property_patches_add_two_new_nodes():
     found_R = False
     found_Q = False
     for nb_id, nbs in na['node_bindings'].items():
-        if nb_id.startswith('extra'):
+        if nb_id.startswith('_n_ac'):
             assert len(nbs) == 1
             if nbs[0]['id'] == 'R':
                 found_R = True

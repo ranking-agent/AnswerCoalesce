@@ -52,7 +52,7 @@ class PropertyPatch:
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
         self.added_nodes.append( NewNode(newnode, newnodetype, edge_type, newnode_is, newnode_name) )
-    def apply(self,answers,question,graph,graph_index):
+    def apply(self,answers,question,graph,graph_index,patch_no):
         # Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
         # answers that were originally in the opportunity, but we might have only found commonality
         # among a subset of them
@@ -65,7 +65,7 @@ class PropertyPatch:
         #If we're not adding a new node, extra_q_node = None, extra_q_edges = extra_k_edges =[]. No bindings to add
         #If we have an added node, the added node is always self.newnode
         # Also we will have an extra_q_node in that case, as well as one extra_q_edge, and 1 or more new k_edges
-        question,extra_q_nodes,extra_q_edges = self.update_qg(question)
+        #question,extra_q_nodes,extra_q_edges = self.update_qg(question)
         graph,all_extra_k_edges,graph_index = self.update_kg(graph,graph_index)
         #Start with some answer
         new_answer = deepcopy(comb_answers[0])
@@ -75,9 +75,8 @@ class PropertyPatch:
         #Add in any extra properties
         new_answer.add_properties(self.qg_id,self.new_props)
         #Add newnode-related bindings if necessary
-        for newnode,extra_q_node,extra_q_edge,extra_k_edges in \
-                zip(self.added_nodes,extra_q_nodes,extra_q_edges,all_extra_k_edges):
-            new_answer.add_bindings(extra_q_node, [newnode.newnode], extra_q_edge, extra_k_edges)
+        for node_no,(newnode,extra_k_edges) in enumerate(zip(self.added_nodes,all_extra_k_edges)):
+            new_answer.add_bindings([newnode.newnode], extra_k_edges, f'{patch_no}_{node_no}')
         return new_answer, question, graph, graph_index
     def isconsistent(self, possibleanswer):
         """
@@ -273,9 +272,9 @@ class Answer:
     def add_properties(self,qg_id,bps):
         """Update the property map of element qg_id with the properties in bps"""
         self.binding_properties[qg_id].update(bps)
-    def add_bindings(self,extra_q_node, newnode, extra_q_edge, extra_k_edges):
-        self.node_bindings[extra_q_node].update(newnode)
-        self.question_edge_bindings[extra_q_edge].update(extra_k_edges)
+    def add_bindings(self, newnode, extra_k_edges,counter):
+        self.node_bindings[f'_n_ac_{counter}'].update(newnode)
+        self.question_edge_bindings[f'_e_ac_{counter}'].update(extra_k_edges)
 
 
 
