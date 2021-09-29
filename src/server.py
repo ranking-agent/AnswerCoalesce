@@ -76,13 +76,15 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     #0 results is perfectly legal, there's just nothing to do.
     if 'results' not in in_message['message'] or in_message['message']['results'] is None or len(in_message['message']['results']) == 0:
         status_code = 200
-        in_message['logs'].append(create_log_entry(f'No results to coalesce', "WARNING"))
+        logger.error(f"No results to coalesce")
+        # in_message['logs'].append(create_log_entry(f'No results to coalesce', "WARNING"))
         return JSONResponse(content=in_message, status_code=status_code)
 
     elif 'knowledge_graph' not in in_message['message'] or in_message['message']['knowledge_graph'] is None or len(in_message['message']['knowledge_graph']) == 0:
         #This is a 422 b/c we do have results, but there's no graph to use.
         status_code = 422
-        in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
+        logger.error(f"No knowledge graph to coalesce")
+        # in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
         return JSONResponse(content=in_message, status_code=status_code)
 
     # init the status code
@@ -111,7 +113,8 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     except Exception as e:
         # put the error in the response
         status_code = 500
-        in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
+        logger.exception(f"No results to coalesce")
+        # in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
 
     # return the result to the caller
     return JSONResponse(content=in_message, status_code=status_code)
@@ -149,7 +152,7 @@ def post(name, url, message, params=None):
         msg = f'Error response from {name}, status code: {response.status_code}'
 
         logger.error(msg)
-        return {'errmsg': create_log_entry(msg, 'Warning', code=response.status_code)}
+        return msg # {'errmsg': create_log_entry(msg, 'Warning', code=response.status_code)}
 
     return response.json()
 
