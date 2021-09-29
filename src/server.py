@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.encoders import jsonable_encoder
 
-AC_VERSION = '2.2.5'
+AC_VERSION = '2.2.6'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
