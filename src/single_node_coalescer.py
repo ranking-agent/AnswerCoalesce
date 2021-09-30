@@ -24,7 +24,12 @@ def coalesce(answerset, method='all', return_original=True):
     patches = []
 
     if method in ['all', 'set']:
-        patches += coalesce_by_set(coalescence_opportunities)
+        # set query is only reasonable if there are more than one edges in the qgraph.  Usually if you're
+        # asking a 1 hop you want to see the answers individually.  THis will do nothing but smush them together
+        # and make them hard to read.
+        n_query_edges = len(answerset.get('query_graph', {}).get('edges', {}))
+        if n_query_edges > 0:
+            patches += coalesce_by_set(coalescence_opportunities)
 
     if method in ['all', 'property']:
         patches += coalesce_by_property(coalescence_opportunities)
