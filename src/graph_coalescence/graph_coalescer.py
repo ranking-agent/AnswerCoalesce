@@ -14,6 +14,9 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir+'/')
 
+#These are predicates that we have decided are too messy for graph coalescer to use
+bad_predicates = ['biolink:causes_adverse_event']
+
 def grouper(n, iterable):
     it = iter(iterable)
     while True:
@@ -225,6 +228,9 @@ def uniquify_links(nodes_to_links, opportunities):
             # if len(nodes_to_links[n]) > 10000:
             #    print(' ',n,len(nodes_to_links[n]),opportunity.get_qg_semantic_type())
             for l in nodes_to_links[n]:
+                #There are some predicates we don't want to allow.  Well, there's one anyway.
+                if l[1] in bad_predicates:
+                    continue
                 # The link as defined uses the input node as is_source, but the lookup into redis uses the
                 # linked node as the is_source, so gotta flip it
                 lplus = l + [opportunity.get_qg_semantic_type()]
