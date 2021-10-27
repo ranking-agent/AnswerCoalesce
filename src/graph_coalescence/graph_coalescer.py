@@ -228,9 +228,6 @@ def uniquify_links(nodes_to_links, opportunities):
             # if len(nodes_to_links[n]) > 10000:
             #    print(' ',n,len(nodes_to_links[n]),opportunity.get_qg_semantic_type())
             for l in nodes_to_links[n]:
-                #There are some predicates we don't want to allow.  Well, there's one anyway.
-                if l[1] in bad_predicates:
-                    continue
                 # The link as defined uses the input node as is_source, but the lookup into redis uses the
                 # linked node as the is_source, so gotta flip it
                 lplus = l + [opportunity.get_qg_semantic_type()]
@@ -263,6 +260,7 @@ def create_nodes_to_links(allnodes):
                 links = []
             else:
                 links = json.loads(linkstring)
+            links = list( filter (lambda l: l[1] not in bad_predicates, links))
             nodes_to_links[node] = links
     #print(len(nodes_to_links))
     return nodes_to_links
