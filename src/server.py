@@ -113,7 +113,7 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     except Exception as e:
         # put the error in the response
         status_code = 500
-        logger.exception(f"No results to coalesce")
+        logger.exception(f"Exception encountered {str(e)}")
         # in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
 
     # return the result to the caller
