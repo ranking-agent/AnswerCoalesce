@@ -7,11 +7,6 @@ LABEL maintainer="powen@renci.org"
 # update the container
 RUN apt-get update
 
-# Get git-lfs
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
-RUN apt-get install -y git-lfs
-RUN git lfs install
-
 # make a directory for the repo
 RUN mkdir /repo
 
@@ -28,9 +23,6 @@ WORKDIR /repo/AnswerCoalesce
 RUN pip install -r requirements.txt
 
 RUN pip install uvicorn
-
-# pull down the large files
-#RUN git lfs pull
 
 # expose the default port
 EXPOSE 6380
