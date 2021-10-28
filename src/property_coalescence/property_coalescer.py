@@ -25,7 +25,7 @@ class PropertyLookup():
     #        stype = re.sub(r'(?<!^)(?=[A-Z])', '_', pascal).lower()
     #    return stype
     def lookup_property_by_node(self,node,stype):
-        pf = f'{self.thisdir}/{stype}.db'
+        pf = f'{self.thisdir}/{stype.replace(":", ".")}.db'
         if not os.path.exists(pf):
             return {}
         with sqlite3.connect(pf) as conn:
@@ -39,7 +39,7 @@ class PropertyLookup():
             return literal_eval(r)
         return {}
     def total_nodes_with_property(self,property,stype):
-        pf = f'{self.thisdir}/{stype}.db'
+        pf = f'{self.thisdir}/{stype.replace(":", ".")}.db'
         if not os.path.exists(pf):
             return 0
         with sqlite3.connect(pf) as conn:
@@ -50,7 +50,7 @@ class PropertyLookup():
             return results[0]['count']
         return 0
     def get_nodecount(self, stype):
-        pf = f'{self.thisdir}/{stype}.db'
+        pf = f'{self.thisdir}/{stype.replace(":", ".")}.db'
         if not os.path.exists(pf):
             return 0
         with sqlite3.connect(pf) as conn:

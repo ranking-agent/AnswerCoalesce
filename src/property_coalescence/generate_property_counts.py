@@ -15,7 +15,7 @@ garbage_properties=set(['molecular_formula','iupac_name','pubchem.orig_smiles','
 def initialize_property_dbs(stype):
     # valid in put is biolink:<node label>. so just use the end part for this
     thisdir = os.path.dirname(os.path.realpath(__file__) )
-    dbname = f'{thisdir}/{stype}.db'
+    dbname = f'{thisdir}/{stype.replace(":", ".")}.db'
     if os.path.exists(dbname):
         os.remove(dbname)
     with sqlite3.connect(dbname) as conn:
@@ -26,7 +26,7 @@ def initialize_property_dbs(stype):
 def create_from_file(stype):
     counts = defaultdict(int)
     properties_per_node = defaultdict(set)
-    with jsonlines.open(f'{stype}_properties.jsonl','r') as inf:
+    with jsonlines.open(f'{stype.replace(":", ".")}_properties.jsonl','r') as inf:
         for line in inf:
             node = line['id']
             for p in line:
