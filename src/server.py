@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-AC_VERSION = '2.2.7'
+AC_VERSION = '2.2.8'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -184,6 +184,18 @@ def construct_open_api_schema():
 
     with open(open_api_extended_file_path) as open_api_file:
         open_api_extended_spec = yaml.load(open_api_file, Loader=yaml.SafeLoader)
+
+    # gather up all the x-maturity and translator id data
+    x_maturity = os.environ.get("MATURITY_KEY", "x-maturity")
+    x_maturity_val = os.environ.get("MATURITY_VALUE", "production")
+    x_translator_id = os.environ.get("INFORES_KEY", "translator_id")
+    x_translator_id_val = os.environ.get("INFORES_VALUE", "infores:answer-coalesce")
+
+    # Add the x-maturity data
+    open_api_schema["info"][x_maturity] = x_maturity_val
+
+    # Add the translator id (infores) data
+    open_api_schema["info"][x_translator_id] = x_translator_id_val
 
     x_translator_extension = open_api_extended_spec.get("x-translator")
     x_trapi_extension = open_api_extended_spec.get("x-trapi")
