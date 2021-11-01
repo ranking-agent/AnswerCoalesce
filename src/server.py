@@ -239,6 +239,9 @@ def construct_open_api_schema():
         for s in servers_conf:
             if s['description'].startswith('Default'):
                 s['url'] = server_root + '1.2' if server_root != '/' else s['url']
+                s['x-maturity'] = os.environ.get("MATURITY_VALUE", "maturity")
+                s['x-location'] = os.environ.get("LOCATION_VALUE", "location")
+
         open_api_schema["servers"] = servers_conf
 
     return open_api_schema
