@@ -1,7 +1,8 @@
 contact:
-  email: patrick@covar.com
-  name: Patrick Wang
-  x-id: https://github.com/patrickkwang
+  title: Answer Coalesce
+  email: bizon@renci.org
+  name: Chris Bizon
+  x-id: https://github.com/cbizon
   x-role: responsible developer
 description: 'Answer coalesce: This service accepts a TRAPI object containing result answers and returns answers that have been coalesced by property, graph or ontology analysis.'
 servers:
