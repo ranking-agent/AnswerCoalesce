@@ -6,10 +6,9 @@ import os,json
 
 jsondir='InputJson_1.1'
 
-#Failing due to RK KG problems.  Once HGNC FAMILY is fixed, turn this back on.  CB May 6, 2020
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
-    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,[0,1,2])
+    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,[0,1,2],{i:[curies[i]] for i in [0,1,2]})
     opportunities=[opportunity]
     patches = gc.coalesce_by_graph(opportunities)
     assert len(patches) == 1
@@ -39,7 +38,7 @@ def test_graph_coalescer_double_check():
  'NCBIGene:7514',
  'NCBIGene:10128']
     cts = [i for i in range(len(curies))]
-    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,cts)
+    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,cts,{i:[curies[i]] for i in cts})
     opportunities=[opportunity]
     patches = gc.coalesce_by_graph(opportunities)
     assert len(patches) == 15

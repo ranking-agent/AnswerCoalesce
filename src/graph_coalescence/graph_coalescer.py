@@ -55,6 +55,8 @@ def coalesce_by_graph(opportunities):
 
     allnodes = create_node_to_type(opportunities)
     nodes_to_links = create_nodes_to_links(allnodes)
+    #There will be nodes we can't enrich b/c they're not in our db.  Remove those from our opps, and remove redundant/empty opps
+    opportunities = filter_opportunities(opportunities,nodes_to_links)
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
     lcounts = get_link_counts(unique_links)
     nodetypedict = get_node_types(unique_link_nodes)
@@ -209,6 +211,17 @@ def get_provs(n2l):
             prov[edge] = [ { 'attribute_type_id':k ,'value': v} for k,v in json.loads(n).items() ]
     return prov
 
+def filter_opportunities(opportunities,nodes_to_links):
+    new_opportunities = []
+    for opportunity in opportunities:
+        kn = opportunity.get_kg_ids()
+        #These will be the nodes that we actually have links for
+        newkn = list(filter( lambda x: len(nodes_to_links[x]), kn))
+        newopp = opportunity.filter(newkn)
+        if newopp is not None:
+            new_opportunities.append(opportunity)
+    return new_opportunities
+
 def uniquify_links(nodes_to_links, opportunities):
     # A link might occur for multiple nodes and across different opportunities
     # Create the total unique set of links
@@ -250,9 +263,6 @@ def create_nodes_to_links(allnodes):
             p.get(node)
         linkstrings = p.execute()
         for node, linkstring in zip(group, linkstrings):
-            if linkstring is None:
-                #print("No node:",node)
-                pass
             if linkstring is None:
                 links = []
             else:
@@ -346,7 +356,6 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
             #     logger.info (f'New and old node count mismatch for ({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type}: n:{n}, o:{o}')
 
             ndraws = len(nodes)
-
 
             #The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
             # For most cases, it is ok to approximate it.  There are multiple levels of approximation as described
