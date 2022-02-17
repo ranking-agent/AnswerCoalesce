@@ -51,8 +51,8 @@ def go():
             namefile.write(f'{node["id"]}\t{name}\n')
     nodes_to_links = defaultdict(list)
     edgecounts = defaultdict(int)
-    with open('category_count','w') as catcountout:
-        for c,v in catcount:
+    with open('category_count.txt','w') as catcountout:
+        for c,v in catcount.items():
             catcountout.write(f'{c}\t{v}\n')
     with jsonlines.open('edges.jsonl','r') as inf, open('prov.txt','w') as provout:
         nl = 0

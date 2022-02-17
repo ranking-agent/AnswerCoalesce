@@ -62,6 +62,7 @@ def coalesce_by_graph(opportunities):
     nodetypedict = get_node_types(unique_link_nodes)
     nodenamedict = get_node_names(unique_link_nodes)
     provs = get_provs(nodes_to_links)
+    total_node_counts = get_total_node_counts( set([o.get_qg_semantic_type() for o in opportunities] ) )
 
 
     onum = 0
@@ -77,7 +78,7 @@ def coalesce_by_graph(opportunities):
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
 
-        enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts,sf_cache,nodetypedict)
+        enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts,sf_cache,nodetypedict, total_node_counts)
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -301,7 +302,7 @@ def create_node_to_type(opportunities):
 #
 #    return nodes_to_links
 
-def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, typecache, pcut=1e-6):
+def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, typecache, total_node_counts, pcut=1e-6):
     logger.info (f'{len(nodes)} enriched node links to process.')
 
     # Get the most enriched connected node for a group of nodes.
@@ -339,7 +340,8 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
 
             x = len(nodeset)  # draws with the property
 
-            total_node_count = get_total_node_count(semantic_type)
+            #total_node_count = get_total_node_count(semantic_type)
+            total_node_count = total_node_counts[semantic_type]
 
             # total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
             # Note that is_source is from the point of view of the input nodes, not newcurie
@@ -386,6 +388,17 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
 
     logger.debug ('end get_enriched_links()')
     return results
+
+
+def get_total_node_counts(semantic_types):
+    p = get_redis_pipeline(5)
+    counts = {}
+    for st in semantic_types:
+        p.get(st)
+    allcounts = p.execute()
+    for st,stc in zip(semantic_types, allcounts):
+        counts[st] = float(stc)
+    return counts
 
 
 def get_total_node_count(semantic_type):

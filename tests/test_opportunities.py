@@ -25,7 +25,7 @@ def test_simple_filtering():
     keep_curies = curies[0:-1]
     new_opp = opportunity.filter(keep_curies)
     assert not opportunity == new_opp  # new object
-    assert new_opp.kg_ids == keep_curies  # changed
+    assert set(new_opp.kg_ids) == set(keep_curies)  # changed
     assert new_opp.answer_indices == [0, 1] #answer 2 removed
 
 def test_complex_filtering():
@@ -38,7 +38,7 @@ def test_complex_filtering():
     keep_curies = curies[0:-1] #just drop curie:4.  Answer 1 should be removed, and curie:3 along with it
     new_opp = opportunity.filter(keep_curies)
     assert not opportunity == new_opp  # new object
-    assert new_opp.kg_ids == ['curie:1','curie:2']
+    assert set(new_opp.kg_ids) == set(['curie:1','curie:2'])
     assert new_opp.answer_indices == [0] #answer 1 removed
 
 def test_empty_op():
