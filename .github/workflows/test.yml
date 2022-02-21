@@ -44,4 +44,4 @@ jobs:
 
       - name: Run the tests
         run: |
-          python -m pytest tests/
+          pytest -m "not nongithub" tests/
