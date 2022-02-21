@@ -9,17 +9,15 @@ from enum import Enum
 from functools import wraps
 from reasoner_pydantic import Response as PDResponse
 
-from src.util import LoggingUtil, create_log_entry
+from src.util import LoggingUtil
 from src.single_node_coalescer import coalesce
-from datetime import datetime
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.encoders import jsonable_encoder
 
-AC_VERSION = '2.2.6'
+AC_VERSION = '2.2.10'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -52,9 +50,10 @@ class MethodName(str, Enum):
 
 
 # load up the config file
-conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','config.json')
+conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'config.json')
 with open(conf_path, 'r') as inf:
     conf = json.load(inf)
+
 
 @APP.post('/coalesce/{method}', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
 async def coalesce_handler(request: PDResponse, method: MethodName):
@@ -73,7 +72,7 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         log['timestamp'] = str(log['timestamp'])
 
     # make sure there are results to coalesce
-    #0 results is perfectly legal, there's just nothing to do.
+    # 0 results is perfectly legal, there's just nothing to do.
     if 'results' not in in_message['message'] or in_message['message']['results'] is None or len(in_message['message']['results']) == 0:
         status_code = 200
         logger.error(f"No results to coalesce")
@@ -81,7 +80,7 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         return JSONResponse(content=in_message, status_code=status_code)
 
     elif 'knowledge_graph' not in in_message['message'] or in_message['message']['knowledge_graph'] is None or len(in_message['message']['knowledge_graph']) == 0:
-        #This is a 422 b/c we do have results, but there's no graph to use.
+        # This is a 422 b/c we do have results, but there's no graph to use.
         status_code = 422
         logger.error(f"No knowledge graph to coalesce")
         # in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
@@ -113,7 +112,7 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     except Exception as e:
         # put the error in the response
         status_code = 500
-        logger.exception(f"No results to coalesce")
+        logger.exception(f"Exception encountered {str(e)}")
         # in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
 
     # return the result to the caller
@@ -152,7 +151,7 @@ def post(name, url, message, params=None):
         msg = f'Error response from {name}, status code: {response.status_code}'
 
         logger.error(msg)
-        return msg # {'errmsg': create_log_entry(msg, 'Warning', code=response.status_code)}
+        return msg  # {'errmsg': create_log_entry(msg, 'Warning', code=response.status_code)}
 
     return response.json()
 
@@ -185,6 +184,18 @@ def construct_open_api_schema():
 
     with open(open_api_extended_file_path) as open_api_file:
         open_api_extended_spec = yaml.load(open_api_file, Loader=yaml.SafeLoader)
+
+    # gather up all the x-maturity and translator id data
+    x_maturity = os.environ.get("MATURITY_KEY", "x-maturity")
+    x_maturity_val = os.environ.get("MATURITY_VALUE", "production")
+    x_translator_id = os.environ.get("INFORES_KEY", "translator_id")
+    x_translator_id_val = os.environ.get("INFORES_VALUE", "infores:answer-coalesce")
+
+    # Add the x-maturity data
+    open_api_schema["info"][x_maturity] = x_maturity_val
+
+    # Add the translator id (infores) data
+    open_api_schema["info"][x_translator_id] = x_translator_id_val
 
     x_translator_extension = open_api_extended_spec.get("x-translator")
     x_trapi_extension = open_api_extended_spec.get("x-trapi")
@@ -228,6 +239,9 @@ def construct_open_api_schema():
         for s in servers_conf:
             if s['description'].startswith('Default'):
                 s['url'] = server_root + '1.2' if server_root != '/' else s['url']
+                s['x-maturity'] = os.environ.get("MATURITY_VALUE", "maturity")
+                s['x-location'] = os.environ.get("LOCATION_VALUE", "location")
+
         open_api_schema["servers"] = servers_conf
 
     return open_api_schema

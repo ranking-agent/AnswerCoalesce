@@ -14,6 +14,9 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir+'/')
 
+#These are predicates that we have decided are too messy for graph coalescer to use
+bad_predicates = ['biolink:causes_adverse_event']
+
 def grouper(n, iterable):
     it = iter(iterable)
     while True:
@@ -268,6 +271,7 @@ def create_nodes_to_links(allnodes):
                 links = []
             else:
                 links = json.loads(linkstring)
+            links = list( filter (lambda l: l[1] not in bad_predicates, links))
             nodes_to_links[node] = links
     #print(len(nodes_to_links))
     return nodes_to_links

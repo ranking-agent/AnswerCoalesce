@@ -1,16 +1,11 @@
-# base this container on python 3.8
-FROM python:3.8.5
+# leverage the renci python base image
+FROM renciorg/renci-python-image:v0.0.1
 
 # get some credit
 LABEL maintainer="powen@renci.org"
 
 # update the container
 RUN apt-get update
-
-# Get git-lfs
-RUN curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | bash
-RUN apt-get install -y git-lfs
-RUN git lfs install
 
 # make a directory for the repo
 RUN mkdir /repo
@@ -24,13 +19,15 @@ RUN git clone https://github.com/ranking-agent/AnswerCoalesce.git
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
 
+RUN chmod 777 -R .
+
 # install all required packages
 RUN pip install -r requirements.txt
 
 RUN pip install uvicorn
 
-# pull down the large files
-#RUN git lfs pull
+# switch to the non-root user (nru). defined in the base image
+USER nru
 
 # expose the default port
 EXPOSE 6380

@@ -1,14 +1,15 @@
 contact:
-  email: patrick@covar.com
-  name: Patrick Wang
-  x-id: https://github.com/patrickkwang
+  title: Answer Coalesce
+  email: bizon@renci.org
+  name: Chris Bizon
+  x-id: https://github.com/cbizon
   x-role: responsible developer
 description: 'Answer coalesce: This service accepts a TRAPI object containing result answers and returns answers that have been coalesced by property, graph or ontology analysis.'
 servers:
 - description: Default server
   url: https://answercoalesce.renci.org
 #- description: localhost
-#  url: http://localhost:5001
+#  url: http://127.0.0.1:5000
 termsOfService: http://robokop.renci.org:7055/tos?service_long=Answer coalesce&provider_long=RENCI
 title: Answer coalesce
 tags:
@@ -20,6 +21,7 @@ x-translator:
   component: ARA
   team:
   - Ranking Agent
+  infores: "infores:answer-coalesce"
 x-trapi:
   version: 1.2.0
   operations:

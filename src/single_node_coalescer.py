@@ -28,7 +28,7 @@ def coalesce(answerset, method='all', return_original=True):
         # asking a 1 hop you want to see the answers individually.  THis will do nothing but smush them together
         # and make them hard to read.
         n_query_edges = len(answerset.get('query_graph', {}).get('edges', {}))
-        if n_query_edges > 0:
+        if n_query_edges > 1:
             patches += coalesce_by_set(coalescence_opportunities)
 
     if method in ['all', 'property']:
