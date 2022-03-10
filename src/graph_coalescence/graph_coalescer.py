@@ -401,7 +401,7 @@ def get_total_node_counts(semantic_types):
         p.get(st)
     allcounts = p.execute()
     for st,stc in zip(semantic_types, allcounts):
-        if stc is None:
+        if stc is not None:
             counts[st] = float(stc)
         else:
             counts[st] = 0
