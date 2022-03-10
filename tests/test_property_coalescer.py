@@ -94,7 +94,7 @@ def xtest_disease_property_enrichment():
 
 def test_property_coalsecer():
     curies = ['PUBCHEM.COMPOUND:11254', 'PUBCHEM.COMPOUND:124886', 'PUBCHEM.COMPOUND:2478','PUBCHEM.COMPOUND:7839']
-    opportunity = Opportunity('hash',('qg_0','biolink:SmallMolecule'),curies,[0,1,2,3])
+    opportunity = Opportunity('hash',('qg_0','biolink:SmallMolecule'),curies,[0,1,2,3],{i:[curies[i]] for i in range(4)})
     opportunities=[opportunity]
     patches = pc.coalesce_by_property(opportunities)
     assert len(patches) == 1

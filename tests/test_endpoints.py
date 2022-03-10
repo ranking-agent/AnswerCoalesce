@@ -12,9 +12,11 @@ client = TestClient(APP)
 
 jsondir= 'InputJson_1.2'
 
-#TODO: This test requires use of the prod databases.  We should add pytest annotations distinguishing tests like this
-# so that the github actions can selectively run them
-def x_test_basic():
+
+#This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
+# to run locally against prod redises, but we use the mark to not run it on github actions
+@pytest.mark.nongithub
+def test_basic():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))

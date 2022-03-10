@@ -58,11 +58,14 @@ def coalesce_by_graph(opportunities):
 
     allnodes = create_node_to_type(opportunities)
     nodes_to_links = create_nodes_to_links(allnodes)
+    #There will be nodes we can't enrich b/c they're not in our db.  Remove those from our opps, and remove redundant/empty opps
+    opportunities = filter_opportunities(opportunities,nodes_to_links)
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
     lcounts = get_link_counts(unique_links)
     nodetypedict = get_node_types(unique_link_nodes)
     nodenamedict = get_node_names(unique_link_nodes)
     provs = get_provs(nodes_to_links)
+    total_node_counts = get_total_node_counts( set([o.get_qg_semantic_type() for o in opportunities] ) )
 
 
     onum = 0
@@ -78,7 +81,7 @@ def coalesce_by_graph(opportunities):
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
 
-        enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts,sf_cache,nodetypedict)
+        enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts,sf_cache,nodetypedict, total_node_counts)
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -212,6 +215,17 @@ def get_provs(n2l):
             prov[edge] = [ { 'attribute_type_id':k ,'value': v} for k,v in json.loads(n).items() ]
     return prov
 
+def filter_opportunities(opportunities,nodes_to_links):
+    new_opportunities = []
+    for opportunity in opportunities:
+        kn = opportunity.get_kg_ids()
+        #These will be the nodes that we actually have links for
+        newkn = list(filter( lambda x: len(nodes_to_links[x]), kn))
+        newopp = opportunity.filter(newkn)
+        if newopp is not None:
+            new_opportunities.append(opportunity)
+    return new_opportunities
+
 def uniquify_links(nodes_to_links, opportunities):
     # A link might occur for multiple nodes and across different opportunities
     # Create the total unique set of links
@@ -254,9 +268,6 @@ def create_nodes_to_links(allnodes):
         linkstrings = p.execute()
         for node, linkstring in zip(group, linkstrings):
             if linkstring is None:
-                #print("No node:",node)
-                pass
-            if linkstring is None:
                 links = []
             else:
                 links = json.loads(linkstring)
@@ -295,7 +306,7 @@ def create_node_to_type(opportunities):
 #
 #    return nodes_to_links
 
-def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, typecache, pcut=1e-6):
+def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, typecache, total_node_counts, pcut=1e-6):
     logger.info (f'{len(nodes)} enriched node links to process.')
 
     # Get the most enriched connected node for a group of nodes.
@@ -333,7 +344,8 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
 
             x = len(nodeset)  # draws with the property
 
-            total_node_count = get_total_node_count(semantic_type)
+            #total_node_count = get_total_node_count(semantic_type)
+            total_node_count = total_node_counts[semantic_type]
 
             # total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
             # Note that is_source is from the point of view of the input nodes, not newcurie
@@ -350,7 +362,6 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
             #     logger.info (f'New and old node count mismatch for ({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type}: n:{n}, o:{o}')
 
             ndraws = len(nodes)
-
 
             #The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
             # For most cases, it is ok to approximate it.  There are multiple levels of approximation as described
@@ -381,6 +392,17 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
 
     logger.debug ('end get_enriched_links()')
     return results
+
+
+def get_total_node_counts(semantic_types):
+    p = get_redis_pipeline(5)
+    counts = {}
+    for st in semantic_types:
+        p.get(st)
+    allcounts = p.execute()
+    for st,stc in zip(semantic_types, allcounts):
+        counts[st] = float(stc)
+    return counts
 
 
 def get_total_node_count(semantic_type):

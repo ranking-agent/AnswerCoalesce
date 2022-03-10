@@ -2,19 +2,21 @@ from copy import deepcopy
 from collections import defaultdict
 
 class Opportunity:
-    def __init__(self,hash, qg, kg, a_i):
+    def __init__(self,hash, qg, kg, a_i, ai2kg):
         """
         Define a coalescent opportunity by a hash (the fixed parts of the answers)
         qg: a (qg_id, semantic type) pair
         kg: kg_ids allowed for the combined answers
         a_i: indices into the results saying which answers are combined to give this
              opportunity
+        kg2a_i: dict mapping frozenset of kg -> which answer they appear in.  Used to filter.
         """
         self.answer_hash = hash
         self.qg_id = qg[0]
         self.qg_semantic_type = qg[1]
         self.kg_ids = kg
         self.answer_indices = a_i
+        self.answerid2kg = ai2kg
     def get_kg_ids(self):
         return self.kg_ids
     def get_qg_id(self):
@@ -26,6 +28,31 @@ class Opportunity:
         return stype
     def get_answer_indices(self):
         return self.answer_indices
+    def filter(self,new_kg_ids):
+        """We constructed the opportunities without regard to what nodes we have data on.  Now, we want to filter
+        this opportunity to only answers where we actually have info about the nodes.
+        new_kg_ids is a subset of self.kg_ids.  If we have an answer where we don't have all the nodes, we want to
+        get rid of that answer, and return a new (filtered) opp.  If we get rid of all answers, return None"""
+        if len(new_kg_ids) == len(self.kg_ids):
+            #No filtering required
+            return self
+        nkgids = set(new_kg_ids)
+        new_ai2kg = {}
+        for answer_i, kgs in self.answerid2kg.items():
+            keep = True
+            for kg_i in kgs:
+                if kg_i not in nkgids:
+                    keep = False
+                    break
+            if keep:
+                new_ai2kg[answer_i] = kgs
+        if len(new_ai2kg) == 0:
+            return None
+        #If we removed any answers, we might also need to remove some kg_ids that weren't explicitly filtered
+        final_kg_ids = set()
+        for kgi in new_ai2kg.values():
+            final_kg_ids.update(kgi)
+        return Opportunity(self.answer_hash, (self.qg_id , self.qg_semantic_type ), list(final_kg_ids), list(new_ai2kg.keys()), new_ai2kg)
 
 class NewNode:
     def __init__(self,newnode, newnodetype, edge_type, newnode_is, newnode_name):

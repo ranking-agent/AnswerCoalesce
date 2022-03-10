@@ -94,11 +94,13 @@ def identify_coalescent_nodes(answerset):
     varhash_to_qg = {}
     varhash_to_kg = defaultdict(set)
     varhash_to_answer_indices = defaultdict(list)
+    varhash_to_kga_map = defaultdict(dict)
     # make a map of kg edges to type. Is done here globally to save time.
     kg_edgetypes = {edge_id: edge['predicate'] for edge_id, edge in graph['edges'].items()}
     for answer_i, answer in enumerate(answers):
         hashes = make_answer_hashes(answer, kg_edgetypes, question)
         for hash_item, qg_id, kg_id in hashes:
+            varhash_to_kga_map[hash_item][answer_i] = kg_id
             varhash_to_answers[hash_item].append(answer_i)
             # qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
             qg_type = question['nodes'][qg_id]['categories']
@@ -114,7 +116,7 @@ def identify_coalescent_nodes(answerset):
         if len(answer_indices) > 1 and len(varhash_to_kg[hash_item]) > 1:
             # We have more than one answer that matches this pattern, and there is more than one kg node
             # in the variable spot.
-            opportunity = Opportunity(hash_item, varhash_to_qg[hash_item], varhash_to_kg[hash_item], varhash_to_answer_indices[hash_item])
+            opportunity = Opportunity(hash_item, varhash_to_qg[hash_item], varhash_to_kg[hash_item], varhash_to_answer_indices[hash_item], varhash_to_kga_map[hash_item])
             coalescent_nodes.append(opportunity)
     return coalescent_nodes
 
