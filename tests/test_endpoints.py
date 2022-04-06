@@ -205,6 +205,25 @@ def xtest_ms_drugs_500():
     rj = response.json()
     assert final_answers > original_answers
 
+def xtest_500():
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path,jsondir, 'mm.json')
+
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+
+    # make a good request
+    response = client.post('/coalesce/graph', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    original_answers = len(answerset['message']['results'])
+    final_answers    = len(response.json()['message']['results'])
+    rj = response.json()
+    assert final_answers > original_answers
+
+
 def test_no_results():
     #Don'tfreak out if strider doesn't find anything
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
