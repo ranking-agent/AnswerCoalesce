@@ -14,14 +14,10 @@ jobs:
             - name: Get the version
               id: get_version
               run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-            - name: Logint to ghcr
-              uses: docker/login-action@v1
-              with:
-                  registry: ghcr.io
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
             - name: Push to GitHub Packages
               uses: docker/build-push-action@v1
               with:
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
                   registry: ghcr.io
                   tags: latest,${{ steps.get_version.outputs.VERSION }}
