@@ -117,7 +117,8 @@ def identify_coalescent_nodes(answerset):
             # We have more than one answer that matches this pattern, and there is more than one kg node
             # in the variable spot.
             opportunity = Opportunity(hash_item, varhash_to_qg[hash_item], varhash_to_kg[hash_item], varhash_to_answer_indices[hash_item], varhash_to_kga_map[hash_item])
-            coalescent_nodes.append(opportunity)
+            if opportunity.get_qg_semantic_type() is not None:
+                coalescent_nodes.append(opportunity)
     return coalescent_nodes
 
 

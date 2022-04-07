@@ -23,17 +23,24 @@ def coalesce_by_set(opportunities):
     This simply acts as if the original question was "is_set = True" at each query node individually.  The question is
     whether we want to do that for all nodes, or just internal nodes...  Maybe we want to look at the query graph...
 
-    For now, it's just everything.
+    Originally, were were just merging everything. This gives some pretty crufty results.
+
+    So we're going to still keep it simple, but just merge when the total number of nodes being put into the set is
+    not too big.  Trying a max of 5.
     """
     patches = []
 
     logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
+
+    MAX_MERGE = 5
 
     sf_cache = {}
     for opportunity in opportunities:
         logger.debug('Starting new opportunity')
 
         nodes = opportunity.get_kg_ids() #this is the list of curies that can be in the given spot
+        if len(nodes) > MAX_MERGE:
+            continue
         qg_id = opportunity.get_qg_id()
 
         patch = PropertyPatch(qg_id,nodes,[],opportunity.get_answer_indices())
