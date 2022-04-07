@@ -23,5 +23,4 @@ jobs:
             - name: Push to GitHub Packages
               uses: docker/build-push-action@v1
               with:
-                  registry: ghcr.io
                   tags: latest,${{ steps.get_version.outputs.VERSION }}
