@@ -397,14 +397,18 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
 def get_total_node_counts(semantic_types):
     p = get_redis_pipeline(5)
     counts = {}
-    for st in semantic_types:
+    #needs to be first so that counts will fill it first
+    semantic_list = ['biolink:NamedThing'] + list(semantic_types)
+    for st in semantic_list:
         p.get(st)
     allcounts = p.execute()
-    for st,stc in zip(semantic_types, allcounts):
+    for st,stc in zip(semantic_list, allcounts):
         if stc is not None:
             counts[st] = float(stc)
         else:
-            counts[st] = 0
+            #If we can't find a type, just use the biggest number.  We could improve this a bit
+            # by fiddling around in the biolink model and using a more closely related superclass.
+            counts[st] = counts['biolink:NamedThing']
     return counts
 
 
