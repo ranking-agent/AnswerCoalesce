@@ -207,7 +207,7 @@ def xtest_ms_drugs_500():
 
 def xtest_500():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,jsondir, 'mm.json')
+    testfilename = os.path.join(dir_path,jsondir, 'bad_coalesce.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
