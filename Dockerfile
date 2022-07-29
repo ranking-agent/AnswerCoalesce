@@ -1,8 +1,12 @@
+ARG BRANCH_NAME=master
+
 # leverage the renci python base image
 FROM renciorg/renci-python-image:v0.0.1
 
 # get some credit
 LABEL maintainer="powen@renci.org"
+
+RUN echo "Oh dang look at that $BRANCH_NAME"
 
 # update the container
 RUN apt-get update
