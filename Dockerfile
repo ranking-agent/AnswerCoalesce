@@ -1,4 +1,4 @@
-ARG BRANCH_NAME=master
+ARG BRANCH_NAME="master"
 
 # leverage the renci python base image
 FROM renciorg/renci-python-image:v0.0.1
