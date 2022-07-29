@@ -18,7 +18,7 @@ RUN mkdir /repo
 WORKDIR /repo
 
 # get the latest code
-RUN git clone https://github.com/ranking-agent/AnswerCoalesce.git
+RUN git clone --branch $BRANCH_NAME --single-branch https://github.com/ranking-agent/AnswerCoalesce.git
 
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
