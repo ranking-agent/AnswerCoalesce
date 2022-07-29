@@ -12,8 +12,6 @@ jobs:
         name: Push Docker image to GitHub Packages tagged with "latest" and version number.
         runs-on: ubuntu-latest
         steps:
-            - name: Debug
-              run: echo ${{ github.event.release.target_commitish }}
             - name: Check out the repo
               uses: actions/checkout@v2
             - name: Get the version
@@ -38,3 +36,4 @@ jobs:
                   push: true
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
+                  build_args: BRANCH_NAME=${{ github.event.release.target_commitish }}
