@@ -41,6 +41,31 @@ def test_basic():
     assert( len(ret['query_graph']['nodes']) < 6)
     assert( len(ret['results'])-len(answerset['message']['results']) > 0 )
 
+@pytest.mark.nongithub
+def test_property():
+    """Bring back when properties are working again"""
+    # get the location of the Translator specification file
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+
+    testfilename = os.path.join(dir_path,jsondir,'property_ac_input.json')
+
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+
+    # make a good request
+    response = client.post('/coalesce/property', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    # convert the response to a json object
+    jret = json.loads(response.content)
+
+    # check the data
+    ret = jret['message']
+    assert(len(ret) == 3)
+    assert( len(ret['results'])-len(answerset['message']['results']) > 0 )
+
 def xtest_wfa3():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
