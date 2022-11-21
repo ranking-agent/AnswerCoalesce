@@ -48,7 +48,6 @@ def coalesce_by_graph(opportunities):
     """
     patches = []
 
-    print(f'{len(opportunities)} opps')
     logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
 
     #Multiple opportunities are going to use the same nodes.  In one random (large) example where there are about

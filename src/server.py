@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-AC_VERSION = '2.2.15'
+AC_VERSION = '2.3.1'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -238,7 +238,7 @@ def construct_open_api_schema():
     if servers_conf:
         for s in servers_conf:
             if s['description'].startswith('Default'):
-                s['url'] = server_root + '1.2' if server_root != '/' else s['url']
+                s['url'] = server_root + '1.3' if server_root != '/' else s['url']
                 s['x-maturity'] = os.environ.get("MATURITY_VALUE", "maturity")
                 s['x-location'] = os.environ.get("LOCATION_VALUE", "location")
 

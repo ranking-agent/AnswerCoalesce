@@ -1,8 +1,8 @@
 # leverage the renci python base image
 FROM renciorg/renci-python-image:v0.0.1
 
-# get some credit
-LABEL maintainer="powen@renci.org"
+#Build from this branch.  Assume master for this repo
+ARG BRANCH_NAME=master
 
 # update the container
 RUN apt-get update
@@ -14,7 +14,7 @@ RUN mkdir /repo
 WORKDIR /repo
 
 # get the latest code
-RUN git clone https://github.com/ranking-agent/AnswerCoalesce.git
+RUN git clone --branch $BRANCH_NAME --single-branch https://github.com/ranking-agent/AnswerCoalesce.git
 
 # go to the repo dir
 WORKDIR /repo/AnswerCoalesce
