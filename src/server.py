@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-AC_VERSION = '2.2.14'
+AC_VERSION = '2.2.15'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))

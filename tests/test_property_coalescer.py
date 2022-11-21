@@ -26,8 +26,8 @@ def test_get_properties():
     #Check a chemical
     props = pl.lookup_property_by_node('CHEBI:64663','biolink:ChemicalEntity')
     assert len(props) == 2
-    assert 'CHEBI_ROLE:allergen'in props
-    assert 'CHEBI_ROLE:aetiopathogenetic_role'in props
+    assert 'CHEBI_ROLE_allergen'in props
+    assert 'CHEBI_ROLE_aetiopathogenetic_role'in props
 
     #Check an empty
     eprops = pl.lookup_property_by_node('CHEBI:NOTREAL','biolink:ChemicalEntity')
@@ -63,12 +63,12 @@ def test_collect_properties():
     """
     pl = pc.PropertyLookup()
     properties = pl.collect_properties(['CHEMBL.COMPOUND:CHEMBL1765416', 'PUBCHEM.COMPOUND:53355908', 'CHEBI:65728'],'biolink:ChemicalEntity')
-    assert len(properties['CHEBI_ROLE:metabolite']) == 3
-    assert len(properties['CHEBI_ROLE:biochemical_role']) == 3
-    assert len(properties['CHEBI_ROLE:antibacterial_agent']) == 2
-    assert len(properties['CHEBI_ROLE:antimicrobial_agent']) == 2
-    assert len(properties['CHEBI_ROLE:eukaryotic_metabolite']) == 2
-    assert len(properties['CHEBI_ROLE:fungal_metabolite']) == 2
+    assert len(properties['CHEBI_ROLE_metabolite']) == 3
+    assert len(properties['CHEBI_ROLE_biochemical_role']) == 3
+    assert len(properties['CHEBI_ROLE_antibacterial_agent']) == 2
+    assert len(properties['CHEBI_ROLE_antimicrobial_agent']) == 2
+    assert len(properties['CHEBI_ROLE_eukaryotic_metabolite']) == 2
+    assert len(properties['CHEBI_ROLE_fungal_metabolite']) == 2
     assert len(properties) == 6
 
 def test_property_enrichment():
@@ -79,8 +79,8 @@ def test_property_enrichment():
     inputs = ['PUBCHEM.COMPOUND:11254', 'PUBCHEM.COMPOUND:124886', 'PUBCHEM.COMPOUND:2478','PUBCHEM.COMPOUND:7839']
     results = pc.get_enriched_properties(inputs,'biolink:ChemicalEntity')
     assert len(results) == 2
-    assert results[0][1] == 'CHEBI_ROLE:mutagen'
-    assert results[1][1] == 'CHEBI_ROLE:genotoxin'
+    assert results[0][1] == 'CHEBI_ROLE_mutagen'
+    assert results[1][1] == 'CHEBI_ROLE_genotoxin'
 
 def xtest_disease_property_enrichment():
     """
