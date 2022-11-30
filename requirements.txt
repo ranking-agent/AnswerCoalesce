@@ -15,5 +15,5 @@ gunicorn==20.0.4
 numpy~=1.19.2
 pydantic~=1.8
 uvicorn==0.12.2
-reasoner-pydantic==1.2.0.4
+reasoner-pydantic==3.0.0
 jsonlines
