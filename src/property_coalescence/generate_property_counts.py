@@ -31,8 +31,10 @@ def create_from_file(stype):
             node = line['id']
             for p in line:
                 if p not in ['id','name','category','equivalent_identifiers']:
-                    properties_per_node[node].add(p)
-                    counts[p] += 1
+                    v = line[p]
+                    if isinstance(v,bool) and v:
+                        properties_per_node[node].add(p)
+                        counts[p] += 1
     dbname = initialize_property_dbs(stype)
     print('connecting to database and loading')
     with sqlite3.connect(dbname) as conn:
