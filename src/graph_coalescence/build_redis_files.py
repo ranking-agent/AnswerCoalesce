@@ -18,6 +18,29 @@ def add_labels(lfile,nid,nlabels,done):
     lfile.write(f'{nid}\t{labs}\n')
     done.add(nid)
 
+
+def parse_line(line):
+    source_id = line['subject']
+    target_id = line['object']
+    pred = line['predicate']
+    # Remove variant/anatomy edges from GTEX.  These are going away in the new load anyway
+    if source_id.startswith('CAID'):
+        if target_id.startswith('UBERON'):
+            if pred == 'biolink:affects_expression_of':
+                return source_id, target_id, None
+    if source_id.startswith('UBERON'):
+        if target_id.startswith('NCBIGene'):
+            if pred == 'biolink:expresses':
+                return source_id, target_id, None
+    if pred == 'biolink:expressed_in' and target_id.startswith('UBERON'):
+        return source_id, target_id, None
+    predicate_parts = {'predicate': line['predicate']}
+    for key,value in line.items():
+        if 'qualifier' in key:
+            predicate_parts[key] = value
+    predicate = json.dumps(predicate_parts,sort_keys=True)
+    return source_id, target_id, predicate
+
 def go():
     """Given a dump of a graph a la robokop, produce 3 files:
     nodelabels.txt which is 2 columns, (id), (list of labels):
@@ -58,19 +81,8 @@ def go():
         nl = 0
         for line in inf:
             nl += 1
-            source_id = line['subject']
-            target_id = line['object']
-            pred = line['predicate']
-            #Remove variant/anatomy edges from GTEX.  These are going away in the new load anyway
-            if source_id.startswith('CAID'):
-                if target_id.startswith('UBERON'):
-                    if pred == 'biolink:affects_expression_of':
-                        continue
-            if source_id.startswith('UBERON'):
-                if target_id.startswith('NCBIGene'):
-                    if pred == 'biolink:expresses':
-                        continue
-            if pred == 'biolink:expressed_in' and target_id.startswith('UBERON'):
+            source_id, target_id, pred = parse_line(line)
+            if pred is None:
                 continue
             source_link = (target_id,pred,True)
             target_link = (source_id,pred,False)
@@ -81,7 +93,7 @@ def go():
             for scategory in categories[source_id]:
                 edgecounts[ (target_id, pred, False, scategory) ] += 1
             pkey=f'{source_id} {pred} {target_id}'
-            prov = {x:line[x] for x in ['biolink:original_knowledge_source','biolink:aggregator_knowledge_source'] if x in line}
+            prov = {x:line[x] for x in ['biolink:primary_knowledge_source','biolink:aggregator_knowledge_source'] if x in line}
             provout.write(f'{pkey}\t{json.dumps(prov)}\n')
             if nl % 1000000 == 0:
                 print(nl)
