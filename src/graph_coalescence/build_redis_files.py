@@ -77,7 +77,7 @@ def go():
     with open('category_count.txt','w') as catcountout:
         for c,v in catcount.items():
             catcountout.write(f'{c}\t{v}\n')
-    with jsonlines.open('edges.jsonl','r') as inf, open('prov.txt','w') as provout:
+    with jsonlines.open('subedges.jsonl','r') as inf, open('prov.txt','w') as provout:
         nl = 0
         for line in inf:
             nl += 1
@@ -88,9 +88,9 @@ def go():
             target_link = (source_id,pred,False)
             nodes_to_links[source_id].append(source_link)
             nodes_to_links[target_id].append(target_link)
-            for tcategory in categories[target_id]:
+            for tcategory in set(categories[target_id]):
                 edgecounts[ (source_id, pred, True, tcategory) ] += 1
-            for scategory in categories[source_id]:
+            for scategory in set(categories[source_id]):
                 edgecounts[ (target_id, pred, False, scategory) ] += 1
             pkey=f'{source_id} {pred} {target_id}'
             prov = {x:line[x] for x in ['biolink:primary_knowledge_source','biolink:aggregator_knowledge_source'] if x in line}
