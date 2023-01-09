@@ -77,7 +77,7 @@ def go():
     with open('category_count.txt','w') as catcountout:
         for c,v in catcount.items():
             catcountout.write(f'{c}\t{v}\n')
-    with jsonlines.open('subedges.jsonl','r') as inf, open('prov.txt','w') as provout:
+    with jsonlines.open('edges.jsonl','r') as inf, open('prov.txt','w') as provout:
         nl = 0
         for line in inf:
             nl += 1
