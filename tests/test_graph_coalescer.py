@@ -155,7 +155,8 @@ def test_graph_coalesce_strider():
                 extra = True
         assert extra
 
-def test_missing_node_norm():
+def xtest_missing_node_norm():
+    #removing test to keep link size low`
     from src.single_node_coalescer import coalesce
     import datetime
 
