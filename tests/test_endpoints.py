@@ -26,6 +26,13 @@ def test_basic():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
 
+    #there are dups in this result set gross: dedup
+    unique_results = {}
+    for result in answerset['message']['results']:
+        key = json.dumps(result,sort_keys=True)
+        unique_results[key] = result
+    answerset['message']['results']=list(unique_results.values())
+
     # make a good request
     response = client.post('/coalesce/graph', json=answerset)
 

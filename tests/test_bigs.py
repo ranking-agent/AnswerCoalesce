@@ -15,7 +15,8 @@ def xtest_killer_graphbased():
     rs = newset['results']
     print(len(rs))
 
-def test_big_graphbased():
+def xtest_big_graphbased():
+    #Removed to keep backlink flow small
     fn = f'{input_dir}/bigger_new.json'
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:

@@ -270,7 +270,7 @@ def create_nodes_to_links(allnodes):
                 links = []
             else:
                 links = json.loads(linkstring)
-            links = list( filter (lambda l: l[1] not in bad_predicates, links))
+            links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
             nodes_to_links[node] = links
     #print(len(nodes_to_links))
     return nodes_to_links
