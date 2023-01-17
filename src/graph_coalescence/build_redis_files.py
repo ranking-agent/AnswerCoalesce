@@ -34,6 +34,11 @@ def parse_line(line):
                 return source_id, target_id, None
     if pred == 'biolink:expressed_in' and target_id.startswith('UBERON'):
         return source_id, target_id, None
+    # Remove subclass of taxa.  This blows things up because of a jillion viruses. We could rethink this.
+    if source_id.startswith('NCBITaxon'):
+        if target_id.startswith('NCBITaxon'):
+            if pred == 'biolink:subclass_of':
+                return source_id, target_id, None
     predicate_parts = {'predicate': line['predicate']}
     for key,value in line.items():
         if 'qualifier' in key:
