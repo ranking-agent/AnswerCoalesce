@@ -20,6 +20,7 @@ def collect_input_nodes():
     input_jsons = ['famcov_new.json','bigger_new.json','graph_named_thing_issue.json','EdgeIDAsStrAndPerfTest.json']
     for ij in input_jsons:
         test_curies.update( load_jsons('InputJson_1.1/'+ij) )
+    test_curies.update( load_jsons('InputJson_1.3/qualified.json'))
     return test_curies
 
 def filter_links(infname,outfname,input_nodes):

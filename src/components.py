@@ -1,5 +1,6 @@
 from copy import deepcopy
 from collections import defaultdict
+import ast
 
 class Opportunity:
     def __init__(self,hash, qg, kg, a_i, ai2kg):
@@ -55,10 +56,10 @@ class Opportunity:
         return Opportunity(self.answer_hash, (self.qg_id , self.qg_semantic_type ), list(final_kg_ids), list(new_ai2kg.keys()), new_ai2kg)
 
 class NewNode:
-    def __init__(self,newnode, newnodetype, edge_type, newnode_is, newnode_name):
+    def __init__(self,newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name):
         self.newnode = newnode
         self.newnode_type = newnodetype
-        self.new_edges = edge_type
+        self.new_edges = edge_pred_and_qual
         self.newnode_is = newnode_is
         self.newnode_name = newnode_name
 
@@ -73,12 +74,12 @@ class PropertyPatch:
         self.provmap = {}
     def add_provenance(self,provmap):
         self.provmap = provmap
-    def add_extra_node(self,newnode, newnodetype, edge_type, newnode_is,newnode_name):
+    def add_extra_node(self,newnode, newnodetype, edge_pred_and_qual, newnode_is,newnode_name):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
-        self.added_nodes.append( NewNode(newnode, newnodetype, edge_type, newnode_is, newnode_name) )
+        self.added_nodes.append( NewNode(newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name) )
     def apply(self,answers,question,graph,graph_index,patch_no):
         # Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
         # answers that were originally in the opportunity, but we might have only found commonality
@@ -210,12 +211,20 @@ class PropertyPatch:
                         prov = self.provmap[ f'{source_id} {newnode.new_edges} {target_id}']
                     except KeyError:
                         prov = []
-                    edge = { 'subject': source_id, 'object': target_id, 'predicate': newnode.new_edges,
+                    #newnode.new_edges is a string containing a dict like
+                    #{"predicate": "biolink:affects", "object_aspect_qualifier":"transport"}
+                    edge_def = ast.literal_eval(newnode.new_edges)
+                    edge = { 'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
                              'attributes': prov + [{'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:aragorn'},
                                             {'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:automat-robokop'}]}
-                    #Need to make a key for the edge, but the attributes make it annoying
+                    if len(edge_def) > 1:
+                        edge["qualifiers"] = [ {"qualifier_type_id": f"biolink:{ekey}", "qualifier_type_value": eval}
+                                               for ekey, eval in edge_def.items() if not ekey == "predicate"]
+                    #Need to make a key for the edge, but the attributes & quals make it annoying
                     ek = deepcopy(edge)
                     ek['attributes'] = str(ek['attributes'])
+                    if 'qualifiers' in ek:
+                        ek['qualifiers'] = str(ek['qualifiers'])
                     eid = str(hash(frozenset(ek.items())))
                     kg['edges'].update({eid:edge})
                     kg_index['edges'][ekey] = eid

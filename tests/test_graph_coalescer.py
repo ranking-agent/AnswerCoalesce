@@ -88,6 +88,33 @@ def flatten(ll):
     else:
         return [ll]
 
+def test_graph_coalesce_qualified():
+    """Make sure that results are well formed."""
+    #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path,"InputJson_1.3", 'qualified.json')
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+        answerset = answerset['message']
+    #Some of these edges are old, we need to know which ones...
+    original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
+    #now generate new answers
+    newset = snc.coalesce(answerset, method='graph',return_original=False)
+    kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
+    kgedges = newset['knowledge_graph']['edges']
+    extra_edge = False
+    for eid,eedge in kgedges.items():
+        if eid in original_edge_ids:
+            continue
+        extra_edge = True
+        assert 'qualifiers' in eedge
+        for qual in eedge["qualifiers"]:
+            assert qual["qualifier_type_id"].startswith("biolink:")
+    assert extra_edge
+
+
+
+
 def test_graph_coalesce():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -101,6 +128,10 @@ def test_graph_coalesce():
     newset = snc.coalesce(answerset, method='graph',return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
+    #Make sure that the edges are properly formed
+    for eid, kg_edge in kgedges.items():
+        assert isinstance(kg_edge["predicate"],str)
+        assert kg_edge["predicate"].startswith("biolink:")
     for r in newset['results']:
         #Make sure each result has at least one extra node binding
         nbs = r['node_bindings']
