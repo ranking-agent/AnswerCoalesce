@@ -125,15 +125,17 @@ def coalesce_by_graph(opportunities):
             provkeys = []
             for e in best_enrichments:
                 newcurie = e[1]
-                etype = e[2]
+                #etype is a string rep of a dict.  We leave it as such because we use it as a key but
+                # we also need to take it apart
+                edge_key = e[2]
                 if e[3]:
                     nni = 'target'
-                    provkeys += [ f'{bg} {etype} {newcurie}' for bg in best_grouping ]
+                    provkeys += [ f'{bg} {edge_key} {newcurie}' for bg in best_grouping ]
                 else:
                     nni = 'source'
-                    provkeys += [f'{newcurie} {etype} {bg}' for bg in best_grouping]
+                    provkeys += [f'{newcurie} {edge_key} {bg}' for bg in best_grouping]
                 #Need to get the right node type.
-                patch.add_extra_node(newcurie, e[8], edge_type=etype, newnode_is=nni, newnode_name = nodenamedict[newcurie])
+                patch.add_extra_node(newcurie, e[8], edge_pred_and_qual=edge_key, newnode_is=nni, newnode_name = nodenamedict[newcurie])
             pprovs = { pk:provs[pk] for pk in provkeys }
             patch.add_provenance(pprovs)
             patches.append(patch)

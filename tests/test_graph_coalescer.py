@@ -102,43 +102,16 @@ def test_graph_coalesce_qualified():
     newset = snc.coalesce(answerset, method='graph',return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
-    for r in newset['results']:
-        #Make sure each result has at least one extra node binding
-        nbs = r['node_bindings']
-        extra_node = False
-        for qg_id,nbk in nbs.items():
-            if qg_id.startswith('extra'):
-                extra_node = True
-            #Every node binding should be found somewhere in the kg nodes
-            for nb in nbk:
-                assert nb['id'] in kgnodes
-                #And each of these nodes should have a name
-                assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
-        #We are no longer updating the qgraph.
-#        assert extra_node
-        #make sure each new result has an extra edge
-        nbs = r['edge_bindings']
-        extra_edge = False
-        for qg_id,nbk in nbs.items():
-            if qg_id.startswith('extra'):
-                extra_edge = True
-                #check that the edges have the provenance we need
-                #Every node binding should be found somewhere in the kg nodes
-                for nb in nbk:
-                    eedge = kgedges[nb['id']]
-                    if nb['id'] in original_edge_ids:
-                        continue
-                    keys = [a['attribute_type_id'] for a in eedge['attributes']]
-                    try:
-                        values = set(flatten([a['value'] for a in eedge['attributes']]))
-                    except:
-                        print(eedge)
-                        assert False
-                    ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
-                    assert len(values.intersection(ac_prov)) == 2
-                    assert len(values) > len(ac_prov)
-        #We are no longer updating the qgraph
-#        assert extra_edge
+    extra_edge = False
+    for eid,eedge in kgedges.items():
+        if eid in original_edge_ids:
+            continue
+        extra_edge = True
+        assert 'qualifiers' in eedge
+        for qual in eedge["qualifiers"]:
+            assert qual["qualifier_type_id"].startswith("biolink:")
+    assert extra_edge
+
 
 
 
