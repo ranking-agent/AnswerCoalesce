@@ -334,6 +334,8 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links,lcounts, sfcache, ty
 
     for nodeset, possible_links in nodeset_to_links.items():
         enriched = []
+        if len(nodeset) == 11:
+            print('hi ma')
         for newcurie,predicate,is_source in possible_links:
             # The hypergeometric distribution models drawing objects from a bin.
             # M is the total number of objects (nodes) ,
