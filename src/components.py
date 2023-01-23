@@ -218,7 +218,7 @@ class PropertyPatch:
                              'attributes': prov + [{'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:aragorn'},
                                             {'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:automat-robokop'}]}
                     if len(edge_def) > 1:
-                        edge["qualifiers"] = [ {"qualifier_type_id": f"biolink:{ekey}", "qualifier_type_value": eval}
+                        edge["qualifiers"] = [ {"qualifier_type_id": f"biolink:{ekey}", "qualifier_value": eval}
                                                for ekey, eval in edge_def.items() if not ekey == "predicate"]
                     #Need to make a key for the edge, but the attributes & quals make it annoying
                     ek = deepcopy(edge)
