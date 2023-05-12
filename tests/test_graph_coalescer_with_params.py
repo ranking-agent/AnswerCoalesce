@@ -17,24 +17,6 @@ def flatten(ll):
     else:
         return [ll]
 
-def test_graph_coalescer():
-    """
-    Same as in test_graph_coalescer
-    """
-    curies = ['NCBIGene:106632262', 'NCBIGene:106632263', 'NCBIGene:106632261']
-    opportunity = Opportunity('hash', ('qg_0', 'biolink:Gene'), curies, [0, 1, 2], {i: [curies[i]] for i in [0, 1, 2]})
-    opportunities = [opportunity]
-    patches = gc.coalesce_by_graph(opportunities)
-    assert len(patches) == 1
-    # patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
-    p = patches[0]
-    assert p.qg_id == 'qg_0'
-    assert len(p.set_curies) == 3  # 3 of the 3 curies are subclasses of the output
-    atts = p.new_props['attributes']
-    kv = {x['original_attribute_name']: x['value'] for x in atts}
-    assert kv['coalescence_method'] == 'graph_enrichment'
-    assert kv['p_value'] < 1e-10
-    assert len(p.added_nodes) == 1
 
 def test_graph_coalesce_without_params():
     """
