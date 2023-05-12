@@ -99,7 +99,7 @@ def test_graph_coalesce_qualified():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=False)
+    newset = snc.coalesce(answerset, method='graph', return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     extra_edge = False
@@ -111,7 +111,6 @@ def test_graph_coalesce_qualified():
         for qual in eedge["qualifiers"]:
             assert qual["qualifier_type_id"].startswith("biolink:")
     assert extra_edge
-
 
 
 
