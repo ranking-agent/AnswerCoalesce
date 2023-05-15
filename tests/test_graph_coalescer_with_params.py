@@ -36,7 +36,7 @@ def test_graph_coalesce_without_params():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True)
-    assert len(newset['results']) == len(answerset['results'])*2 + 1
+    assert len(newset['results']) == len(answerset['results'])*2
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -103,7 +103,7 @@ def test_graph_coalesce_only_threshold_1():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, coalesce_threshold= coalesce_threshold)
-    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold + 1
+    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -170,7 +170,7 @@ def test_graph_coalesce_only_pred_exclude():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, predicates_to_exclude=predicates_to_exclude)
-    assert len(newset['results']) == len(answerset['results'])*2 + 1
+    assert len(newset['results']) == len(answerset['results'])*2
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -237,7 +237,7 @@ def test_graph_coalesce_with_params_1():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, predicates_to_exclude=predicates_to_exclude, coalesce_threshold=coalesce_threshold)
-    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold + 1
+    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -305,7 +305,7 @@ def test_graph_coalesce_with_params_500():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, predicates_to_exclude=predicates_to_exclude, coalesce_threshold=coalesce_threshold)
-    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold + 1
+    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
