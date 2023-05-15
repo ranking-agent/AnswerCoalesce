@@ -176,7 +176,7 @@ def test_graph_coalesce_strider():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset, method='graph', return_original=False)
+    newset = snc.coalesce(answerset, method='graph', return_original=True)
     for r in newset['results']:
         nbs = r['node_bindings']
         extra = False
