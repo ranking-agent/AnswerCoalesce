@@ -116,7 +116,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
                 threshold = coalesce_threshold
             else:
                 threshold = len(nodes)
-            if i >= threshold:
+            if i > threshold:
                 break
             # for the first 78 enriched result,
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples

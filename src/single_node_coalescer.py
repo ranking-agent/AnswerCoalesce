@@ -8,7 +8,7 @@ from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
-def coalesce(answerset, method='all', return_original=True,  predicates_to_exclude = None, coalesce_threshold=None):
+def coalesce(answerset, method='all', return_original=False,  predicates_to_exclude=None, coalesce_threshold=None):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same

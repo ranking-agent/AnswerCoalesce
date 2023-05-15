@@ -36,7 +36,7 @@ def test_graph_coalesce_without_params():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True)
-    assert len(newset['results']) == len(answerset['results'])*2
+    assert len(newset['results']) == len(answerset['results'])*2 + 1
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -92,7 +92,7 @@ def test_graph_coalesce_only_threshold_1():
        Subsequent lines make sure that results are well-formed.
     """
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir2, 'alzh_trapi_only_threshold_1.json')
+    testfilename = os.path.join(dir_path, jsondir2, 'alzh_trapi_with_only_threshold_1.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         assert answerset['workflow'][0].get('threshold')
@@ -103,7 +103,7 @@ def test_graph_coalesce_only_threshold_1():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, coalesce_threshold= coalesce_threshold)
-    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold
+    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold + 1
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -166,12 +166,11 @@ def test_graph_coalesce_only_pred_exclude():
         predicates_to_exclude = answerset['workflow'][0].get('predicates_to_exclude', None)
         answerset = answerset['message']
 
-
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, predicates_to_exclude=predicates_to_exclude)
-    assert len(newset['results']) == len(answerset['results'])*2
+    assert len(newset['results']) == len(answerset['results'])*2 + 1
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -216,8 +215,6 @@ def test_graph_coalesce_only_pred_exclude():
                     assert len(values) > len(ac_prov)
         # We are no longer updating the qgraph
 
-#
-
 def test_graph_coalesce_with_params_1():
     """
         Accepts a trapi1.3 formatted json with additional parameters like:
@@ -228,7 +225,7 @@ def test_graph_coalesce_with_params_1():
        Subsequent lines make sure that results are well-formed.
     """
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir2, 'alzh_trapi_with_params1.json')
+    testfilename = os.path.join(dir_path, jsondir2, 'alzh_trapi_with_params_1.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         assert answerset['workflow'][0].get('threshold')
@@ -240,7 +237,7 @@ def test_graph_coalesce_with_params_1():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, predicates_to_exclude=predicates_to_exclude, coalesce_threshold=coalesce_threshold)
-    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold
+    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold + 1
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -308,7 +305,7 @@ def test_graph_coalesce_with_params_500():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph',  return_original=True, predicates_to_exclude=predicates_to_exclude, coalesce_threshold=coalesce_threshold)
-    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold
+    assert len(newset['results']) == len(answerset['results']) + coalesce_threshold + 1
 
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
