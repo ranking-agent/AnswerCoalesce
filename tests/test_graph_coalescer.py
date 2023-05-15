@@ -124,7 +124,7 @@ def test_graph_coalesce():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=False)
+    newset = snc.coalesce(answerset, method='graph',return_original=True)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     #Make sure that the edges are properly formed
