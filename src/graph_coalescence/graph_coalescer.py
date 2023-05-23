@@ -111,12 +111,13 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
         tj = 0
         for i in range(len(enriched_links)):
             link = enriched_links[i]
-
             if coalesce_threshold:
                 threshold = coalesce_threshold
             else:
                 threshold = len(nodes)
+
             if i >= threshold:
+                print('Here i >= threshold', i)
                 break
             # for the first 78 enriched result,
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
@@ -167,6 +168,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
                                      newnode_name=nodenamedict[newcurie])
             pprovs = {pk: provs[pk] for pk in provkeys}
             patch.add_provenance(pprovs)
+            # print(patch)
             patches.append(patch)
         logger.debug('end of opportunity')
 
@@ -436,7 +438,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
                 node_types = typecache[newcurie]
 
                 if predicates_to_exclude:
-                    if predicate not in predicates_to_exclude:
+                    if json.loads(predicate)['predicate'] not in predicates_to_exclude:
                         enriched.append(
                             (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
                              # if pred_exclude is used to filter, the results looks cleaner like 1000+ else 2000+ results
@@ -464,7 +466,7 @@ def get_total_node_counts(semantic_types):
     for st, stc in zip(semantic_list, allcounts):
         if stc is not None:
             counts[st] = float(stc)
-        else:
+        elif not stc and 'biolink:NamedThing' in counts:
             # If we can't find a type, just use the biggest number.  We could improve this a bit
             # by fiddling around in the biolink model and using a more closely related superclass.
             counts[st] = counts['biolink:NamedThing']

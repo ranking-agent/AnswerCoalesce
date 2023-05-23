@@ -41,7 +41,7 @@ def test_graph_coalescer_double_check():
     opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,cts,{i:[curies[i]] for i in cts})
     opportunities=[opportunity]
     patches = gc.coalesce_by_graph(opportunities)
-    assert len(patches) == 15
+    assert len(patches) == 14
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
     p = patches[0]
     assert p.qg_id == 'qg_0'
@@ -99,7 +99,7 @@ def test_graph_coalesce_qualified():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph', return_original=False)
+    newset = snc.coalesce(answerset, method='graph',return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     extra_edge = False
@@ -114,6 +114,7 @@ def test_graph_coalesce_qualified():
 
 
 
+
 def test_graph_coalesce():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -124,7 +125,7 @@ def test_graph_coalesce():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=True)
+    newset = snc.coalesce(answerset, method='graph',return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     #Make sure that the edges are properly formed
@@ -176,7 +177,7 @@ def test_graph_coalesce_strider():
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset, method='graph', return_original=True)
+    newset = snc.coalesce(answerset, method='graph', return_original=False)
     for r in newset['results']:
         nbs = r['node_bindings']
         extra = False

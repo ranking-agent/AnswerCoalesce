@@ -211,11 +211,10 @@ class PropertyPatch:
                         prov = self.provmap[ f'{source_id} {newnode.new_edges} {target_id}']
                     except KeyError:
                         prov = []
+
                     #newnode.new_edges is a string containing a dict like
                     #{"predicate": "biolink:affects", "object_aspect_qualifier":"transport"}
-
-                    # edge_def = newnode.new_edges   #THIS DOESNT WORK FOR ME
-                    edge_def = {"predicate": newnode.new_edges}
+                    edge_def = ast.literal_eval(newnode.new_edges)
 
                     edge = { 'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
                              'attributes': prov + [{'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:aragorn'},
