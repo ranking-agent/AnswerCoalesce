@@ -28,7 +28,7 @@
                 "bc": {
                     "subject": "c",
                     "object": "b",
-                    "predicates": null
+                    "predicates": "biolink:treats"
                 }
             }
         },

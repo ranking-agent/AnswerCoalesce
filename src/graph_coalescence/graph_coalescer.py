@@ -69,7 +69,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
     opportunities = filter_opportunities(opportunities, nodes_to_links)
 
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
-    # unique_link_nodes: bringing all the nodes that each chemical in allnodes map through nodes_to_links as a set
+    # unique_link_nodes: bringing all the nodes that each chemical in allnodes maps through nodes_to_links as a set
     # unique_links:
 
     lcounts = get_link_counts(unique_links)
@@ -115,9 +115,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
                 threshold = coalesce_threshold
             else:
                 threshold = len(nodes)
-
             if i >= threshold:
-                print('Here i >= threshold', i)
                 break
             # for the first 78 enriched result,
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples

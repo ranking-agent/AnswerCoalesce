@@ -54,6 +54,9 @@ def test_graph_coalesce_with_workflow():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph', return_original=True)
+
+    # Must be at least the length of the initial answers
+    assert len(newset['results']) >= len(answerset['results'])
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     # Make sure that the edges are properly formed
@@ -98,7 +101,6 @@ def test_graph_coalesce_with_workflow():
         # We are no longer updating the qgraph
 
 
-# 18 results
 def test_graph_coalesce_with_pred_exclude():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -112,6 +114,9 @@ def test_graph_coalesce_with_pred_exclude():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph', return_original=True, predicates_to_exclude=predicates_to_exclude)
+
+    # Must be at least the length of the initial answers
+    assert len(newset['results']) >= len(answerset['results'])
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     # Make sure that the edges are properly formed
@@ -154,8 +159,6 @@ def test_graph_coalesce_with_pred_exclude():
                     assert len(values.intersection(ac_prov)) == 2
                     assert len(values) > len(ac_prov)
         # We are no longer updating the qgraph
-
-
 
 
 def test_graph_coalesce_with_threshold_1():
@@ -172,6 +175,13 @@ def test_graph_coalesce_with_threshold_1():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph', return_original=True, coalesce_threshold=coalesce_threshold)
+    # Must be at least the length of the initial answers
+    assert len(newset['results']) >= len(answerset['results'])
+
+    check_opportunity = snc.identify_coalescent_nodes(answerset)
+    #There is likely to be at least one result for each opportunity
+    assert len(newset['results']) >= len(answerset['results']) + len(check_opportunity)
+
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     # Make sure that the edges are properly formed
@@ -229,6 +239,10 @@ def test_graph_coalesce_with_threshold_500():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph', return_original=True, coalesce_threshold=coalesce_threshold)
+
+    # Must be at least the length of the initial answers
+    assert len(newset['results']) >= len(answerset['results'])
+
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     # Make sure that the edges are properly formed
@@ -290,6 +304,9 @@ def test_graph_coalesce_with_params_500():
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph', return_original=True, predicates_to_exclude=predicates_to_exclude,
                           coalesce_threshold=coalesce_threshold)
+
+    # Must be at least the length of the initial answers
+    assert len(newset['results']) >= len(answerset['results'])
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     # Make sure that the edges are properly formed
@@ -332,7 +349,6 @@ def test_graph_coalesce_with_params_500():
                     assert len(values.intersection(ac_prov)) == 2
                     assert len(values) > len(ac_prov)
         # We are no longer updating the qgraph
-
 
 
 def test_gouper():

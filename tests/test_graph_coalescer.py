@@ -1,8 +1,9 @@
 import pytest
+import os, json
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
-import os,json
+
 
 jsondir='InputJson_1.2'
 
