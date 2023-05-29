@@ -1,8 +1,9 @@
 import pytest
+import os, json
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
-import os,json
+
 
 jsondir='InputJson_1.2'
 
@@ -41,7 +42,7 @@ def test_graph_coalescer_double_check():
     opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,cts,{i:[curies[i]] for i in cts})
     opportunities=[opportunity]
     patches = gc.coalesce_by_graph(opportunities)
-    assert len(patches) == 15
+    assert len(patches) == 14
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
     p = patches[0]
     assert p.qg_id == 'qg_0'

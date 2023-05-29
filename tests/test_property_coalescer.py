@@ -1,3 +1,5 @@
+
+import os
 import src.property_coalescence.property_coalescer as pc
 from src.components import Opportunity
 

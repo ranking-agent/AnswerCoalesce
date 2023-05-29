@@ -8,7 +8,7 @@ from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
-def coalesce(answerset, method='all', return_original=True):
+def coalesce(answerset, method='all', return_original=True,  predicates_to_exclude=None, coalesce_threshold=None):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -35,7 +35,7 @@ def coalesce(answerset, method='all', return_original=True):
         patches += coalesce_by_property(coalescence_opportunities)
 
     if method in ['all', 'graph']:
-        patches += coalesce_by_graph(coalescence_opportunities)
+        patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, coalesce_threshold)
 
     # print('lets patch')
     new_answers, updated_qg, updated_kg = patch_answers(answerset, patches)
@@ -103,7 +103,11 @@ def identify_coalescent_nodes(answerset):
             varhash_to_kga_map[hash_item][answer_i] = kg_id
             varhash_to_answers[hash_item].append(answer_i)
             # qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
+            # print("question['nodes'][qg_id]: ", question['nodes'])
+            # print(question['nodes'][qg_id])
             qg_type = question['nodes'][qg_id]['categories']
+            # qg_type = question['nodes'][qg_id]['categories']
+
             if isinstance(qg_type, list):
                 qg_type = [qg_type[0]]
             else:
