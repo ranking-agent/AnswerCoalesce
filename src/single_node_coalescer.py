@@ -1,5 +1,5 @@
 from collections import defaultdict
-
+from copy import deepcopy
 # from datetime import datetime as dt
 
 from src.components import Opportunity, Answer
@@ -38,10 +38,8 @@ def coalesce(answerset, method='all', return_original=True,  predicates_to_exclu
         patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, coalesce_threshold)
 
     # print('lets patch')
+    #Enrichment done and commonalities found, at this point we can rewrite the results
     new_answers, updated_qg, updated_kg = patch_answers(answerset, patches)
-
-    if return_original:
-        new_answers += answerset['results']
 
     new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
 
@@ -54,7 +52,7 @@ def patch_answers(answerset, patches):
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
     answers = [Answer(ans, qg, kg) for ans in answerset['results']]
-    new_answers = []
+    new_answers = defaultdict(dict)
     i = 0
     # If there are lots of patches, then we end up spending lots of time finding edges and nodes in the kg
     # as we update it.  kg_indexes are the indexes required to find things quickly.  apply both
@@ -62,12 +60,14 @@ def patch_answers(answerset, patches):
     kg_indexes = {}
     for patch in patches:
         i += 1
-        # print(f'{i} / {len(patches)}')
-        new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes, i)
-        if new_answer is not None:
-            new_answers.append(new_answer.to_json())
-    return new_answers, qg, kg
-
+        print(f'{i} / {len(patches)}')
+        all_new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes, i)
+        for new_answer in all_new_answer:
+            if new_answer is not None:
+                outp = new_answer.to_json()
+                outp_id = outp['node_bindings']['input_chemical'][0]['id']
+                new_answers[outp_id] = outp
+    return list(new_answers.values()), qg, kg
 
 def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single
@@ -102,11 +102,7 @@ def identify_coalescent_nodes(answerset):
         for hash_item, qg_id, kg_id in hashes:
             varhash_to_kga_map[hash_item][answer_i] = kg_id
             varhash_to_answers[hash_item].append(answer_i)
-            # qg_type = [node['type'] for node in question['nodes'] if node['id'] == qg_id][0]
-            # print("question['nodes'][qg_id]: ", question['nodes'])
-            # print(question['nodes'][qg_id])
-            qg_type = question['nodes'][qg_id]['categories']
-            # qg_type = question['nodes'][qg_id]['categories']
+            qg_type = question['nodes'][qg_id]['categories'] if 'categories' in question['nodes'][qg_id] else graph['nodes'][question['nodes'][qg_id]['ids'][0]]['categories']
 
             if isinstance(qg_type, list):
                 qg_type = [qg_type[0]]
@@ -131,6 +127,8 @@ def make_answer_hashes(result, kg_edgetypes, question):
     with the answer node that was varied, and the kg node id for that qnode in this answer"""
     # First combine the node and edge bindings into a single dictionary,
     # bindings = make_bindings(question, result)
+    # we dont need to make bindings
+    result=result
     bindings = result.make_bindings()
     hashes = []
     for qg_id, kg_ids in result.node_bindings.items():
@@ -138,29 +136,6 @@ def make_answer_hashes(result, kg_edgetypes, question):
         hashes.append((newhash, qg_id, kg_ids))
     return hashes
 
-
-# def make_bindings(question, result):
-#    """Given a question and a result, build a single bindings map, making sure that the same id is not
-#    used for both a node and edge. Also remove any edge_bindings that are not part of the question, such
-#    as support edges"""
-#    question_nodes = [e['id'] for e in question['nodes']]
-#    question_edges = [e['id'] for e in question['edges']]
-#    bindings = defaultdict(list)
-#    for nb in result['node_bindings']:
-#        if nb['qg_id'] in question_nodes:
-#            if isinstance(nb['kg_id'],list):
-#                bindings[f'n_{nb["qg_id"]}'] += nb['kg_id']
-#            else:
-#                bindings[f'n_{nb["qg_id"]}'].append(nb['kg_id'])
-#    for eb in result['edge_bindings']:
-#        if eb['qg_id'] in question_edges:
-#            if isinstance(nb['kg_id'],list):
-#                bindings[f'e_{eb["qg_id"]}'] += eb['kg_id']
-#            else:
-#                bindings[f'e_{eb["qg_id"]}'].append(eb['kg_id'])
-#    #bindings = {f'n_{nb["qg_id"]}': [nb['kg_id']] for nb in result['node_bindings'] if nb['qg_id'] in question_nodes}
-#    #bindings.update( {f'e_{eb["qg_id"]}': [eb['kg_id']] for eb in result['edge_bindings'] if eb['qg_id'] in question_edges})
-#    return bindings
 
 
 def make_answer_hash(bindings, kg_edgetypes, question, qg_id):
@@ -170,7 +145,7 @@ def make_answer_hash(bindings, kg_edgetypes, question, qg_id):
     by their types. That will then allow other answers with a different node but the same types of connections to
     that node to look the same under this hashing function"""
     # for some reason, the bindings are to lists?  Just grabbing the first (and only) element to the new bindings.
-    singlehash = {x: frozenset(y) for x, y in bindings.items()}
+    singlehash = {x: frozenset(y) for x, y in bindings['node_bindings'].items()}
     # take out the binding for qg_id
     del singlehash[qg_id]
     # Now figure out which edges hook to qg_id
