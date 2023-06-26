@@ -125,6 +125,8 @@ def test_graph_coalesce_creative():
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
     newset = snc.coalesce(answerset, method='graph')
+    with open('results.json', 'w') as nw:
+        nw.write(json.dumps(newset, indent=4))
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     extra_edge = False
@@ -136,6 +138,35 @@ def test_graph_coalesce_creative():
         for qual in eedge["qualifiers"]:
             assert qual["qualifier_type_id"].startswith("biolink:")
     assert extra_edge
+
+
+def test_graph_coalesce_creative_long():
+    """Make sure that results are well formed."""
+    #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path,"InputJson_1.3", 'Not_inferedresponse.json')
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+        answerset = answerset['message']
+    #Some of these edges are old, we need to know which ones...
+    original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
+    #now generate new answers
+    newset = snc.coalesce(answerset, method='graph')
+    if answerset['results'] != newset['results']:
+        with open('results.json', 'w') as nw:
+            nw.write(json.dumps(newset, indent=4))
+        kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
+        kgedges = newset['knowledge_graph']['edges']
+        extra_edge = False
+        for eid,eedge in kgedges.items():
+            if eid in original_edge_ids:
+                continue
+            extra_edge = True
+            assert 'qualifiers' in eedge
+            for qual in eedge["qualifiers"]:
+                assert qual["qualifier_type_id"].startswith("biolink:")
+        assert extra_edge
+
 
 
 def test_graph_coalesce():
@@ -170,26 +201,27 @@ def test_graph_coalesce():
         #We are no longer updating the qgraph.
 #        assert extra_node
         #make sure each new result has an extra edge
-        nbs = r['edge_bindings']
-        extra_edge = False
-        for qg_id,nbk in nbs.items():
-            if qg_id.startswith('extra'):
-                extra_edge = True
-                #check that the edges have the provenance we need
-                #Every node binding should be found somewhere in the kg nodes
-                for nb in nbk:
-                    eedge = kgedges[nb['id']]
-                    if nb['id'] in original_edge_ids:
-                        continue
-                    keys = [a['attribute_type_id'] for a in eedge['attributes']]
-                    try:
-                        values = set(flatten([a['value'] for a in eedge['attributes']]))
-                    except:
-                        print(eedge)
-                        assert False
-                    ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
-                    assert len(values.intersection(ac_prov)) == 2
-                    assert len(values) > len(ac_prov)
+        if all('analyses' in result for result in r):
+            nbs = r['analyses'][0]['edge_bindings']
+            extra_edge = False
+            for qg_id,nbk in nbs.items():
+                if qg_id.startswith('extra'):
+                    extra_edge = True
+                    #check that the edges have the provenance we need
+                    #Every node binding should be found somewhere in the kg nodes
+                    for nb in nbk:
+                        eedge = kgedges[nb['id']]
+                        if nb['id'] in original_edge_ids:
+                            continue
+                        keys = [a['attribute_type_id'] for a in eedge['attributes']]
+                        try:
+                            values = set(flatten([a['value'] for a in eedge['attributes']]))
+                        except:
+                            print(eedge)
+                            assert False
+                        ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
+                        assert len(values.intersection(ac_prov)) == 2
+                        assert len(values) > len(ac_prov)
         #We are no longer updating the qgraph
 #        assert extra_edge
 

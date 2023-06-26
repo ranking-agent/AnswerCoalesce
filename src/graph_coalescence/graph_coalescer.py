@@ -108,8 +108,6 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
         # to end up with more answers than we started with, so we need to parameterize, and
         # that's more work that we can do later.
         # (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
-
-        tj = 0
         for i in range(len(enriched_links)):
             link = enriched_links[i]
             if coalesce_threshold:
@@ -122,6 +120,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
             best_enrich_p = link[0]
             best_grouping = link[7]
+            best_enrich_predicate = json.loads(link[2])
             # I don't think this is right
             # best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
             best_enrichments = [link]  # ?
@@ -143,11 +142,12 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
                                'value': [x[1] for x in best_enrichments],
                                'value_type_id': 'EDAM:data_0006'})
 
-            newprops = {'attributes': attributes}
+            attributes.append({'original_attribute_name': 'predicates',
+                               'attribute_type_id': 'biolink:has_attribute',
+                               'value': [best_enrich_predicate],
+                               'value_type_id': 'EDAM:data_0006'})
 
-            # newprops = {'coalescence_method':'graph_enrichment',
-            #             'p_value': best_enrich_p,
-            #             'enriched_nodes': [x[1] for x in best_enrichments]}
+            newprops = {'attributes': attributes}
 
             patch = PropertyPatch(qg_id, best_grouping, newprops, opportunity.get_answer_indices())
             provkeys = []
