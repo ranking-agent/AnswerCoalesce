@@ -39,11 +39,35 @@ def coalesce(answerset, method='all', return_original=True,  predicates_to_exclu
 
     # print('lets patch')
     #Enrichment done and commonalities found, at this point we can rewrite the results
-    new_answers, updated_qg, updated_kg = patch_answers(answerset, patches)
-
-    new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers}
+    new_answers, aux_graphs, updated_qg, updated_kg = patch_answers(answerset, patches)
+    if new_answers:
+        new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers, 'auxiliary_graphs': aux_graphs}
+    else:
+        new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': is_trapi1_4(answerset['results']), 'auxiliary_graphs': aux_graphs}
 
     return new_answerset
+
+def transform_trapi(data):
+    transformed_trapi1_4_data = []
+    for result in data:
+        transformed_result = {
+            "node_bindings": result["node_bindings"],
+            "analyses": [
+                {
+                    "edge_bindings": result.get("edge_bindings", {}),
+                    "score": result.get("score", '')
+                }
+            ]
+        }
+        transformed_trapi1_4_data.append(transformed_result)
+
+    return transformed_trapi1_4_data
+
+def is_trapi1_4(results):
+    if all('analyses' in result for result in results):
+        return results
+    else:
+        return transform_trapi(results)
 
 
 def patch_answers(answerset, patches):
@@ -51,23 +75,33 @@ def patch_answers(answerset, patches):
     # We want to maintain a single kg, and qg.
     qg = answerset['query_graph']
     kg = answerset['knowledge_graph']
-    answers = [Answer(ans, qg, kg) for ans in answerset['results']]
-    new_answers = defaultdict(dict)
+
+    answers = [Answer(ans, qg, kg) for ans in is_trapi1_4(answerset['results'])]
+
+    new_answers_dict = defaultdict(dict)
+    auxilliary_graphs = defaultdict()
     i = 0
     # If there are lots of patches, then we end up spending lots of time finding edges and nodes in the kg
     # as we update it.  kg_indexes are the indexes required to find things quickly.  apply both
     # looks in there, and updates it
     kg_indexes = {}
     for patch in patches:
+        # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
         i += 1
         print(f'{i} / {len(patches)}')
+
         all_new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes, i)
+        # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
+        """Serialize the answer back to ReasonerStd JSON 1.0"""
+        auxilliary_graphs.update(all_new_answer[-1].aux_graph)
         for new_answer in all_new_answer:
             if new_answer is not None:
                 outp = new_answer.to_json()
-                outp_id = outp['node_bindings']['input_chemical'][0]['id']
-                new_answers[outp_id] = outp
-    return list(new_answers.values()), qg, kg
+                outp_id = outp['node_bindings'][next(iter(outp['node_bindings']))][0]['id']
+                new_answers_dict[outp_id] = outp
+    new_answers = list(new_answers_dict.values())
+    return new_answers, auxilliary_graphs, qg, kg
+
 
 def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single
@@ -89,7 +123,12 @@ def identify_coalescent_nodes(answerset):
     # identity but must remain constant in type.
     question = answerset['query_graph']
     graph = answerset['knowledge_graph']
-    answers = [Answer(ans, question, graph) for ans in answerset['results']]
+
+    if all('analyses' in results for results in answerset['results']):
+        answers = [Answer(ans, question, graph) for ans in answerset['results']]
+    else:
+        answers = [Answer(ans, question, graph) for ans in transform_trapi(answerset['results'])]
+
     varhash_to_answers = defaultdict(list)
     varhash_to_qg = {}
     varhash_to_kg = defaultdict(set)
@@ -103,7 +142,6 @@ def identify_coalescent_nodes(answerset):
             varhash_to_kga_map[hash_item][answer_i] = kg_id
             varhash_to_answers[hash_item].append(answer_i)
             qg_type = question['nodes'][qg_id]['categories'] if 'categories' in question['nodes'][qg_id] else graph['nodes'][question['nodes'][qg_id]['ids'][0]]['categories']
-
             if isinstance(qg_type, list):
                 qg_type = [qg_type[0]]
             else:
@@ -128,7 +166,6 @@ def make_answer_hashes(result, kg_edgetypes, question):
     # First combine the node and edge bindings into a single dictionary,
     # bindings = make_bindings(question, result)
     # we dont need to make bindings
-    result=result
     bindings = result.make_bindings()
     hashes = []
     for qg_id, kg_ids in result.node_bindings.items():
@@ -145,7 +182,15 @@ def make_answer_hash(bindings, kg_edgetypes, question, qg_id):
     by their types. That will then allow other answers with a different node but the same types of connections to
     that node to look the same under this hashing function"""
     # for some reason, the bindings are to lists?  Just grabbing the first (and only) element to the new bindings.
-    singlehash = {x: frozenset(y) for x, y in bindings['node_bindings'].items()}
+    #  Doing this because a result is now structured
+    #  1. node_bindings
+    #         # 2. Analyses
+    #         #       a. edge_bindings, and
+    #         #       b. score
+    quick_bindings = {}
+    quick_bindings.update(dict(bindings['node_bindings'].items()))
+    quick_bindings.update(dict(bindings['analyses'][0]['edge_bindings'].items()))
+    singlehash = {x: frozenset(y) for x, y in quick_bindings.items()}
     # take out the binding for qg_id
     del singlehash[qg_id]
     # Now figure out which edges hook to qg_id

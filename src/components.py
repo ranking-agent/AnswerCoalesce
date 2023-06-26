@@ -63,7 +63,6 @@ class NewNode:
         self.newnode_is = newnode_is
         self.newnode_name = newnode_name
 
-
 class PropertyPatch:
     def __init__(self,qg_id,curies,props,answer_ids):
         self.qg_id = qg_id
@@ -96,13 +95,10 @@ class PropertyPatch:
         # Also we will have an extra_q_node in that case, as well as one extra_q_edge, and 1 or more new k_edges
         #question,extra_q_nodes,extra_q_edges = self.update_qg(question)
         graph,all_extra_k_edges,graph_index = self.update_kg(graph,graph_index)
-
-
         for new_answer in comb_answers:
-            new_answer.add_properties(self.qg_id,self.new_props)
-            for node_no, (newnode, extra_k_edges) in enumerate(zip(self.added_nodes, all_extra_k_edges)):
-                new_answer.add_bindings([newnode.newnode], extra_k_edges, f'{patch_no}_{node_no}')
-
+            for node_no, extra_k_edges in enumerate(all_extra_k_edges):
+                new_answer.add_bindings(extra_k_edges, f'{patch_no}_{node_no}')
+                new_answer.add_properties(self.new_props, f'{patch_no}_{node_no}')
             all_new_answers.append(new_answer)
 
         return all_new_answers, question, graph, graph_index
@@ -238,32 +234,41 @@ class PropertyPatch:
 class Answer:
     def __init__(self,json_answer,json_question,json_kg):
         """Take the json answer and turn it into a more usable structure"""
-        #The answer has 3 parts:  Score, a list of node bindings, and a list of edge bindings
+        #The answer has 2 parts:
+        # 1. Node bindings
+        # 2. Analyses
+        #       a. a list of edge bindings, and
+        #       b. Score
         # The edges may be asked for in the question, or they might be extras (support edges)
-
-        self.binding_properties = defaultdict(dict)
         #The node bindings can be in a variety of formats. In 1.0 they're all based on
         #"node_bindings": { "n0": [ { "id": "CHEBI:35475" } ], "n1": [ { "id": "MONDO:0004979" } ] },
         self.node_bindings = defaultdict(set)
-        self.enrichment_result = []
+        self.binding_properties = defaultdict(dict)
+        self.enrichments = []
         self.analyses = []
+        self.aux_graph = defaultdict(dict)
+
+        # Node_bindings
         for qg_id,kg_bindings in json_answer['node_bindings'].items():
             kg_ids = set( [x['id'] for x in kg_bindings] )
             self.node_bindings[ qg_id ].update(kg_ids)
-            #Not sure that this is important re: 1.0?
-            #props = { k:v for k,v in nb.items() if k not in ('qg_id','kg_id')}
-            #self.binding_properties[nb['qg_id']] = props
             self.binding_properties[qg_id] = defaultdict(dict)
 
-        question_edge_ids = set(json_question['edges'].keys())
+        # Analyses, edge_bindings and other properties
         question_edge_bindings = defaultdict(set)
         support_edge_bindings = defaultdict(set)
+
+        question_edge_ids = set(json_question['edges'].keys())
+
+
         if 'score' in json_answer['analyses'] and json_answer['analyses'].get('score'):
             score = json_answer['analyses'].get('score')
         else:
             score = 0.
+
         self.analyses.append({'score':score, "attributes":[], 'edge_bindings':json_answer['analyses'][0].get('edge_bindings')})
-        self.enrichment_result.append({'edges': [], 'attributes': defaultdict(set), 'enriched_node': {}})
+        self.enrichments.append({'edges': []})
+
 
         for analysis in json_answer['analyses']:
             kg_bindings = analysis['edge_bindings']
@@ -274,41 +279,46 @@ class Answer:
                     self.analyses[0]['edge_bindings'] = question_edge_bindings
                 else:
                     support_edge_bindings[qg_id].update(kg_ids)
-                    self.enrichment_result.append({'edges':support_edge_bindings})
+                    self.enrichments.append({'edges': support_edge_bindings})
                 self.binding_properties[qg_id] = defaultdict(dict)
 
     def to_json(self):
         """Serialize the answer back to ReasonerStd JSON 1.0"""
-        json_node_bindings = { q : [ {"id": kid} for kid in k ]  for q,k in self.node_bindings.items() }
-        json_analyses = [ { 'edge_bindings': {{"id": key}: value for key, value in item['edge_bindings'].items()},
-                            'score': item['score'], 'attributes': item['attributes'] }
-                            for item in self.analyses
-                        ]
-        json_enrichment_result = [ {'edges': [{eb_key: [{"id": eb} for eb in eb_dict[eb_key]]for eb_dict in item['edges'] for eb_key in eb_dict}],
-                                    'attributes': item['attributes'],
-                                    'enriched_node': { key: [{"id": val} for val in item['enriched_node'][key]] for key in item['enriched_node']}
-                                    } for item in self.enrichment_result
-                                ]
-        # chk = self.binding_properties
-        for (qg_id,_), enr in zip(json_node_bindings.items(), json_enrichment_result):
-                enr['attributes'].update(dict(self.binding_properties[qg_id]))
+        json_node_bindings = { q : [ {"id": kid} for kid in k ] for q,k in self.node_bindings.items() }
+        json_analyses = [ { 'edge_bindings': {key:[{"id": list(value)[0]}]  for key, value in analysis['edge_bindings'].items()},
+                        'score': analysis['score'],
+                        'attributes': analysis['attributes']
+                    }
+                        for analysis in self.analyses
+                ]
 
-        return { 'node_bindings': json_node_bindings, 'analyses': json_analyses, 'enrichment_result':json_enrichment_result}
+        json_enrichments = [eb_key for item in self.enrichments for eb_dict in item['edges'] for eb_key in eb_dict ]
+        return {'node_bindings': json_node_bindings, 'analyses': json_analyses, 'enrichments':json_enrichments}
+
+
     #TODO: This is not including edges, which is bad.  But I think it should work if the bindings are made right.
     def make_bindings(self):
         """Return a single bindings map, making sure that the same id is not
-        used for both a node and edge. Also remove any edge_bindings that are not part of the question, such
+        used for both node and edge. Also remove any edge_bindings that are not part of the question, such
         as support edges"""
-
         #Check for malformed questions: are the qg_id's unique across edges and nodes
         if len( set(self.node_bindings.keys()).intersection( set(keys for anl in self.analyses for keys in anl['edge_bindings'].keys()))) > 0:
             print('Invalid Question; shares identifiers across nodes and edges in the question')
-        if len( set(self.node_bindings.keys()).intersection( set(item.keys() for enrichment_rslt in self.enrichment_result for item in enrichment_rslt['edges']))) > 0:
+        eb= set()
+        for enrichment in self.enrichments:
+            for edges in enrichment['edges']:
+                if isinstance(edges, str):
+                    eb.update(edges)
+                else:
+                    eb.update(edges.keys())
+        if len(set(self.node_bindings.keys()).intersection( eb)) > 0:
             print('Invalid Question; shares identifiers across nodes and edges in the question')
+        # if len( set(self.node_bindings.keys()).intersection( set(item.keys() for enrichment in self.enrichments for item in enrichment['edges']))) > 0:
+        #     print('Invalid Question; shares identifiers across nodes and edges in the question')
         combined_bindings = {}
         one_result = {'node_bindings': self.node_bindings,
               'analyses': self.analyses,
-              'enrichment_result': self.enrichment_result}
+              'enrichments': self.enrichments}
         combined_bindings.update(one_result)
         return combined_bindings
     def update(self,other_answer):
@@ -322,13 +332,24 @@ class Answer:
         #this one might not be right since it's nested...
         for k, v in other_answer.binding_properties.items():
             self.binding_properties[k].update(v)
-    def add_properties(self,qg_id,bps):
+    def add_properties(self, bps, counter):
         """Update the property map of element qg_id with the properties in bps"""
-        self.binding_properties[qg_id].update(bps)
-    def add_bindings(self, newnode, extra_k_edges,counter):
-        for enr in self.enrichment_result:
-            enr.get('edges', []).append({f'_e_ac_{counter}':extra_k_edges})
-            enr.get('enriched_node', {}).setdefault(f'_n_ac_{counter}', set()).update(newnode)
+        self.aux_graph[f'_e_ac_{counter}'] = bps
+        ls = []
+        for enrichment in self.enrichments:
+            for edges in enrichment:
+                edge_bd_list = enrichment[edges]
+                for eb in edge_bd_list:
+                    if f'_e_ac_{counter}' in eb:
+                        ls.extend(eb[f'_e_ac_{counter}'])
+        self.aux_graph[f'_e_ac_{counter}'].update({'edges': ls})
+
+    def add_bindings(self, extra_k_edges,counter):
+        # Add enriched edges to the enrichments
+        edges = []
+        for enr in self.enrichments:
+            edges.append({f'_e_ac_{counter}':extra_k_edges})
+        enr['edges'] = edges
 
 
 
