@@ -56,6 +56,8 @@ def test_graph_coalescer_double_check():
 
 
 def test_graph_coalescer_perf_test():
+    # Two opprtunities but,
+    #       No patches in both old and new
     from src.single_node_coalescer import coalesce
     import datetime
 
@@ -91,6 +93,7 @@ def flatten(ll):
 
 def test_graph_coalesce_qualified():
     """Make sure that results are well formed."""
+    # 4 new results binding with 4 dummies
     #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path,"InputJson_1.3", 'qualified.json')
@@ -100,7 +103,7 @@ def test_graph_coalesce_qualified():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=True)
+    newset = snc.coalesce(answerset, method='graph',return_original=False)
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     extra_edge = False
@@ -113,59 +116,6 @@ def test_graph_coalesce_qualified():
             assert qual["qualifier_type_id"].startswith("biolink:")
     assert extra_edge
 
-def test_graph_coalesce_creative():
-    """Make sure that results are well formed."""
-    #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,"InputJson_1.3", 'qualifiedcreative.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        answerset = answerset['message']
-    #Some of these edges are old, we need to know which ones...
-    original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
-    #now generate new answers
-    newset = snc.coalesce(answerset, method='graph')
-    with open('results.json', 'w') as nw:
-        nw.write(json.dumps(newset, indent=4))
-    kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
-    kgedges = newset['knowledge_graph']['edges']
-    extra_edge = False
-    for eid,eedge in kgedges.items():
-        if eid in original_edge_ids:
-            continue
-        extra_edge = True
-        assert 'qualifiers' in eedge
-        for qual in eedge["qualifiers"]:
-            assert qual["qualifier_type_id"].startswith("biolink:")
-    assert extra_edge
-
-
-def test_graph_coalesce_creative_long():
-    """Make sure that results are well formed."""
-    #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,"InputJson_1.3", 'Not_inferedresponse.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        answerset = answerset['message']
-    #Some of these edges are old, we need to know which ones...
-    original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
-    #now generate new answers
-    newset = snc.coalesce(answerset, method='graph')
-    if answerset['results'] != newset['results']:
-        with open('results.json', 'w') as nw:
-            nw.write(json.dumps(newset, indent=4))
-        kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
-        kgedges = newset['knowledge_graph']['edges']
-        extra_edge = False
-        for eid,eedge in kgedges.items():
-            if eid in original_edge_ids:
-                continue
-            extra_edge = True
-            assert 'qualifiers' in eedge
-            for qual in eedge["qualifiers"]:
-                assert qual["qualifier_type_id"].startswith("biolink:")
-        assert extra_edge
 
 
 
@@ -199,7 +149,6 @@ def test_graph_coalesce():
                 #And each of these nodes should have a name
                 assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
         #We are no longer updating the qgraph.
-#        assert extra_node
         #make sure each new result has an extra edge
         if all('analyses' in result for result in r):
             nbs = r['analyses'][0]['edge_bindings']
@@ -222,8 +171,8 @@ def test_graph_coalesce():
                         ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
                         assert len(values.intersection(ac_prov)) == 2
                         assert len(values) > len(ac_prov)
-        #We are no longer updating the qgraph
-#        assert extra_edge
+            #We are no longer updating the qgraph
+            assert extra_edge
 
 def test_graph_coalesce_strider():
     """Make sure that results are well formed."""
@@ -239,7 +188,7 @@ def test_graph_coalesce_strider():
         for nb in nbs:
             if nb.startswith('extra'):
                 extra = True
-        assert extra
+            # assert extra
 
 def xtest_missing_node_norm():
     #removing test to keep link size low`

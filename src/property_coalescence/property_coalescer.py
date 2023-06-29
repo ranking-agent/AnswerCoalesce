@@ -113,6 +113,11 @@ def coalesce_by_property(opportunities):
                                'value': [x[1] for x in eps],
                                'value_type_id': 'EDAM:data_0006'})
 
+            attributes.append({'original_attribute_name': 'predicates',
+                               'attribute_type_id': 'biolink:has_attribute',
+                               'value': ['biolink:has_role'],
+                               'value_type_id': 'EDAM:data_0006'})
+
             newprops = {'attributes': attributes}
 
             patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())

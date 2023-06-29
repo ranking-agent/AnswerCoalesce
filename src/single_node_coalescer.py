@@ -8,7 +8,7 @@ from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
-def coalesce(answerset, method='all', return_original=True,  predicates_to_exclude=None, coalesce_threshold=None):
+def coalesce(answerset, method='all', return_original=False, predicates_to_exclude=None, coalesce_threshold=None):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -40,16 +40,14 @@ def coalesce(answerset, method='all', return_original=True,  predicates_to_exclu
     # print('lets patch')
     #Enrichment done and commonalities found, at this point we can rewrite the results
     new_answers, aux_graphs, updated_qg, updated_kg = patch_answers(answerset, patches)
-    if new_answers:
-        new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers, 'auxiliary_graphs': aux_graphs}
-    else:
-        new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': is_trapi1_4(answerset['results']), 'auxiliary_graphs': aux_graphs}
+
+    new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers, 'auxiliary_graphs': aux_graphs}
 
     return new_answerset
 
-def transform_trapi(data):
+def transform_trapi(results):
     transformed_trapi1_4_data = []
-    for result in data:
+    for result in results:
         transformed_result = {
             "node_bindings": result["node_bindings"],
             "analyses": [
@@ -77,30 +75,36 @@ def patch_answers(answerset, patches):
     kg = answerset['knowledge_graph']
 
     answers = [Answer(ans, qg, kg) for ans in is_trapi1_4(answerset['results'])]
-
-    new_answers_dict = defaultdict(dict)
-    auxilliary_graphs = defaultdict()
+    new_answers = []
     i = 0
     # If there are lots of patches, then we end up spending lots of time finding edges and nodes in the kg
     # as we update it.  kg_indexes are the indexes required to find things quickly.  apply both
     # looks in there, and updates it
     kg_indexes = {}
-    for patch in patches:
-        # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
-        i += 1
-        print(f'{i} / {len(patches)}')
+    auxiliary_graphs = defaultdict(dict)
+    if patches:
+        for patch in patches:
+            # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
+            i += 1
+            print(f'{i} / {len(patches)}')
 
-        all_new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes, i)
-        # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
+            all_new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes, i)
+            # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
+
+
         """Serialize the answer back to ReasonerStd JSON 1.0"""
-        auxilliary_graphs.update(all_new_answer[-1].aux_graph)
-        for new_answer in all_new_answer:
-            if new_answer is not None:
-                outp = new_answer.to_json()
-                outp_id = outp['node_bindings'][next(iter(outp['node_bindings']))][0]['id']
-                new_answers_dict[outp_id] = outp
-    new_answers = list(new_answers_dict.values())
-    return new_answers, auxilliary_graphs, qg, kg
+        for answer in all_new_answer:
+            new_answers.append(answer.to_json())
+            auxiliary_graphs.update(answer.get_auxiliarygraph())
+
+        aux_g = auxiliary_graphs
+        return new_answers, dict(sorted(aux_g.items())), qg, kg
+    else:
+        for answer in answers:
+            new_answers.append(answer.to_json())
+        return new_answers, auxiliary_graphs, qg, kg
+
+
 
 
 def identify_coalescent_nodes(answerset):
@@ -124,10 +128,8 @@ def identify_coalescent_nodes(answerset):
     question = answerset['query_graph']
     graph = answerset['knowledge_graph']
 
-    if all('analyses' in results for results in answerset['results']):
-        answers = [Answer(ans, question, graph) for ans in answerset['results']]
-    else:
-        answers = [Answer(ans, question, graph) for ans in transform_trapi(answerset['results'])]
+
+    answers = [Answer(ans, question, graph) for ans in is_trapi1_4(answerset['results'])]
 
     varhash_to_answers = defaultdict(list)
     varhash_to_qg = {}

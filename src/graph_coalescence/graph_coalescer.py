@@ -116,15 +116,12 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
                 threshold = len(nodes)
             if i >= threshold:
                 break
-            # for the first 78 enriched result,
+
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
             best_enrich_p = link[0]
             best_grouping = link[7]
             best_enrich_predicate = json.loads(link[2])
-            # I don't think this is right
-            # best_enrichments = list(filter(lambda x: (x[0] == best_enrich_p) and x[7] == best_grouping,enriched_links))
-            best_enrichments = [link]  # ?
-            # print(best_enrichments)
+            best_enrichments = [link]  #
             attributes = []
 
             attributes.append({'original_attribute_name': 'coalescence_method',
