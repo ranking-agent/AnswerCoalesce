@@ -1,7 +1,5 @@
 import pytest
 import os, json
-drr = '/Users/olawumiolasunkanmi/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/FALL2022/BACKUPS/ARAGORN/AnswerCoalesce'
-os.sys.path.insert(0, drr)
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
