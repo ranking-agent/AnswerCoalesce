@@ -84,7 +84,7 @@ def upgrade_Edge(edge):
             new['sources'] = new['sources'] + sources
     return new
 
-
+# Currently in use
 def upgrade_KnowledgeGraph(kgraph):
     """Upgrade KnowledgeGraph from 0.9.2 to 1.0.0."""
     return {
