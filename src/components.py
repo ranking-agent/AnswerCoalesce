@@ -192,7 +192,6 @@ class PropertyPatch:
             #See if the newnode is already in the KG, and if not, add it.
             found = False
             if newnode.newnode not in kg_index['nodes']:
-
                 if not isinstance(newnode.newnode_type, list):
                     newnode.newnode_type = [newnode.newnode_type]
 
@@ -213,23 +212,41 @@ class PropertyPatch:
                 ekey = (source_id, target_id,  newnode.new_edges)
                 if ekey not in kg_index['edges']:
                     try:
-                        prov = self.provmap[ f'{source_id} {newnode.new_edges} {target_id}']
+                        provs = self.provmap[ f'{source_id} {newnode.new_edges} {target_id}']
                     except KeyError:
-                        prov = []
+                        provs = []
 
                     #newnode.new_edges is a string containing a dict like
                     #{"predicate": "biolink:affects", "object_aspect_qualifier":"transport"}
                     edge_def = ast.literal_eval(newnode.new_edges)
 
+                    sources = []
+                    for prov in provs:
+                        source1 = {'resource_id': 'infores:automat-robokop',
+                                   'resource_role': 'aggregator_knowledge_source'}
+                        source2 = {'resource_id': 'infores:aragorn', 'resource_role': 'aggregator_knowledge_source'}
+                        source1['upstream_resource_ids'] = [prov.get('resource_id', None)]
+                        source2['upstream_resource_ids'] = [source1.get('resource_id', None)]
+                        sources.extend([source1, source2])
+                    source_pov = provs + sources
+
                     edge = { 'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
-                             'attributes': prov + [{'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:aragorn'},
-                                            {'attribute_type_id':'biolink:aggregator_knowledge_source','value':'infores:automat-robokop'}]}
+                             'sources': source_pov}
+                    if 'attributes' in self.new_props:
+                        edge.update(self.new_props)
+                    else:
+                        edge.update({'attributes': self.new_props})
+                    # if not self.new_props:
+                    #     no_attr.append(edge)
+                    #     continue
                     if len(edge_def) > 1:
                         edge["qualifiers"] = [ {"qualifier_type_id": f"biolink:{ekey}", "qualifier_value": eval}
                                                for ekey, eval in edge_def.items() if not ekey == "predicate"]
                     #Need to make a key for the edge, but the attributes & quals make it annoying
                     ek = deepcopy(edge)
+
                     ek['attributes'] = str(ek['attributes'])
+                    ek['sources'] = str(ek['sources'])
                     if 'qualifiers' in ek:
                         ek['qualifiers'] = str(ek['qualifiers'])
                     eid = str(hash(frozenset(ek.items())))
@@ -237,6 +254,7 @@ class PropertyPatch:
                     kg_index['edges'][ekey] = eid
                 eid = kg_index['edges'][ekey]
                 extra_edges.append(str(eid))
+
             all_extra_edges.append(extra_edges)
         return kg,all_extra_edges,kg_index
 
@@ -253,10 +271,8 @@ class Answer:
         # "node_bindings": { "n0": [ { "id": "CHEBI:35475" } ], "n1": [ { "id": "MONDO:0004979" } ] },
         self.node_bindings = defaultdict(set)
         self.binding_properties = defaultdict(dict)
-        self.enrichments = defaultdict(set) #[]
+        self.enrichments = defaultdict(set)
         self.analyses = []
-        # self.aux_graph = defaultdict(defaultdict(list))
-
         self.aux_graph = defaultdict(lambda: defaultdict(list))
 
         # Node_bindings
@@ -266,33 +282,28 @@ class Answer:
             self.binding_properties[qg_id] = defaultdict(dict)
 
         # Analyses, edge_bindings and other properties
-        question_edge_bindings = defaultdict(set)
         self.support_edge_bindings = defaultdict(set)
 
         question_edge_ids = set(json_question['edges'].keys())
-
-        if 'score' in json_answer['analyses'] and json_answer['analyses'].get('score'):
-            score = json_answer['analyses'].get('score')
-        else:
-            score = 0.
-
-        self.analyses.append(
-            {'score': score, "attributes": [], 'edge_bindings': json_answer['analyses'][0].get('edge_bindings')})
+        #resource_id keep throwing error because of null value so i am using a temporary place holder
+        placeholder = 'infores:automat-robokop'
         self.enrichments.update({'edges': defaultdict(set)})
 
+        question_edge_bindings = defaultdict(set)
+
         for analysis in json_answer['analyses']:
-            kg_bindings = analysis['edge_bindings']
-            for qg_id, bindings in kg_bindings.items():
-                kg_ids = set(x['id'] for x in bindings)
+            for qg_id, kg_bindings in analysis['edge_bindings'].items():
+                kg_ids = set(x['id'] for x in kg_bindings)
                 if qg_id in question_edge_ids:
                     question_edge_bindings[qg_id].update(kg_ids)
-                    self.analyses[0]['edge_bindings'] = question_edge_bindings
                 else:
-                    self.support_edge_bindings[qg_id].update(kg_ids)
-                    # self.enrichments.append({'edges': support_edge_bindings})
+                    self.support_edge_bindings[ qg_id].update(kg_ids)
                 self.binding_properties[qg_id] = defaultdict(dict)
-
-
+            self.analyses.append(
+                {'resource_id': analysis.get('resource_id', placeholder),
+                 'attributes': analysis.get('attributes', []),
+                 'edge_bindings': question_edge_bindings,
+                 'score': analysis.get('score', 0.)})
 
     def get_auxiliarygraph(self):
         graph = {}
@@ -305,7 +316,8 @@ class Answer:
         json_node_bindings = { q : [ {"id": kid} for kid in k ] for q,k in self.node_bindings.items() }
         json_analyses = [ { 'edge_bindings': {key:[{"id": list(value)[0]}]  for key, value in analysis['edge_bindings'].items()},
                         'score': analysis['score'],
-                        'attributes': analysis['attributes']
+                        'attributes': analysis['attributes'],
+                        'resource_id':analysis['resource_id']
                     }
                         for analysis in self.analyses
                 ]

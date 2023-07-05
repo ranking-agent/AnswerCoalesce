@@ -124,25 +124,25 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
             best_enrichments = [link]  #
             attributes = []
 
-            attributes.append({'original_attribute_name': 'coalescence_method',
-                               'attribute_type_id': 'biolink:has_attribute',
+            attributes.append({'attribute_type_id': 'biolink:has_attribute',
                                'value': 'graph_enrichment',
-                               'value_type_id': 'EDAM:operation_0004'})
+                               'value_type_id': 'EDAM:operation_0004',
+                               'original_attribute_name': 'coalescence_method'})
 
-            attributes.append({'original_attribute_name': 'p_value',
-                               'attribute_type_id': 'biolink:has_numeric_value',
+            attributes.append({'attribute_type_id': 'biolink:has_numeric_value',
                                'value': best_enrich_p,
-                               'value_type_id': 'EDAM:data_1669'})
+                               'value_type_id': 'EDAM:data_1669',
+                               'original_attribute_name': 'p_value'})
 
-            attributes.append({'original_attribute_name': 'enriched_nodes',
-                               'attribute_type_id': 'biolink:has_attribute',
+            attributes.append({'attribute_type_id': 'biolink:has_attribute',
                                'value': [x[1] for x in best_enrichments],
-                               'value_type_id': 'EDAM:data_0006'})
+                               'value_type_id': 'EDAM:data_0006',
+                               'original_attribute_name': 'enriched_nodes'})
 
-            attributes.append({'original_attribute_name': 'predicates',
-                               'attribute_type_id': 'biolink:has_attribute',
+            attributes.append({'attribute_type_id': 'biolink:has_attribute',
                                'value': [best_enrich_predicate],
-                               'value_type_id': 'EDAM:data_0006'})
+                               'value_type_id': 'EDAM:data_0006',
+                               'original_attribute_name': 'predicates'})
 
             newprops = {'attributes': attributes}
 
@@ -220,6 +220,16 @@ def get_link_counts(unique_links):
                 lcounts[ul] = 0
     return lcounts
 
+def check_prov_value_type(value):
+    if isinstance(value, list):
+        val = ','.join(value)
+    else:
+        val = value
+
+    # I noticed some values are lists eg. ['infores:sri-reference-kg']
+    # This function coerce such to string
+    # Also, the newer pydantic accepts 'primary_knowledge_source' instead of 'biolink:primary_knowledge_source' in the old
+    return val.replace('biolink:', '')
 
 def get_provs(n2l):
     # Now we are going to hit redis to get the provenances for all of the links.
@@ -243,7 +253,7 @@ def get_provs(n2l):
             if n is None:
                 print(edge)
             # Convert the svelte key-value attribute into a fat trapi-style attribute
-            prov[edge] = [{'attribute_type_id': k, 'value': v} for k, v in json.loads(n).items()]
+            prov[edge] = [{'resource_id': check_prov_value_type(v) , 'resource_role': check_prov_value_type(k)} for k, v in json.loads(n).items()]
     return prov
 
 

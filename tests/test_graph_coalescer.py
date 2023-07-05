@@ -3,9 +3,10 @@ import os, json
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
+from reasoner_pydantic import Response as PDResponse
 
 
-jsondir='InputJson_1.2'
+jsondir='InputJson_1.2.4'
 
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
@@ -57,7 +58,7 @@ def test_graph_coalescer_double_check():
 
 def test_graph_coalescer_perf_test():
     # Two opprtunities but,
-    #       No patches in both old and new
+    #       Zero patches in both old and new implementations
     from src.single_node_coalescer import coalesce
     import datetime
 
@@ -72,9 +73,10 @@ def test_graph_coalescer_perf_test():
         incoming = json.load(tf)
         incoming = incoming['message']
 
+
     # call function that does property coalesce
     coalesced = coalesce(incoming, method='graph')
-
+    assert PDResponse.parse_obj({'message': coalesced})
     # get the amount of time it took
     diff = datetime.datetime.now() - t1
 
@@ -96,14 +98,17 @@ def test_graph_coalesce_qualified():
     # 4 new results binding with 4 dummies
     #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,"InputJson_1.3", 'qualified.json')
+    testfilename = os.path.join(dir_path,"InputJson_1.3.4", 'qualified.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        assert PDResponse.parse_obj(answerset)
         answerset = answerset['message']
+
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
     newset = snc.coalesce(answerset, method='graph',return_original=False)
+    assert PDResponse.parse_obj({'message':newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     extra_edge = False
@@ -125,11 +130,13 @@ def test_graph_coalesce():
     testfilename = os.path.join(dir_path,jsondir, 'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        assert PDResponse.parse_obj(answerset)
         answerset = answerset['message']
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
     newset = snc.coalesce(answerset, method='graph',return_original=False)
+    assert PDResponse.parse_obj({'message': newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     #Make sure that the edges are properly formed
@@ -139,10 +146,12 @@ def test_graph_coalesce():
     for r in newset['results']:
         #Make sure each result has at least one extra node binding
         nbs = r['node_bindings']
-        extra_node = False
+        # We are no longer including the enriched node in the node binding some of the following is not necessary
+        # extra_node = False
+
         for qg_id,nbk in nbs.items():
-            if qg_id.startswith('extra'):
-                extra_node = True
+            # if qg_id.startswith('extra'):
+            #     extra_node = True
             #Every node binding should be found somewhere in the kg nodes
             for nb in nbk:
                 assert nb['id'] in kgnodes
@@ -150,29 +159,25 @@ def test_graph_coalesce():
                 assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
         #We are no longer updating the qgraph.
         #make sure each new result has an extra edge
-        if all('analyses' in result for result in r):
-            nbs = r['analyses'][0]['edge_bindings']
-            extra_edge = False
-            for qg_id,nbk in nbs.items():
-                if qg_id.startswith('extra'):
-                    extra_edge = True
-                    #check that the edges have the provenance we need
-                    #Every node binding should be found somewhere in the kg nodes
-                    for nb in nbk:
-                        eedge = kgedges[nb['id']]
-                        if nb['id'] in original_edge_ids:
-                            continue
-                        keys = [a['attribute_type_id'] for a in eedge['attributes']]
-                        try:
-                            values = set(flatten([a['value'] for a in eedge['attributes']]))
-                        except:
-                            print(eedge)
-                            assert False
-                        ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
-                        assert len(values.intersection(ac_prov)) == 2
-                        assert len(values) > len(ac_prov)
-            #We are no longer updating the qgraph
-            assert extra_edge
+        ebs = r['analyses'][0]['edge_bindings']
+        extra_edge = False
+        for qg_id,nbk in ebs.items():
+
+                #check that the edges have the provenance we need
+                #Every node binding should be found somewhere in the kg nodes
+                for nb in nbk:
+                    eedge = kgedges[nb['id']]
+                    if nb['id'] in original_edge_ids:
+                        continue
+                    keys = [a['attribute_type_id'] for a in eedge['attributes']]
+                    try:
+                        values = set(flatten([a['value'] for a in eedge['attributes']]))
+                    except:
+                        assert False
+                    ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
+                    assert len(values.intersection(ac_prov)) == 2
+                    assert len(values) > len(ac_prov)
+
 
 def test_graph_coalesce_strider():
     """Make sure that results are well formed."""
@@ -233,3 +238,5 @@ def test_gouper_keys():
         n += 1
     assert n == 3
     assert x == ('g',)
+
+

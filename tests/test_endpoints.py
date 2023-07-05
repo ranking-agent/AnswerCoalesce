@@ -5,12 +5,13 @@ import pytest
 import yaml
 import json
 from fastapi.testclient import TestClient
+from reasoner_pydantic import Response as PDResponse
 from src.server import APP
 
 
 client = TestClient(APP)
 
-jsondir= 'InputJson_1.2'
+jsondir= 'InputJson_1.2.4'
 
 
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
@@ -32,9 +33,9 @@ def test_basic():
         key = json.dumps(result,sort_keys=True)
         unique_results[key] = result
 
-    # chkeys = list(unique_results.keys())
     answerset['message']['results'] = list(unique_results.values())
 
+    assert PDResponse.parse_obj(answerset)
     # make a good request
     response = client.post('/coalesce/graph', json=answerset)
 
@@ -48,8 +49,9 @@ def test_basic():
     ret = jret['message']
     assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
     assert( len(ret['query_graph']['nodes']) < 6)
-    #Coming back to this
-    # assert( len(ret['results'])==len(answerset['message']['results']))
+
+    assert( len(ret['results'])==len(answerset['message']['results']))
+
 
 @pytest.mark.nongithub
 def test_property():
@@ -170,9 +172,6 @@ def xfailed_relation_attrib_error_test_schizo_coalesce():
 
     # convert the response to a json object
     jret = json.loads(response.content)
-
-    #assert('results' in ret)
-    #assert( len(ret['results']) <= 4 )
 
     jr = response.json()
     assert 'message' in jr

@@ -17,6 +17,8 @@ def coalesce(answerset, method='all', return_original=False, predicates_to_exclu
     There are plenty of ways to extend this, including adding edges to the coalescent
     entities.
     """
+    # reformat answerset
+    answerset['results'] = is_trapi1_4(answerset['results'])
 
     # Look for places to combine
     coalescence_opportunities = identify_coalescent_nodes(answerset)
@@ -46,19 +48,30 @@ def coalesce(answerset, method='all', return_original=False, predicates_to_exclu
     return new_answerset
 
 def transform_trapi(results):
-    transformed_trapi1_4_data = []
-    for result in results:
-        transformed_result = {
-            "node_bindings": result["node_bindings"],
-            "analyses": [
-                {
-                    "edge_bindings": result.get("edge_bindings", {}),
-                    "score": result.get("score", '')
-                }
-            ]
-        }
-        transformed_trapi1_4_data.append(transformed_result)
-
+    if isinstance(results, list):
+        transformed_trapi1_4_data = []
+        for result in results:
+            transformed_result = {
+                "node_bindings": result["node_bindings"],
+                "analyses": [
+                    {
+                        "resource_id": result.get("resource_id", "automat-robokop"),
+                        "edge_bindings": result.get("edge_bindings", {}),
+                        "score": result.get("score", 0.)
+                    }
+                ]
+            }
+            transformed_trapi1_4_data.append(transformed_result)
+    else:
+        transformed_trapi1_4_data = {
+                "node_bindings": results["node_bindings"],
+                "analyses": [
+                    {
+                        "edge_bindings": results.get("edge_bindings", {}),
+                        "score": results.get("score", 0.)
+                    }
+                ]
+            }
     return transformed_trapi1_4_data
 
 def is_trapi1_4(results):
@@ -91,12 +104,10 @@ def patch_answers(answerset, patches):
             all_new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes, i)
             # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
 
-
         """Serialize the answer back to ReasonerStd JSON 1.0"""
         for answer in all_new_answer:
             new_answers.append(answer.to_json())
             auxiliary_graphs.update(answer.get_auxiliarygraph())
-
         aux_g = auxiliary_graphs
         return new_answers, dict(sorted(aux_g.items())), qg, kg
     else:
@@ -129,7 +140,8 @@ def identify_coalescent_nodes(answerset):
     graph = answerset['knowledge_graph']
 
 
-    answers = [Answer(ans, question, graph) for ans in is_trapi1_4(answerset['results'])]
+    # answers = [Answer(ans, question, graph) for ans in is_trapi1_4(answerset['results'])]
+    answers = [Answer(ans, question, graph) for ans in answerset['results']]
 
     varhash_to_answers = defaultdict(list)
     varhash_to_qg = {}
@@ -191,8 +203,10 @@ def make_answer_hash(bindings, kg_edgetypes, question, qg_id):
     #         #       b. score
     quick_bindings = {}
     quick_bindings.update(dict(bindings['node_bindings'].items()))
-    quick_bindings.update(dict(bindings['analyses'][0]['edge_bindings'].items()))
+    for analysis in bindings['analyses']:
+        quick_bindings.update(dict(analysis['edge_bindings'].items()))
     singlehash = {x: frozenset(y) for x, y in quick_bindings.items()}
+
     # take out the binding for qg_id
     del singlehash[qg_id]
     # Now figure out which edges hook to qg_id
