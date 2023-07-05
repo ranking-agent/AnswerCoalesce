@@ -8,7 +8,6 @@ import redis
 import json
 import ast
 import itertools
-# os.path.insert(0, "/Users/olawumiolasunkanmi/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/FALL2022/BACKUPS/ARAGORN/AnswerCoalesce/")
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
