@@ -5,7 +5,7 @@ import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
 
 
-jsondir='InputJson_1.2'
+jsondir='InputJson_1.2.4'
 
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
