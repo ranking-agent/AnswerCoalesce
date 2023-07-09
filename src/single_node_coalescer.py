@@ -1,7 +1,6 @@
 from collections import defaultdict
 from copy import deepcopy
 # from datetime import datetime as dt
-from collections import OrderedDict
 
 from src.components import Opportunity, Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
