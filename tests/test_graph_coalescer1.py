@@ -18,22 +18,22 @@ def flatten(ll):
         return [ll]
 
 def test_double_check_enrichment():
-    """Make sure that results are well formed."""
+    """Make sure that the patches length == auxiliary graph length."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_workflow.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         assert answerset.get('workflow')
-        coalesce_threshold = answerset['workflow'][0].get('threshold', None)
+        assert PDResponse.parse_obj(answerset)
     answerset = answerset['message']
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', coalesce_threshold=coalesce_threshold)
+    newset = snc.coalesce(answerset, method='graph', coalesce_threshold=None)
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
     opportunities = snc.identify_coalescent_nodes(answerset)
     patches = gc.coalesce_by_graph(opportunities)
     #There is at least one enriched result for each patch in the patches
-    assert len(patches) == len(newset['auxiliary_graphs'])
+    assert len(patches) == len(newset['auxiliary_graphs']) # 18
 
 def test_graph_coalesce_qualified():
     """Make sure that results are well formed."""
@@ -95,6 +95,7 @@ def test_graph_coalesce_creative_long():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
+    # Local redis only do property enrichment because there is no sufficient datss for graph enrichment
     newset = snc.coalesce(answerset, method='all')
     assert PDResponse.parse_obj({'message':newset})
     kgedges = newset['knowledge_graph']['edges']
@@ -172,8 +173,8 @@ def test_graph_coalesce_with_pred_exclude():
     testfilename = os.path.join(dir_path, jsondir, 'famcov_new_pred_exclude.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
-        # assert PDResponse.parse_obj(answerset)
-        assert answerset['workflow'][0].get('predicates_to_exclude')
+        assert PDResponse.parse_obj(answerset)
+        assert answerset['workflow'][0].get("parameters").get('predicates_to_exclude')
         predicates_to_exclude = answerset['workflow'][0].get('predicates_to_exclude', None)
         answerset = answerset['message']
     # Some of these edges are old, we need to know which ones...
@@ -228,9 +229,9 @@ def test_graph_coalesce_with_threshold_1():
     testfilename = os.path.join(dir_path, jsondir, 'famcov_new_threshold_1.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
-        assert answerset['workflow'][0].get('threshold')
-        coalesce_threshold = answerset['workflow'][0].get('threshold', None)
-
+        assert PDResponse.parse_obj(answerset)
+        assert answerset['workflow'][0].get("parameters").get('threshold')
+        coalesce_threshold = answerset['workflow'][0].get("parameters").get('threshold')
     answerset = answerset['message']
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
@@ -284,8 +285,9 @@ def test_graph_coalesce_with_threshold_500():
     testfilename = os.path.join(dir_path, jsondir, 'famcov_new_threshold_500.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
-        assert answerset['workflow'][0].get('threshold')
-        coalesce_threshold = answerset['workflow'][0].get('threshold', None)
+        assert PDResponse.parse_obj(answerset)
+        assert answerset['workflow'][0].get("parameters").get('threshold')
+        coalesce_threshold = answerset['workflow'][0].get("parameters").get('threshold')
     answerset = answerset['message']
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
@@ -337,8 +339,9 @@ def test_graph_coalesce_with_params_500():
     testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_params.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
-        assert answerset['workflow'][0].get('threshold')
-        assert answerset['workflow'][0].get('predicates_to_exclude')
+        assert PDResponse.parse_obj(answerset)
+        assert answerset['workflow'][0].get("parameters").get('threshold')
+        assert answerset['workflow'][0].get("parameters").get('predicates_to_exclude')
         coalesce_threshold = answerset['workflow'][0].get('threshold', None)
         predicates_to_exclude = answerset['workflow'][0].get('predicates_to_exclude', None)
     answerset = answerset['message']

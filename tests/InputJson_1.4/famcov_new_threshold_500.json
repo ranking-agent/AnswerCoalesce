@@ -2193,7 +2193,7 @@
     "workflow": [
         {
             "id": "enrich_results",
-            "threshold": 500
+           "parameters": {"threshold": 500}
         }
     ]
 }
