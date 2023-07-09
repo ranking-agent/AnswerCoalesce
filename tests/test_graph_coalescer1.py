@@ -27,7 +27,7 @@ def test_double_check_enrichment():
         coalesce_threshold = answerset['workflow'][0].get('threshold', None)
     answerset = answerset['message']
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', return_original=True, coalesce_threshold=coalesce_threshold)
+    newset = snc.coalesce(answerset, method='graph', coalesce_threshold=coalesce_threshold)
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
     opportunities = snc.identify_coalescent_nodes(answerset)
@@ -47,9 +47,8 @@ def test_graph_coalesce_qualified():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=True)
+    newset = snc.coalesce(answerset, method='graph')
     assert PDResponse.parse_obj({'message': newset})
-    kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     extra_edge = False
     for eid,eedge in kgedges.items():
@@ -122,7 +121,7 @@ def test_graph_coalesce_with_workflow():
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
-    newset = snc.coalesce(answerset, method='all', return_original=True)
+    newset = snc.coalesce(answerset, method='all')
     assert PDResponse.parse_obj({'message': newset})
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
@@ -180,7 +179,7 @@ def test_graph_coalesce_with_pred_exclude():
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', return_original=True, predicates_to_exclude=predicates_to_exclude)
+    newset = snc.coalesce(answerset, method='graph', predicates_to_exclude=predicates_to_exclude)
     assert PDResponse.parse_obj({'message': newset})
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
@@ -236,7 +235,7 @@ def test_graph_coalesce_with_threshold_1():
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', return_original=True, coalesce_threshold=coalesce_threshold)
+    newset = snc.coalesce(answerset, method='graph', coalesce_threshold=coalesce_threshold)
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
 
@@ -291,7 +290,7 @@ def test_graph_coalesce_with_threshold_500():
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', return_original=True, coalesce_threshold=coalesce_threshold)
+    newset = snc.coalesce(answerset, method='graph', coalesce_threshold=coalesce_threshold)
     assert PDResponse.parse_obj({'message': newset})
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
@@ -346,7 +345,7 @@ def test_graph_coalesce_with_params_500():
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', return_original=True, predicates_to_exclude=predicates_to_exclude,
+    newset = snc.coalesce(answerset, method='graph', predicates_to_exclude=predicates_to_exclude,
                           coalesce_threshold=coalesce_threshold)
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])

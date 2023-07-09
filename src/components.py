@@ -3,7 +3,7 @@ from collections import defaultdict
 import ast
 
 class Opportunity:
-    def __init__(self,hash, qg, kg, a_i, ai2kg):
+    def __init__(self, hash, qg, kg, a_i, ai2kg):
         """
         Define a coalescent opportunity by a hash (the fixed parts of the answers)
         qg: a (qg_id, semantic type) pair

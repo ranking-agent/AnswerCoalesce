@@ -8,7 +8,7 @@ from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
-def coalesce(answerset, method='all', return_original=False, predicates_to_exclude=None, coalesce_threshold=None):
+def coalesce(answerset, method='all', predicates_to_exclude=None, coalesce_threshold=None):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -218,7 +218,7 @@ def make_answer_hash(bindings, kg_edgetypes, question, qg_id):
 
     # The double comprehension is a bit of a mess, but our singlehash values are sets
     # What is happening is that a given s or t edge, we want a map from that qgid (the id in sedges) we want to
-    # get the kg edges.  Thats a set, we loop over it, and get the edgetypes from the kg for each, and make
+    # get the kg edges.  That's a set, we loop over it, and get the edgetypes from the kg for each, and make
     # a new set with all those types in it.  At the end, we have a map from an edge qg_id to a frozenset of
     # types for that edge for this answer.
     sedge_types = {se: frozenset([kg_edgetypes[x] for x in singlehash[se]]) for se in sedges}

@@ -107,7 +107,7 @@ def test_graph_coalesce_qualified():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=False)
+    newset = snc.coalesce(answerset, method='graph')
 
     assert PDResponse.parse_obj({'message':newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
@@ -136,7 +136,7 @@ def test_graph_coalesce():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=False)
+    newset = snc.coalesce(answerset, method='graph')
     assert PDResponse.parse_obj({'message': newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -188,7 +188,7 @@ def test_graph_coalesce_strider():
         # Note: Assert PDResponse cannot work here since the categories are depicted as :
         # "categories": ["biolink:C", "biolink:H",...]
         answerset = answerset['message']
-    newset = snc.coalesce(answerset, method='graph', return_original=False)
+    newset = snc.coalesce(answerset, method='graph')
     #  Opportunities(5) contain nodes that we dont have links for, so they were filtered out and the patches =[]
 
 
