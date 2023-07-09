@@ -221,12 +221,8 @@ class PropertyPatch:
 
                     #newnode.new_edges is a string containing a dict like
                     #{"predicate": "biolink:affects", "object_aspect_qualifier":"transport"}
-                    # Running this on the local redis give representations above. However,
-                    # Port forwarding gives "biolink:affects"
-                    if isinstance(newnode.new_edges, str) and 'predicate' in newnode.new_edges:
-                        edge_def = ast.literal_eval(newnode.new_edges)
-                    else:
-                        edge_def = {'predicate': newnode.new_edges}
+
+                    edge_def = ast.literal_eval(newnode.new_edges)
 
                     sources = []
                     for prov in provs:
@@ -239,7 +235,8 @@ class PropertyPatch:
 
                     edge = { 'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
                              'sources': source_pov}
-                    # Because of Test files with hand-created patches with no 'attributes' key
+
+                    # Because of Test files with manually-created patches with no 'attributes' key
                     if 'attributes' in self.new_props:
                         edge.update(self.new_props)
                     else:

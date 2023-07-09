@@ -1,8 +1,6 @@
 import pytest
 import json
 import os
-drr = '/Users/olawumiolasunkanmi/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/FALL2022/BACKUPS/ARAGORN/AnswerCoalesce'
-os.sys.path.insert(0, drr)
 import src.single_node_coalescer as snc
 
 input_dir = 'InputJson_1.1'
