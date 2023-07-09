@@ -6,8 +6,7 @@ import yaml
 import json
 from fastapi.testclient import TestClient
 from reasoner_pydantic import Response as PDResponse
-drr = '/Users/olawumiolasunkanmi/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/FALL2022/BACKUPS/ARAGORN/AnswerCoalesce'
-os.sys.path.insert(0, drr)
+
 from src.server import APP
 
 
