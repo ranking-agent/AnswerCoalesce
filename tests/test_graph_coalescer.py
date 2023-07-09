@@ -6,7 +6,7 @@ from src.components import Opportunity,Answer
 from reasoner_pydantic import Response as PDResponse
 
 
-jsondir='InputJson_1.2.4'
+jsondir='InputJson_1.4'
 
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
@@ -98,7 +98,7 @@ def test_graph_coalesce_qualified():
     # 4 new results binding with 4 dummies
     #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,"InputJson_1.3.4", 'qualified.json')
+    testfilename = os.path.join(dir_path,jsondir, 'qualified.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         assert PDResponse.parse_obj(answerset)
@@ -108,6 +108,7 @@ def test_graph_coalesce_qualified():
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
     newset = snc.coalesce(answerset, method='graph',return_original=False)
+
     assert PDResponse.parse_obj({'message':newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -162,7 +163,6 @@ def test_graph_coalesce():
         ebs = r['analyses'][0]['edge_bindings']
         extra_edge = False
         for qg_id,nbk in ebs.items():
-
                 #check that the edges have the provenance we need
                 #Every node binding should be found somewhere in the kg nodes
                 for nb in nbk:
@@ -185,15 +185,12 @@ def test_graph_coalesce_strider():
     testfilename = os.path.join(dir_path,jsondir,'strider_relay_mouse.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        # Note: Assert PDResponse cannot work here since the categories are depicted as :
+        # "categories": ["biolink:C", "biolink:H",...]
         answerset = answerset['message']
     newset = snc.coalesce(answerset, method='graph', return_original=False)
-    for r in newset['results']:
-        nbs = r['node_bindings']
-        extra = False
-        for nb in nbs:
-            if nb.startswith('extra'):
-                extra = True
-            # assert extra
+    #  Opportunities(5) contain nodes that we dont have links for, so they were filtered out and the patches =[]
+
 
 def xtest_missing_node_norm():
     #removing test to keep link size low`

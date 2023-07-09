@@ -11,7 +11,7 @@ from src.server import APP
 
 client = TestClient(APP)
 
-jsondir= 'InputJson_1.2.4'
+jsondir= 'InputJson_1.4'
 
 
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around

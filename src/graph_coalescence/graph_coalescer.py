@@ -119,7 +119,8 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
             best_enrich_p = link[0]
             best_grouping = link[7]
-            best_enrich_predicate = json.loads(link[2])
+            # best_enrich_predicate = json.loads(link[2]) if isinstance(link[2], bytes) else link[2]
+            best_enrich_predicate = ast.literal_eval(link[2])
             best_enrichments = [link]  #
             attributes = []
 
@@ -139,7 +140,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
                                'original_attribute_name': 'enriched_nodes'})
 
             attributes.append({'attribute_type_id': 'biolink:has_attribute',
-                               'value': [best_enrich_predicate],
+                               'value': [best_enrich_predicate['predicate']],
                                'value_type_id': 'EDAM:data_0006',
                                'original_attribute_name': 'predicates'})
 

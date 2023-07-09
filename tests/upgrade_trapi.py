@@ -185,6 +185,7 @@ def upgrade_QEdge(qedge):
         "subject": qedge.pop("source_id"),
         "object": qedge.pop("target_id"),
     }
+
     if "type" in qedge:
         new["predicate"] = upgrade_BiolinkRelation(qedge.pop("type"))
     if "relation" in qedge:

@@ -1,6 +1,7 @@
 from collections import defaultdict
 from copy import deepcopy
 # from datetime import datetime as dt
+from collections import OrderedDict
 
 from src.components import Opportunity, Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
@@ -109,7 +110,7 @@ def patch_answers(answerset, patches):
             new_answers.append(answer.to_json())
             auxiliary_graphs.update(answer.get_auxiliarygraph())
         aux_g = auxiliary_graphs
-        return new_answers, dict(sorted(aux_g.items())), qg, kg
+        return new_answers, dict(sorted(aux_g.items(), key=lambda x: int(x[0].split('_')[3]))), qg, kg
     else:
         for answer in answers:
             new_answers.append(answer.to_json())
@@ -142,7 +143,6 @@ def identify_coalescent_nodes(answerset):
 
     # answers = [Answer(ans, question, graph) for ans in is_trapi1_4(answerset['results'])]
     answers = [Answer(ans, question, graph) for ans in answerset['results']]
-
     varhash_to_answers = defaultdict(list)
     varhash_to_qg = {}
     varhash_to_kg = defaultdict(set)

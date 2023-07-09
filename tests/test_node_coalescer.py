@@ -12,7 +12,7 @@ def test_bindings():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1.4','asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.4','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         assert PDResponse.parse_obj(answerset)
@@ -34,7 +34,7 @@ def test_hash_one_hop():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1.4','asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.4','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']

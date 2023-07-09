@@ -103,9 +103,12 @@ class PropertyPatch:
                     answer.add_properties(self.qg_id, self.new_props, f'{patch_no}_{node_no}')
                 else:
                     # For property_coalesced nodes with no all_extra_k_edges
-                    node_no = 0
-                    answer.add_bindings(all_extra_k_edges, f'{patch_no}_{node_no}')
-                    answer.add_properties(self.qg_id, self.new_props, f'{patch_no}_{node_no}')
+                    # Noticed some property patches has null from et_enriched_properties in the Property_coalescer,
+                    # We need to be sure such nodes are not added into the enrichment
+                    # Example in test_graph_coalesce_with_workflow() with method= 'all'
+                    if self.new_props:
+                        node_no = 0
+                        answer.add_property_bindings(all_extra_k_edges, self.qg_id, self.new_props, f'{patch_no}_{node_no}')
             all_new_answers.append(answer)
 
         return all_new_answers, question, graph, graph_index
@@ -218,12 +221,16 @@ class PropertyPatch:
 
                     #newnode.new_edges is a string containing a dict like
                     #{"predicate": "biolink:affects", "object_aspect_qualifier":"transport"}
-                    edge_def = ast.literal_eval(newnode.new_edges)
+                    # Running this on the local redis give representations above. However,
+                    # Port forwarding gives "biolink:affects"
+                    if isinstance(newnode.new_edges, str) and 'predicate' in newnode.new_edges:
+                        edge_def = ast.literal_eval(newnode.new_edges)
+                    else:
+                        edge_def = {'predicate': newnode.new_edges}
 
                     sources = []
                     for prov in provs:
-                        source1 = {'resource_id': 'infores:automat-robokop',
-                                   'resource_role': 'aggregator_knowledge_source'}
+                        source1 = {'resource_id': 'infores:automat-robokop', 'resource_role': 'aggregator_knowledge_source'}
                         source2 = {'resource_id': 'infores:aragorn', 'resource_role': 'aggregator_knowledge_source'}
                         source1['upstream_resource_ids'] = [prov.get('resource_id', None)]
                         source2['upstream_resource_ids'] = [source1.get('resource_id', None)]
@@ -232,13 +239,12 @@ class PropertyPatch:
 
                     edge = { 'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
                              'sources': source_pov}
+                    # Because of Test files with hand-created patches with no 'attributes' key
                     if 'attributes' in self.new_props:
                         edge.update(self.new_props)
                     else:
                         edge.update({'attributes': self.new_props})
-                    # if not self.new_props:
-                    #     no_attr.append(edge)
-                    #     continue
+
                     if len(edge_def) > 1:
                         edge["qualifiers"] = [ {"qualifier_type_id": f"biolink:{ekey}", "qualifier_value": eval}
                                                for ekey, eval in edge_def.items() if not ekey == "predicate"]
@@ -275,9 +281,11 @@ class Answer:
         self.analyses = []
         self.aux_graph = defaultdict(lambda: defaultdict(list))
 
+
         # Node_bindings
         for qg_id, kg_bindings in json_answer['node_bindings'].items():
-            kg_ids = set([x['id'] for x in kg_bindings])
+            kg_ids = set([x['id'] for x in kg_bindings ])
+            # kg_ids = set([x[id] for x in kg_bindings for id in x])#To retain both the id and the qnode_id
             self.node_bindings[qg_id].update(kg_ids)
             self.binding_properties[qg_id] = defaultdict(dict)
 
@@ -285,8 +293,15 @@ class Answer:
         self.support_edge_bindings = defaultdict(set)
 
         question_edge_ids = set(json_question['edges'].keys())
+
+        # Using this to save up the qnode_id in addition to the id
+        self.question_node_ids = [value['ids'][0] for _, value in json_question['nodes'].items() if value.get('ids')]
+
+            # [value['ids'][0] for _, value in json_question['nodes'].items() if 'ids' in value]
+        self.question_node = [key for key, value in json_question['nodes'].items() if value.get('ids')]
+
         #resource_id keep throwing error because of null value so i am using a temporary place holder
-        placeholder = 'infores:automat-robokop'
+        placeholder = 'infores:automat-robokopPLACEHOLDER'
         self.enrichments.update({'edges': defaultdict(set)})
 
         question_edge_bindings = defaultdict(set)
@@ -301,7 +316,6 @@ class Answer:
                 self.binding_properties[qg_id] = defaultdict(dict)
             self.analyses.append(
                 {'resource_id': analysis.get('resource_id', placeholder),
-                 'attributes': analysis.get('attributes', []),
                  'edge_bindings': question_edge_bindings,
                  'score': analysis.get('score', 0.)})
 
@@ -311,13 +325,19 @@ class Answer:
             graph.update({k:v})
         return graph
 
+    #
     def to_json(self):
         """Serialize the answer back to ReasonerStd JSON 1.0"""
         json_node_bindings = { q : [ {"id": kid} for kid in k ] for q,k in self.node_bindings.items() }
-        json_analyses = [ { 'edge_bindings': {key:[{"id": list(value)[0]}]  for key, value in analysis['edge_bindings'].items()},
-                        'score': analysis['score'],
-                        'attributes': analysis['attributes'],
-                        'resource_id':analysis['resource_id']
+
+        # Initially the edge bindings have qnode_id, rewrite them in the node_bindings
+        for q_node, q_nodeid in zip(self.question_node, self.question_node_ids):
+            if q_node in json_node_bindings:
+                json_node_bindings[q_node][0]["qnode_id"] = q_nodeid
+
+        json_analyses = [ {'resource_id':analysis['resource_id'],
+                           'edge_bindings': {key:[{"id": list(value)[0]}]  for key, value in analysis['edge_bindings'].items()},
+                            'score': analysis['score']
                     }
                         for analysis in self.analyses
                 ]
@@ -356,8 +376,14 @@ class Answer:
         self.aux_graph[f'_e_ac_{counter}'].update(bps)
 
 
-
     def add_bindings(self, extra_k_edges, counter):
         self.enrichments['edges'][f'_e_ac_{counter}'].update(extra_k_edges)
         self.aux_graph[f'_e_ac_{counter}']['edges'].extend(extra_k_edges)
+
+
+    def add_property_bindings(self, extra_k_edges, qg_id, bps, counter):
+        self.enrichments['edges'][f'_n_ac_{counter}'].update(extra_k_edges)
+        self.aux_graph[f'_n_ac_{counter}']['edges'].extend(extra_k_edges)
+        self.binding_properties[qg_id].update(bps)
+        self.aux_graph[f'_n_ac_{counter}'].update(bps)
 
