@@ -43,7 +43,7 @@ def get_redis_pipeline(dbnum):
     return p
 
 
-def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_threshold=None, pcut=0):
+def coalesce_by_graph(opportunities, predicates_to_exclude=None, pcut=None):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -109,12 +109,8 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
         # (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
         for i in range(len(enriched_links)):
             link = enriched_links[i]
-            # if coalesce_threshold:
-            #     threshold = coalesce_threshold
-            # else:
-            #     threshold = len(nodes)
-            # if i >= threshold:
-            #     break
+            if i >= len(nodes):
+                break
 
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
             best_enrich_p = link[0]
@@ -351,8 +347,15 @@ def create_node_to_type(opportunities):
 #    return nodes_to_links
 
 def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
-                       predicates_to_exclude=None, pcut=1e-6):
+                       predicates_to_exclude=None, pcut=None):
     logger.info(f'{len(nodes)} enriched node links to process.')
+
+    if not pcut:
+        # Use the specified pcut as the enrichment p-value threshold
+        p_threshold = 1e-6
+    else:
+        # Use the default p-value threshold of 1e-6
+        p_threshold = pcut
 
     # Get the most enriched connected node for a group of nodes.
     logger.debug('start get_shared_links()')
@@ -439,7 +442,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             # Enrichment pvalue
             enrichp = sfcache[args]
 
-            if enrichp < pcut:
+            if enrichp < p_threshold:
                 # get the real labels/types of the enriched node
                 node_types = typecache[newcurie]
 
@@ -459,6 +462,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
     logger.debug('end get_enriched_links()')
     return results
+
 
 
 def get_total_node_counts(semantic_types):

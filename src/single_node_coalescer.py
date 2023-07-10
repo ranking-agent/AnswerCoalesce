@@ -37,7 +37,7 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, coalesce_thres
         patches += coalesce_by_property(coalescence_opportunities)
 
     if method in ['all', 'graph']:
-        patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, coalesce_threshold, pcut)
+        patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, pcut)
 
     # print('lets patch')
     #Enrichment done and commonalities found, at this point we can rewrite the results
