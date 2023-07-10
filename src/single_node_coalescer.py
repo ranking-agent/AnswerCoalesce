@@ -8,7 +8,7 @@ from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
-def coalesce(answerset, method='all', predicates_to_exclude=None, coalesce_threshold=None):
+def coalesce(answerset, method='all', predicates_to_exclude=None, coalesce_threshold=None, pcut=0):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -37,7 +37,7 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, coalesce_thres
         patches += coalesce_by_property(coalescence_opportunities)
 
     if method in ['all', 'graph']:
-        patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, coalesce_threshold)
+        patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, coalesce_threshold, pcut)
 
     # print('lets patch')
     #Enrichment done and commonalities found, at this point we can rewrite the results

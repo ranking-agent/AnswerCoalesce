@@ -88,7 +88,7 @@ class PropertyPatch:
         comb_answers = [a for a in possible_answers if self.isconsistent(a)]
         #This can happen for weird inputs like double bound nodes
         if len(comb_answers) < 2:
-            return None,question,graph,graph_index
+            return answers,question,graph,graph_index
         #Modify the question graph and the knowledge graph
         #If we're not adding a new node, extra_q_node = None, extra_q_edges = extra_k_edges =[]. No bindings to add
         #If we have an added node, the added node is always self.newnode

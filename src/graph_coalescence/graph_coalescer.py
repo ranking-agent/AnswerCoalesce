@@ -43,7 +43,7 @@ def get_redis_pipeline(dbnum):
     return p
 
 
-def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_threshold=None):
+def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_threshold=None, pcut=0):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -98,7 +98,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
 
 
         enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                            total_node_counts, predicates_to_exclude=predicates_to_exclude)
+                                            total_node_counts, predicates_to_exclude=predicates_to_exclude, pcut=pcut)
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -109,12 +109,12 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, coalesce_thresh
         # (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
         for i in range(len(enriched_links)):
             link = enriched_links[i]
-            if coalesce_threshold:
-                threshold = coalesce_threshold
-            else:
-                threshold = len(nodes)
-            if i >= threshold:
-                break
+            # if coalesce_threshold:
+            #     threshold = coalesce_threshold
+            # else:
+            #     threshold = len(nodes)
+            # if i >= threshold:
+            #     break
 
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
             best_enrich_p = link[0]
