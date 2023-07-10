@@ -2193,7 +2193,7 @@
     "workflow": [
         {
             "id": "enrich_results",
-            "parameters": {"threshold": 500,
+            "parameters": {"pvalue_threshold": 1e-7,
             "predicates_to_exclude": [
                 "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
                 "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"

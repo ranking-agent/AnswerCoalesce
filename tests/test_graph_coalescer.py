@@ -135,6 +135,7 @@ def test_graph_coalesce():
         answerset = answerset['message']
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
+    original_node_ids = set([node for node in answerset['knowledge_graph']['nodes']])
     #now generate new answers
     newset = snc.coalesce(answerset, method='graph')
     assert PDResponse.parse_obj({'message': newset})
@@ -144,15 +145,17 @@ def test_graph_coalesce():
     for eid, kg_edge in kgedges.items():
         assert isinstance(kg_edge["predicate"],str)
         assert kg_edge["predicate"].startswith("biolink:")
+    extra_node = False
+    for node in kgnodes:
+        if node in original_node_ids:
+            continue
+        extra_node = True
+    assert extra_node
     for r in newset['results']:
         #Make sure each result has at least one extra node binding
         nbs = r['node_bindings']
         # We are no longer including the enriched node in the node binding some of the following is not necessary
-        # extra_node = False
-
         for qg_id,nbk in nbs.items():
-            # if qg_id.startswith('extra'):
-            #     extra_node = True
             #Every node binding should be found somewhere in the kg nodes
             for nb in nbk:
                 assert nb['id'] in kgnodes
@@ -160,23 +163,28 @@ def test_graph_coalesce():
                 assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
         #We are no longer updating the qgraph.
         #make sure each new result has an extra edge
-        ebs = r['analyses'][0]['edge_bindings']
-        extra_edge = False
-        for qg_id,nbk in ebs.items():
-                #check that the edges have the provenance we need
-                #Every node binding should be found somewhere in the kg nodes
-                for nb in nbk:
-                    eedge = kgedges[nb['id']]
-                    if nb['id'] in original_edge_ids:
+        ebs = r['enrichments']
+        # make sure each enriched result has an extra edge
+        if ebs:
+            # check that the edges have the provenance we need
+            # Every node binding should be found somewhere in the kg nodes
+            for eb in ebs:
+                e_bindings = newset['auxiliary_graphs'][eb]
+                eb_edges = e_bindings['edges']
+                for eid in eb_edges:
+                    if eid in original_edge_ids:
                         continue
-                    keys = [a['attribute_type_id'] for a in eedge['attributes']]
+                    extra_edge = True
+                    eedge = kgedges[eid]
                     try:
-                        values = set(flatten([a['value'] for a in eedge['attributes']]))
+                        resource = set(flatten([a['resource_id'] for a in eedge['sources']]))
                     except:
                         assert False
-                    ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
-                    assert len(values.intersection(ac_prov)) == 2
-                    assert len(values) > len(ac_prov)
+                    ac_prov = set(['infores:aragorn', 'infores:automat-robokop'])
+                    assert len(resource.intersection(ac_prov)) == 2
+                    assert len(resource) > len(ac_prov)
+
+            assert extra_edge
 
 
 def test_graph_coalesce_strider():
