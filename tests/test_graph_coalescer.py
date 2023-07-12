@@ -3,9 +3,10 @@ import os, json
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
+from reasoner_pydantic import Response as PDResponse
 
 
-jsondir='InputJson_1.2'
+jsondir='InputJson_1.4'
 
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
@@ -56,6 +57,8 @@ def test_graph_coalescer_double_check():
 
 
 def test_graph_coalescer_perf_test():
+    # Two opprtunities but,
+    #       Zero patches in both old and new implementations
     from src.single_node_coalescer import coalesce
     import datetime
 
@@ -70,9 +73,10 @@ def test_graph_coalescer_perf_test():
         incoming = json.load(tf)
         incoming = incoming['message']
 
+
     # call function that does property coalesce
     coalesced = coalesce(incoming, method='graph')
-
+    assert PDResponse.parse_obj({'message': coalesced})
     # get the amount of time it took
     diff = datetime.datetime.now() - t1
 
@@ -91,16 +95,21 @@ def flatten(ll):
 
 def test_graph_coalesce_qualified():
     """Make sure that results are well formed."""
+    # 4 new results binding with 4 dummies
     #chem_ids = ["MESH:C034206", "PUBCHEM.COMPOUND:2336", "PUBCHEM.COMPOUND:2723949", "PUBCHEM.COMPOUND:24823"]
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path,"InputJson_1.3", 'qualified.json')
+    testfilename = os.path.join(dir_path,jsondir, 'qualified.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        assert PDResponse.parse_obj(answerset)
         answerset = answerset['message']
+
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=False)
+    newset = snc.coalesce(answerset, method='graph')
+
+    assert PDResponse.parse_obj({'message':newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     extra_edge = False
@@ -122,54 +131,61 @@ def test_graph_coalesce():
     testfilename = os.path.join(dir_path,jsondir, 'famcov_new.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        assert PDResponse.parse_obj(answerset)
         answerset = answerset['message']
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
+    original_node_ids = set([node for node in answerset['knowledge_graph']['nodes']])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph',return_original=False)
+    newset = snc.coalesce(answerset, method='graph')
+    assert PDResponse.parse_obj({'message': newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
     #Make sure that the edges are properly formed
     for eid, kg_edge in kgedges.items():
         assert isinstance(kg_edge["predicate"],str)
         assert kg_edge["predicate"].startswith("biolink:")
+    extra_node = False
+    for node in kgnodes:
+        if node in original_node_ids:
+            continue
+        extra_node = True
+    assert extra_node
     for r in newset['results']:
         #Make sure each result has at least one extra node binding
         nbs = r['node_bindings']
-        extra_node = False
+        # We are no longer including the enriched node in the node binding some of the following is not necessary
         for qg_id,nbk in nbs.items():
-            if qg_id.startswith('extra'):
-                extra_node = True
             #Every node binding should be found somewhere in the kg nodes
             for nb in nbk:
                 assert nb['id'] in kgnodes
                 #And each of these nodes should have a name
                 assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
         #We are no longer updating the qgraph.
-#        assert extra_node
         #make sure each new result has an extra edge
-        nbs = r['edge_bindings']
-        extra_edge = False
-        for qg_id,nbk in nbs.items():
-            if qg_id.startswith('extra'):
-                extra_edge = True
-                #check that the edges have the provenance we need
-                #Every node binding should be found somewhere in the kg nodes
-                for nb in nbk:
-                    eedge = kgedges[nb['id']]
-                    if nb['id'] in original_edge_ids:
+        ebs = r['enrichments']
+        # make sure each enriched result has an extra edge
+        if ebs:
+            # check that the edges have the provenance we need
+            # Every node binding should be found somewhere in the kg nodes
+            for eb in ebs:
+                e_bindings = newset['auxiliary_graphs'][eb]
+                eb_edges = e_bindings['edges']
+                for eid in eb_edges:
+                    if eid in original_edge_ids:
                         continue
-                    keys = [a['attribute_type_id'] for a in eedge['attributes']]
+                    extra_edge = True
+                    eedge = kgedges[eid]
                     try:
-                        values = set(flatten([a['value'] for a in eedge['attributes']]))
+                        resource = set(flatten([a['resource_id'] for a in eedge['sources']]))
                     except:
-                        print(eedge)
                         assert False
-                    ac_prov = set( ['infores:aragorn', 'infores:automat-robokop'] )
-                    assert len(values.intersection(ac_prov)) == 2
-                    assert len(values) > len(ac_prov)
-        #We are no longer updating the qgraph
-#        assert extra_edge
+                    ac_prov = set(['infores:aragorn', 'infores:automat-robokop'])
+                    assert len(resource.intersection(ac_prov)) == 2
+                    assert len(resource) > len(ac_prov)
+
+            assert extra_edge
+
 
 def test_graph_coalesce_strider():
     """Make sure that results are well formed."""
@@ -177,15 +193,12 @@ def test_graph_coalesce_strider():
     testfilename = os.path.join(dir_path,jsondir,'strider_relay_mouse.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        # Note: Assert PDResponse cannot work here since the categories are depicted as :
+        # "categories": ["biolink:C", "biolink:H",...]
         answerset = answerset['message']
-    newset = snc.coalesce(answerset, method='graph', return_original=False)
-    for r in newset['results']:
-        nbs = r['node_bindings']
-        extra = False
-        for nb in nbs:
-            if nb.startswith('extra'):
-                extra = True
-        assert extra
+    newset = snc.coalesce(answerset, method='graph')
+    #  Opportunities(5) contain nodes that we dont have links for, so they were filtered out and the patches =[]
+
 
 def xtest_missing_node_norm():
     #removing test to keep link size low`
@@ -230,3 +243,5 @@ def test_gouper_keys():
         n += 1
     assert n == 3
     assert x == ('g',)
+
+

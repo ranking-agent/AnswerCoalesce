@@ -98,20 +98,25 @@ def coalesce_by_property(opportunities):
 
             attributes = []
 
-            attributes.append({'original_attribute_name': 'coalescence_method',
-                         'attribute_type_id': 'biolink:has_attribute',
+            attributes.append({'attribute_type_id': 'biolink:has_attribute',
                          'value': 'property_enrichment',
-                         'value_type_id': 'EDAM:operation_0004'})
+                         'value_type_id': 'EDAM:operation_0004',
+                         'original_attribute_name': 'coalescence_method'})
 
-            attributes.append({'original_attribute_name': 'p_value',
-                               'attribute_type_id': 'biolink:has_numeric_value',
+            attributes.append({'attribute_type_id': 'biolink:has_numeric_value',
                                'value': [x[0] for x in eps],
-                               'value_type_id': 'EDAM:data_1669'})
+                               'value_type_id': 'EDAM:data_1669',
+                               'original_attribute_name': 'p_value'})
 
-            attributes.append({'original_attribute_name': 'properties',
-                               'attribute_type_id': 'biolink:has_attribute',
+            attributes.append({'attribute_type_id': 'biolink:has_attribute',
                                'value': [x[1] for x in eps],
-                               'value_type_id': 'EDAM:data_0006'})
+                               'value_type_id': 'EDAM:data_0006',
+                               'original_attribute_name': 'properties'})
+
+            attributes.append({'attribute_type_id': 'biolink:has_attribute',
+                               'value': ['biolink:has_role'],
+                               'value_type_id': 'EDAM:data_0006',
+                               'original_attribute_name': 'predicates'})
 
             newprops = {'attributes': attributes}
 

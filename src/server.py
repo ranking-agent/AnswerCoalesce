@@ -13,7 +13,7 @@ from src.util import LoggingUtil
 from src.single_node_coalescer import coalesce
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
@@ -99,6 +99,7 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # turn it back into a full trapi message
         in_message['message'] = coalesced
 
+        assert PDResponse.parse_obj(in_message)
         # import json
         # with open('ac_out_attributes.json', 'w') as tf:
         #     tf.write(json.dumps(in_message, default=str))
@@ -116,7 +117,11 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
         # in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
 
     # return the result to the caller
+    # return Response(content=json.dumps(in_message), media_type='application/json', status_code=status_code)
     return JSONResponse(content=in_message, status_code=status_code)
+
+
+
 
 
 def log_exception(method):
