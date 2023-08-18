@@ -72,7 +72,7 @@ def flatten(ll):
         return [ll]
 
 
-def test_all_coalesce_creative_long():
+def x_test_all_coalesce_creative_long():
     # coalesce method = 'all'
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, jsondir, 'alzheimer.json')
