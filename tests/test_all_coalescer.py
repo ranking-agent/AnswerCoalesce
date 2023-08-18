@@ -1,5 +1,7 @@
 import pytest
 import os, json
+import sys
+sys.path.insert(0, "/Users/olawumiolasunkanmi/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/FALL2022/BACKUPS/ARAGORN/AnswerCoalesce/")
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
@@ -16,46 +18,6 @@ def set_workflowparams(lookup_results):
             ]}
         }
     ]})
-def x_test_all_coalesce_creative_():
-    # coalesce method = 'all'
-    # Also test if nodebinding in the old and new results are the same
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    # testfilename = os.path.join(dir_path, jsondir, 'asthma_one_hop.json')
-    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflow.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    pvalue_threshold = None
-    predicates_to_exclude = None
-    if 'workflow' in answerset and 'parameters' in answerset['workflow'][0]:
-        pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', None)
-        predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
-
-    assert PDResponse.parse_obj(answerset)
-    answerset = answerset['message']
-    #Some of these edges are old, we need to know which ones...
-    original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
-    #now generate new answers
-       # Local redis only do property enrichment because there is no sufficient datss for graph enrichment
-    newset = snc.coalesce(answerset, method='all', predicates_to_exclude=predicates_to_exclude, pvalue_threshold=pvalue_threshold)
-    assert PDResponse.parse_obj({'message': newset})
-
-    kgedges = newset['knowledge_graph']['edges']
-    extra_edge = False
-    for eid, eedge in kgedges.items():
-        if eid in original_edge_ids:
-            continue
-        extra_edge = True
-        if 'qualifiers' in eedge:
-            for qual in eedge["qualifiers"]:
-                assert qual["qualifier_type_id"].startswith("biolink:")
-    assert extra_edge #This only works with port forwarding when there are graphenriched results
-
-    # This only works with the lookup results whose nodebindings contain qnode_id originally
-    for i, r in enumerate(newset['results']):
-        old_r = answerset['results'][i]['node_bindings']
-        # Make sure each result has at least one extra node binding
-        assert r['node_bindings'] == old_r
 
 import requests
 # These were downloaded from searching the terms in https://ui.test.transltr.io/
@@ -90,7 +52,7 @@ def test_all_ui_message():
     newset = snc.coalesce(answerset, method='all', predicates_to_exclude= predicates_to_exclude, pvalue_threshold=pvalue_threshold)
 
     assert PDResponse.parse_obj({'message': newset})
-    with open(common_diseasesdir+'/ac_results/'+name.split('.')[0]+'_output.json', 'w') as qw:
+    with open(dir_path+'/'+common_diseasesdir+'/ac_results/'+name.split('.')[0]+'_output.json', 'w') as qw:
         qw.write(json.dumps({'message': newset}, indent=4))
 
     kgedges = newset['knowledge_graph']['edges']
