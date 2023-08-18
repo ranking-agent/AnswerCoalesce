@@ -1,7 +1,5 @@
 import pytest
 import os, json
-import sys
-sys.path.insert(0, "/Users/olawumiolasunkanmi/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/FALL2022/BACKUPS/ARAGORN/AnswerCoalesce/")
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
