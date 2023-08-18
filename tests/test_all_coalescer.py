@@ -19,10 +19,7 @@ def set_workflowparams(lookup_results):
 
 import requests
 # These were downloaded from searching the terms in https://ui.test.transltr.io/
-disease_names = ['ArthrochalasiaEhlers-Danlos', 'Bethlem', 'Castleman', 'Cerebralautosomal', 'ClassicalEhlers-Danlos',
-         'Ehlers-danlos SyndromeDermatosparaxisType', 'Ehlers-danlosSyndrome', 'Ehlers-danlosVascularType', 'Fatalfamilialinsomnia',
-         'Hereditarysensoryandautonomicneuropathytype4', 'InclusionBodyMyositis', 'KyphoscolioticEhlers-Danlos',
-         'UllrichCongenitalMuscularDystrophy']
+disease_names = ['ArthrochalasiaEhlers-Danlos', 'Bethlem']
 common_diseasesdir = 'CommonDiseases'
 def test_all_ui_message():
     # req = requests.get("https://ars.test.transltr.io/ars/api/messages/0f45557e-ffd9-4ef8-870a-84d4dbf37ba4")
@@ -30,7 +27,7 @@ def test_all_ui_message():
     # with open(common_diseasesdir+name+'.json', 'w') as qw:
     #     qw.write(json.dumps({'message': answerset}, indent=4))
 
-    name = disease_names[1] + '.json'
+    name = disease_names[0] + '.json'
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, common_diseasesdir, name)
     with open(testfilename, 'r') as tf:
