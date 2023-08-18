@@ -103,34 +103,6 @@ def test_all_coalesce_creative_long():
         # Make sure each result has at least one extra node binding
         assert r['node_bindings'] == old_r
 
-
-
-def test_all_coalesce_withworkflow():
-    # coalesce method = 'all'
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflow.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        assert PDResponse.parse_obj(answerset)
-        answerset = answerset['message']
-    #Some of these edges are old, we need to know which ones...
-    original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
-    #now generate new answers
-    # Local redis only do property enrichment because there is no sufficient datss for graph enrichment
-    newset = snc.coalesce(answerset, method='graph')
-    assert PDResponse.parse_obj({'message':newset})
-    kgedges = newset['knowledge_graph']['edges']
-    extra_edge = False
-    for eid,eedge in kgedges.items():
-        if eid in original_edge_ids:
-            continue
-        extra_edge = True
-        if 'qualifiers' in eedge:
-            for qual in eedge["qualifiers"]:
-                assert qual["qualifier_type_id"].startswith("biolink:")
-    assert extra_edge #This only works with port forwarding when there are graphenriched results
-
-
 def test_all_coalesce_with_workflow():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
