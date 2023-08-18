@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-AC_VERSION = '2.4.6'
+AC_VERSION = '2.4.7'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -92,9 +92,16 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     # get the message to work on
     coalesced = in_message['message']
 
+    predicates_to_exclude = None
+    pvalue_threshold = None
+
+    if in_message.get('workflow'):
+        if in_message.get('workflow')[0].get('parameters', {}):
+            predicates_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('predicates_to_exclude', [])
+            pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 1e-06)
     try:
         # call the operation with the message in the request message
-        coalesced = coalesce(coalesced, method=method)
+        coalesced = coalesce(coalesced, method=method, predicates_to_exclude=predicates_to_exclude, pvalue_threshold=pvalue_threshold)
 
         # turn it back into a full trapi message
         in_message['message'] = coalesced

@@ -6,14 +6,14 @@ argparse~=1.4.0
 setuptools~=50.3.2
 requests~=2.24.0
 pytest==6.1.1
-scipy~=1.5.3
+scipy~=1.11.1
 sparqlwrapper~=1.8.5
 redis~=3.5.3
 fastapi==0.65.2
 sanic~=20.9.0
 gunicorn==20.0.4
-numpy~=1.19.2
+numpy~=1.21.6
 pydantic~=1.8
 uvicorn==0.12.2
-reasoner-pydantic==4.1.0
+reasoner-pydantic==4.1.4
 jsonlines

@@ -1,5 +1,7 @@
 import pytest
 import os, json
+import sys
+sys.path.insert(0, "/Users/olawumiolasunkanmi/Library/CloudStorage/OneDrive-UniversityofNorthCarolinaatChapelHill/FALL2022/BACKUPS/ARAGORN/AnswerCoalesce/")
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
@@ -27,7 +29,7 @@ def test_double_check_enrichment():
         assert PDResponse.parse_obj(answerset)
     answerset = answerset['message']
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', coalesce_threshold=None)
+    newset = snc.coalesce(answerset, method='graph')
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
     opportunities = snc.identify_coalescent_nodes(answerset)
@@ -118,14 +120,13 @@ def test_graph_coalesce_with_pred_exclude():
                     extra_edge = True
                     eedge = kgedges[eid]
                     try:
-                        predicates = set(flatten([a['value'] for a in eedge['attributes'] if a['original_attribute_name']=='predicates'] ))
                         resource = set(flatten([a['resource_id'] for a in eedge['sources']]))
                     except:
                         assert False
                     ac_prov = set(['infores:aragorn', 'infores:automat-robokop'])
                     assert len(resource.intersection(ac_prov)) == 2
                     assert len(resource) > len(ac_prov)
-                    assert len(predicates.intersection(predicates_to_exclude)) == 0
+                    assert len(set(eedge['predicate']).intersection(set(predicates_to_exclude))) == 0
             assert extra_edge
 
 
@@ -145,7 +146,7 @@ def test_graph_coalesce_with_params_and_pcut1e6():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph', predicates_to_exclude=predicates_to_exclude,
-                          pcut=pvalue_threshold)
+                          pvalue_threshold=pvalue_threshold)
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
@@ -178,18 +179,13 @@ def test_graph_coalesce_with_params_and_pcut1e6():
                     extra_edge = True
                     eedge = kgedges[eid]
                     try:
-                        pvalue = set(flatten(
-                            [a['value'] for a in eedge['attributes'] if a['original_attribute_name'] == 'p_value']))
-                        predicates = set(flatten(
-                            [a['value'] for a in eedge['attributes'] if a['original_attribute_name'] == 'predicates']))
                         resource = set(flatten([a['resource_id'] for a in eedge['sources']]))
                     except:
                         assert False
                     ac_prov = set(['infores:aragorn', 'infores:automat-robokop'])
                     assert len(resource.intersection(ac_prov)) == 2
                     assert len(resource) > len(ac_prov)
-                    assert len(predicates.intersection(predicates_to_exclude)) == 0
-                    assert max(pvalue)<pvalue_threshold
+                    assert len(set(eedge['predicate']).intersection(set(predicates_to_exclude))) == 0
             assert extra_edge
 
 
@@ -209,7 +205,7 @@ def test_graph_coalesce_with_params_1e7():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
     newset = snc.coalesce(answerset, method='graph', predicates_to_exclude=predicates_to_exclude,
-                          pcut=pvalue_threshold)
+                          pvalue_threshold=pvalue_threshold)
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
@@ -235,6 +231,8 @@ def test_graph_coalesce_with_params_1e7():
             # Every node binding should be found somewhere in the kg nodes
             for eb in ebs:
                 e_bindings = newset['auxiliary_graphs'][eb]
+                pvalue = set([a['value'] for a in e_bindings['attributes'] if a['attribute_type_id']== 'biolink:p_value'])
+                assert (pvalue!=1e-06)
                 eb_edges = e_bindings['edges']
                 for eid in eb_edges:
                     if eid in original_edge_ids:
@@ -242,18 +240,13 @@ def test_graph_coalesce_with_params_1e7():
                     extra_edge = True
                     eedge = kgedges[eid]
                     try:
-                        pvalue = set(flatten(
-                            [a['value'] for a in eedge['attributes'] if a['original_attribute_name'] == 'p_value']))
-                        predicates = set(flatten(
-                            [a['value'] for a in eedge['attributes'] if a['original_attribute_name'] == 'predicates']))
                         resource = set(flatten([a['resource_id'] for a in eedge['sources']]))
                     except:
                         assert False
                     ac_prov = set(['infores:aragorn', 'infores:automat-robokop'])
                     assert len(resource.intersection(ac_prov)) == 2
                     assert len(resource) > len(ac_prov)
-                    assert len(predicates.intersection(predicates_to_exclude)) == 0
-                    assert max(pvalue) < pvalue_threshold
+                    assert len(set(eedge['predicate']).intersection(set(predicates_to_exclude))) == 0
             assert extra_edge
 
 

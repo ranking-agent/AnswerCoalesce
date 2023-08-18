@@ -19,9 +19,9 @@ def test_graph_coalescer():
     assert p.qg_id == 'qg_0'
     assert len(p.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
     atts=p.new_props['attributes']
-    kv = { x['original_attribute_name']: x['value'] for x in atts}
-    assert kv['coalescence_method'] == 'graph_enrichment'
-    assert kv['p_value'] < 1e-10
+    kv = { x['attribute_type_id']: x['value'] for x in atts}
+    assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
+    assert kv['biolink:p_value'] < 1e-10
     assert len(p.added_nodes)==1
 
 def test_graph_coalescer_double_check():
@@ -49,9 +49,9 @@ def test_graph_coalescer_double_check():
     assert p.qg_id == 'qg_0'
     #assert len(p.set_curies) == 3 #  Don't really know how many there are.
     atts=p.new_props['attributes']
-    kv = { x['original_attribute_name']: x['value'] for x in atts}
-    assert kv['coalescence_method'] == 'graph_enrichment'
-    assert kv['p_value'] < 1e-10
+    kv = { x['attribute_type_id']: x['value'] for x in atts}
+    assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
+    assert kv['biolink:p_value'] < 1e-10
     assert len(p.added_nodes)==1
 
 
@@ -122,9 +122,6 @@ def test_graph_coalesce_qualified():
             assert qual["qualifier_type_id"].startswith("biolink:")
     assert extra_edge
 
-
-
-
 def test_graph_coalesce():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -183,7 +180,6 @@ def test_graph_coalesce():
                     ac_prov = set(['infores:aragorn', 'infores:automat-robokop'])
                     assert len(resource.intersection(ac_prov)) == 2
                     assert len(resource) > len(ac_prov)
-
             assert extra_edge
 
 

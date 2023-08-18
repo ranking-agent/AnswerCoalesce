@@ -91,37 +91,26 @@ def coalesce_by_property(opportunities):
         for ep in enriched_properties:
             c2e[ep[5]].append(ep)
         #now construct a patch for each curie set.
-        for curieset,eps in c2e.items():
+        for curieset,epss in c2e.items():
             # newprops = {'coalescence_method':'property_enrichment',
             #             'p_values': [x[0] for x in eps],
             #             'properties': [x[1] for x in eps]}
+            for eps in epss:
+                attributes = []
 
-            attributes = []
+                attributes.append({'attribute_type_id': 'biolink:supporting_study_method_type',
+                             'value': 'property_enrichment'})
 
-            attributes.append({'attribute_type_id': 'biolink:has_attribute',
-                         'value': 'property_enrichment',
-                         'value_type_id': 'EDAM:operation_0004',
-                         'original_attribute_name': 'coalescence_method'})
+                attributes.append({'attribute_type_id': 'biolink:p_value',
+                                   'value': eps[0]})
 
-            attributes.append({'attribute_type_id': 'biolink:has_numeric_value',
-                               'value': [x[0] for x in eps],
-                               'value_type_id': 'EDAM:data_1669',
-                               'original_attribute_name': 'p_value'})
+                attributes.append({'attribute_type_id': 'biolink:chemical_role',
+                                   'value': eps[1]})
 
-            attributes.append({'attribute_type_id': 'biolink:has_attribute',
-                               'value': [x[1] for x in eps],
-                               'value_type_id': 'EDAM:data_0006',
-                               'original_attribute_name': 'properties'})
+                newprops = {'attributes': attributes}
 
-            attributes.append({'attribute_type_id': 'biolink:has_attribute',
-                               'value': ['biolink:has_role'],
-                               'value_type_id': 'EDAM:data_0006',
-                               'original_attribute_name': 'predicates'})
-
-            newprops = {'attributes': attributes}
-
-            patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
-            patches.append(patch)
+                patch = PropertyPatch(qg_id,curieset,newprops,opportunity.get_answer_indices())
+                patches.append(patch)
     return patches
 
 def get_enriched_properties(nodes,semantic_type,pcut=1e-4):

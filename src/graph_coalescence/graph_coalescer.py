@@ -43,7 +43,7 @@ def get_redis_pipeline(dbnum):
     return p
 
 
-def coalesce_by_graph(opportunities, predicates_to_exclude=None, pcut=None):
+def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshold=None):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -98,7 +98,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pcut=None):
 
 
         enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                            total_node_counts, predicates_to_exclude=predicates_to_exclude, pcut=pcut)
+                                            total_node_counts, predicates_to_exclude=predicates_to_exclude, pvalue_threshold=pvalue_threshold)
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -114,37 +114,32 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pcut=None):
 
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
             best_enrich_p = link[0]
+            best_enrich_node = link[1]
+            direction = {True: 'biolink:object', False: 'biolink:subject'}
+            enrich_direction = direction.get(link[3])
             best_grouping = link[7]
 
-            best_enrich_predicate = json.loads(link[2])['predicate']
-            best_enrichments = [link]  #
+  #
             attributes = []
 
-            attributes.append({'attribute_type_id': 'biolink:has_attribute',
-                               'value': 'graph_enrichment',
-                               'value_type_id': 'EDAM:operation_0004',
-                               'original_attribute_name': 'coalescence_method'})
+            attributes.append({'attribute_type_id': 'biolink:supporting_study_method_type',
+                               'value': 'graph_enrichment'})
 
-            attributes.append({'attribute_type_id': 'biolink:has_numeric_value',
-                               'value': best_enrich_p,
-                               'value_type_id': 'EDAM:data_1669',
-                               'original_attribute_name': 'p_value'})
+            attributes.append({'attribute_type_id': 'biolink:p_value',
+                               'value': best_enrich_p})
 
-            attributes.append({'attribute_type_id': 'biolink:has_attribute',
-                               'value': [x[1] for x in best_enrichments],
-                               'value_type_id': 'EDAM:data_0006',
-                               'original_attribute_name': 'enriched_nodes'})
+            attributes.append({'attribute_type_id': enrich_direction,
+                               'value': best_enrich_node})
 
-            attributes.append({'attribute_type_id': 'biolink:has_attribute',
-                               'value': best_enrich_predicate,
-                               'value_type_id': 'EDAM:data_0006',
-                               'original_attribute_name': 'predicates'})
+            for key, value in json.loads(link[2]).items():
+                attributes.append({'attribute_type_id': 'biolink:'+key,
+                                   'value': value})
 
             newprops = {'attributes': attributes}
 
             patch = PropertyPatch(qg_id, best_grouping, newprops, opportunity.get_answer_indices())
             provkeys = []
-            for e in best_enrichments:
+            for e in [link]:
                 newcurie = e[1]
                 # etype is a string rep of a dict.  We leave it as such because we use it as a key but
                 # we also need to take it apart
@@ -347,15 +342,15 @@ def create_node_to_type(opportunities):
 #    return nodes_to_links
 
 def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
-                       predicates_to_exclude=None, pcut=None):
+                       predicates_to_exclude=None, pvalue_threshold=None):
     logger.info(f'{len(nodes)} enriched node links to process.')
 
-    if not pcut:
+    if not pvalue_threshold:
         # Use the specified pcut as the enrichment p-value threshold
         p_threshold = 1e-6
     else:
         # Use the default p-value threshold of 1e-6
-        p_threshold = pcut
+        p_threshold = pvalue_threshold
 
     # Get the most enriched connected node for a group of nodes.
     logger.debug('start get_shared_links()')
@@ -462,8 +457,6 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
     logger.debug('end get_enriched_links()')
     return results
-
-
 
 def get_total_node_counts(semantic_types):
     p = get_redis_pipeline(5)

@@ -103,7 +103,7 @@ class PropertyPatch:
                     answer.add_properties(self.qg_id, self.new_props, f'{patch_no}_{node_no}')
                 else:
                     # For property_coalesced nodes with no all_extra_k_edges
-                    # Noticed some property patches has null from et_enriched_properties in the Property_coalescer,
+                    # Noticed some property patches has null from enriched_properties in the Property_coalescer,
                     # We need to be sure such nodes are not added into the enrichment
                     # Example in test_graph_coalesce_with_workflow() with method= 'all'
                     if self.new_props:
@@ -185,6 +185,8 @@ class PropertyPatch:
                 qg['edges'].update( {new_edge_id:{ 'subject': new_node_id, 'object': self.qg_id }})
             extra_q_edges.append(new_edge_id)
         return qg, extra_q_nodes, extra_q_edges
+
+
     def update_kg(self,kg,kg_index):
         if len(kg_index) == 0:
             kg_index['nodes'] = set( kg['nodes'].keys() )
@@ -204,6 +206,7 @@ class PropertyPatch:
             for curie in self.set_curies: #try to add a new edge from this curie to newnode
                 if curie == newnode.newnode:
                     continue #no self edge please
+
                 #check to see if the edge we want to add is already present in the kg
                 if newnode.newnode_is == 'source':
                     source_id = newnode.newnode
@@ -234,13 +237,7 @@ class PropertyPatch:
                     source_pov = provs + sources
 
                     edge = { 'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
-                             'sources': source_pov}
-
-                    # Because of Test files with manually-created patches with no 'attributes' key
-                    if 'attributes' in self.new_props:
-                        edge.update(self.new_props)
-                    else:
-                        edge.update({'attributes': self.new_props})
+                             'sources': source_pov, 'attributes': []}
 
                     if len(edge_def) > 1:
                         edge["qualifiers"] = [ {"qualifier_type_id": f"biolink:{ekey}", "qualifier_value": eval}
@@ -259,7 +256,7 @@ class PropertyPatch:
                 extra_edges.append(str(eid))
 
             all_extra_edges.append(extra_edges)
-        return kg,all_extra_edges,kg_index
+        return kg, all_extra_edges,kg_index
 
 class Answer:
     def __init__(self, json_answer, json_question, json_kg):
@@ -298,7 +295,7 @@ class Answer:
         self.question_node = [key for key, value in json_question['nodes'].items() if value.get('ids')]
 
         #resource_id keep throwing error because of null value so i am using a temporary place holder
-        placeholder = 'infores:automat-robokopPLACEHOLDER'
+        placeholder = 'infores:automat-robokop'
         self.enrichments.update({'edges': defaultdict(set)})
 
         question_edge_bindings = defaultdict(set)

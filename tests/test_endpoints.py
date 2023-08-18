@@ -15,6 +15,16 @@ client = TestClient(APP)
 jsondir= 'InputJson_1.4'
 
 
+def set_workflowparams(lookup_results):
+    return lookup_results.update({"workflow": [
+        {
+            "id": "enrich_results",
+            "parameters": {"predicates_to_exclude": [
+                "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+                "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
+            ]}
+        }
+    ]})
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub
@@ -23,10 +33,16 @@ def test_basic():
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
 
-    testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
+    # testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
+    #
+    # with open(testfilename, 'r') as tf:
+    #     answerset = json.load(tf)
 
+    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflow.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
+        set_workflowparams(answerset)
+        # assert PDResponse.parse_obj(answerset)
 
     #there are dups in this result set gross: dedup
     unique_results = {}
@@ -38,7 +54,7 @@ def test_basic():
 
     assert PDResponse.parse_obj(answerset)
     # make a good request
-    response = client.post('/coalesce/graph', json=answerset)
+    response = client.post('/coalesce/all', json=answerset)
 
     # was the request successful
     assert(response.status_code == 200)

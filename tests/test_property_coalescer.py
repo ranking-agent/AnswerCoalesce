@@ -98,7 +98,7 @@ def test_property_coalsecer():
     opportunity = Opportunity('hash',('qg_0','biolink:SmallMolecule'),curies,[0,1,2,3],{i:[curies[i]] for i in range(4)})
     opportunities=[opportunity]
     patches = pc.coalesce_by_property(opportunities)
-    assert len(patches) == 1
+    assert len(patches) == 2 #Now that the list if split into strings
     #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
     p = patches[0]
     assert p.qg_id == 'qg_0'
