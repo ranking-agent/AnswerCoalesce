@@ -19,23 +19,24 @@ def set_workflowparams(lookup_results):
 
 import requests
 common_diseasesdir = 'CommonDiseases'
-def test_all_ui_message():
-    name = 'response_1693583708718.json'
-    # req = requests.get("https://ars.test.transltr.io/ars/api/messages/cae4b633-4984-42b0-8364-1424c4771347")
-    # answerset = req.json()['fields']['data']
-    # with open(common_diseasesdir+name+'.json', 'w') as qw:
-    #     qw.write(json.dumps({'message': answerset}, indent=4))
+def x_test_all_ui_message():
+    name = 'hyperlipidemia'
+    req = requests.get("https://ars.test.transltr.io/ars/api/messages/cae4b633-4984-42b0-8364-1424c4771347")
+    answerset = req.json()['fields']['data']
+    with open(common_diseasesdir+name+'.json', 'w') as qw:
+        qw.write(json.dumps({'message': answerset}, indent=4))
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, common_diseasesdir, name)
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-    # set_workflowparams(answerset)
+    # testfilename = os.path.join(dir_path, common_diseasesdir, name)
+    # with open(testfilename, 'r') as tf:
+        # answerset = json.load(tf)
+        # answerset = answerset['message']
+    set_workflowparams(answerset)
     predicates_to_exclude = None
     pvalue_threshold = None
-    # if 'workflow' in answerset and 'parameters' in answerset['workflow'][0]:
-    #     pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', None)
-    #     predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
+    if 'workflow' in answerset and 'parameters' in answerset['workflow'][0]:
+        pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', None)
+        predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
 
     answerset = answerset['message']
     # These edges are old, we need to know which ones...
