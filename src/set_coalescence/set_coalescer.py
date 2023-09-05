@@ -42,8 +42,13 @@ def coalesce_by_set(opportunities, predicates_to_exclude, pvalue_threshold):
         if len(nodes) > MAX_MERGE:
             continue
         qg_id = opportunity.get_qg_id()
-        if len(set(predicates_to_exclude).intersection(nodes))==0:
-            patch = PropertyPatch(qg_id,nodes,[],opportunity.get_answer_indices())
+        if predicates_to_exclude:
+            if len(set(predicates_to_exclude).intersection(nodes))==0:
+                patch = PropertyPatch(qg_id,nodes,[],opportunity.get_answer_indices())
+                patches.append(patch)
+                logger.debug('end of opportunity')
+        else:
+            patch = PropertyPatch(qg_id, nodes, [], opportunity.get_answer_indices())
             patches.append(patch)
             logger.debug('end of opportunity')
     logger.info('All opportunities processed.')
