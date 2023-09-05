@@ -10,7 +10,7 @@ def set_workflowparams(lookup_results):
     return lookup_results.update({"workflow": [
         {
             "id": "enrich_results",
-            "parameters": {"predicates_to_exclude": [
+            "parameters": {"predicates_to_exclude": ["CHEBI_ROLE_drug", 'CHEBI_ROLE_pharmaceutical', 'CHEBI_ROLE_pharmacological_role'
                 "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
                 "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
             ]}
@@ -18,25 +18,24 @@ def set_workflowparams(lookup_results):
     ]})
 
 import requests
-# These were downloaded from searching the terms in https://ui.test.transltr.io/
-
 common_diseasesdir = 'CommonDiseases'
 def test_all_ui_message():
-    # req = requests.get("https://ars.test.transltr.io/ars/api/messages/0f45557e-ffd9-4ef8-870a-84d4dbf37ba4")
+    name = 'response_1693583708718.json'
+    # req = requests.get("https://ars.test.transltr.io/ars/api/messages/cae4b633-4984-42b0-8364-1424c4771347")
     # answerset = req.json()['fields']['data']
     # with open(common_diseasesdir+name+'.json', 'w') as qw:
     #     qw.write(json.dumps({'message': answerset}, indent=4))
 
-    name = 'ArthrochalasiaEhlers-Danlos.json'
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, common_diseasesdir, name)
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
-        answerset = answerset['message']
-    set_workflowparams(answerset)
-    if 'workflow' in answerset and 'parameters' in answerset['workflow'][0]:
-        pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', None)
-        predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
+    # set_workflowparams(answerset)
+    predicates_to_exclude = None
+    pvalue_threshold = None
+    # if 'workflow' in answerset and 'parameters' in answerset['workflow'][0]:
+    #     pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', None)
+    #     predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
 
     answerset = answerset['message']
     # These edges are old, we need to know which ones...
@@ -44,7 +43,7 @@ def test_all_ui_message():
 
     #now generate new answers
     # Local redis only do property enrichment because there is no sufficient datss for graph enrichment
-    newset = snc.coalesce(answerset, method='all', predicates_to_exclude= predicates_to_exclude, pvalue_threshold=pvalue_threshold)
+    newset = snc.coalesce(answerset, method='all', predicates_to_exclude= predicates_to_exclude, pvalue_threshold=0)
 
     assert PDResponse.parse_obj({'message': newset})
     with open(dir_path+'/'+common_diseasesdir+'/ac_results/'+name.split('.')[0]+'_output.json', 'w') as qw:

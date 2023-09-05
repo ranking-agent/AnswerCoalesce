@@ -14,7 +14,7 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir+'/')
 
-def coalesce_by_set(opportunities):
+def coalesce_by_set(opportunities, predicates_to_exclude, pvalue_threshold):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -42,9 +42,9 @@ def coalesce_by_set(opportunities):
         if len(nodes) > MAX_MERGE:
             continue
         qg_id = opportunity.get_qg_id()
-
-        patch = PropertyPatch(qg_id,nodes,[],opportunity.get_answer_indices())
-        patches.append(patch)
-        logger.debug('end of opportunity')
+        if len(set(predicates_to_exclude).intersection(nodes))==0:
+            patch = PropertyPatch(qg_id,nodes,[],opportunity.get_answer_indices())
+            patches.append(patch)
+            logger.debug('end of opportunity')
     logger.info('All opportunities processed.')
     return patches

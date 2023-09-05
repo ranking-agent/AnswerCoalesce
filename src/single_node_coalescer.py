@@ -32,10 +32,10 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, pvalue_thresho
         # and make them hard to read.
         n_query_edges = len(answerset.get('query_graph', {}).get('edges', {}))
         if n_query_edges > 1:
-            patches += coalesce_by_set(coalescence_opportunities)
+            patches += coalesce_by_set(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
 
     if method in ['all', 'property']:
-        patches += coalesce_by_property(coalescence_opportunities)
+        patches += coalesce_by_property(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
 
     if method in ['all', 'graph']:
         patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)

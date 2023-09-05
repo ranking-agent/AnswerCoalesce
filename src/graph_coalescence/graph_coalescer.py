@@ -119,7 +119,6 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
             enrich_direction = direction.get(link[3])
             best_grouping = link[7]
 
-  #
             attributes = []
 
             attributes.append({'attribute_type_id': 'biolink:supporting_study_method_type',
@@ -127,6 +126,9 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
 
             attributes.append({'attribute_type_id': 'biolink:p_value',
                                'value': best_enrich_p})
+
+            attributes.append({'attribute_type_id': 'biolink:supporting_study_cohort',
+                               'value': qg_id})
 
             attributes.append({'attribute_type_id': enrich_direction,
                                'value': best_enrich_node})
@@ -347,10 +349,10 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
     if not pvalue_threshold:
         # Use the specified pcut as the enrichment p-value threshold
-        p_threshold = 1e-6
+        pcut = 1e-6
     else:
         # Use the default p-value threshold of 1e-6
-        p_threshold = pvalue_threshold
+        pcut = pvalue_threshold
 
     # Get the most enriched connected node for a group of nodes.
     logger.debug('start get_shared_links()')
@@ -437,7 +439,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             # Enrichment pvalue
             enrichp = sfcache[args]
 
-            if enrichp < p_threshold:
+            if enrichp < pcut:
                 # get the real labels/types of the enriched node
                 node_types = typecache[newcurie]
 

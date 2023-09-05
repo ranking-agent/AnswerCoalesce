@@ -73,7 +73,7 @@ class PropertyLookup():
                 returnmap[prop] = frozenset(nodelist)
         return returnmap
 
-def coalesce_by_property(opportunities):
+def coalesce_by_property(opportunities, predicates_to_exclude=None, pvalue_threshold=None):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -84,7 +84,7 @@ def coalesce_by_property(opportunities):
         nodes = opportunity.get_kg_ids() #this is the list of curies that can be in the given spot
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
-        enriched_properties = get_enriched_properties(nodes,stype)
+        enriched_properties = get_enriched_properties(nodes,stype, predicates_to_exclude, pvalue_threshold)
         #There will be multiple ways to combine the same curies
         # group by curies.
         c2e = defaultdict(list)
@@ -101,6 +101,9 @@ def coalesce_by_property(opportunities):
                 attributes.append({'attribute_type_id': 'biolink:supporting_study_method_type',
                              'value': 'property_enrichment'})
 
+                attributes.append({'attribute_type_id': 'biolink:supporting_study_cohort',
+                                   'value': qg_id})
+
                 attributes.append({'attribute_type_id': 'biolink:p_value',
                                    'value': eps[0]})
 
@@ -113,7 +116,7 @@ def coalesce_by_property(opportunities):
                 patches.append(patch)
     return patches
 
-def get_enriched_properties(nodes,semantic_type,pcut=1e-4):
+def get_enriched_properties(nodes,semantic_type, predicates_to_exclude=None, pvalue_threshold=None):
     if semantic_type in ['biolink:SmallMolecule','biolink:MolecularMixture','biolink:Drug']:
         semantic_type = 'biolink:ChemicalEntity'
     if semantic_type not in ['biolink:ChemicalEntity']:
@@ -121,6 +124,13 @@ def get_enriched_properties(nodes,semantic_type,pcut=1e-4):
     property_lookup = PropertyLookup()
     properties = property_lookup.collect_properties(nodes,semantic_type)  # properties = {property: (curies with it)}
     enriched = []
+    if not pvalue_threshold:
+        # Use the default p-value threshold of 1e-4
+        pcut = 1e-4
+    else:
+        # Use the specified pcut as the enrichment p-value threshold
+        pcut = pvalue_threshold
+
     for property, curies in properties.items():
         # The hypergeometric distribution models drawing objects from a bin.
         # M is the total number of objects (nodes) ,
@@ -133,7 +143,12 @@ def get_enriched_properties(nodes,semantic_type,pcut=1e-4):
         ndraws = len(nodes)
         enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
         if enrichp < pcut:
-            enriched.append( (enrichp, property, ndraws, n, total_node_count, curies) )
+            if predicates_to_exclude:
+                #this translates to properties to exclude eg ["CHEBI_Role:Drug", ]
+                if property not in predicates_to_exclude:
+                    enriched.append( (enrichp, property, ndraws, n, total_node_count, curies) )
+            else:
+                enriched.append((enrichp, property, ndraws, n, total_node_count, curies))
     enriched.sort()
     return enriched
 

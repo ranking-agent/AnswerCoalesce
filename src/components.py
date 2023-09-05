@@ -291,7 +291,6 @@ class Answer:
         # Using this to save up the qnode_id in addition to the id
         self.question_node_ids = [value['ids'][0] for _, value in json_question['nodes'].items() if value.get('ids')]
 
-            # [value['ids'][0] for _, value in json_question['nodes'].items() if 'ids' in value]
         self.question_node = [key for key, value in json_question['nodes'].items() if value.get('ids')]
 
         #resource_id keep throwing error because of null value so i am using a temporary place holder
@@ -342,7 +341,6 @@ class Answer:
 
         return {'node_bindings': json_node_bindings, 'analyses': json_analyses, 'enrichments':json_enrichments}
 
-
     #TODO: This is not including edges, which is bad.  But I think it should work if the bindings are made right.
     def make_bindings(self):
         """Return a single bindings map, making sure that the same id is not
@@ -369,11 +367,9 @@ class Answer:
         self.binding_properties[qg_id].update(bps)
         self.aux_graph[f'_e_ac_{counter}'].update(bps)
 
-
     def add_bindings(self, extra_k_edges, counter):
         self.enrichments['edges'][f'_e_ac_{counter}'].update(extra_k_edges)
         self.aux_graph[f'_e_ac_{counter}']['edges'].extend(extra_k_edges)
-
 
     def add_property_bindings(self, extra_k_edges, qg_id, bps, counter):
         self.enrichments['edges'][f'_n_ac_{counter}'].update(extra_k_edges)
