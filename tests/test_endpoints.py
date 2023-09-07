@@ -16,15 +16,20 @@ jsondir= 'InputJson_1.4'
 
 
 def set_workflowparams(lookup_results):
+    # Dummy parameters to check igf reasoner pydantic accepts the new parameters
     return lookup_results.update({"workflow": [
         {
             "id": "enrich_results",
-            "parameters": {"predicates_to_exclude": [
-                "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
-                "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
-            ]}
+            "parameters":
+            {
+                "predicates_to_exclude": ["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+                    "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"],
+                "properties_to_exclude": ["CHEBI_ROLE_drug", 'CHEBI_ROLE_pharmaceutical', 'CHEBI_ROLE_pharmacological_role'],
+                "nodesets_to_exclude": ["MONDO:0001", 'MONDO:00002']
+            }
         }
     ]})
+
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub

@@ -9,11 +9,11 @@ pytest==6.1.1
 scipy~=1.11.1
 sparqlwrapper~=1.8.5
 redis~=3.5.3
-fastapi==0.65.2
-sanic~=20.9.0
-gunicorn==20.0.4
-numpy~=1.21.6
-pydantic~=1.8
-uvicorn==0.12.2
+fastapi==0.103.1
+sanic~=23.6.0
+gunicorn==21.2.0
+numpy~=1.25.2
+pydantic>=1.8
+uvicorn==0.23.2
 reasoner-pydantic==4.1.4
 jsonlines

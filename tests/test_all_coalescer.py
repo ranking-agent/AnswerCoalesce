@@ -7,6 +7,7 @@ from reasoner_pydantic import Response as PDResponse
 jsondir ='InputJson_1.4'
 
 def set_workflowparams(lookup_results):
+    # Dummy parameters to check igf reasoner pydantic accepts the new parameters
     return lookup_results.update({"workflow": [
         {
             "id": "enrich_results",

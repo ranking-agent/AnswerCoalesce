@@ -101,9 +101,9 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     if in_message.get('workflow'):
         if in_message.get('workflow')[0].get('parameters', {}):
             predicates_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('predicates_to_exclude', [])
-            properties_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('properties_to_exclude', 1e-06)
+            properties_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('properties_to_exclude', [])
             nodesets_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('nodesets_to_exclude', [])
-            pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 1e-06)
+            pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 0)
     try:
         # call the operation with the message in the request message
 
