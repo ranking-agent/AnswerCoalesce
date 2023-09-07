@@ -31,7 +31,7 @@ def test_all_ui_message():
     #     qw.write(json.dumps({'message': answerset}, indent=4))
 
     ## OR Uncomment this part to load message from directory
-    name = 'Bethlem.json'
+    name = 'ArthrochalasiaEhlers-Danlos.json'
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, common_diseasesdir, name)
     with open(testfilename, 'r') as tf:
