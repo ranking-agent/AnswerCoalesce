@@ -8,7 +8,7 @@ from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
-def coalesce(answerset, method='all', predicates_to_exclude=None, pvalue_threshold=0):
+def coalesce(answerset, method='all', predicates_to_exclude=None, properties_to_exclude=None, nodesets_to_exclude=None, pvalue_threshold=0):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -19,6 +19,7 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, pvalue_thresho
     """
 
     # reformat answerset
+    # NB: we could remove this once it's certain that every query is trapi1.4 compliant
     answerset['results'] = is_trapi1_4(answerset['results'])
 
     # Look for places to combine
@@ -32,10 +33,10 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, pvalue_thresho
         # and make them hard to read.
         n_query_edges = len(answerset.get('query_graph', {}).get('edges', {}))
         if n_query_edges > 1:
-            patches += coalesce_by_set(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
+            patches += coalesce_by_set(coalescence_opportunities, nodesets_to_exclude, pvalue_threshold)
 
     if method in ['all', 'property']:
-        patches += coalesce_by_property(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
+        patches += coalesce_by_property(coalescence_opportunities, properties_to_exclude, pvalue_threshold)
 
     if method in ['all', 'graph']:
         patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)

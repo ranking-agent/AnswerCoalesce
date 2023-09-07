@@ -6,6 +6,11 @@ import os.path
 
 from src.components import PropertyPatch
 
+bad_property = ['CHEBI_ROLE_pharmaceutical', 'CHEBI_ROLE_drug', 'CHEBI_ROLE_pharmacological_role', "sp2_c",
+                        "sp_c", "halogen", "hetero_sp2_c", "oh_nh", 'rotb', 'o_n']
+
+
+
 class PropertyLookup():
     def __init__(self):
         # Right now, we're going to load the property file, but we should replace with a redis or sqlite
@@ -73,7 +78,7 @@ class PropertyLookup():
                 returnmap[prop] = frozenset(nodelist)
         return returnmap
 
-def coalesce_by_property(opportunities, predicates_to_exclude=None, pvalue_threshold=None):
+def coalesce_by_property(opportunities, properties_to_exclude=None, pvalue_threshold=None):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -84,7 +89,7 @@ def coalesce_by_property(opportunities, predicates_to_exclude=None, pvalue_thres
         nodes = opportunity.get_kg_ids() #this is the list of curies that can be in the given spot
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
-        enriched_properties = get_enriched_properties(nodes,stype, predicates_to_exclude, pvalue_threshold)
+        enriched_properties = get_enriched_properties(nodes,stype, properties_to_exclude, pvalue_threshold)
         #There will be multiple ways to combine the same curies
         # group by curies.
         c2e = defaultdict(list)
@@ -116,7 +121,7 @@ def coalesce_by_property(opportunities, predicates_to_exclude=None, pvalue_thres
                 patches.append(patch)
     return patches
 
-def get_enriched_properties(nodes,semantic_type, predicates_to_exclude=None, pvalue_threshold=None):
+def get_enriched_properties(nodes,semantic_type, properties_to_exclude=None, pvalue_threshold=None):
     if semantic_type in ['biolink:SmallMolecule','biolink:MolecularMixture','biolink:Drug']:
         semantic_type = 'biolink:ChemicalEntity'
     if semantic_type not in ['biolink:ChemicalEntity']:
@@ -143,12 +148,13 @@ def get_enriched_properties(nodes,semantic_type, predicates_to_exclude=None, pva
         ndraws = len(nodes)
         enrichp = hypergeom.sf(x - 1, total_node_count, n, ndraws)
         if enrichp < pcut:
-            if predicates_to_exclude:
-                #this translates to properties to exclude eg ["CHEBI_Role:Drug", ]
-                if property not in predicates_to_exclude:
-                    enriched.append( (enrichp, property, ndraws, n, total_node_count, curies) )
+            if properties_to_exclude:
+                bad_properties = set(properties_to_exclude).union(set(bad_property))
+                if property not in bad_properties:
+                    enriched.append((enrichp, property, ndraws, n, total_node_count, curies))
             else:
-                enriched.append((enrichp, property, ndraws, n, total_node_count, curies))
+                if property not in bad_property:
+                    enriched.append((enrichp, property, ndraws, n, total_node_count, curies))
     enriched.sort()
     return enriched
 
