@@ -95,19 +95,17 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     #The newly added parameters
     predicates_to_exclude = None
     properties_to_exclude = None
-    nodesets_to_exclude = None
     pvalue_threshold = None
 
     if in_message.get('workflow'):
         if in_message.get('workflow')[0].get('parameters', {}):
             predicates_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('predicates_to_exclude', [])
             properties_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('properties_to_exclude', [])
-            nodesets_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('nodesets_to_exclude', [])
             pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 0)
     try:
         # call the operation with the message in the request message
 
-        coalesced = coalesce(coalesced, method=method, predicates_to_exclude=predicates_to_exclude, properties_to_exclude=properties_to_exclude, nodesets_to_exclude=nodesets_to_exclude, pvalue_threshold=pvalue_threshold)
+        coalesced = coalesce(coalesced, method=method, predicates_to_exclude=predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold)
 
         # turn it back into a full trapi message
         in_message['message'] = coalesced

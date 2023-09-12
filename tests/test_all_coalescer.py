@@ -23,40 +23,41 @@ def set_workflowparams(lookup_results):
 
 import requests
 common_diseasesdir = 'CommonDiseases'
-def test_all_ui_message():
-    ## Uncomment this part to fetch the message from ars
-    # name = 'Bethlem.json'
-    # req = requests.get("https://ars.test.transltr.io/ars/api/messages/cae4b633-4984-42b0-8364-1424c4771347")
+def xtest_all_ui_message():
+    # Uncomment this part to fetch the message from ars
+    # dir_path = os.path.dirname(os.path.realpath(__file__))
+    # name = 'Cystic-Fibrosis'
+    # req = requests.get("https://ars.test.transltr.io/ars/api/messages/7da3fb74-de99-42fc-aaa2-e45ee4be1114")
     # answerset = req.json()['fields']['data']
-    # with open(common_diseasesdir+name+'.json', 'w') as qw:  #saves the file
+    #
+    # with open(dir_path+'/'+common_diseasesdir+'/'+name+'.json', 'w') as qw:  #saves the file
     #     qw.write(json.dumps({'message': answerset}, indent=4))
 
-    ## OR Uncomment this part to load message from directory
-    name = 'ArthrochalasiaEhlers-Danlos.json'
+    # OR Uncomment this part to load message from directory
+    name = 'hyperlipidemia.json'
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, common_diseasesdir, name)
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
 
-    set_workflowparams(answerset)
+    # set_workflowparams(answerset)
     predicates_to_exclude = None
     pvalue_threshold = None
     properties_to_exclude = None
-    nodesets_to_exclude = None
     if 'workflow' in answerset and 'parameters' in answerset['workflow'][0]:
         pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', 0)
         predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
         properties_to_exclude = answerset.get('workflow', [])[0].get('parameters').get('properties_to_exclude', None)
-        nodesets_to_exclude = answerset.get('workflow', [])[0].get('parameters').get('nodesets_to_exclude', None)
 
     answerset = answerset['message']
     # These edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
 
+    print(f'\n==Coalesce for{name}===')
     #now generate new answers
     # Local redis only do property enrichment because there is no sufficient datss for graph enrichment
-    newset = snc.coalesce(answerset, method='all', predicates_to_exclude= predicates_to_exclude, properties_to_exclude=properties_to_exclude, nodesets_to_exclude=nodesets_to_exclude, pvalue_threshold=pvalue_threshold)
+    newset = snc.coalesce(answerset, method='all', predicates_to_exclude= predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold)
 
     assert PDResponse.parse_obj({'message': newset})
     with open(dir_path+'/'+common_diseasesdir+'/ac_results/'+name.split('.')[0]+'_output.json', 'w') as qw:
@@ -71,7 +72,7 @@ def test_all_ui_message():
         if 'qualifiers' in eedge:
             for qual in eedge["qualifiers"]:
                 assert qual["qualifier_type_id"].startswith("biolink:")
-        # assert extra_edge #This only works with port forwarding when there are graphenriched results
+        assert extra_edge #This only works with port forwarding when there are graphenriched results
 
 
 def flatten(ll):
