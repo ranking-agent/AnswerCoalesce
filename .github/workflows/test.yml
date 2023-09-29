@@ -14,10 +14,10 @@ jobs:
     strategy:
       matrix:
         python-version: [3.11.0]
-        redis-version: [4]
+        redis-version: [6,7]
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Create environment variables
         run: |
@@ -34,7 +34,7 @@ jobs:
 
 
       - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
+        uses: supercharge/redis-github-action@1.7.0
         with:
           redis-version: ${{ matrix.redis-version }}
 
