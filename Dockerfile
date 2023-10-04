@@ -1,5 +1,5 @@
 # leverage the renci python base image
-FROM renciorg/renci-python-image:0.3.0
+FROM renciorg/renci-python-image:latest
 
 #Build from this branch.  Assume master for this repo
 ARG BRANCH_NAME=master
