@@ -24,8 +24,7 @@ def set_workflowparams(lookup_results):
             {
                 "predicates_to_exclude": ["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
                     "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"],
-                "properties_to_exclude": ["CHEBI_ROLE_drug", 'CHEBI_ROLE_pharmaceutical', 'CHEBI_ROLE_pharmacological_role'],
-                "nodesets_to_exclude": ["MONDO:0001", 'MONDO:00002']
+                "properties_to_exclude": ["CHEBI_ROLE_drug", 'CHEBI_ROLE_pharmaceutical', 'CHEBI_ROLE_pharmacological_role']
             }
         }
     ]})

@@ -19,8 +19,8 @@ def initialize_property_dbs(stype):
     if os.path.exists(dbname):
         os.remove(dbname)
     with sqlite3.connect(dbname) as conn:
-        conn.execute('''CREATE TABLE properties (node text, propertyset text)''')
-        conn.execute('''CREATE TABLE property_counts (property text, count integer)''')
+        conn.execute('''CREATE TABLE properties (node text PRIMARY KEY, propertyset text)''')
+        conn.execute('''CREATE TABLE property_counts (property text PRIMARY KEY, count integer)''')
     return dbname
 
 def create_from_file(stype):
