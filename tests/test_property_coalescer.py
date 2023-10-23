@@ -94,7 +94,6 @@ def xtest_disease_property_enrichment():
     """
     inputs = ['MONDO:0010563', 'MONDO:0010379', 'MONDO:0021019']
     results = pc.get_enriched_properties(inputs, 'biolink:Disease')
-    print(results)
     assert len(results) == 2
     assert results[0][1] == 'X_linked_recessive_disease'
     assert results[1][1] == 'X_linked_disease'
