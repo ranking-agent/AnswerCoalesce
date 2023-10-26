@@ -49,12 +49,25 @@ def test_profile(name, idx):
     stats= pstats.Stats(profile)
     stats.strip_dirs().sort_stats("filename")
     stats.print_stats()
+    aux = newset['message']['auxiliary_graphs']
+    if aux:
+        count_n_ac = sum(1 for key in aux.keys() if '_n_ac' in key)
+        count_e_ac = sum(1 for key in aux.keys() if '_e_ac' in key)
+        print(f'{"*" * 30}')
+        print(f"*Count of '_n_ac' pattern keys: {count_n_ac} *")
+        print(f"*Count of '_e_ac' pattern keys: {count_e_ac} *")
+        print(f'{"*" * 30}')
+
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         border = "*" * 60
         print(border)
-        print("* Usage: python script.py 'castleman' '513e239f-e00e-4397-97fc-91beb09df868' *")
+        print("* Usage: python test_profiling.py 'alzheimers' '47674b0d-3a50-4272-a3bd-a50c3bbba322' *")
+        print("* Usage: python test_profiling.py 'castleman' '513e239f-e00e-4397-97fc-91beb09df868' *")
+        print("* Usage: python test_profiling.py 'Bethlem_myopathy' '21c78af9-4055-4407-afa4-6ba9a7994719' *")
+        print("* Usage: python test_profiling.py 'hyperlipidemia' '3a258bce-725c-4119-8ef5-79bd87386241' *")
+        print("* OR ********************")
         print("* 1. Go to: https://ui.test.transltr.io/main and search for a disease *")
         print("* 1.1 Copy the search id from the address bar eg. f6a1ed69-b09a-4376-87e5-424b145fe446 *")
         print("* 2. Go to: https://ars.test.transltr.io/ars/api/messages/ and append the id eg https://ars.test.transltr.io/ars/api/messages/f6a1ed69-b09a-4376-87e5-424b145fe446 *")
