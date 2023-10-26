@@ -19,8 +19,8 @@ def collect_input_nodes():
     test_curies.update( set(['NCBIGene:191', 'NCBIGene:55832', 'NCBIGene:645', 'NCBIGene:54884', 'NCBIGene:8239', 'NCBIGene:4175', 'NCBIGene:10469', 'NCBIGene:8120', 'NCBIGene:3840', 'NCBIGene:55705', 'NCBIGene:2597', 'NCBIGene:23066', 'NCBIGene:7514', 'NCBIGene:10128']))
     input_jsons = ['famcov_new.json','bigger_new.json','graph_named_thing_issue.json','EdgeIDAsStrAndPerfTest.json']
     for ij in input_jsons:
-        test_curies.update( load_jsons('InputJson_1.1/'+ij) )
-    test_curies.update( load_jsons('InputJson_1.3/qualified.json'))
+        test_curies.update( load_jsons('InputJson_1.4/'+ij) )
+    test_curies.update( load_jsons('InputJson_1.4/qualified.json'))
     return test_curies
 
 def filter_links(infname,outfname,input_nodes):

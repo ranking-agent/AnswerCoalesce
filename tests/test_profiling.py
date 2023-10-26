@@ -1,8 +1,9 @@
 import cProfile
 import pstats
 import builtins
+import requests
 import pytest
-import os, json
+import os, sys, json
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
@@ -24,13 +25,10 @@ def set_workflowparams(lookup_results):
 
 common_diseasesdir = 'CommonDiseases'
 
-def test_profile():
-    name = 'ArthrochalasiaEhlers-Danlos.json'
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, common_diseasesdir, name)
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        answerset = answerset['message']
+
+def test_profile(name, idx):
+    req = requests.get(f"https://ars.test.transltr.io/ars/api/messages/{idx}")
+    answerset = req.json()['fields']['data']
 
     predicates_to_exclude = None
     pvalue_threshold = None
@@ -51,4 +49,21 @@ def test_profile():
     stats= pstats.Stats(profile)
     stats.strip_dirs().sort_stats("filename")
     stats.print_stats()
+
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        border = "*" * 60
+        print(border)
+        print("* Usage: python script.py 'castleman' '513e239f-e00e-4397-97fc-91beb09df868' *")
+        print("* 1. Go to: https://ui.test.transltr.io/main and search for a disease *")
+        print("* 1.1 Copy the search id from the address bar eg. f6a1ed69-b09a-4376-87e5-424b145fe446 *")
+        print("* 2. Go to: https://ars.test.transltr.io/ars/api/messages/ and append the id eg https://ars.test.transltr.io/ars/api/messages/f6a1ed69-b09a-4376-87e5-424b145fe446 *")
+        print("* Look for the merged_version and copy the value eg 513e239f-e00e-4397-97fc-91beb09df868 *")
+        print("* 3. Enter the value as an argument *")
+        print(border)
+    else:
+        name = sys.argv[1]
+        idx = sys.argv[2]
+        test_profile(name, idx)
+
 
