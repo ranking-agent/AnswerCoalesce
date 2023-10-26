@@ -26,7 +26,7 @@ def set_workflowparams(lookup_results):
 common_diseasesdir = 'CommonDiseases'
 
 
-def test_profile(name, idx):
+def xtest_profile(name, idx):
     req = requests.get(f"https://ars.test.transltr.io/ars/api/messages/{idx}")
     answerset = req.json()['fields']['data']
 
