@@ -54,8 +54,8 @@ def xtest_profile(name, idx):
         count_n_ac = sum(1 for key in aux.keys() if '_n_ac' in key)
         count_e_ac = sum(1 for key in aux.keys() if '_e_ac' in key)
         print(f'{"*" * 30}')
-        print(f"*Count of '_n_ac' pattern keys: {count_n_ac} *")
-        print(f"*Count of '_e_ac' pattern keys: {count_e_ac} *")
+        print(f"*Count of '_n_ac' Property Coalesce: {count_n_ac} *")
+        print(f"*Count of '_e_ac' Graph Coalesce: {count_e_ac} *")
         print(f'{"*" * 30}')
 
 
