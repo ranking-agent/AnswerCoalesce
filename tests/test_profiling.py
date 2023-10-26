@@ -49,7 +49,7 @@ def xtest_profile(name, idx):
     stats= pstats.Stats(profile)
     stats.strip_dirs().sort_stats("filename")
     stats.print_stats()
-    aux = newset['message']['auxiliary_graphs']
+    aux = newset['auxiliary_graphs']
     if aux:
         count_n_ac = sum(1 for key in aux.keys() if '_n_ac' in key)
         count_e_ac = sum(1 for key in aux.keys() if '_e_ac' in key)
