@@ -77,6 +77,6 @@ if __name__ == '__main__':
     else:
         name = sys.argv[1]
         idx = sys.argv[2]
-        test_profile(name, idx)
+        xtest_profile(name, idx)
 
 
