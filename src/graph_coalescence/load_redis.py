@@ -1,8 +1,9 @@
+import os
 import sys
 import redis
 
 def get_redis(db):
-    r = redis.Redis(host='localhost', port=6379, db=db)
+    r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost'), port=int(os.environ.get('REDIS_PORT',  6379)), db=db)
     return r
 
 def write_to(fname,db):
@@ -11,7 +12,7 @@ def write_to(fname,db):
     r = get_redis(db)
     pipe = r.pipeline()
     n=0
-    batchsize = 100000
+    batchsize = 10000
     with open(fname,'r') as inf:
         for line in inf:
             x = line.strip().split('\t')
@@ -27,7 +28,7 @@ def write_to(fname,db):
 
 def go():
     import os
-    thisdir = os.path.dirname(os.path.realpath(__file__))
+    thisdir = os.environ.get('DATA_DIR', os.path.dirname(os.path.realpath(__file__)))
     write_to(os.path.join(thisdir, 'links.txt'),0)
     write_to(os.path.join(thisdir, 'nodelabels.txt'),1)
     write_to(os.path.join(thisdir, 'backlinks.txt'),2)
