@@ -18,3 +18,5 @@ pydantic==1.10.10
 uvicorn==0.23.2
 reasoner-pydantic==4.1.4
 jsonlines
+orjson
+
