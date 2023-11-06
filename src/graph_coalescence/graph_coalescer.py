@@ -8,10 +8,13 @@ import redis
 import json
 import ast
 import itertools
+import time
+import orjson
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir + '/')
+
 
 # These are predicates that we have decided are too messy for graph coalescer to use
 #
@@ -39,7 +42,7 @@ def get_redis_pipeline(dbnum):
                                 password=conf['redis_password'])
     else:
         typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum)
-    p = typeredis.pipeline()
+    p = typeredis.pipeline(transaction=False)
     return p
 
 
@@ -57,11 +60,9 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
     # 2k opportunities, there are a total of 577 unique nodes, but with repeats, we'd end up calling messenger 3650
     # times.  So instead, we will unique the nodes here, call messenger once each, and then pull from that
     # collected set of info.
-
     allnodes = create_node_to_type(opportunities)
 
     nodes_to_links = create_nodes_to_links(allnodes)
-
     "eg 'PUBCHEM.COMPOUND:60809' maps 112 [['UniProtKB:P14416', 'biolink:interacts_with', True], ['MONDO:0002039', 'biolink:ameliorates', True]," \
     "['NCBIGene:1133', 'biolink:activity_increased_by', False], ['CHEBI:24431', 'biolink:subclass_of', True],"
 
@@ -96,9 +97,9 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
         qg_id = opportunity.get_qg_id()
         stype = opportunity.get_qg_semantic_type()
 
-
         enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                            total_node_counts, predicates_to_exclude=predicates_to_exclude, pvalue_threshold=pvalue_threshold)
+                                            total_node_counts, predicates_to_exclude=predicates_to_exclude,
+                                            pvalue_threshold=pvalue_threshold)
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -134,7 +135,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
                                'value': best_enrich_node})
 
             for key, value in json.loads(link[2]).items():
-                attributes.append({'attribute_type_id': 'biolink:'+key,
+                attributes.append({'attribute_type_id': 'biolink:' + key,
                                    'value': value})
 
             newprops = {'attributes': attributes}
@@ -159,6 +160,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
             patch.add_provenance(pprovs)
             # print(patch)
             patches.append(patch)
+
         logger.debug('end of opportunity')
 
     logger.info('All opportunities processed.')
@@ -167,51 +169,55 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
 
 
 def get_node_types(unique_link_nodes):
-    p = get_redis_pipeline(1)
+    # p = get_redis_pipeline(1)
     nodetypedict = {}
-    for ncg in grouper(2000, unique_link_nodes):
-        # print(ncg)
-        # for ncg in (unique_link_nodes):
-        for newcurie in ncg:
-            p.get(newcurie)
-        all_typestrings = p.execute()
-        for newcurie, nodetypestring in zip(ncg, all_typestrings):
-            node_types = ast.literal_eval(nodetypestring.decode())
-            nodetypedict[newcurie] = node_types
+    with get_redis_pipeline(1) as p:
+        for ncg in grouper(2000, unique_link_nodes):
+            # print(ncg)
+            # for ncg in (unique_link_nodes):
+            for newcurie in ncg:
+                p.get(newcurie)
+            all_typestrings = p.execute()
+            for newcurie, nodetypestring in zip(ncg, all_typestrings):
+                node_types = ast.literal_eval(nodetypestring.decode())
+                nodetypedict[newcurie] = node_types
     return nodetypedict
 
 
 def get_node_names(unique_link_nodes):
-    p = get_redis_pipeline(3)
+    # p = get_redis_pipeline(3)
     nodenames = {}
-    for ncg in grouper(1000, unique_link_nodes):
-        for newcurie in ncg:
-            p.get(newcurie)
-        all_names = p.execute()
-        for newcurie, name in zip(ncg, all_names):
-            try:
-                nodenames[newcurie] = name.decode('UTF-8')
-            except:
-                nodenames[newcurie] = ''
+    with get_redis_pipeline(3) as p:
+        for ncg in grouper(1000, unique_link_nodes):
+            for newcurie in ncg:
+                p.get(newcurie)
+            all_names = p.execute()
+            for newcurie, name in zip(ncg, all_names):
+                try:
+                    nodenames[newcurie] = name.decode('UTF-8')
+                except:
+                    nodenames[newcurie] = ''
     return nodenames
 
 
 def get_link_counts(unique_links):
     # Now we are going to hit redis to get the counts for all of the links.
     # our unique_links are the keys
-    p = get_redis_pipeline(2)
+    # p = get_redis_pipeline(2)
     lcounts = {}
-    for ulg in grouper(1000, unique_links):
-        for ul in ulg:
-            p.get(str(ul))
-        ns = p.execute()
-        for ul, n in zip(ulg, ns):
-            try:
-                lcounts[ul] = int(n)
-            except:
-                # this can happen becuase we're inferring the category type from the qgraph.  But if we have 0 we have 0
-                lcounts[ul] = 0
+    with get_redis_pipeline(2) as p:
+        for ulg in grouper(1000, unique_links):
+            for ul in ulg:
+                p.get(str(ul))
+            ns = p.execute()
+            for ul, n in zip(ulg, ns):
+                try:
+                    lcounts[ul] = int(n)
+                except:
+                    # this can happen becuase we're inferring the category type from the qgraph.  But if we have 0 we have 0
+                    lcounts[ul] = 0
     return lcounts
+
 
 def check_prov_value_type(value):
     if isinstance(value, list):
@@ -224,11 +230,19 @@ def check_prov_value_type(value):
     # Also, the newer pydantic accepts 'primary_knowledge_source' instead of 'biolink:primary_knowledge_source' in the old
     return val.replace('biolink:', '')
 
+
 def get_provs(n2l):
     # Now we are going to hit redis to get the provenances for all of the links.
     # our unique_links are the keys
     # Convert n2l to edges
+    def process_prov(prov_data):
+        if isinstance(prov_data, (str, bytes)):
+            prov_data = orjson.loads(prov_data)
+        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
+                prov_data.items()]
+
     edges = []
+    prov = {}
     for n1, ll in n2l.items():
         for link in ll:
             if link[2]:
@@ -236,17 +250,17 @@ def get_provs(n2l):
             else:
                 edges.append(f'{link[0]} {link[1]} {n1}')
     # now get the prov for those edges
-    p = get_redis_pipeline(4)
-    prov = {}
-    for edgegroup in grouper(1000, edges):
-        for edge in edgegroup:
-            p.get(edge)
-        ns = p.execute()
-        for edge, n in zip(edgegroup, ns):
-            if n is None:
-                print(edge)
-            # Convert the svelte key-value attribute into a fat trapi-style attribute
-            prov[edge] = [{'resource_id': check_prov_value_type(v) , 'resource_role': check_prov_value_type(k)} for k, v in json.loads(n).items()]
+    with get_redis_pipeline(4) as p:
+        for edgegroup in grouper(1000, edges):
+            for edge in edgegroup:
+                p.get(edge)
+            ns = p.execute()
+            # print(ns)
+            for edge, n in zip(edgegroup, ns):
+                if n is None:
+                    print(f"n is None: {edge}")
+                # Convert the svelte key-value attribute into a fat trapi-style attribute
+                prov[edge] = process_prov(n)
     return prov
 
 
@@ -293,24 +307,25 @@ def uniquify_links(nodes_to_links, opportunities):
 
 
 def create_nodes_to_links(allnodes):
-    p = get_redis_pipeline(0)
+    # p = get_redis_pipeline(0)
     # Create a dict from node->links by looking up in redis.  Each link is a potential node to add.
     # This is across all opportunities as well
     # Could pipeline
     nodes_to_links = {}
-    for group in grouper(1000, allnodes.keys()):
-        for node in group:
-            p.get(node)
-        linkstrings = p.execute()
-        for node, linkstring in zip(group, linkstrings):
-            if linkstring is None:
-                links = []
-            else:
-                links = json.loads(linkstring)
-            links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
-            # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
-            nodes_to_links[node] = links
-    # print(len(nodes_to_links))
+    with get_redis_pipeline(0) as p:
+        for group in grouper(1000, allnodes.keys()):
+            for node in group:
+                p.get(node)
+            linkstrings = p.execute()
+            for node, linkstring in zip(group, linkstrings):
+                if linkstring is None:
+                    links = []
+                else:
+                    links = orjson.loads(linkstring)
+                # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
+                # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
+                nodes_to_links[node] = links
+        # print(len(nodes_to_links))
     return nodes_to_links
 
 
@@ -418,7 +433,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
             # The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
             # For most cases, it is ok to approximate it.  There are multiple levels of approximation as described
-            # here: https://www.vosesoftware.com/riskwiki/ApproximationstotheHypergeometricdistribution.php
+            # here: https://riskwiki.vosesoftware.com/ApproximationstotheHypergeometricdistribution.php
             # Ive tested and each approximation is faster, while the quality decreases.
             # Norm is a bad approximation for this data
             # the other three are fine.  Poisson very occassionaly is off by a factor of two or so, but that's not
@@ -447,7 +462,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
                     if json.loads(predicate)['predicate'] not in predicates_to_exclude:
                         enriched.append(
                             (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
-                             # if pred_exclude is used to filter, the results looks cleaner like 1000+ else 2000+ results
+                        # if pred_exclude is used to filter, the results looks cleaner like 1000+ else 2000+ results
                 else:
                     enriched.append(
                         (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
@@ -460,14 +475,16 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
     logger.debug('end get_enriched_links()')
     return results
 
+
 def get_total_node_counts(semantic_types):
-    p = get_redis_pipeline(5)
+    # p = get_redis_pipeline(5)
     counts = {}
     # needs to be first so that counts will fill it first
     semantic_list = ['biolink:NamedThing'] + list(semantic_types)
-    for st in semantic_list:
-        p.get(st)
-    allcounts = p.execute()
+    with get_redis_pipeline(5) as p:
+        for st in semantic_list:
+            p.get(st)
+        allcounts = p.execute()
     for st, stc in zip(semantic_list, allcounts):
         if stc is not None:
             counts[st] = float(stc)
