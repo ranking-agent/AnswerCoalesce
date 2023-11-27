@@ -1,0 +1,34 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "chemical": {
+                    "is_set": false,
+                    "constraints": []
+                },
+                "gene": {
+                    "ids": ["NCBIGene:5111", "NCBIGene:8856", "NCBIGene:3357", "NCBIGene:8520", "NCBIGene:9133", "NCBIGene:79902",
+                        "NCBIGene:1738", "NCBIGene:1026", "NCBIGene:1565", "NCBIGene:5243", "NCBIGene:1544", "NCBIGene:991",
+                        "NCBIGene:1557", "NCBIGene:6192", "UniProtKB:P24462", "NCBIGene:3356", "NCBIGene:152", "NCBIGene:1571"],
+                    "categories": [
+                        "biolink:Gene"
+                    ],
+                    "is_set": true,
+                    "constraints": []
+                }
+            },
+            "edges": {
+                "e00": {
+                    "subject": "chemical",
+                    "object": "gene",
+                    "predicates": [
+                        "biolink:affects"
+                    ],
+                    "knowledge_type": "inferred",
+                    "attribute_constraints": [],
+                    "qualifier_constraints": []
+                }
+            }
+        }
+  }
+}

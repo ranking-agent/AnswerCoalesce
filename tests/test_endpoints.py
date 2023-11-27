@@ -6,7 +6,7 @@ import yaml
 import json
 from fastapi.testclient import TestClient
 from reasoner_pydantic import Response as PDResponse
-
+from datetime import datetime
 from src.server import APP
 
 
@@ -42,7 +42,7 @@ def test_basic():
     # with open(testfilename, 'r') as tf:
     #     answerset = json.load(tf)
 
-    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflow.json')
+    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflowparams.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         set_workflowparams(answerset)
@@ -72,6 +72,41 @@ def test_basic():
     assert( len(ret['query_graph']['nodes']) < 6)
 
     assert( len(ret['results'])==len(answerset['message']['results']))
+
+@pytest.mark.nongithub
+def test_basicall():
+    """Bring back when properties are working again"""
+    # get the location of the Translator specification file
+    dir_path: str = os.path.dirname(os.path.realpath(__file__))
+
+    # testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
+    #
+    # with open(testfilename, 'r') as tf:
+    #     answerset = json.load(tf)
+
+    testfilename = os.path.join(dir_path, jsondir, 'sampleset1.json')
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+        set_workflowparams(answerset)
+        # assert PDResponse.parse_obj(answerset)
+
+    #there are dups in this result set gross: dedup
+
+    assert PDResponse.parse_obj(answerset)
+    # make a good request
+    response = client.post('/query/all', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    # convert the response to a json object
+    jret = json.loads(response.content)
+
+    # check the data
+    ret = jret['message']
+    with open(f"newset{datetime.now()}.json", 'w') as outf:
+        json.dump(ret, outf, indent=4)
+    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
 
 
 @pytest.mark.nongithub

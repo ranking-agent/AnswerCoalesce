@@ -2,6 +2,150 @@ from copy import deepcopy
 from collections import defaultdict
 import ast
 
+class NewNode:
+    def __init__(self,newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name):
+        self.newnode = newnode
+        self.newnode_type = newnodetype
+        self.new_edges = edge_pred_and_qual
+        self.newnode_is = newnode_is
+        self.newnode_name = newnode_name
+class PropertyPatch_:
+    def __init__(self,qg_id,curies,curies_types,curies_names,props,answer_ids):
+        self.qg_id = qg_id
+        self.set_curies = curies
+        self.curies_types = curies_types
+        self.curies_names = curies_names
+        self.new_props = props
+        self.answer_indices = answer_ids
+        self.added_nodes = []
+        self.provmap = {}
+    def add_provenance(self,provmap):
+        self.provmap = provmap
+    def add_extra_node(self,newnode, newnodetype, edge_pred_and_qual, newnode_is,newnode_name):
+        """Optionally, we can patch by adding a new node, which will share a relationship of
+        some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
+        of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
+        or away from it (newnode_is = 'source') """
+        self.added_nodes.append( NewNode(newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name) )
+
+    def apply_(self, nodeset, graph, graph_index, patch_no):
+
+        all_new_answers = []
+        graph, all_extra_k_edges, graph_index = self.update_kg_(graph, graph_index)
+
+        if all_extra_k_edges:
+            for node_no, extra_k_edges in enumerate(all_extra_k_edges):
+                answer = self.create_resullt(extra_k_edges, nodeset)
+            all_new_answers.append(answer)
+
+        return all_new_answers, graph, graph_index
+
+    def create_resullt(self, extra_k_edges, nodeset):
+        answer = {}
+        answer['node_bindings'] = {self.qg_id: [{'id': curie, 'qnode_id': curie} for curie in self.set_curies],
+                                 nodeset.get('answer_id', 'answer'): [{'id': newnode.newnode} for newnode in
+                                                                      self.added_nodes]}
+        answer['analyses'] = [{"resource_id": "infores:automat-robokop",
+                               "edge_bindings": {
+                                   next(iter(nodeset.get('answer_edge'))): [
+                                       {
+                                           "id": kedge
+                                       } for kedge in extra_k_edges
+                                   ]
+                               },
+                               "score": 0.
+                               }]
+        answer['analyses'][0].update(self.new_props)
+        return answer
+
+    def update_kg_(self, kg, kg_index):
+        if not kg:
+            kg['nodes'] = {}
+            kg['edges'] = {}
+
+        if len(kg_index) == 0:
+            kg_index['nodes'] = set(kg.get('nodes', {}).keys())
+            kg_index['edges'] = {(edge['subject'], edge['object'], edge['predicate']): edge_id for edge_id, edge in
+                                 kg.get('edges', {}).items()}
+        all_extra_edges = []
+        for newnode in self.added_nodes:
+            extra_edges = []
+            # See if the newnode is already in the KG, and if not, add it.
+            found = False
+            if newnode.newnode not in kg_index['nodes']:
+                if not isinstance(newnode.newnode_type, list):
+                    newnode.newnode_type = [newnode.newnode_type]
+
+                kg['nodes'].update(
+                    {newnode.newnode: {'name': newnode.newnode_name, 'categories': newnode.newnode_type}})
+                kg_index['nodes'].add(newnode.newnode)
+
+
+            # Add new edges
+            for curie in self.set_curies:  # try to add a new edge from this curie to newnode
+                if curie not in kg['nodes']:
+                    kg['nodes'].update(
+                        {curie: {'name': self.curies_names.get(curie), 'categories': self.curies_types.get(curie)}}
+                    )
+                    kg_index['nodes'].add(curie)
+
+
+                if curie == newnode.newnode:
+                    continue  # no self edge please
+
+                # check to see if the edge we want to add is already present in the kg
+                if newnode.newnode_is == 'source':
+                    source_id = newnode.newnode
+                    target_id = curie
+                else:
+                    source_id = curie
+                    target_id = newnode.newnode
+                eid = None
+                ekey = (source_id, target_id, newnode.new_edges)
+                if ekey not in kg_index['edges']:
+                    try:
+                        provs = self.provmap[f'{source_id} {newnode.new_edges} {target_id}']
+                    except KeyError:
+                        provs = []
+
+                    # newnode.new_edges is a string containing a dict like
+                    # {"predicate": "biolink:affects", "object_aspect_qualifier":"transport"}
+
+                    edge_def = ast.literal_eval(newnode.new_edges)
+
+                    sources = []
+                    for prov in provs:
+                        source1 = {'resource_id': 'infores:automat-robokop',
+                                   'resource_role': 'aggregator_knowledge_source'}
+                        source2 = {'resource_id': 'infores:aragorn', 'resource_role': 'aggregator_knowledge_source'}
+                        source1['upstream_resource_ids'] = [prov.get('resource_id', None)]
+                        source2['upstream_resource_ids'] = [source1.get('resource_id', None)]
+                        sources.extend([source1, source2])
+                    source_pov = provs + sources
+
+                    edge = {'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
+                            'sources': source_pov, 'attributes': []}
+
+                    if len(edge_def) > 1:
+                        edge["qualifiers"] = [{"qualifier_type_id": f"biolink:{ekey}", "qualifier_value": eval}
+                                              for ekey, eval in edge_def.items() if not ekey == "predicate"]
+                    # Need to make a key for the edge, but the attributes & quals make it annoying
+                    ek = deepcopy(edge)
+
+                    ek['attributes'] = str(ek['attributes'])
+                    ek['sources'] = str(ek['sources'])
+                    if 'qualifiers' in ek:
+                        ek['qualifiers'] = str(ek['qualifiers'])
+                    eid = str(hash(frozenset(ek.items())))
+                    kg['edges'].update({eid: edge})
+                    kg_index['edges'][ekey] = eid
+                eid = kg_index['edges'][ekey]
+                extra_edges.append(str(eid))
+
+            all_extra_edges.append(extra_edges)
+        return kg, all_extra_edges, kg_index
+
+
 class Opportunity:
     def __init__(self, hash, qg, kg, a_i, ai2kg):
         """
@@ -55,13 +199,7 @@ class Opportunity:
             final_kg_ids.update(kgi)
         return Opportunity(self.answer_hash, (self.qg_id , self.qg_semantic_type ), list(final_kg_ids), list(new_ai2kg.keys()), new_ai2kg)
 
-class NewNode:
-    def __init__(self,newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name):
-        self.newnode = newnode
-        self.newnode_type = newnodetype
-        self.new_edges = edge_pred_and_qual
-        self.newnode_is = newnode_is
-        self.newnode_name = newnode_name
+
 
 class PropertyPatch:
     def __init__(self,qg_id,curies,props,answer_ids):
@@ -112,7 +250,6 @@ class PropertyPatch:
             all_new_answers.append(answer)
 
         return all_new_answers, question, graph, graph_index
-
 
     def isconsistent(self, possibleanswer):
         """
@@ -185,8 +322,6 @@ class PropertyPatch:
                 qg['edges'].update( {new_edge_id:{ 'subject': new_node_id, 'object': self.qg_id }})
             extra_q_edges.append(new_edge_id)
         return qg, extra_q_nodes, extra_q_edges
-
-
     def update_kg(self,kg,kg_index):
         if len(kg_index) == 0:
             kg_index['nodes'] = set( kg['nodes'].keys() )
@@ -257,7 +392,7 @@ class PropertyPatch:
 
             all_extra_edges.append(extra_edges)
         return kg, all_extra_edges,kg_index
-
+#
 class Answer:
     def __init__(self, json_answer, json_question, json_kg):
         """Take the json answer and turn it into a more usable structure"""
@@ -277,7 +412,7 @@ class Answer:
 
 
         # Node_bindings
-        for qg_id, kg_bindings in json_answer['node_bindings'].items():
+        for qg_id, kg_bindings in json_answer.get('node_bindings', {}).items():
             kg_ids = set([x['id'] for x in kg_bindings ])
             # kg_ids = set([x[id] for x in kg_bindings for id in x])#To retain both the id and the qnode_id
             self.node_bindings[qg_id].update(kg_ids)
@@ -376,4 +511,3 @@ class Answer:
         self.aux_graph[f'_n_ac_{counter}']['edges'].extend(extra_k_edges)
         self.binding_properties[qg_id].update(bps)
         self.aux_graph[f'_n_ac_{counter}'].update(bps)
-

@@ -1,10 +1,11 @@
 from collections import defaultdict
 from copy import deepcopy
 # from datetime import datetime as dt
-
+from reasoner_pydantic import Response as PDResponse
+from reasoner_pydantic import KnowledgeGraph
 from src.components import Opportunity, Answer
 from src.property_coalescence.property_coalescer import coalesce_by_property
-from src.graph_coalescence.graph_coalescer import coalesce_by_graph
+from src.graph_coalescence.graph_coalescer import coalesce_by_graph, coalesce_by_graph_
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
@@ -17,35 +18,50 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, properties_to_
     There are plenty of ways to extend this, including adding edges to the coalescent
     entities.
     """
-
-    # reformat answerset
-    # NB: we could remove this once it's certain that every query is trapi1.4 compliant
-    answerset['results'] = is_trapi1_4(answerset['results'])
-
-    # Look for places to combine
-    coalescence_opportunities = identify_coalescent_nodes(answerset)
-
     patches = []
+    nodeset = {}
 
-    if method in ['all', 'set']:
-        # set query is only reasonable if there are more than one edges in the qgraph.  Usually if you're
-        # asking a 1 hop you want to see the answers individually.  THis will do nothing but smush them together
-        # and make them hard to read.
-        n_query_edges = len(answerset.get('query_graph', {}).get('edges', {}))
-        if n_query_edges > 1:
-            patches += coalesce_by_set(coalescence_opportunities, nodesets_to_exclude, pvalue_threshold)
+    for qg_id, node_data in answerset.get("query_graph", {}).get("nodes", {}).items():
+        if 'ids' in node_data and node_data.get('is_set'):
+            nodeset = get_node_ids_to_type(answerset)
 
-    if method in ['all', 'property']:
-        patches += coalesce_by_property(coalescence_opportunities, properties_to_exclude, pvalue_threshold)
+    if nodeset:
+        coalescence_opportunities = nodeset
 
-    if method in ['all', 'graph']:
-        patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
+        patches += coalesce_by_graph_(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
 
-    # print('lets patch')
-    #Enrichment done and commonalities found, at this point we can rewrite the results
-    new_answers, aux_graphs, updated_qg, updated_kg = patch_answers(answerset, patches)
+        new_answers = patch_answers_(answerset, nodeset, patches)
 
-    new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers, 'auxiliary_graphs': aux_graphs}
+        new_answerset = new_answers['message']
+
+    else:
+        # reformat answerset
+        # # NB: we could remove this once it's certain that every query is trapi1.4 compliant
+        answerset['results'] = is_trapi1_4(answerset['results'])
+
+        # Look for places to combine
+        coalescence_opportunities = identify_coalescent_nodes(answerset)
+
+
+        if method in ['all', 'set']:
+            # set query is only reasonable if there are more than one edges in the qgraph.  Usually if you're
+            # asking a 1 hop you want to see the answers individually.  THis will do nothing but smush them together
+            # and make them hard to read.
+            n_query_edges = len(answerset.get('query_graph', {}).get('edges', {}))
+            if n_query_edges > 1:
+                patches += coalesce_by_set(coalescence_opportunities, nodesets_to_exclude, pvalue_threshold)
+
+        if method in ['all', 'property']:
+            patches += coalesce_by_property(coalescence_opportunities, properties_to_exclude, pvalue_threshold)
+
+        if method in ['all', 'graph']:
+            patches += coalesce_by_graph(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
+
+        # print('lets patch')
+        #Enrichment done and commonalities found, at this point we can rewrite the results
+        new_answers, aux_graphs, updated_qg, updated_kg = patch_answers(answerset, patches)
+
+        new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers, 'auxiliary_graphs': aux_graphs}
 
     return new_answerset
 
@@ -82,6 +98,32 @@ def is_trapi1_4(results):
     else:
         return transform_trapi(results)
 
+def patch_answers_(answerset, nodeset, patches):
+    # probably only good for the prop coalescer
+    # We want to maintain a single kg, and qg.
+    qg = answerset.get('query_graph', {})
+    # kg = answerset.get('knowledge_graph', {})
+    i = 0
+    kg_indexes = {}
+    pydantic_kgraph = KnowledgeGraph.parse_obj({"nodes": {}, "edges": {}})
+    result = PDResponse(**{
+        "message": {"query_graph": {"nodes": {}, "edges": {}},
+                    "knowledge_graph": {"nodes": {}, "edges": {}},
+                    "results": []}}).dict(exclude_none=True)
+    if patches:
+        for patch in patches:
+            # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
+            i += 1
+            print(f'{i} / {len(patches)}')
+            new_answer, updated_kg, kg_indexes = patch.apply_(nodeset, result['message']['knowledge_graph'], kg_indexes, i)
+            # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
+            pydantic_kgraph.update(KnowledgeGraph.parse_obj(updated_kg))
+            # Construct the final result message, currently empty
+            result["message"]["results"].extend(new_answer)
+        result["message"]["query_graph"] = qg
+        result["message"]["knowledge_graph"] = pydantic_kgraph.dict()
+
+    return result
 
 def patch_answers(answerset, patches):
     # probably only good for the prop coalescer
@@ -117,8 +159,30 @@ def patch_answers(answerset, patches):
             new_answers.append(answer.to_json())
         return new_answers, auxiliary_graphs, qg, kg
 
+def get_node_ids_to_type(answerset):
+    query_graph = answerset.get("query_graph", {})
+    nodes = query_graph.get("nodes", {})
+    allnodes = {}
+    opportunity = {}
+    alledges = {}
+    for qg_id, node_data in nodes.items():
+        if 'ids' in node_data and node_data.get('is_set'):
+            category = node_data.get("categories", ["biolink:NamedThing"])[0]
+            nodeset = set(node_data.get("ids", []))
+            for node in nodeset:
+                allnodes[node] = category
+            opportunity['qg_id'] = qg_id
+            opportunity['qg_semantic_type'] = category
+        else:
+            opportunity['answer_id'] = qg_id
+            opportunity['kg_id'] = allnodes
 
+    for qg_eid, edge_data in query_graph.get("edges", {}).items():
+        alledges[qg_eid] = edge_data['predicates'][0]
 
+    opportunity['answer_edge'] = alledges
+
+    return opportunity
 
 def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single
@@ -174,7 +238,6 @@ def identify_coalescent_nodes(answerset):
                 coalescent_nodes.append(opportunity)
     return coalescent_nodes
 
-
 def make_answer_hashes(result, kg_edgetypes, question):
     """Given a single answer, find the hash for each answer node and return it along
     with the answer node that was varied, and the kg node id for that qnode in this answer"""
@@ -187,8 +250,6 @@ def make_answer_hashes(result, kg_edgetypes, question):
         newhash = make_answer_hash(bindings, kg_edgetypes, question, qg_id)
         hashes.append((newhash, qg_id, kg_ids))
     return hashes
-
-
 
 def make_answer_hash(bindings, kg_edgetypes, question, qg_id):
     """given a combined node/edge bindings dictionary, plus the knowledge graph it points to and the question graph,

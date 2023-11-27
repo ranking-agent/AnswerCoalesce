@@ -132,7 +132,75 @@ async def coalesce_handler(request: PDResponse, method: MethodName):
     return JSONResponse(content=in_message, status_code=status_code)
 
 
+@APP.post('/query/{method}', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
+async def coalesce_handler(request: PDResponse, method: MethodName):
+    """ Answer coalesce operations. You may choose all, property, graph. """
 
+    # convert the incoming message into a dict
+    in_message = request.dict()
+
+    # save the logs for the response (if any)
+    if 'logs' not in in_message or in_message['logs'] is None:
+        in_message['logs'] = []
+
+    # these timestamps are causing json serialization issues in call to the normalizer
+    # so here we convert them to strings.
+    for log in in_message['logs']:
+        log['timestamp'] = str(log['timestamp'])
+
+    # make sure there are results to coalesce
+    # 0 results is perfectly legal, there's just nothing to do.
+    if 'query_graph' not in in_message['message'] or len(in_message['message']['query_graph']) == 0:
+        # This is a 422 b/c we do have results, but there's no graph to use.
+        status_code = 422
+        logger.error(f"No set to coalesce")
+        # in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
+        return JSONResponse(content=in_message, status_code=status_code)
+
+    # init the status code
+    status_code: int = 200
+
+    # get the message to work on
+    coalesced = in_message['message']
+
+    #The newly added parameters
+    predicates_to_exclude = None
+    properties_to_exclude = None
+    pvalue_threshold = None
+
+    if in_message.get('workflow'):
+        if in_message.get('workflow')[0].get('parameters', {}):
+            predicates_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('predicates_to_exclude', [])
+            properties_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('properties_to_exclude', [])
+            pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 0)
+    try:
+        # call the operation with the message in the request message
+
+        coalesced = coalesce(coalesced, method=method, predicates_to_exclude=predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold)
+
+        # turn it back into a full trapi message
+        in_message['message'] = coalesced
+
+        assert PDResponse.parse_obj(in_message)
+        # import json
+        # with open('ac_out_attributes.json', 'w') as tf:
+        #     tf.write(json.dumps(in_message, default=str))
+
+        # # Normalize the data
+        # coalesced = normalize(in_message)
+        #
+        # # save the response in the incoming message
+        # in_message['message'] = coalesced['message']
+
+    except Exception as e:
+        # put the error in the response
+        status_code = 500
+        logger.exception(f"Exception encountered {str(e)}")
+        # in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
+
+    # return the result to the caller
+    # return Response(content=json.dumps(in_message), media_type='application/json', status_code=status_code)
+    return JSONResponse(content=in_message, status_code=status_code)
 
 
 def log_exception(method):
