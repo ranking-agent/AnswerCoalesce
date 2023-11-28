@@ -74,15 +74,9 @@ def test_basic():
     assert( len(ret['results'])==len(answerset['message']['results']))
 
 @pytest.mark.nongithub
-def test_basicall():
-    """Bring back when properties are working again"""
+def test_acpathfinder():
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
-    # testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
-    #
-    # with open(testfilename, 'r') as tf:
-    #     answerset = json.load(tf)
 
     testfilename = os.path.join(dir_path, jsondir, 'sampleset1.json')
     with open(testfilename, 'r') as tf:
@@ -104,9 +98,15 @@ def test_basicall():
 
     # check the data
     ret = jret['message']
-    with open(f"newset{datetime.now()}.json", 'w') as outf:
-        json.dump(ret, outf, indent=4)
-    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
+    # uncomment this to save the result to the directory
+    # with open(f"newset{datetime.now()}.json", 'w') as outf:
+    #     json.dump(ret, outf, indent=4)
+    nodeset = {}
+    for qg_id, node_data in ret.get("query_graph", {}).get("nodes", {}).items():
+        if 'ids' in node_data and node_data.get('is_set'):
+            nodeset = set(node_data.get('ids', []))
+    assert len(ret['results']) >= len(nodeset)
+    assert len(ret) == 3
 
 
 @pytest.mark.nongithub

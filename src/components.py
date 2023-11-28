@@ -36,27 +36,30 @@ class PropertyPatch_:
         if all_extra_k_edges:
             for node_no, extra_k_edges in enumerate(all_extra_k_edges):
                 answer = self.create_resullt(extra_k_edges, nodeset)
-            all_new_answers.append(answer)
+            all_new_answers.extend(answer)
 
         return all_new_answers, graph, graph_index
 
     def create_resullt(self, extra_k_edges, nodeset):
         answer = {}
-        answer['node_bindings'] = {self.qg_id: [{'id': curie, 'qnode_id': curie} for curie in self.set_curies],
-                                 nodeset.get('answer_id', 'answer'): [{'id': newnode.newnode} for newnode in
-                                                                      self.added_nodes]}
-        answer['analyses'] = [{"resource_id": "infores:automat-robokop",
-                               "edge_bindings": {
-                                   next(iter(nodeset.get('answer_edge'))): [
-                                       {
-                                           "id": kedge
-                                       } for kedge in extra_k_edges
-                                   ]
-                               },
-                               "score": 0.
-                               }]
-        answer['analyses'][0].update(self.new_props)
-        return answer
+        result = []
+        for qg_edge in nodeset.get('answer_edge'):
+            answer['node_bindings'] = {self.qg_id: [{'id': curie, 'qnode_id': curie} for curie in self.set_curies],
+                                     nodeset.get('answer_id', 'answer'): [{'id': newnode.newnode} for newnode in
+                                                                          self.added_nodes]}
+            answer['analyses'] = [{"resource_id": "infores:automat-robokop",
+                                   "edge_bindings": {
+                                       qg_edge: [
+                                           {
+                                               "id": kedge
+                                           } for kedge in extra_k_edges
+                                       ]
+                                   },
+                                   "score": 0.
+                                   }]
+            answer['analyses'][0].update(self.new_props)
+            result.append(answer)
+        return result
 
     def update_kg_(self, kg, kg_index):
         if not kg:
@@ -107,10 +110,6 @@ class PropertyPatch_:
                         provs = self.provmap[f'{source_id} {newnode.new_edges} {target_id}']
                     except KeyError:
                         provs = []
-
-                    # newnode.new_edges is a string containing a dict like
-                    # {"predicate": "biolink:affects", "object_aspect_qualifier":"transport"}
-
                     edge_def = ast.literal_eval(newnode.new_edges)
 
                     sources = []

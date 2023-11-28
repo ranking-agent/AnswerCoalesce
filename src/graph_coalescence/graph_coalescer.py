@@ -167,7 +167,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
 
     return patches
 
-def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_threshold=None):
+def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_threshold=None, limit = None):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -177,7 +177,7 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
     if isinstance(opportunities, dict):
         logger.info(f'Start of processing the opportunity.')
 
-        allnodes = opportunities.get('kg_id')
+        allnodes = opportunities.get('qg_curies')
         nodes_to_links = create_nodes_to_links(allnodes)
         # #There will be nodes we can't enrich b/c they're not in our db.  Remove those from our opps, and remove redundant/empty opps
         new_nodes_to_links, nodes_indices, unique_link_nodes, unique_links = filter_opportunities_(opportunities, nodes_to_links)
@@ -202,8 +202,8 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
 
         nodes = list(allnodes.keys())  # this is the list of curies that can be in the given spot
 
-        qg_id = opportunities.get('qg_id', '')
-        stype = opportunities.get('qg_semantic_type', '')
+        qg_id = opportunities.get('question_id', '')
+        stype = opportunities.get('question_type', '')
         otype = opportunities.get('answer_type', None)
 
         q_predicates = list(opportunities.get('answer_edge', {}).values())
@@ -212,16 +212,16 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
+        max_ret = len(nodes)
         if not otype:
-            # Extract the values you want to use for random selection
             values_for_random_selection = [l[0] for l in enriched_links]
 
-            # Set the seed for reproducibility (optional)
             random.seed(42)
 
-            # Randomly select 1000 links based on the values in link[-1]
-            enriched_links = random.choices(enriched_links, weights=values_for_random_selection, k=1000)
+            limit = limit if limit else 500
 
+            enriched_links = random.choices(enriched_links, weights=values_for_random_selection, k=limit)
+            max_ret = limit
         # For the moment, we're only going to return an arbitrarily small number of enrichments
         # It's POC, really you'd like to include many of these.  But we don't want
         # to end up with more answers than we started with, so we need to parameterize, and
@@ -229,9 +229,7 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
         # (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
         for i in range(len(enriched_links)):
             link = enriched_links[i]
-            # if i >= 1000:
-            #     break
-            if i >= 1000:
+            if i >= max_ret:
                 break
 
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
@@ -400,7 +398,7 @@ def filter_opportunities(opportunities, nodes_to_links):
 def filter_opportunities_(opportunities, nodes_to_links):
     unique_links = set()
     unique_link_nodes = set()
-    kn = set(opportunities['kg_id'].keys())
+    kn = set(opportunities['qg_curies'].keys())
     # These will be the nodes that we actually have links for
     link_nodes = set(filter(lambda x: len(nodes_to_links[x]), kn))
     new_nodes_to_links = {node: (nodes_to_links[node]) for node in link_nodes}
@@ -410,7 +408,7 @@ def filter_opportunities_(opportunities, nodes_to_links):
         for l in nodes_to_links[n]:
             # The link as defined uses the input node as is_source, but the lookup into redis uses the
             # linked node as the is_source, so gotta flip it
-            lplus = l + [opportunities['kg_id'].get(n)]
+            lplus = l + [opportunities['qg_curies'].get(n)]
             lplus[2] = not lplus[2]
             tl = tuple(lplus)
             if tl not in seen:

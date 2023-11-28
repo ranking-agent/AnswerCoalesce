@@ -9,7 +9,7 @@ from src.graph_coalescence.graph_coalescer import coalesce_by_graph, coalesce_by
 from src.set_coalescence.set_coalescer import coalesce_by_set
 
 
-def coalesce(answerset, method='all', predicates_to_exclude=None, properties_to_exclude=None, nodesets_to_exclude=None, pvalue_threshold=0):
+def coalesce(answerset, method='all', predicates_to_exclude=None, properties_to_exclude=None, nodesets_to_exclude=None, pvalue_threshold=0, limit=None):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -19,18 +19,18 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, properties_to_
     entities.
     """
     patches = []
-    nodeset = {}
+    set_opportunity = {}
 
     for qg_id, node_data in answerset.get("query_graph", {}).get("nodes", {}).items():
         if 'ids' in node_data and node_data.get('is_set'):
-            nodeset = get_node_ids_to_type(answerset)
+            set_opportunity = get_opportunity(answerset)
 
-    if nodeset:
-        coalescence_opportunities = nodeset
+    if set_opportunity:
+        coalescence_opportunities = set_opportunity
 
-        patches += coalesce_by_graph_(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
+        patches += coalesce_by_graph_(coalescence_opportunities, predicates_to_exclude, pvalue_threshold, limit)
 
-        new_answers = patch_answers_(answerset, nodeset, patches)
+        new_answers = patch_answers_(answerset, coalescence_opportunities, patches)
 
         new_answerset = new_answers['message']
 
@@ -159,7 +159,7 @@ def patch_answers(answerset, patches):
             new_answers.append(answer.to_json())
         return new_answers, auxiliary_graphs, qg, kg
 
-def get_node_ids_to_type(answerset):
+def get_opportunity(answerset):
     query_graph = answerset.get("query_graph", {})
     nodes = query_graph.get("nodes", {})
     allnodes = {}
@@ -171,11 +171,12 @@ def get_node_ids_to_type(answerset):
             nodeset = set(node_data.get("ids", []))
             for node in nodeset:
                 allnodes[node] = category
-            opportunity['qg_id'] = qg_id
-            opportunity['qg_semantic_type'] = category
+            opportunity['question_id'] = qg_id  #genes
+            opportunity['question_type'] = category
         else:
-            opportunity['answer_id'] = qg_id
-            opportunity['kg_id'] = allnodes
+            opportunity['answer_id'] = qg_id #chemical
+            opportunity['answer_type'] = node_data["categories"][0] if "categories" in node_data and node_data["categories"] else None
+            opportunity['qg_curies'] = allnodes
 
     for qg_eid, edge_data in query_graph.get("edges", {}).items():
         alledges[qg_eid] = edge_data['predicates'][0]
