@@ -2,8 +2,8 @@
 from setuptools import setup
 
 setup(
-    name='Answer Coalesce',
-    version='2.4.8',
+    name='PathFinding Answer Coalesce',
+    version='2.1',
     author='Chris Bizon',
     author_email='bizon@renci.org',
     url='https://github.com/ranking-agent/AnswerCoalesce',

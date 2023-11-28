@@ -28,7 +28,7 @@ def coalesce(answerset, method='all', predicates_to_exclude=None, properties_to_
     if set_opportunity:
         coalescence_opportunities = set_opportunity
 
-        patches += coalesce_by_graph_(coalescence_opportunities, predicates_to_exclude, pvalue_threshold, limit)
+        patches += coalesce_by_graph_(coalescence_opportunities, predicates_to_exclude, pvalue_threshold)
 
         new_answers = patch_answers_(answerset, coalescence_opportunities, patches)
 

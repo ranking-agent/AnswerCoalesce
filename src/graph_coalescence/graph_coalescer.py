@@ -63,8 +63,6 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
     allnodes = create_node_to_type(opportunities)
 
     nodes_to_links = create_nodes_to_links(allnodes)
-    "eg 'PUBCHEM.COMPOUND:60809' maps 112 [['UniProtKB:P14416', 'biolink:interacts_with', True], ['MONDO:0002039', 'biolink:ameliorates', True]," \
-    "['NCBIGene:1133', 'biolink:activity_increased_by', False], ['CHEBI:24431', 'biolink:subclass_of', True],"
 
     # #There will be nodes we can't enrich b/c they're not in our db.  Remove those from our opps, and remove redundant/empty opps
     opportunities = filter_opportunities(opportunities, nodes_to_links)
@@ -167,7 +165,7 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
 
     return patches
 
-def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_threshold=None, limit = None):
+def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_threshold=None):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -177,8 +175,8 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
     if isinstance(opportunities, dict):
         logger.info(f'Start of processing the opportunity.')
 
-        allnodes = opportunities.get('qg_curies')
-        nodes_to_links = create_nodes_to_links(allnodes)
+        allcuries = opportunities.get('qg_curies')
+        nodes_to_links = create_nodes_to_links(allcuries)
         # #There will be nodes we can't enrich b/c they're not in our db.  Remove those from our opps, and remove redundant/empty opps
         new_nodes_to_links, nodes_indices, unique_link_nodes, unique_links = filter_opportunities_(opportunities, nodes_to_links)
 
@@ -189,7 +187,7 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
         # provs: One chemical to many enrich nodes
         provs = get_provs(nodes_to_links)
 
-        total_node_counts = get_total_node_counts(set([k for k in allnodes.values()]))
+        total_node_counts = get_total_node_counts(set([k for k in allcuries.values()]))
 
         onum = 0
         # sffile=open('sfcalls.txt','w')
@@ -200,7 +198,7 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
         logger.debug('Starting the opportunity')
         onum += 1
 
-        nodes = list(allnodes.keys())  # this is the list of curies that can be in the given spot
+        nodes = list(allcuries.keys())  # this is the list of curies that can be in the given spot
 
         qg_id = opportunities.get('question_id', '')
         stype = opportunities.get('question_type', '')
@@ -212,16 +210,10 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
-        max_ret = len(nodes)
-        if not otype:
-            values_for_random_selection = [l[0] for l in enriched_links]
+        max_ret = 1000
+        curies_types = get_node_types(nodes)
+        curies_names = get_node_names(nodes)
 
-            random.seed(42)
-
-            limit = limit if limit else 500
-
-            enriched_links = random.choices(enriched_links, weights=values_for_random_selection, k=limit)
-            max_ret = limit
         # For the moment, we're only going to return an arbitrarily small number of enrichments
         # It's POC, really you'd like to include many of these.  But we don't want
         # to end up with more answers than we started with, so we need to parameterize, and
@@ -238,6 +230,8 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
             direction = {True: 'biolink:object', False: 'biolink:subject'}
             enrich_direction = direction.get(link[3])
             best_grouping = link[7]
+            best_grouping_types = {curie: curies_types[curie] for curie in best_grouping}
+            best_grouping_names = {curie: curies_names[curie] for curie in best_grouping}
 
             attributes = []
 
@@ -259,7 +253,7 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
 
             newprops = {'attributes': attributes}
 
-            patch = PropertyPatch_(qg_id, best_grouping, get_node_types(best_grouping), get_node_names(best_grouping), newprops, nodes_indices)
+            patch = PropertyPatch_(qg_id, best_grouping, best_grouping_types, best_grouping_names, newprops, nodes_indices)
             provkeys = []
             for e in [link]:
                 newcurie = e[1]
@@ -277,7 +271,6 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
                                      newnode_name=nodenamedict[newcurie])
             pprovs = {pk: provs[pk] for pk in provkeys}
             patch.add_provenance(pprovs)
-            # print(patch)
             patches.append(patch)
 
 

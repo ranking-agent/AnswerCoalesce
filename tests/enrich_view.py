@@ -99,7 +99,9 @@ class Data(param.Parameterized):
             reslt.append([identifier, names, p_values, supporting_study_cohort, object_aspect_qualifier, object_direction_qualifier, predicate,  types, rex, rxtype])
 
         df = pd.DataFrame(reslt, columns = ['identifier', 'enrichment_names', 'p_values', 'supporting_study_cohort', 'object_aspect_qualifier', 'object_direction_qualifier', 'predicate', 'enrichment_type', 'enriched', 'enriched_names'])
+        # df.drop_duplicates(inplace=True, ignore_index=True)
         df.sort_values(by="p_values", ascending=False, inplace=True)
+
 
         self.results = df
 
@@ -112,7 +114,7 @@ class Data(param.Parameterized):
         n = 20
         j=data.shape[0]
         if data.shape[0]>20:
-            data = data.sample(n=min(20, len(data)), random_state=42)
+            data = data.head(20)
             title = 'Sample 20 Enrichment Plot'
             j=20
 
@@ -131,15 +133,15 @@ class Data(param.Parameterized):
             name_to_value = {name: 0 for name in names}
 
             for name, source, value in flat_data:
-                name_to_sources[name].update(source)
+                name_to_sources[name].add(source)
                 name_to_value[name] += value
 
             sorted_names = sorted(names, key=lambda name: name_to_value[name], reverse=True)
-
+            print(sorted_names)
             name_indices = np.arange(len(sorted_names))
             values = [name_to_value[name] for name in sorted_names]
             bubble_sizes = [len(name_to_sources[name]) for name in sorted_names]
-
+            print(bubble_sizes)
             fig, ax = plt.subplots(figsize=(18, j))
             gs = gridspec.GridSpec(1, 2, width_ratios=[12,1])
             ax = plt.subplot(gs[0])
@@ -161,11 +163,13 @@ class Data(param.Parameterized):
             ax.set_title(title)
 
 
-            handles, labels = scatter.legend_elements("sizes", num=4)
-
-            print(handles)
+            handles, labels = scatter.legend_elements("sizes", num=5)
+            # new_label = []
+            # new_handle = []
+            # print(handles, labels)
             rc = r'\d+'
-            labels = [f"${int(re.search(rc, label).group()) // 30}$" for label in labels]
+
+            labels = set(f"${int(re.search(rc, label).group()) // n}$" for label in labels)
             legend = ax.legend(handles, labels, title="# of Genes",
                                bbox_to_anchor=(1.1, 0.6))
             ax.add_artist(legend)

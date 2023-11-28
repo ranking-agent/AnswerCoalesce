@@ -77,7 +77,7 @@ def test_basic():
 def test_acpathfinder():
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
+    #NB The type of the answers to return is not specified in the sampleset1.json
     testfilename = os.path.join(dir_path, jsondir, 'sampleset1.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
@@ -88,7 +88,7 @@ def test_acpathfinder():
 
     assert PDResponse.parse_obj(answerset)
     # make a good request
-    response = client.post('/query/all', json=answerset)
+    response = client.post('/query', json=answerset)
 
     # was the request successful
     assert(response.status_code == 200)

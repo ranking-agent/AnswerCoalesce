@@ -7,7 +7,7 @@ from datetime import datetime
 
 jsondir ='InputJson_1.4'
 
-def test_all_coalesce_with_workflow():
+def test_pathfinderac():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, jsondir, 'sampleset.json')
@@ -27,5 +27,5 @@ def test_all_coalesce_with_workflow():
     for qg_id, node_data in newset.get("query_graph", {}).get("nodes", {}).items():
         if 'ids' in node_data and node_data.get('is_set'):
             nodeset = set(node_data.get('ids', []))
-    assert len(newset['results']) <= len(nodeset)
+    assert len(newset['results']) >= len(nodeset)
 
