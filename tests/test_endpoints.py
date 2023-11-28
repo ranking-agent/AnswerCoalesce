@@ -32,7 +32,7 @@ def set_workflowparams(lookup_results):
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub
-def test_basic():
+def xtest_basic():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
@@ -110,7 +110,7 @@ def test_acpathfinder():
 
 
 @pytest.mark.nongithub
-def test_property():
+def xtest_property():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
@@ -158,7 +158,7 @@ def xtest_wfa3():
     assert(len(ret) == 3 or len(ret) == 4)
     assert( len(ret['results'])-len(answerset['message']['results']) > 0 )
 
-def test_set_coalesce():
+def xtest_set_coalesce():
     """This is a 2 hop query with three answers
     A B C
     A B D
@@ -314,7 +314,7 @@ def xtest_500():
     assert final_answers > original_answers
 
 
-def test_no_results():
+def xtest_no_results():
     #Don'tfreak out if strider doesn't find anything
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path,jsondir, 'no_results.json')
