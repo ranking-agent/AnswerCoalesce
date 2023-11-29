@@ -166,7 +166,7 @@ async def coalesce_handler(request: PDResponse):
     try:
         # call the operation with the message in the request message
 
-        coalesced = coalesce(coalesced, predicates_to_exclude=predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold)
+        coalesced = coalesce(coalesced)
 
         # turn it back into a full trapi message
         in_message['message'] = coalesced
