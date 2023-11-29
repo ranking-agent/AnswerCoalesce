@@ -27,7 +27,7 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 
 # declare the application and populate some details
 APP = FastAPI(
-    title='PathFinder Answer coalesce - A FastAPI UI/web service',
+    title='Answer coalesce - A FastAPI UI/web service',
     version=AC_VERSION
 )
 
@@ -42,11 +42,11 @@ APP.add_middleware(
 
 
 # declare the types of answer coalesce methods
-# class MethodName(str, Enum):
-#     all = "all"
-#     property = "property"
-#     graph = "graph"
-#     set = "set"
+class MethodName(str, Enum):
+    all = "all"
+    property = "property"
+    graph = "graph"
+    set = "set"
 
 
 # load up the config file
@@ -132,7 +132,7 @@ with open(conf_path, 'r') as inf:
 #     return JSONResponse(content=in_message, status_code=status_code)
 #
 
-@APP.post('/query/', tags=[" PathFinder Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
+@APP.post('/query/', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
 async def coalesce_handler(request: PDResponse):
     """ Answer coalesce operations. You may choose all, property, graph. """
 
@@ -163,16 +163,6 @@ async def coalesce_handler(request: PDResponse):
     # get the message to work on
     coalesced = in_message['message']
 
-    #The newly added parameters
-    predicates_to_exclude = None
-    properties_to_exclude = None
-    pvalue_threshold = None
-
-    if in_message.get('workflow'):
-        if in_message.get('workflow')[0].get('parameters', {}):
-            predicates_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('predicates_to_exclude', [])
-            properties_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('properties_to_exclude', [])
-            pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 0)
     try:
         # call the operation with the message in the request message
 
@@ -259,7 +249,7 @@ def construct_open_api_schema():
         return APP.openapi_schema
 
     open_api_schema = get_openapi(
-        title='PathFinding Answer Coalesce',
+        title='Answer Coalesce',
         version=AC_VERSION,
         routes=APP.routes
     )

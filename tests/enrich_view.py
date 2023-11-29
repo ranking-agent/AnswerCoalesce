@@ -137,11 +137,11 @@ class Data(param.Parameterized):
                 name_to_value[name] += value
 
             sorted_names = sorted(names, key=lambda name: name_to_value[name], reverse=True)
-            print(sorted_names)
+            # print(sorted_names)
             name_indices = np.arange(len(sorted_names))
             values = [name_to_value[name] for name in sorted_names]
             bubble_sizes = [len(name_to_sources[name]) for name in sorted_names]
-            print(bubble_sizes)
+            # print(bubble_sizes)
             fig, ax = plt.subplots(figsize=(18, j))
             gs = gridspec.GridSpec(1, 2, width_ratios=[12,1])
             ax = plt.subplot(gs[0])

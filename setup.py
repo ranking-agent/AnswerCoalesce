@@ -2,7 +2,7 @@
 from setuptools import setup
 
 setup(
-    name='PathFinding Answer Coalesce',
+    name='Answer Coalesce',
     version='2.1',
     author='Chris Bizon',
     author_email='bizon@renci.org',
