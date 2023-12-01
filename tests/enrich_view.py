@@ -63,12 +63,10 @@ class Data(param.Parameterized):
             return
         filename = self.data_select
         with open(filename, "r") as inf:
-            self.response=json.load(inf)
+           self.response=json.load(inf)
+           if 'message' in self.response:
+               self.response =self.response.get('message')
         self.get_results()
-
-    def getsetlabel(self):
-        res = self.response
-        res['query_graph']['node']
 
     def get_results(self):
         results = self.response.get("results",{})
