@@ -2,8 +2,8 @@ import pytest
 import os, json, random, sys, io
 import cProfile
 import pstats
-import pandas as pd
-import matplotlib.pyplot as plt
+import numpy as np
+# import matplotlib.pyplot as plt
 import requests
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
@@ -119,19 +119,43 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
                             stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions],
         'filename(function)': [targetdict.get(key[0])+'_'+key[-1] for key in stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions]
     }
-    df = pd.DataFrame(stats_data)
-    df = df.sort_values(by='cumtime', ascending=False)
-    print(df)
-    plt.figure(figsize=(10, 6))
-    plt.plot(df['filename(function)'], df['cumtime'], label='Cumulative Time', marker='o', linestyle='-')
-    plt.xticks(rotation=45, ha="right")
-    plt.title("Cumulative Time for the Functions")
-    plt.xlabel("Functions")
-    plt.ylabel("Cumulative Time (secs)")
-    plt.legend()
-    plt.grid(linewidth=0.1)
-    plt.tight_layout()
-    plt.show()
+
+    cumtime = np.array(stats_data['cumtime'])
+    sorted_indices = np.argsort(cumtime)[::-1]
+    filename_function = np.array(stats_data['filename(function)'])[sorted_indices]
+    ncalls = np.array(stats_data['ncalls'])[sorted_indices]
+    tottime = np.array(stats_data['tottime'])[sorted_indices]
+    percall_tottime = np.array(stats_data['percall_tottime'])[sorted_indices]
+    percall_cumtime = np.array(stats_data['percall_cumtime'])[sorted_indices]
+    cumtime = cumtime[sorted_indices]
+
+    rows = list(zip(filename_function, ncalls, tottime, percall_tottime, cumtime, percall_cumtime))
+
+    # Headers
+    headers = ["Function", "ncalls", "tottime", "percall_tottime", "cumtime", "percall_cumtime"]
+
+    # Calculate the maximum width for each column
+    col_widths = [max(len(str(header)), max(len(str(row[i])) for row in rows)) for i, header in enumerate(headers)]
+
+    # Print the headers
+    header_line = "|".join(f"{header:<{col_widths[i]}}" for i, header in enumerate(headers))
+    print(header_line)
+    print("-" * sum(col_widths + [len(headers) - 1]))
+
+    # Print the rows
+    for row in rows:
+        row_line = "|".join(f"{str(value):<{col_widths[i]}}" for i, value in enumerate(row))
+        print(row_line)
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(filename_function, cumtime, label='Cumulative Time', marker='o', linestyle='-')
+    # plt.xticks(rotation=45, ha="right")
+    # plt.title("Cumulative Time for the Functions")
+    # plt.xlabel("Functions")
+    # plt.ylabel("Cumulative Time (secs)")
+    # plt.legend()
+    # plt.grid(linewidth=0.1)
+    # plt.tight_layout()
+    # plt.show()
 
     print(f"***{len(newset['results'])} *** results returned")
     #uncomment this to save the result to the directory
