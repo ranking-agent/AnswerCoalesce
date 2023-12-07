@@ -114,7 +114,7 @@ def patch_answers_(answerset, nodeset, patches):
         for patch in patches:
             # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
             i += 1
-            print(f'{i} / {len(patches)}')
+            # print(f'{i} / {len(patches)}')
             new_answer, updated_kg, kg_indexes = patch.apply_(nodeset, result['message']['knowledge_graph'], kg_indexes, i)
             # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
             pydantic_kgraph.update(KnowledgeGraph.parse_obj(updated_kg))
@@ -159,31 +159,77 @@ def patch_answers(answerset, patches):
             new_answers.append(answer.to_json())
         return new_answers, auxiliary_graphs, qg, kg
 
+
 def get_opportunity(answerset):
     query_graph = answerset.get("query_graph", {})
     nodes = query_graph.get("nodes", {})
     allnodes = {}
     opportunity = {}
     alledges = {}
+
     for qg_id, node_data in nodes.items():
         if 'ids' in node_data and node_data.get('is_set'):
             category = node_data.get("categories", ["biolink:NamedThing"])[0]
             nodeset = set(node_data.get("ids", []))
             for node in nodeset:
                 allnodes[node] = category
-            opportunity['question_id'] = qg_id  #genes
+            opportunity['question_id'] = qg_id  # genes
             opportunity['question_type'] = category
         else:
-            opportunity['answer_id'] = qg_id #chemical
-            opportunity['answer_type'] = node_data["categories"][0] if "categories" in node_data and node_data["categories"] else None
+            opportunity['answer_id'] = qg_id  # chemical
+            opportunity['answer_type'] = node_data["categories"][0] if "categories" in node_data and node_data[
+                "categories"] else None
             opportunity['qg_curies'] = allnodes
 
     for qg_eid, edge_data in query_graph.get("edges", {}).items():
-        alledges[qg_eid] = edge_data['predicates'][0]
+        edgepredicate = {}
+        edgepredicate['predicate'] = edge_data['predicates'][0]
+        for i in edge_data.get('qualifier_constraints', []):
+            val = []
+            for _, value in i.items():
+                val.append(value)
+            edgepredicate[val[0].split(':')[1]] = val[1]
+        alledges[qg_eid] = edgepredicate
 
     opportunity['answer_edge'] = alledges
 
     return opportunity
+
+
+# def get_opportunity(answerset):
+#     query_graph = answerset.get("query_graph", {})
+#     nodes = query_graph.get("nodes", {})
+#     allnodes = {}
+#     opportunity = {}
+#     alledges = []
+#
+#     for qg_id, node_data in nodes.items():
+#         if 'ids' in node_data and node_data.get('is_set'):
+#             category = node_data.get("categories", ["biolink:NamedThing"])[0]
+#             nodeset = set(node_data.get("ids", []))
+#             for node in nodeset:
+#                 allnodes[node] = category
+#             opportunity['question_id'] = qg_id  #genes
+#             opportunity['question_type'] = category
+#         else:
+#             opportunity['answer_id'] = qg_id #chemical
+#             opportunity['answer_type'] = node_data["categories"][0] if "categories" in node_data and node_data["categories"] else None
+#             opportunity['qg_curies'] = allnodes
+#
+#     edgepredicate = {}
+#     for qg_eid, edge_data in query_graph.get("edges", {}).items():
+#         edgepredicate = {}
+#         edgepredicate['predicate'] = edge_data['predicates'][0]
+#         for i in edge_data.get('qualifier_constraints', []):
+#             val = []
+#             for key, value in i.items():
+#                 val.append(value)
+#             edgepredicate[val[0].split(':')[1]] = val[1]
+#         alledges.append(edgepredicate)
+#
+#     opportunity['answer_edge'] = alledges
+#
+#     return opportunity
 
 def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single

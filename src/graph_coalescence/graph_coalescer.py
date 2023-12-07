@@ -291,8 +291,10 @@ def get_node_types(unique_link_nodes):
                 p.get(newcurie)
             all_typestrings = p.execute()
             for newcurie, nodetypestring in zip(ncg, all_typestrings):
-                node_types = ast.literal_eval(nodetypestring.decode())
-                nodetypedict[newcurie] = node_types
+                # noticed 'NCBIGene:103178432' returned none
+                if nodetypestring:
+                    node_types = ast.literal_eval(nodetypestring.decode())
+                    nodetypedict[newcurie] = node_types
     return nodetypedict
 
 
@@ -517,15 +519,12 @@ def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
 
     logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
 
-    # rm = RobokopMessenger()
+
     results = []
 
     logger.info(f'{len(nodeset_to_links.items())} possible shared links discovered.')
 
     for nodeset, possible_links in nodeset_to_links.items():
-        # nodeset: set of chemicals
-        # possible links: list of possible enriched tuple
-        # eg frozenset({'MESH:D006495', 'PUBCHEM.COMPOUND:445154', 'PUBCHEM.COMPOUND:3108'}): [('HP:0001907', 'biolink:treats', True)]
         enriched = []
 
         for ix, (newcurie, predicate, is_source) in enumerate(possible_links):
@@ -536,25 +535,16 @@ def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
             # The random variate represents the number of Type I objects in N drawn
             #  without replacement from the total population (len curies).
 
+            if not any(set(p.items()).issubset(set(json.loads(predicate).items())) for p in q_predicates):
+                continue
             # length of the set of chemicals that mapped to the tuple
             x = len(nodeset)  # draws with the property
 
-            # total_node_count = get_total_node_count(semantic_type)
             total_node_count = total_node_counts[semantic_type]
-
-            # total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
-            # Note that is_source is from the point of view of the input nodes, not newcurie
 
             newcurie_is_source = not is_source
 
-            # logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
-            # n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
             n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
-            # logger.debug (f'end get_hit_node_count() = {n}, start get_hit_nodecount_old()')
-            # o = rm.get_hit_nodecount_old(newcurie, predicate, newcurie_is_source, semantic_type)
-
-            # if n != o:
-            #     logger.info (f'New and old node count mismatch for ({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type}: n:{n}, o:{o}')
 
             ndraws = len(nodes)
 
@@ -585,17 +575,19 @@ def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
             # get the real labels/types of the enriched node
             node_types = typecache[newcurie]
 
-            parsed_predicate = json.loads(predicate)['predicate']
+            # parsed_predicate = json.loads(predicate)['predicate']
 
-            if parsed_predicate in q_predicates and answer_type:
-                if answer_type not in node_types:
-                    continue
+            # if answer_type:
+            #     if answer_type not in node_types:
+            #         continue
+            #     enriched.append(
+            #         (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
+            # elif not answer_type:
+            #     enriched.append(
+            #         (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
+            if not answer_type or (answer_type and answer_type in set(node_types)):
                 enriched.append(
                     (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
-            elif parsed_predicate in q_predicates and not answer_type:
-                enriched.append(
-                    (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
-
 
         if len(enriched) > 0:
             results += enriched

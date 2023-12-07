@@ -134,7 +134,7 @@ with open(conf_path, 'r') as inf:
 
 @APP.post('/query/', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
 async def coalesce_handler(request: PDResponse):
-    """ Answer coalesce operations. You may choose all, property, graph. """
+    # """ Answer coalesce operations. You may choose all, property, graph. """
 
     # convert the incoming message into a dict
     in_message = request.dict()

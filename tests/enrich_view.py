@@ -6,6 +6,7 @@ import os
 import json
 import pandas as pd
 import re
+import math
 from matplotlib import gridspec
 import param
 import holoviews as hv
@@ -34,6 +35,7 @@ class Data(param.Parameterized):
     results = param.DataFrame(pd.DataFrame({}))
     enrichments = param.DataFrame(pd.DataFrame({}))
     data_select = param.ObjectSelector(default="",objects=jsons)
+    select_method = param.ObjectSelector(default="head", objects=["head", "tail", "random"])
 
     @param.depends()
     def __init__(self, **params):
@@ -51,7 +53,7 @@ class Data(param.Parameterized):
             selectable=1,
             show_index=False,
             editors={'identifier':None, 'enrichment_names': None, 'p_values': None, 'supporting_study_cohort': None,
-                     'object_aspect_qualifier': None, 'object_direction_qualifier': None, 'predicate': None, 'enrichment_type': None, 'enriched':None, 'enriched_names':None,},
+                     'object_aspect_qualifier': None, 'object_direction_qualifier': None, 'predicate': None, 'enrichment_type': None, 'enriched':None, 'enriched_names':None,'#enriched':None},
             formatters={"p_values": ScientificFormatter()}
         )
         return self.rtable
@@ -68,11 +70,14 @@ class Data(param.Parameterized):
                self.response =self.response.get('message')
         self.get_results()
 
+        # self.select_method = param.ObjectSelector(default="head", objects=["head", "tail", "random"])
+
     def get_results(self):
         results = self.response.get("results",{})
         for qid, node_data in self.response["query_graph"]['nodes'].items():
             if "ids" in node_data and node_data['is_set']:
                 aid=qid
+                self.nodes = node_data['ids']
             else:
                 qgid = qid
 
@@ -93,30 +98,40 @@ class Data(param.Parameterized):
                 if att["attribute_type_id"] == "biolink:predicate":
                     predicate = att["value"]
             rex = [x['id'] for x in result['node_bindings'][aid]]
-            rxtype = [self.response.get("knowledge_graph", {}).get("nodes", {})[rx]["name"] for rx in rex]
-            reslt.append([identifier, names, p_values, supporting_study_cohort, object_aspect_qualifier, object_direction_qualifier, predicate,  types, rex, rxtype])
+            rxname = [self.response.get("knowledge_graph", {}).get("nodes", {})[rx]["name"] for rx in rex]
+            reslt.append([identifier, names, p_values, supporting_study_cohort, object_aspect_qualifier, object_direction_qualifier, predicate,  types, rex, rxname, len(rex)])
 
-        df = pd.DataFrame(reslt, columns = ['identifier', 'enrichment_names', 'p_values', 'supporting_study_cohort', 'object_aspect_qualifier', 'object_direction_qualifier', 'predicate', 'enrichment_type', 'enriched', 'enriched_names'])
+        df = pd.DataFrame(reslt, columns = ['identifier', 'enrichment_names', 'p_values', 'supporting_study_cohort', 'object_aspect_qualifier', 'object_direction_qualifier', 'predicate', 'enrichment_type', 'enriched', 'enriched_names', '#enriched'])
         # df.drop_duplicates(inplace=True, ignore_index=True)
-        df.sort_values(by="p_values", ascending=False, inplace=True)
+        df.sort_values(by="p_values", ascending=True, inplace=True)
 
 
         self.results = df
 
 
-    @param.depends('results')
+    @param.depends('results', 'select_method')
     def create_plot(self):
         # plt.rcParams["figure.autolayout"] = True
+        # print(pn.Panel())
         data = self.results
-        title = 'Enrichment Plot'
-        n = 20
-        j=data.shape[0]
-        if data.shape[0]>20:
-            data = data.head(20)
-            title = 'Sample 20 Enrichment Plot'
-            j=20
 
         if not data.empty:
+            title = 'Enrichment Plot'
+            n = 20
+            j = data.shape[0]
+            if data.shape[0] > n:
+                if self.select_method == "head":
+                    data = data.head(20)
+                    title = 'First 20 Enrichment Plot'
+                    j = 20
+                elif self.select_method == "tail":
+                    data = data.tail(20)
+                    title = 'Last 20 Enrichment Plot'
+                    j = 20
+                elif self.select_method == "random":
+                    data = data.sample(n=20)
+                    title = 'Random 20 Enrichment Plot'
+                    j = 20
 
             mask = data['enrichment_names'].duplicated(keep=False)
             data.loc[mask, 'enrichment_names'] += data.groupby('enrichment_names').cumcount().add(1).astype(str)
@@ -167,7 +182,9 @@ class Data(param.Parameterized):
             # print(handles, labels)
             rc = r'\d+'
 
-            labels = set(f"${int(re.search(rc, label).group()) // n}$" for label in labels)
+            # labels = set(f"${int(re.search(rc, label).group()) // n}$" for label in labels)
+
+            labels = set(f"${math.ceil(int(re.search(rc, label).group()) / n)}$" for label in labels)
             legend = ax.legend(handles, labels, title="# of Genes",
                                bbox_to_anchor=(1.1, 0.6))
             ax.add_artist(legend)
@@ -204,6 +221,6 @@ row = pn.Row(data.result_table)
 plot_panel = pn.Row(data.create_plot)
 plot_panel2 = pn.Row(data.pieplot)
 
-layout = pn.Column(data.param.data_select, row, plot_panel, plot_panel2)
+layout = pn.Column(data.param.data_select, row, data.param.select_method, plot_panel, plot_panel2)
 
 layout.servable()
