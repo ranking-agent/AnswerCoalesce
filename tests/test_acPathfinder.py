@@ -58,7 +58,7 @@ def resolvename(name):
 
 def xtest_pathfinderac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers):
 # def test_pathfinderac():
-#
+##Sources: https://link.springer.com/article/10.1007/s41048-019-0086-2
 #     # target_ids = ['JUN', 'GDI1', 'GNAI2']#["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
 #     target_ids= ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]#['NCBIGene:3693', 'NCBIGene:19894', 'NCBIGene:2778', 'NCBIGene:7070', 'NCBIGene:103178432']
 #     target='gene'
@@ -82,7 +82,7 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
             target_ids = target_ids.split(',')
             if target_ids[0].find(':')<0:
                 target_ids = [resolvename(name) for name in target_ids]
-
+        #Sources: https://link.springer.com/article/10.1007/s41048-019-0086-2
         # target_ids =  ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
         # target_id = 'gene'
         # source_id = 'chemical'
@@ -109,32 +109,30 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     stats.strip_dirs()
     stats.sort_stats('cumulative')
 
+    filtered_stats = [(key, stats.stats[key]) for key in stats.stats
+                      if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions]
     stats_data = {
-        'ncalls': [stats.stats[key][0] for key in stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions],
-        'tottime': [stats.stats[key][2] for key in stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions],
-        'percall_tottime': [stats.stats[key][2] / stats.stats[key][0] if stats.stats[key][0] != 0 else 0 for key in
-                            stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions],
-        'cumtime': [stats.stats[key][3] for key in stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions],
-        'percall_cumtime': [stats.stats[key][3] / stats.stats[key][0] if stats.stats[key][0] != 0 else 0 for key in
-                            stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions],
-        'filename(function)': [targetdict.get(key[0])+'_'+key[-1] for key in stats.stats if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions]
+        'ncalls': [data[0] for key, data in filtered_stats],
+        # 'tottime': [data[2] for key, data in filtered_stats],
+        # 'percall_tottime': [data[2] / data[0] if data[0] != 0 else 0 for key, data in filtered_stats],
+        'cumtime': [data[3] for key, data in filtered_stats],
+        # 'percall_cumtime': [data[3] / data[0] if data[0] != 0 else 0 for key, data in filtered_stats],
+        'filename(function)': [targetdict.get(key[0]) + '_' + key[-1] for key, data in filtered_stats]
     }
 
     cumtime = np.array(stats_data['cumtime'])
     sorted_indices = np.argsort(cumtime)[::-1]
     filename_function = np.array(stats_data['filename(function)'])[sorted_indices]
     ncalls = np.array(stats_data['ncalls'])[sorted_indices]
-    tottime = np.array(stats_data['tottime'])[sorted_indices]
-    percall_tottime = np.array(stats_data['percall_tottime'])[sorted_indices]
-    percall_cumtime = np.array(stats_data['percall_cumtime'])[sorted_indices]
+    # tottime = np.array(stats_data['tottime'])[sorted_indices]
+    # percall_tottime = np.array(stats_data['percall_tottime'])[sorted_indices]
+    # percall_cumtime = np.array(stats_data['percall_cumtime'])[sorted_indices]
     cumtime = cumtime[sorted_indices]
 
-    rows = list(zip(filename_function, ncalls, tottime, percall_tottime, cumtime, percall_cumtime))
+    rows = list(zip(filename_function, ncalls, cumtime))
 
-    # Headers
-    headers = ["Function", "ncalls", "tottime", "percall_tottime", "cumtime", "percall_cumtime"]
+    headers = ["Function", "ncalls", "cumtime"]
 
-    # Calculate the maximum width for each column
     col_widths = [max(len(str(header)), max(len(str(row[i])) for row in rows)) for i, header in enumerate(headers)]
 
     # Print the headers
