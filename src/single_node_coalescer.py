@@ -102,7 +102,6 @@ def patch_answers_(answerset, nodeset, patches):
     # probably only good for the prop coalescer
     # We want to maintain a single kg, and qg.
     qg = answerset.get('query_graph', {})
-    # kg = answerset.get('knowledge_graph', {})
     i = 0
     kg_indexes = {}
     pydantic_kgraph = KnowledgeGraph.parse_obj({"nodes": {}, "edges": {}})
@@ -110,14 +109,16 @@ def patch_answers_(answerset, nodeset, patches):
         "message": {"query_graph": {"nodes": {}, "edges": {}},
                     "knowledge_graph": {"nodes": {}, "edges": {}},
                     "results": []}}).dict(exclude_none=True)
+    kg = result['message']['knowledge_graph']
     if patches:
         for patch in patches:
             # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
             i += 1
             # print(f'{i} / {len(patches)}')
-            new_answer, updated_kg, kg_indexes = patch.apply_(nodeset, result['message']['knowledge_graph'], kg_indexes, i)
+            new_answer, updated_kg, kg_indexes = patch.apply_(nodeset, kg, kg_indexes, i)
             # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
             pydantic_kgraph.update(KnowledgeGraph.parse_obj(updated_kg))
+
             # Construct the final result message, currently empty
             result["message"]["results"].extend(new_answer)
         result["message"]["query_graph"] = qg

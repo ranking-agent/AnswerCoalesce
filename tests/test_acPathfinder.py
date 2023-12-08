@@ -60,7 +60,7 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
 # def test_pathfinderac():
 ##Sources: https://link.springer.com/article/10.1007/s41048-019-0086-2
 #     # target_ids = ['JUN', 'GDI1', 'GNAI2']#["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
-#     target_ids= ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]#['NCBIGene:3693', 'NCBIGene:19894', 'NCBIGene:2778', 'NCBIGene:7070', 'NCBIGene:103178432']
+#     target_ids= ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
 #     target='gene'
 #     target_category='biolink:Gene'
 #     predicate='biolink:affects'
@@ -95,16 +95,31 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
         # print(answerset)
     with cProfile.Profile() as profile:
         newset = snc.coalesce(answerset, method='graph')
-
     s = io.StringIO()
     stats = pstats.Stats(profile, stream=s)
+    nodeset = {}; question = ''
+    for qg_id, node_data in newset.get("query_graph", {}).get("nodes", {}).items():
+        if 'ids' in node_data and node_data.get('is_set'):
+            nodeset = set(node_data.get('ids', []))
+            question = qg_id
+    print()
+    print(f"*** {len(newset['results'])} *** results returned")
+    print(f"nodeset: {nodeset}")
+    #uncomment this to save the result to the directory
+    with open(f"newset{datetime.now()}.json", 'w') as outf:
+        json.dump(newset, outf, indent=4)
+    assert PDResponse.parse_obj({'message': newset})
+    if newset['results']:
+        print(f"Samples: {[newset['knowledge_graph']['nodes'][idx]['name'] for idx in random.sample(list(set(newset['knowledge_graph']['nodes']).difference(nodeset)), 2)]}")
+    assert len(newset['results']) >= len(nodeset)
+
     excluded_function =["getEffectiveLevel", "<method 'isalnum' of 'str' objects>", "<method '__exit__' of '_thread.lock' objects>", "<method 'pop' of 'list' objects>", "__enter__", "disable", "owns_connection", "connect", "<method 'close' of '_io.BytesIO' objects>", "<method 'sort' of 'list' objects>", "<method 'keys' of 'dict' objects>",
                         "<method 'connect' of '_socket.socket' objects>", "_releaseLock", "<method 'acquire' of '_thread.RLock' objects>", "get_connection",
                         "<method 'truncate' of '_io.BytesIO' objects>", "close", "_releaseLock", "_connect", "<method 'replace' of 'str' objects>",
                         "getaddrinfo", "<method 'replace' of 'str' objects>", "<method 'add' of 'set' objects>",  "<method 'rpartition' of 'str' objects>", '<genexpr>', '<lambda>',  '<listcomp>', '<dictcomp>', "<method 'disable' of '_lsprof.Profiler' objects>", "<method 'values' of 'dict' objects>", "<method 'release' of '_thread.RLock' objects>", "<method 'remove' of 'set' objects>",
                         "getaddrinfo", "__exit__", "__init__", "check_health", "<method 'replace' of 'str' objects>", "<method 'add' of 'set' objects>",  "<method 'rpartition' of 'str' objects>", '<genexpr>', '<lambda>',  '<listcomp>', '<dictcomp>', "<method 'disable' of '_lsprof.Profiler' objects>", "<method 'values' of 'dict' objects>",
                         "<method 'end' of 're.Match' objects>",  "length", "__del__", "<method 'items' of 'dict' objects>", "<method 'release' of '_thread.RLock' objects>", "<method 'remove' of 'set' objects>"]
-    target_functions = ['graph_coalescer.py', 'single_node_coalescer.py', 'property_coalesce.py']
+    target_functions = ['graph_coalescer.py', 'single_node_coalescer.py', 'property_coalesce.py', 'component.py']
     targetdict = {'graph_coalescer.py':'gc', 'single_node_coalescer.py': 'snc', 'property_coalesce.py':'pc'}
     stats.strip_dirs()
     stats.sort_stats('cumulative')
@@ -147,7 +162,7 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     # plt.figure(figsize=(10, 6))
     # plt.plot(filename_function, cumtime, label='Cumulative Time', marker='o', linestyle='-')
     # plt.xticks(rotation=45, ha="right")
-    # plt.title("Cumulative Time for the Functions")
+    # plt.title(f"Cumulative Time for the Functions {len(nodeset)} {question}set")
     # plt.xlabel("Functions")
     # plt.ylabel("Cumulative Time (secs)")
     # plt.legend()
@@ -155,19 +170,7 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     # plt.tight_layout()
     # plt.show()
 
-    print(f"***{len(newset['results'])} *** results returned")
-    #uncomment this to save the result to the directory
-    # with open(f"newset{datetime.now()}.json", 'w') as outf:
-    #     json.dump(newset, outf, indent=4)
-    assert PDResponse.parse_obj({'message': newset})
 
-    nodeset = {}
-    for qg_id, node_data in newset.get("query_graph", {}).get("nodes", {}).items():
-        if 'ids' in node_data and node_data.get('is_set'):
-            nodeset = set(node_data.get('ids', []))
-    if newset['results']:
-        print(f"Samples: {[newset['knowledge_graph']['nodes'][idx]['name'] for idx in random.sample(list(set(newset['knowledge_graph']['nodes']).difference(nodeset)), 2)]}")
-    # assert len(newset['results']) >= len(nodeset)
 
 def get_qg(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers=None):
     query_template = Template(qg_template())
