@@ -184,12 +184,6 @@ def get_opportunity(answerset):
 
     for qg_eid, edge_data in query_graph.get("edges", {}).items():
         edgepredicate = {}
-        # edgepredicate['predicate'] = edge_data['predicates']
-        # for i in edge_data.get('qualifier_constraints', []):
-        #     val = []
-        #     for _, value in i.items():
-        #         val.append(value)
-        #     edgepredicate[val[0].split(':')[1]] = val[1]
         edgepredicate['predicate'] = edge_data['predicates']
         for i in edge_data.get('qualifier_constraints', []):
             val = []
@@ -201,42 +195,6 @@ def get_opportunity(answerset):
     opportunity['answer_edge'] = alledges
 
     return opportunity
-
-
-# def get_opportunity(answerset):
-#     query_graph = answerset.get("query_graph", {})
-#     nodes = query_graph.get("nodes", {})
-#     allnodes = {}
-#     opportunity = {}
-#     alledges = []
-#
-#     for qg_id, node_data in nodes.items():
-#         if 'ids' in node_data and node_data.get('is_set'):
-#             category = node_data.get("categories", ["biolink:NamedThing"])[0]
-#             nodeset = set(node_data.get("ids", []))
-#             for node in nodeset:
-#                 allnodes[node] = category
-#             opportunity['question_id'] = qg_id  #genes
-#             opportunity['question_type'] = category
-#         else:
-#             opportunity['answer_id'] = qg_id #chemical
-#             opportunity['answer_type'] = node_data["categories"][0] if "categories" in node_data and node_data["categories"] else None
-#             opportunity['qg_curies'] = allnodes
-#
-#     edgepredicate = {}
-#     for qg_eid, edge_data in query_graph.get("edges", {}).items():
-#         edgepredicate = {}
-#         edgepredicate['predicate'] = edge_data['predicates'][0]
-#         for i in edge_data.get('qualifier_constraints', []):
-#             val = []
-#             for key, value in i.items():
-#                 val.append(value)
-#             edgepredicate[val[0].split(':')[1]] = val[1]
-#         alledges.append(edgepredicate)
-#
-#     opportunity['answer_edge'] = alledges
-#
-#     return opportunity
 
 def identify_coalescent_nodes(answerset):
     """Given a set of answers, locate answersets that are equivalent except for a single

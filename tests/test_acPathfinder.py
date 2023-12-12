@@ -3,7 +3,7 @@ import os, json, random, sys, io
 import cProfile
 import pstats
 import numpy as np
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import requests
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
@@ -71,6 +71,7 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     # source_ids=None
     # source='genes'
     # source_category='biolink:Gene'
+    # qualifiers = 'increased_activity'
     # qualifiers=''
 
     if not target_ids:
@@ -86,22 +87,13 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
             target_ids = target_ids.split(',')
         if target_ids[0].find(':')<0:
             target_ids = [resolvename(name) for name in target_ids]
-    #Sources: https://link.springer.com/article/10.1007/s41048-019-0086-2
-    # target_ids =  ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
-        # target_id = 'gene'
-        # source_id = 'chemical'
-        # input_category = 'biolink:Gene'
-        # output_category = 'biolink:ChemicalEntity'
-        # predicate = 'biolink:affects'
-        # qualifiers = 'increased_activity'
-        print('=====: ', target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers, end='\n')
 
-
+        # print('=====: ', target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers, end='\n')
         answerset = get_qg(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)
         # print(answerset)
     with cProfile.Profile() as profile:
         newset = snc.coalesce(answerset, method='graph')
-    # s = io.StringIO()
+    s = io.StringIO()
     stats = pstats.Stats(profile)
     nodeset = {}; question = ''
     for qg_id, node_data in newset.get("query_graph", {}).get("nodes", {}).items():
@@ -112,8 +104,8 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     print(f"*** {len(newset['results'])} *** results returned")
     print(f"nodeset: {nodeset}")
     #uncomment this to save the result to the directory
-    with open(f"newset{datetime.now()}.json", 'w') as outf:
-        json.dump(newset, outf, indent=4)
+    # with open(f"newset{datetime.now()}.json", 'w') as outf:
+    #     json.dump(newset, outf, indent=4)
     assert PDResponse.parse_obj({'message': newset})
     if newset['results']:
         print(f"Samples: {[newset['knowledge_graph']['nodes'][idx]['name'] for idx in random.sample(list(set(newset['knowledge_graph']['nodes']).difference(nodeset)), 2)]}")
@@ -131,51 +123,51 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     stats.sort_stats('filename')
     stats.print_stats()
 
-    # filtered_stats = [(key, stats.stats[key]) for key in stats.stats
-    #                   if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions]
-    # stats_data = {
-    #     'ncalls': [data[0] for key, data in filtered_stats],
-    #     # 'tottime': [data[2] for key, data in filtered_stats],
-    #     # 'percall_tottime': [data[2] / data[0] if data[0] != 0 else 0 for key, data in filtered_stats],
-    #     'cumtime': [data[3] for key, data in filtered_stats],
-    #     # 'percall_cumtime': [data[3] / data[0] if data[0] != 0 else 0 for key, data in filtered_stats],
-    #     'filename(function)': [targetdict.get(key[0]) + '_' + key[-1] for key, data in filtered_stats]
-    # }
+    filtered_stats = [(key, stats.stats[key]) for key in stats.stats
+                      if key[-1] not in excluded_function and '<built-in' not in key[-1] and key[0] in target_functions]
+    stats_data = {
+        'ncalls': [data[0] for key, data in filtered_stats],
+        # 'tottime': [data[2] for key, data in filtered_stats],
+        # 'percall_tottime': [data[2] / data[0] if data[0] != 0 else 0 for key, data in filtered_stats],
+        'cumtime': [data[3] for key, data in filtered_stats],
+        # 'percall_cumtime': [data[3] / data[0] if data[0] != 0 else 0 for key, data in filtered_stats],
+        'filename(function)': [targetdict.get(key[0]) + '_' + key[-1] for key, data in filtered_stats]
+    }
 
-    # cumtime = np.array(stats_data['cumtime'])
-    # sorted_indices = np.argsort(cumtime)[::-1]
-    # filename_function = np.array(stats_data['filename(function)'])[sorted_indices]
-    # ncalls = np.array(stats_data['ncalls'])[sorted_indices]
+    cumtime = np.array(stats_data['cumtime'])
+    sorted_indices = np.argsort(cumtime)[::-1]
+    filename_function = np.array(stats_data['filename(function)'])[sorted_indices]
+    ncalls = np.array(stats_data['ncalls'])[sorted_indices]
     # tottime = np.array(stats_data['tottime'])[sorted_indices]
     # percall_tottime = np.array(stats_data['percall_tottime'])[sorted_indices]
-    # # percall_cumtime = np.array(stats_data['percall_cumtime'])[sorted_indices]
-    # cumtime = cumtime[sorted_indices]
-    #
-    # rows = list(zip(filename_function, ncalls, cumtime))
-    #
-    # headers = ["Function", "ncalls", "cumtime"]
-    #
-    # col_widths = [max(len(str(header)), max(len(str(row[i])) for row in rows)) for i, header in enumerate(headers)]
+    # percall_cumtime = np.array(stats_data['percall_cumtime'])[sorted_indices]
+    cumtime = cumtime[sorted_indices]
+
+    rows = list(zip(filename_function, ncalls, cumtime))
+
+    headers = ["Function", "ncalls", "cumtime"]
+
+    col_widths = [max(len(str(header)), max(len(str(row[i])) for row in rows)) for i, header in enumerate(headers)]
 
     # Print the headers
-    # header_line = "|".join(f"{header:<{col_widths[i]}}" for i, header in enumerate(headers))
-    # print(header_line)
-    # print("-" * sum(col_widths + [len(headers) - 1]))
-    #
-    # # Print the rows
-    # for row in rows:
-    #     row_line = "|".join(f"{str(value):<{col_widths[i]}}" for i, value in enumerate(row))
-    #     print(row_line)
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(filename_function, cumtime, label='Cumulative Time', marker='o', linestyle='-')
-    # plt.xticks(rotation=45, ha="right")
-    # plt.title(f"Cumulative Time for the Functions {len(nodeset)} {question}set")
-    # plt.xlabel("Functions")
-    # plt.ylabel("Cumulative Time (secs)")
-    # plt.legend()
-    # plt.grid(linewidth=0.1)
-    # plt.tight_layout()
-    # plt.show()
+    header_line = "|".join(f"{header:<{col_widths[i]}}" for i, header in enumerate(headers))
+    print(header_line)
+    print("-" * sum(col_widths + [len(headers) - 1]))
+
+    # Print the rows
+    for row in rows:
+        row_line = "|".join(f"{str(value):<{col_widths[i]}}" for i, value in enumerate(row))
+        print(row_line)
+    plt.figure(figsize=(10, 6))
+    plt.plot(filename_function, cumtime, label='Cumulative Time', marker='o', linestyle='-')
+    plt.xticks(rotation=45, ha="right")
+    plt.title(f"Cumulative Time for the Functions {len(nodeset)} {question}set")
+    plt.xlabel("Functions")
+    plt.ylabel("Cumulative Time (secs)")
+    plt.legend()
+    plt.grid(linewidth=0.1)
+    plt.tight_layout()
+    plt.show()
 
 
 
