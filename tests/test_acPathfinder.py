@@ -3,7 +3,7 @@ import os, json, random, sys, io
 import cProfile
 import pstats
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import requests
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
@@ -158,16 +158,16 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     for row in rows:
         row_line = "|".join(f"{str(value):<{col_widths[i]}}" for i, value in enumerate(row))
         print(row_line)
-    plt.figure(figsize=(10, 6))
-    plt.plot(filename_function, cumtime, label='Cumulative Time', marker='o', linestyle='-')
-    plt.xticks(rotation=45, ha="right")
-    plt.title(f"Cumulative Time for the Functions {len(nodeset)} {question}set")
-    plt.xlabel("Functions")
-    plt.ylabel("Cumulative Time (secs)")
-    plt.legend()
-    plt.grid(linewidth=0.1)
-    plt.tight_layout()
-    plt.show()
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(filename_function, cumtime, label='Cumulative Time', marker='o', linestyle='-')
+    # plt.xticks(rotation=45, ha="right")
+    # plt.title(f"Cumulative Time for the Functions {len(nodeset)} {question}set")
+    # plt.xlabel("Functions")
+    # plt.ylabel("Cumulative Time (secs)")
+    # plt.legend()
+    # plt.grid(linewidth=0.1)
+    # plt.tight_layout()
+    # plt.show()
 
 
 
