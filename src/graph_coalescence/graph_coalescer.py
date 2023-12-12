@@ -204,7 +204,7 @@ def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_thresho
         stype = opportunities.get('question_type', '')
         otype = opportunities.get('answer_type', None)
 
-        q_predicates = list(opportunities.get('answer_edge', {}).values())
+        q_predicates = list(opportunities.get('answer_edge', {}).values())[0]
         enriched_links = get_enriched_links_(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
                                             total_node_counts, q_predicates, otype)
 
@@ -511,9 +511,6 @@ def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
             links_to_nodes[tuple(link)].append(node)
     nodeset_to_links = defaultdict(list)
     for link, snodes in links_to_nodes.items():
-
-        # # if the enriched node connects to more than one lookup chemical
-        # if len(snodes) > 1:
         nodeset_to_links[frozenset(snodes)].append(link)
     logger.debug('end get_shared_links()')
 
@@ -534,9 +531,16 @@ def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
             # n is total number of Type I objects (nodes with that property).
             # The random variate represents the number of Type I objects in N drawn
             #  without replacement from the total population (len curies).
-
-            if not any(set(p.items()).issubset(set(json.loads(predicate).items())) for p in q_predicates):
+            pred=json.loads(predicate)
+            # if not any(set(p.items()).issubset(set(json.loads(predicate).items())) for p in q_predicates):
+            if pred['predicate'] not in q_predicates['predicate']:
                 continue
+            if q_predicates.get('object_aspect_qualifier', ''):
+                if q_predicates.get('object_aspect_qualifier') != pred.get('object_aspect_qualifier', ''):
+                    continue
+            if q_predicates.get('object_direction_qualifier', ''):
+                if q_predicates.get('object_direction_qualifier') != pred.get('object_direction_qualifier', ''):
+                    continue
             # length of the set of chemicals that mapped to the tuple
             x = len(nodeset)  # draws with the property
 

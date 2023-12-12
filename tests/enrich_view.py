@@ -83,10 +83,12 @@ class Data(param.Parameterized):
 
         reslt = []
         for result in results:
+
             identifier = [x['id'] for x in result['node_bindings'][qgid]][0]
             names = self.response["knowledge_graph"]["nodes"][identifier]["name"]
             types = self.response["knowledge_graph"]["nodes"][identifier]["categories"][0]
             for att in result["analyses"][0]["attributes"]:
+                object_aspect_qualifier = ''; object_direction_qualifier= ''
                 if att["attribute_type_id"] == "biolink:p_value":
                     p_values = att.get("value", '')
                 if att["attribute_type_id"] == "biolink:supporting_study_cohort":

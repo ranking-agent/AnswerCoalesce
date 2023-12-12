@@ -18,9 +18,9 @@ def qg_template():
                 "e00": {
                     "subject": "$source",
                     "object": "$target",
-                    "predicates": [
-                        "$predicate"
-                    ],
+                    "predicates":
+                        $predicate
+                    ,
                     "attribute_constraints": [],
                     "qualifier_constraints": $qualifier
                     

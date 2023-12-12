@@ -184,7 +184,13 @@ def get_opportunity(answerset):
 
     for qg_eid, edge_data in query_graph.get("edges", {}).items():
         edgepredicate = {}
-        edgepredicate['predicate'] = edge_data['predicates'][0]
+        # edgepredicate['predicate'] = edge_data['predicates']
+        # for i in edge_data.get('qualifier_constraints', []):
+        #     val = []
+        #     for _, value in i.items():
+        #         val.append(value)
+        #     edgepredicate[val[0].split(':')[1]] = val[1]
+        edgepredicate['predicate'] = edge_data['predicates']
         for i in edge_data.get('qualifier_constraints', []):
             val = []
             for _, value in i.items():
