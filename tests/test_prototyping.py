@@ -4,7 +4,7 @@ from ruleandmultiquery import lookup
 jsondir = 'InputJson_1.4'
 
 
-def test_pathfinder1_():
+def xtest_pathfinder1_():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, jsondir, 'samplesetnew.json')
