@@ -1,0 +1,4 @@
+{"subject":"PUBCHEM.COMPOUND:123","predicate":"biolink:affects","object":"NCBIGene:239","biolink:primary_knowledge_source":"infores:gtopdb","primaryTarget":true,"affinityParameter":"pIC50","endogenous":false,"affinity":6.46999979019165,"publications":["PMID:24393039"],"object_aspect_qualifier":"activity","object_direction_qualifier":"decreased","qualified_predicate":"biolink:causes"}
+{"subject":"PUBCHEM.COMPOUND:123","predicate":"biolink:related_to","object":"NCBIGene:239","biolink:primary_knowledge_source":"infores:gtopdb"}
+{"subject":"PUBCHEM.COMPOUND:123","predicate":"biolink:related_to_at_instance_level","object":"NCBIGene:239","biolink:primary_knowledge_source":"infores:gtopdb"}
+{"subject":"PUBCHEM.COMPOUND:123","predicate":"biolink:causes","object":"MONDO:0000001","biolink:primary_knowledge_source":"infores:gtopdb"}
