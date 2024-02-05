@@ -10,7 +10,7 @@ pytest==7.4.2
 scipy~=1.11.2
 sparqlwrapper~=1.8.5
 redis~=3.5.3
-fastapi==0.103.1
+fastapi==0.109.1
 sanic~=23.6.0
 httpx~=0.24.1
 gunicorn==21.2.0
