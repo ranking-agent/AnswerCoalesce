@@ -15,10 +15,10 @@ from string import Template
 
 jsondir ='InputJson_1.4'
 
-def test_pathfinderac():
+def xtest_pathfinderac_():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'sampleset.json')
+    testfilename = os.path.join(dir_path, jsondir, 'sampleset2.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         assert PDResponse.parse_obj(answerset)
@@ -56,9 +56,9 @@ def resolvename(name):
             break
     return curie
 
-def xtest_pathfinderac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers):
-# def test_pathfinderac():
-##Sources: https://link.springer.com/article/10.1007/s41048-019-0086-2
+# def xtest_pathfinderac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers):
+def xtest_pathfinderac():
+#Sources: https://link.springer.com/article/10.1007/s41048-019-0086-2
     # target_ids = ['JUN', 'GDI1', 'GNAI2']#["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
     # target_ids= ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
     # target_ids = ['NPM1','FLT3','NRAS','BCL2']
@@ -73,7 +73,7 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
     # source_category='biolink:Gene'
     # qualifiers = 'increased_activity'
     # qualifiers=''
-
+    target_ids = None
     if not target_ids:
         """Make sure that results are well formed."""
         dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -90,7 +90,7 @@ def xtest_pathfinderac(target_ids, target, target_category, predicate, source_id
 
         # print('=====: ', target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers, end='\n')
         answerset = get_qg(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)
-        # print(answerset)
+        print(answerset)
     with cProfile.Profile() as profile:
         newset = snc.coalesce(answerset, method='graph')
     s = io.StringIO()
@@ -211,30 +211,30 @@ def get_qg(target_ids, target, target_category, predicate, source_ids, source, s
     print(query)
     return query
 
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        try:
-            target_ids = sys.argv[1]
-            target = sys.argv[2]
-            target_category = sys.argv[3]
-            predicate = sys.argv[4]
-            source_ids = sys.argv[5]
-            source = sys.argv[6]
-            source_category = sys.argv[7]
-            qualifiers = sys.argv[8]
-        except IndexError:
-            print("Not enough command-line arguments provided.")
-            print(
-                "Usage: python your_script.py target_ids target target_category predicate source_ids source source_category qualifiers")
-            print(
-                "Example: test_acPathfinder.py NCBIGene:3693,NCBIGene:19894 gene 'biolink:Gene' 'biolink:affects' None chemical 'biolink:ChemicalEntity' '' ")
-
-            sys.exit(1)
-    else:
-        print(
-            "Usage: python your_script.py target_ids target target_category predicate source_ids source source_category qualifiers")
-        print(
-            "Example: test_acPathfinder.py NCBIGene:3693,NCBIGene:19894 gene 'biolink:Gene' 'biolink:affects' None chemical 'biolink:ChemicalEntity' '' ")
-        sys.exit(1)
-    # Call your function with the provided or default values
-    xtest_pathfinderac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)
+# if __name__ == '__main__':
+#     if len(sys.argv) > 1:
+#         try:
+#             target_ids = sys.argv[1]
+#             target = sys.argv[2]
+#             target_category = sys.argv[3]
+#             predicate = sys.argv[4]
+#             source_ids = sys.argv[5]
+#             source = sys.argv[6]
+#             source_category = sys.argv[7]
+#             qualifiers = sys.argv[8]
+#         except IndexError:
+#             print("Not enough command-line arguments provided.")
+#             print(
+#                 "Usage: python your_script.py target_ids target target_category predicate source_ids source source_category qualifiers")
+#             print(
+#                 "Example: test_acPathfinder.py NCBIGene:3693,NCBIGene:19894 gene 'biolink:Gene' 'biolink:affects' None chemical 'biolink:ChemicalEntity' '' ")
+#
+#             sys.exit(1)
+#     else:
+#         print(
+#             "Usage: python your_script.py target_ids target target_category predicate source_ids source source_category qualifiers")
+#         print(
+#             "Example: test_acPathfinder.py NCBIGene:3693,NCBIGene:19894 gene 'biolink:Gene' 'biolink:affects' None chemical 'biolink:ChemicalEntity' '' ")
+#         sys.exit(1)
+#     # Call your function with the provided or default values
+#     xtest_pathfinderac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)

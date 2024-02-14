@@ -19,33 +19,35 @@ logger = logging.getLogger(__name__)
 jsondir = 'InputJson_1.4'
 AC_TEST_URL = "https://answercoalesce-test.apps.renci.org/1.4/query/"
 ROBOKOP_URL = "https://aragorn.renci.org/robokop/query"
-rulefile = os.path.join(os.path.dirname(__file__),"rules","kara_typed_rules","rules_with_types_cleaned_finalized.json")
-# rulefile = os.path.join(os.path.dirname(__file__),"rules","rules.json")
+rulefile = os.path.join(os.path.dirname(__file__),"rules","dummyrule.json")
 with open(rulefile,'r') as inf:
     AMIE_EXPANSIONS = json.load(inf)
 
 async def lookup(message) -> (dict, int):
     try:
-        AC_TEST_URL = os.environ.get("AC_URL", "https://answercoalesce-test.apps.renci.org/1.4/query/")
         max_conns = os.environ.get("MAX_CONNECTIONS", 5)
-        nrules = int(os.environ.get("MAXIMUM_ROBOKOPKG_RULES", 10))
+        nrules = int(os.environ.get("MAXIMUM_ROBOKOPKG_RULES", 5))
         original_query_graph = message['message']['query_graph']
         input_message = deepcopy(message)
-        tasks = []
+        # tasks = []
         input_id, is_set, source, source_input, target, answer_category, keys = get_infer_parameters(input_message)
         rule_results = get_rule_results(input_message, keys, source, target, input_id, is_set, answer_category, source_input)
         # tasks.append(asyncio.create_task(rule_learning(input_message, rules, nrules, target, AC_TEST_URL, max_conns)))
         # tasks.append(asyncio.create_task(enrichmentbased(message, AC_TEST_URL)))
         # results = await asyncio.gather(*tasks)
-        return combine_all(rule_results, input_message, original_query_graph, original_query_graph, target), 200
+        return rule_results
     except ConnectionError as c:
         return f"Illegal caller {c}", 400
 
 def get_rule_results(input_message, keys, source, target, input_id, is_set, answer_category, source_input=False):
     original_result = multiqueryAC(input_message, AC_TEST_URL=AC_TEST_URL)
+    # with open('prototyping_results/OriginalResult.json', 'r') as inf:
+    #     original_result = json.load(inf)
+    # with open(f"prototyping_results/OriginalResult{datetime.now()}.json", 'w') as outf:
+    #     json.dump(original_result , outf, indent=2)
     result_messages = []
     original_query_graph = input_message["message"]["query_graph"]
-    allnodes = set(input_message["message"]["query_graph"]["nodes"].keys())
+    allnodes = input_message["message"]["query_graph"]['nodes'].keys()
     for key in keys:
         for rule_def in AMIE_EXPANSIONS.get(key,[]):
             query_template = Template(json.dumps(rule_def["template"]))
@@ -59,9 +61,11 @@ def get_rule_results(input_message, keys, source, target, input_id, is_set, answ
                 query["query_graph"]["nodes"][source]["ids"] = input_id
                 query["query_graph"]["nodes"][source].update({"is_set": is_set, "constraints": []})
                 query["query_graph"]["nodes"][target].update({"is_set": not(is_set), "constraints": []})
-                ## if we strictly want only rules that satisfies the subject category, but it seems not important right now
-                # if query["query_graph"]["nodes"][target]["categories"] == answer_category:
+                # with open(f"prototyping_results/Multihop_Query{datetime.now()}.json", 'w') as outf:
+                #     json.dump(query, outf, indent=2)
                 if len(query['query_graph']['nodes'])>2 or len(query['query_graph']['edges'])>1:
+                    # with open('prototyping_results/ResultsList.json', 'r') as inf:
+                    #     r_messages = json.load(inf)
                     r_messages = expandmultihopquery(query, allnodes, is_set)
                 else:
                     r_messages = [multiqueryAC({"message": query}, AC_TEST_URL=AC_TEST_URL)]
@@ -69,27 +73,29 @@ def get_rule_results(input_message, keys, source, target, input_id, is_set, answ
                     continue
                 combined_res = combine_multihoprule_results(source, original_query_graph, query,
                                                             r_messages, original_result)
-                result_messages.extend(combined_res)
+                result_messages.append(combined_res)
             else:
                 del query["query_graph"]["nodes"][source]["ids"]
                 query["query_graph"]["nodes"][target]["ids"] = input_id
                 query["query_graph"]["nodes"][target].update({"is_set": is_set, "constraints": []})
                 query["query_graph"]["nodes"][source].update({"is_set": not(is_set), "constraints": []})
+                # with open(f"prototyping_results/Multihop_Query{datetime.now()}.json", 'w') as outf:
+                #     json.dump(query, outf, indent=2)
                 if len(query['query_graph']['nodes'])>2 or len(query['query_graph']['edges'])>1:
-                    r_messages = expandmultihopquery(query, allnodes, is_set)
+                    # with open('prototyping_results/ResultsList.json', 'r') as inf:
+                    #     r_messages = json.load(inf)
+                    r_messages =  expandmultihopquery(query, allnodes, is_set)
                 else:
                     r_messages = [multiqueryAC({"message": query}, AC_TEST_URL=AC_TEST_URL)]
                 if None in r_messages:
                     continue
-                combined_res = combine_multihoprule_results(source, original_query_graph, query,
-                                                        r_messages, original_result)
-                result_messages.extend(combined_res)
+                combined_res = combine_multihoprule_results(source, original_query_graph, query, r_messages, original_result)
+                result_messages.append(combined_res)
     return result_messages
 
-
-def combine_multihoprule_results(answer_qnode, original_query_graph, lookup_query_graph, r_messages, original_result):
+def combine_multihoprule_results(source, original_query_graph, query,
+                                 r_messages, original_result):
     pydantic_kgraph = KnowledgeGraph.parse_obj(original_result["message"]["knowledge_graph"])
-    auxiliary_graphs = {}
     for rm in r_messages:
         pydantic_kgraph.update(KnowledgeGraph.parse_obj(rm["message"]["knowledge_graph"]))
 
@@ -100,74 +106,167 @@ def combine_multihoprule_results(answer_qnode, original_query_graph, lookup_quer
                     "results": [],
                     "auxiliary_graphs": {}}}).dict(exclude_none=True)
     result["message"]["query_graph"] = original_query_graph
-    result["message"]["results"] = original_result["message"]["results"].copy()
     result["message"]["knowledge_graph"] = pydantic_kgraph.dict()
+    for node, node_dict in original_query_graph['nodes'].items():
+        if not node_dict.get('ids'):
+            a_node = node
+    qg_nodes = set(original_query_graph['nodes'].keys())
+    q_node = list(qg_nodes.difference([a_node]))[0]
+    qg_qualifiers = []
+    for qg_ed in original_query_graph['edges']:
+        orignial_Edge = qg_ed
+        qg_predicate = original_query_graph['edges'][qg_ed]['predicates'][0]
+        if original_query_graph['edges'][qg_ed].get('qualifier_constraints', []):
+            qg_qualifiers = original_query_graph['edges'][qg_ed]["qualifier_constraints"][0].get("qualifier_set", [])
 
-    lookup_results = []  # in case we don't have any
-    rules = []
-    rule_edges = []
-    for result_message in r_messages:
-        if queries_equivalent(result_message["message"]["query_graph"], lookup_query_graph["query_graph"]):
-            result["message"]["results"].extend(result_message["message"]["results"])
-        else:
-            rule_edges.extend(result_message["message"]["knowledge_graph"]["edges"])
+    bf = {}
+    bf_edges = {}
+    bf_edges_attributes = {}
+    aux_graphs = {}
+    new_graph_edges = {}
 
-     # make aux graph out of the result
-    aux_graph_id = str(uuid.uuid4())
-    aux_graph = {"edges": rule_edges}
-    new_results = [result["message"]["results"][i].update({'support_graph': aux_graph_id}) for i in range(len(result["message"]["results"]))]
-    result["message"]["results"] = new_results
-    result["message"]["auxiliary_graphs"].update({aux_graph_id: aux_graph})
+    # bf
+    for rmsg in r_messages:
+        # making sure that we regroup only the rule
+        if not queries_equivalent(rmsg["message"]["query_graph"], original_query_graph):
+            msg_nodes = rmsg["message"]["query_graph"]["nodes"]
+            if source in msg_nodes:
+                continue
+            mid = list(set(msg_nodes).difference(qg_nodes))[0]
+            for r in rmsg["message"]["results"]:
+                b = r["node_bindings"][q_node]
+                f = r["node_bindings"][mid][0]['id']
+                for bs in b:
+                    bf.setdefault(f, []).append(bs['id'])
+                for qedge in r['analyses'][0]['edge_bindings']:
+                    bf_edges.setdefault(f, []).extend([e['id'] for e in r['analyses'][0]['edge_bindings'][qedge]])
+                    bf_edges_attributes.setdefault(f, []).extend(r['analyses'][0]['attributes'])
 
-    return result
+    # fa
+    for rmsg in r_messages:
+        # making sure that we regroup only the rule
+        if not queries_equivalent(rmsg["message"]["query_graph"], original_query_graph):
+            msg_nodes = rmsg["message"]["query_graph"]["nodes"]
+            if source not in msg_nodes:
+                continue
+            mid = list(set(msg_nodes).difference(qg_nodes))[0]
+            msg_results = []
+            for r in rmsg["message"]["results"]:
+                one_result = {'node_bindings': {}, 'analyses': []}
+                fs = r["node_bindings"][mid].copy()
+                a = r["node_bindings"][a_node][0]['id']
+
+                # replace fa with ba: use the f to get the b that replaces f
+                newb = {q_node: remove_duplicates_ids([{'id': b, 'qnode_id': b} for f in fs for b in bf.get(f['id'])])}
+                newa = {a_node: r["node_bindings"][a_node]}
+                edge_0_attributes = r['analyses'][0].get('attributes')
+                edge_0 = [e['id'] for bdedge in r['analyses'][0]['edge_bindings'] for e in r['analyses'][0]['edge_bindings'].get(bdedge)]
+                aux_graph_id_0 = a+'_'+str([f['id'] for f in fs])
+                # if aux_graph_id_0 in aux_graphs:
+                #     # Extend the existing edges for the given aux_graph_id
+                #     aux_graphs[aux_graph_id_0]['edges'].extend(edge_0)
+                # else:
+                #     # Create a new entry if aux_graph_id doesn't exist
+                #     aux_graphs.setdefault(aux_graph_id_0, {}).update({'edges': edge_0, 'attributes': edge_0_attributes})
+                qnode_ids = [ed['id'] for ed in newb[q_node]]
+
+                # make new knowledge graph edges
+                kgedges = []
+                for qnode_id in qnode_ids:
+                    sources = {'sources': [{'resource_id': 'infores:robokop',
+                                 'resource_role': 'aggregator_knowledge_source',
+                                 'upstream_resource_ids': ['infores:automat-robokop']}]
+                               }
+                    newkgedge = {'subject': a, 'predicate': qg_predicate, 'object': qnode_id, 'sources': sources,
+                                 'qualifiers': qg_qualifiers}
+                    tempedge = newkgedge.copy()
+                    tempedge['sources'] = str(tempedge['sources'])
+                    if 'qualifiers' in tempedge:
+                        tempedge['qualifiers'] = str(tempedge['qualifiers'])
+                    if 'attributes' in tempedge:
+                        tempedge['attributes'] = str(tempedge['attributes'])
+                    ek = str(hash(frozenset(tempedge.items())))
+                    kgedges.append(ek)
+                    new_graph_edges.update({ek:newkgedge})
+
+                # analysis = []
+                resource_id = 'infores:aragorn-robokop'
+                edge_1 = edge_0 + [bf_edge for f in fs for bf_edge in bf_edges.get(f['id'])]
+
+                # for f in fs:
+                #     for bf_edge_attrb in bf_edges_attributes.get(f['id']):
+                #         edge_1_attributes.extend(bf_edge_attrb)
+                eb = {orignial_Edge:[{'id': ek} for ek in kgedges]}
+                b_list = remove_duplicates_ids([b for f in fs for b in bf.get(f['id'])])
+                # aux_graph_id_1 = str([f['id'] for f in fs])+'_'+str(b_list)
+                if aux_graph_id_0 in aux_graphs:
+                    # Extend the existing edges for the given aux_graph_id
+                    aux_graphs[aux_graph_id_0]['edges'].extend(edge_1)
+                else:
+                    # Create a new entry if aux_graph_id doesn't exist
+                    aux_graphs.setdefault(aux_graph_id_0, {}).update({'edges': edge_1, 'attributes': edge_0_attributes})
+
+                one_binding = {'resource_id': resource_id,
+                               'edge_bindings': eb,
+                               'score': r['analyses'][0].get('score'),
+                               'attributes': update_supporting_study_cohort(r['analyses'][0].get('attributes')),
+                               'support_graphs': [aux_graph_id_0]}
+
+                # update the kg edges with the support graphs
+                for kgedge in kgedges:
+                    if new_graph_edges.get(kgedge, {}):
+                        if new_graph_edges.get(kgedge, {}).get("attributes", []):
+                            if new_graph_edges[kgedge].get("attributes", [])[0].get(
+                                    "value",
+                                    []):
+                                new_graph_edges[kgedge].get("attributes", [])[0].get(
+                                    "value", []).extend([aux_graph_id_0])
+                        else:
+                            new_graph_edges[kgedge].update({'attributes': [
+                                {'attribute_type_id': "biolink:support_graphs", "value": [aux_graph_id_0]}]})
 
 
-# def combine_multihoprule_results(answer_qnode, original_query_graph, lookup_query_graph, r_messages, original_result):
-#     pydantic_kgraph = KnowledgeGraph.parse_obj(original_result["message"]["knowledge_graph"])
-#     for rm in r_messages:
-#         pydantic_kgraph.update(KnowledgeGraph.parse_obj(rm["message"]["knowledge_graph"]))
-#
-#     result = PDResponse(**{
-#         "message": {"query_graph": {"nodes": {}, "edges": {}},
-#                     "knowledge_graph": {"nodes": {}, "edges": {}},
-#                     "results": [],
-#                     "auxiliary_graphs": {}}}).dict(exclude_none=True)
-#     result["message"]["query_graph"] = original_query_graph
-#     result["message"]["results"] = original_result["message"]["results"].copy()
-#     result["message"]["knowledge_graph"] = pydantic_kgraph.dict()
-#
-#     lookup_results = []
-#     for result_message in r_messages:
-#         if queries_equivalent(result_message["message"]["query_graph"],lookup_query_graph["query_graph"]):
-#             lookup_results = result_message["message"]["results"]
-#         else:
-#             result["message"]["results"].extend(result_message["message"]["results"])
-#     if not lookup_results:
-#         lookup_results = original_result["message"]["results"].copy()
-#     mergedresults = merge_results_by_node(result, answer_qnode, lookup_results)
-#     return mergedresults
-#
+                one_result['node_bindings'].update(newb)
+                one_result['node_bindings'].update(newa)
+                one_result['analyses'].append(one_binding)
+                msg_results.append(one_result)
+    result["message"]["results"] = msg_results
+    result["message"]["knowledge_graph"]["edges"].update(new_graph_edges)
+    result["message"]["auxiliary_graphs"].update(aux_graphs)
 
+    # with open(f"prototyping_results/OneResults{datetime.now()}.json", 'w') as outf:
+    #     json.dump(result, outf, indent=2)
+    merge_results = merge_results_by_node(result, a_node, original_result["message"]["results"])
+    # with open(f"prototyping_results/mergedResults{datetime.now()}.json", 'w') as outf:
+    #     json.dump(result, outf, indent=2)
+    return merge_results
 
 def expandmultihopquery(query, allnodes, is_set):
     nodes = query['query_graph']['nodes']
-    anodes = []
+    intermediate_qnodes = []
     qgtemp = []
     for edgekey, edge in query['query_graph']['edges'].items():
         subject = edge['subject']
         object = edge['object']
         if set([subject, object]) != allnodes:
-            anode = list(set([subject, object]).difference(allnodes))[0]
-            query['query_graph']['nodes'][anode].update({"is_set": not(is_set), "constraints": []})
-            anodes.append(anode)
+            intermediate_qnode = list(set([subject, object]).difference(allnodes))[0]
+            query['query_graph']['nodes'][intermediate_qnode].update({"is_set": not(is_set), "constraints": []})
+            intermediate_qnodes.append(intermediate_qnode)
         edge["knowledge_type"] = "inferred"
         edge['attribute_constraints'] = []
         qg = {'query_graph': {'nodes': {subject: nodes[subject], object: nodes[object]}, 'edges': {edgekey: edge}}}
         qgtemp.append(qg)
 
-    result_messages = processqg(qgtemp, anodes)
+    result_messages = processqg(qgtemp, intermediate_qnodes)
+    # with open(f"prototyping_results/ResultsList{datetime.now()}.json", 'w') as outf:
+    #     json.dump(result_messages, outf, indent=2)
     return result_messages
 
+def update_supporting_study_cohort(attributes):
+    index_to_update = next((index for index, attr in enumerate(attributes) if attr["attribute_type_id"] == "biolink:supporting_study_cohort"), None)
+    if index_to_update is not None:
+        attributes[index_to_update]["value"] = "gene"
+    return attributes
 def get_infer_parameters(input_message):
     keydicts = []
     for edge_id, edge in input_message["message"]["query_graph"]["edges"].items():
@@ -202,21 +301,35 @@ def get_infer_parameters(input_message):
 def multiqueryAC(input_message, AC_TEST_URL=AC_TEST_URL):
     # with open(f"newset{datetime.now()}.json", 'w') as outf:
     #     json.dump(input_message, outf, indent=4)
-    # # headers = {'Content-Type': 'application/json'}
-    url_response = requests.post(AC_TEST_URL, json=input_message)
-    coalesced = url_response.json()
-    if url_response.status_code == 200 and coalesced['message']['results']:
-        return coalesced
-    else:
-        try:
-            client_response = client.post('/query', json=input_message)
-            if client_response.status_code == 200:
-                return json.loads(client_response.content)
-        except ModuleNotFoundError:
-            return input_message
+    # url_response = requests.post(AC_TEST_URL, json=input_message)
+    # coalesced = url_response.json()
+    # if url_response.status_code == 200 and coalesced['message']['results']:
+    #     return coalesced
+    # else:
+    try:
+        client_response = client.post('/query', json=input_message)
+        if client_response.status_code == 200:
+            return json.loads(client_response.content)
+    except ModuleNotFoundError:
+        return None
 
-def processqg(queries, anodes):
-    # wait!!!!!
+def remove_duplicates_ids(binding_list):
+    unique_set = []
+    seen_keys = set()
+    for d in binding_list:
+        if isinstance(d, dict):
+            frozen = frozenset(d.items())
+            if frozen not in seen_keys:
+                seen_keys.add(frozen)
+                unique_set.append(dict(frozen))
+        if isinstance(d, str) and d not in seen_keys:
+            seen_keys.add(d)
+            unique_set.append(d)
+    return unique_set
+
+
+def processqg(queries, intermediate_qnodes):
+    decomposed_queries = []
     result_messsages = []
     for i, query in enumerate(queries.copy()):
         query_graph = query.get('query_graph', {})
@@ -224,41 +337,32 @@ def processqg(queries, anodes):
 
         # !!!!Check if 'ids' are present in the 'nodes'
         if any('ids' in node for node in nodes.values()):
-            intermediate_results = multiqueryAC({"message": query}, AC_TEST_URL=AC_TEST_URL)
-            if anodes:
-                anode = anodes[i]
-                intermediate_answers = get_intermediate_nodes(intermediate_results, anode)
-            # Remove the processed query from the list
-            if not intermediate_answers['message']['results']:
-                robo_response = try_robokop_url(query)
-            result_messsages.append(intermediate_results)
+            intermediate_answers = multiqueryAC({"message": query}, AC_TEST_URL=AC_TEST_URL)
+            if intermediate_qnodes and intermediate_answers.get("message", {}):
+                intermediate_qnode = intermediate_qnodes[i]
+                intermediate_ids = get_intermediate_nodes(intermediate_answers, intermediate_qnode)
+                # Remove the processed query from the list
+            result_messsages.append(intermediate_answers)
+            decomposed_queries.append(query)
             queries.remove(query)
 
     # Process the remaining queries
     for j, query in enumerate(queries):
-        if anodes:
-            anode = anodes[j]
-            infix_intermediate_ids(query, intermediate_answers, anode)
-        result = multiqueryAC({"message": query}, AC_TEST_URL=AC_TEST_URL)
-        if not result['message']['results']:
-            robo_response = try_robokop_url(query)
-        result_messsages.append(result)
+        if intermediate_qnodes and intermediate_ids:
+            anode = intermediate_qnodes[j]
+            infix_intermediate_ids(query, intermediate_ids, anode)
+            decomposed_queries.append(query)
+            result = multiqueryAC({"message": query}, AC_TEST_URL=AC_TEST_URL)
+            if result and result.get('message', {}).get('results', []):
+                result_messsages.append(result)
+            else:
+                print(result)
+                print("********")
+                logger.info(f"Empty returned for the {len(intermediate_ids)} intermediate_ids")
+    # with open(f"prototyping_results/decomposed_Queries{datetime.now()}.json", 'w') as outf:
+    #     json.dump(decomposed_queries, outf, indent=2)
     return result_messsages
 
-def try_robokop_url(query):
-    # qg = query.copy()
-    for nodekey, node in query['query_graph']['nodes'].items():
-        if 'ids' in node:
-            keynode = nodekey
-            input_ids = node['ids']
-    results = []
-    for ids in input_ids:
-        qgnext = query.copy()
-        qgnext['query_graph']['nodes'][keynode].update({'ids': [ids], 'is_set': False})
-        r = requests.post(ROBOKOP_URL, json={"message": qgnext})
-        if r.status_code == 200:
-            results.append(r.json())
-    return results
 
 def get_intermediate_nodes(intermediate_results, anode):
     results = intermediate_results['message']['results']
@@ -273,39 +377,12 @@ def infix_intermediate_ids(qg, intermediate_answers, anode):
 
 
 
-
-def combine_all(result_messages, input_message, original_query_graph, lookup_query_graph, answer_qnode):
-    print(f'result_messages: {result_messages}')
-    pydantic_kgraph = KnowledgeGraph.parse_obj({"nodes": {}, "edges": {}})
-    # Construct the final result message, currently empty
-    result = PDResponse(**{
-        "message": {"query_graph": {"nodes": {}, "edges": {}},
-                    "knowledge_graph": {"nodes": {}, "edges": {}},
-                    "results": []}}).dict(exclude_none=True)
-
-    for rms in result_messages:
-        # print(rms)
-        if rms[1] == 200:
-            rm = rms[0]
-            pydantic_kgraph.update(KnowledgeGraph.parse_obj(rm["message"]["knowledge_graph"]))
-            result["message"]["results"].extend(rm["message"]["results"])
-
-    result["message"]["query_graph"] = original_query_graph
-    result["message"]["knowledge_graph"] = pydantic_kgraph.dict()
-
-    with open(f"_eb-rb_merged{datetime.now()}.json", 'w') as outf:
-        json.dump(result, outf, indent=2)
-
-    return result
-
 def merge_results_by_node(result_message, merge_qnode, lookup_results):
     grouped_results = group_results_by_qnode(merge_qnode, result_message, lookup_results)
     original_qnodes = result_message["message"]["query_graph"]["nodes"].keys()
     new_results = []
     for r in grouped_results:
         new_result = merge_answer(result_message, r, grouped_results[r], original_qnodes)
-
-        # new_result = merge_answer(result_message, r, grouped_results[r], original_qnodes, robokop)
         new_results.append(new_result)
     result_message["message"]["results"] = new_results
     return result_message
@@ -403,6 +480,7 @@ def merge_answer(result_message, answer, results, qnode_ids):
         "resource_id": source,
         "edge_bindings": {qedge_id:[ { "id":kid } for kid in knowledge_edge_ids ] }
                 }
+
     mergedresult["analyses"].append(analysis)
 
     # 6. add any lookup edges to the analysis directly

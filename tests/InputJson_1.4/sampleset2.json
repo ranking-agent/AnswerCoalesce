@@ -10,7 +10,7 @@
                     "constraints": []
                 },
                 "gene": {
-                    "ids": ["NCBIGene:596","NCBIGene:2322", "NCBIGene:4893", "NCBIGene:4869"],
+                    "ids": ["NCBIGene:3952", "NCBIGene:9370", "NCBIGene:5468"],
                     "categories": [
                         "biolink:Gene"
                     ],
@@ -23,22 +23,24 @@
                     "subject": "chemical",
                     "object": "gene",
                     "predicates": [
-                        "biolink:affects"],
+                        "biolink:affects"
+                    ],
                     "knowledge_type": "inferred",
                     "attribute_constraints": [],
-                    "qualifier_constraints":[
+                    "qualifier_constraints": [
                         {
-                                    "qualifier_set": [
-                                        {
-                                            "qualifier_type_id": "biolink:object_aspect_qualifier",
-                                            "qualifier_value": "activity"
-                                        },
-                                        {
-                                            "qualifier_type_id": "biolink:object_direction_qualifier",
-                                            "qualifier_value": "decreased"
-                                        }
-                                    ]
-                                }]
+                            "qualifier_set": [
+                                {
+                                    "qualifier_type_id": "biolink:object_aspect_qualifier",
+                                    "qualifier_value": "activity_or_abundance"
+                                },
+                                {
+                                    "qualifier_type_id": "biolink:object_direction_qualifier",
+                                    "qualifier_value": "increased"
+                                }
+                            ]
+                        }
+                    ]
                 }
             }
         }
