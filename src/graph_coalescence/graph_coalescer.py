@@ -252,9 +252,9 @@ def get_provs(n2l):
                 p.get(edge)
             ns = p.execute()
             for edge, n in zip(edgegroup, ns):
-                if n is None:
-                    print(f"n is None: {edge}")
-                # Convert the svelte key-value attribute into a fat trapi-style attribute
+                if n is None: # This is true in the latest redundantMinus GTex rdb
+                    continue
+                # Convert the svelte key-value attribute into a fat trapi-style attribute :)
                 prov[edge] = process_prov(n)
     return prov
 

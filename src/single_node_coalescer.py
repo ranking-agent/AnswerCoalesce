@@ -45,7 +45,6 @@ def patch_answers_(answerset, nodeset, patches):
         for patch in patches:
             # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
             i += 1
-            # print(f'{i} / {len(patches)}')
             new_answer, updated_kg, kg_indexes = patch.apply_(nodeset, kg, kg_indexes, i)
             # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
             pydantic_kgraph.update(KnowledgeGraph.parse_obj(updated_kg))
