@@ -18,9 +18,6 @@ logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, form
 
 
 # These are predicates that we have decided are too messy for graph coalescer to use
-#
-# bad_predicates = ['biolink:causes_adverse_event']
-
 
 def grouper(n, iterable):
     it = iter(iterable)
