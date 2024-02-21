@@ -1,28 +1,20 @@
 import pytest
 import json, os, asyncio
-from ruleandmultiquery import lookup
+from src.multicurie_ac import multiCurieLookup
+from fastapi.testclient import TestClient
 jsondir = 'InputJson_1.4'
+from src.server import APP
+client = TestClient(APP)
 
-
-def test_pathfinder1_():
+def test_multicurie():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'sampleset2.json')
+    testfilename = os.path.join(dir_path, jsondir, 'sampleset4.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
-    newset = asyncio.run(lookup(answerset))
-    if newset:
-        if len(newset)>1:
-            assert 'message' in newset[0]
-            assert 'message' in newset[1]
-        else:
-            assert 'message' in newset
-            assert 'result' in newset['message']
-
-
-
-# if __name__ == '__main__':
-#     try:
-#         test_pathfinder1_()
-#     except ConnectionError as cn:
-#         print(cn)
+    newset =  client.post('/query', json=answerset)
+    newset_message = newset.json()["message"]
+    if newset_message:
+        assert len(newset_message) == 4
+        assert 'results' in newset_message
+        assert 'auxiliary_graphs' in newset_message

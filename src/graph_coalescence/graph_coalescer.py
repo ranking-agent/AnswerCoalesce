@@ -46,126 +46,8 @@ def get_redis_pipeline(dbnum):
     p = typeredis.pipeline(transaction=False)
     return p
 
-def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshold=None):
-    """
-    Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
-    patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
-    qg_id of the edges being removed/combined, answers being collapsed]
-    """
-    patches = []
 
-    logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
-
-    # Multiple opportunities are going to use the same nodes.  In one random (large) example where there are about
-    # 2k opportunities, there are a total of 577 unique nodes, but with repeats, we'd end up calling messenger 3650
-    # times.  So instead, we will unique the nodes here, call messenger once each, and then pull from that
-    # collected set of info.
-    allnodes = create_node_to_type(opportunities)
-
-    nodes_to_links = create_nodes_to_links(allnodes)
-
-    # #There will be nodes we can't enrich b/c they're not in our db.  Remove those from our opps, and remove redundant/empty opps
-    opportunities = filter_opportunities(opportunities, nodes_to_links)
-
-    unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
-    # unique_link_nodes: bringing all the nodes that each chemical in allnodes maps through nodes_to_links as a set
-    # unique_links:
-
-    lcounts = get_link_counts(unique_links)
-    nodetypedict = get_node_types(unique_link_nodes)
-    nodenamedict = get_node_names(unique_link_nodes)
-
-    # provs: One chemical to many enrich nodes
-    provs = get_provs(nodes_to_links)
-
-    total_node_counts = get_total_node_counts(set([o.get_qg_semantic_type() for o in opportunities]))
-
-    onum = 0
-    # sffile=open('sfcalls.txt','w')
-    # In a test from test_bigs, we can see that we call sf 1.46M times.  But, we only call with 250k unique parametersets
-    # so we're gonna cache those
-    sf_cache = {}
-    for opportunity in opportunities:
-
-        logger.debug('Starting new opportunity')
-        onum += 1
-
-        nodes = opportunity.get_kg_ids()  # this is the list of curies that can be in the given spot
-
-        qg_id = opportunity.get_qg_id()
-        stype = opportunity.get_qg_semantic_type()
-
-        enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                            total_node_counts, predicates_to_exclude=predicates_to_exclude,
-                                            pvalue_threshold=pvalue_threshold)
-
-        logger.info(f'{len(enriched_links)} enriched links discovered.')
-
-        # For the moment, we're only going to return an arbitrarily small number of enrichments
-        # It's POC, really you'd like to include many of these.  But we don't want
-        # to end up with more answers than we started with, so we need to parameterize, and
-        # that's more work that we can do later.
-        # (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
-        for i in range(len(enriched_links)):
-            link = enriched_links[i]
-            if i >= len(nodes):
-                break
-
-            # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
-            best_enrich_p = link[0]
-            best_enrich_node = link[1]
-            direction = {True: 'biolink:object', False: 'biolink:subject'}
-            enrich_direction = direction.get(link[3])
-            best_grouping = link[7]
-
-            attributes = []
-
-            attributes.append({'attribute_type_id': 'biolink:supporting_study_method_type',
-                               'value': 'graph_enrichment'})
-
-            attributes.append({'attribute_type_id': 'biolink:p_value',
-                               'value': best_enrich_p})
-
-            attributes.append({'attribute_type_id': 'biolink:supporting_study_cohort',
-                               'value': qg_id})
-
-            attributes.append({'attribute_type_id': enrich_direction,
-                               'value': best_enrich_node})
-
-            for key, value in json.loads(link[2]).items():
-                attributes.append({'attribute_type_id': 'biolink:' + key,
-                                   'value': value})
-
-            newprops = {'attributes': attributes}
-
-            patch = PropertyPatch(qg_id, best_grouping, newprops, opportunity.get_answer_indices())
-            provkeys = []
-            for e in [link]:
-                newcurie = e[1]
-                # etype is a string rep of a dict.  We leave it as such because we use it as a key but
-                # we also need to take it apart
-                edge_key = e[2]
-                if e[3]:
-                    nni = 'target'
-                    provkeys += [f'{bg} {edge_key} {newcurie}' for bg in best_grouping]
-                else:
-                    nni = 'source'
-                    provkeys += [f'{newcurie} {edge_key} {bg}' for bg in best_grouping]
-                # Need to get the right node type.
-                patch.add_extra_node(newcurie, e[8], edge_pred_and_qual=edge_key, newnode_is=nni,
-                                     newnode_name=nodenamedict[newcurie])
-            pprovs = {pk: provs[pk] for pk in provkeys}
-            patch.add_provenance(pprovs)
-            # print(patch)
-            patches.append(patch)
-
-        logger.debug('end of opportunity')
-
-    logger.info('All opportunities processed.')
-
-    return patches
-
-def coalesce_by_graph_(opportunities, predicates_to_exclude=None, pvalue_threshold=None):
+def coalesce_by_graph_(opportunities):
     """
     Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
     patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
@@ -369,26 +251,12 @@ def get_provs(n2l):
             for edge in edgegroup:
                 p.get(edge)
             ns = p.execute()
-            # print(ns)
             for edge, n in zip(edgegroup, ns):
                 if n is None:
                     print(f"n is None: {edge}")
                 # Convert the svelte key-value attribute into a fat trapi-style attribute
                 prov[edge] = process_prov(n)
     return prov
-
-
-def filter_opportunities(opportunities, nodes_to_links):
-    new_opportunities = []
-    for opportunity in opportunities:
-        kn = opportunity.get_kg_ids()
-        # These will be the nodes that we actually have links for
-        newkn = list(filter(lambda x: len(nodes_to_links[x]), kn))
-        newopp = opportunity.filter(newkn)
-        if newopp is not None:
-            new_opportunities.append(opportunity)
-    return new_opportunities
-
 
 def filter_opportunities_(opportunities, nodes_to_links):
     unique_links = set()
@@ -413,7 +281,6 @@ def filter_opportunities_(opportunities, nodes_to_links):
                 seen.add(tl)
 
     return new_nodes_to_links, nodes_indices, unique_link_nodes, unique_links
-
 
 def uniquify_links(nodes_to_links, opportunities):
     # A link might occur for multiple nodes and across different opportunities
@@ -444,7 +311,6 @@ def uniquify_links(nodes_to_links, opportunities):
         # print('','end',dt.now())
     return unique_link_nodes, unique_links
 
-
 def create_nodes_to_links(allnodes):
     # p = get_redis_pipeline(0)
     # Create a dict from node->links by looking up in redis.  Each link is a potential node to add.
@@ -467,7 +333,6 @@ def create_nodes_to_links(allnodes):
         # print(len(nodes_to_links))
     return nodes_to_links
 
-
 def create_node_to_type(opportunities):
     # Create a dict from node->type(node) for all nodes in every opportunity
     allnodes = {}
@@ -478,32 +343,11 @@ def create_node_to_type(opportunities):
             allnodes[node] = stype
     return allnodes
 
-
-# def get_shared_links(nodes, stype, nodes_type_list: dict):
-#    """Return the intersection of the superclasses of every node in nodes"""
-#    rm = RobokopMessenger()
-#    links_to_nodes = defaultdict(set)
-#    for node in nodes:
-#        logger.debug(f'start get_links_for({node}, {stype})')
-#        links = rm.get_links_for(node, stype, nodes_type_list)
-#        logger.debug('end get_links_for()')
-#
-#        for link in links:
-#            links_to_nodes[link].add(node)
-#    nodes_to_links = defaultdict(list)
-#    for link,nodes in links_to_nodes.items():
-#        if len(nodes) > 1:
-#            nodes_to_links[frozenset(nodes)].append(link)
-#
-#    return nodes_to_links
-
 def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts, q_predicates, answer_type = None):
     logger.info(f'{len(nodes)} enriched node links to process.')
 
-
     # Get the most enriched connected node for a group of nodes.
     logger.debug('start get_shared_links()')
-
 
     links_to_nodes = defaultdict(list)
     for node in nodes:
@@ -516,7 +360,6 @@ def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
 
     logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
 
-
     results = []
 
     logger.info(f'{len(nodeset_to_links.items())} possible shared links discovered.')
@@ -527,7 +370,7 @@ def get_enriched_links_(nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
         for ix, (newcurie, predicate, is_source) in enumerate(possible_links):
             # For each tuple: ('HP:0001907', 'biolink:treats', True)
             # The hypergeometric distribution models drawing objects from a bin.
-            # M is the total number of objects (nodes) ,
+            # N is the total number of objects (nodes) ,
             # n is total number of Type I objects (nodes with that property).
             # The random variate represents the number of Type I objects in N drawn
             #  without replacement from the total population (len curies).
