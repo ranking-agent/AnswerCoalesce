@@ -1,0 +1,48 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "chemical": {
+                    "categories": [
+                        "biolink:ChemicalEntity"
+                    ],
+                    "is_set": false,
+                    "constraints": []
+                },
+                "gene": {
+                    "ids": ["NCBIGene:3952", "NCBIGene:9370", "NCBIGene:5468"],
+                    "categories": [
+                        "biolink:Gene"
+                    ],
+                    "is_set": true,
+                    "constraints": []
+                }
+            },
+            "edges": {
+                "e00": {
+                    "subject": "chemical",
+                    "object": "gene",
+                    "predicates": [
+                        "biolink:affects"
+                    ],
+                    "knowledge_type": "inferred",
+                    "attribute_constraints": [],
+                    "qualifier_constraints": [
+                        {
+                            "qualifier_set": [
+                                {
+                                    "qualifier_type_id": "biolink:object_aspect_qualifier",
+                                    "qualifier_value": "activity_or_abundance"
+                                },
+                                {
+                                    "qualifier_type_id": "biolink:object_direction_qualifier",
+                                    "qualifier_value": "increased"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        }
+  }
+}
