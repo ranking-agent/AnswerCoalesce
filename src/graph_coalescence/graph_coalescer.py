@@ -223,37 +223,103 @@ def check_prov_value_type(value):
     # Also, the newer pydantic accepts 'primary_knowledge_source' instead of 'biolink:primary_knowledge_source' in the old
     return val.replace('biolink:', '')
 
+# from concurrent.futures import ThreadPoolExecutor
 
 def get_provs(n2l):
-    # Now we are going to hit redis to get the provenances for all of the links.
-    # our unique_links are the keys
-    # Convert n2l to edges
     def process_prov(prov_data):
         if isinstance(prov_data, (str, bytes)):
             prov_data = orjson.loads(prov_data)
-        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
-                prov_data.items()]
+        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in prov_data.items()]
 
-    edges = []
+    def get_edge_symmetric(edge):
+        subject, b = edge.split('{')
+        edge_predicate, obj = b.split('}')
+        edge_predicate = '{' + edge_predicate + '}'
+        return f'{obj.lstrip()} {edge_predicate} {subject.rstrip()}'
+
+    edges = [f'{n1} {link[1]} {link[0]}' if link[2] else f'{link[0]} {link[1]} {n1}' for n1, ll in n2l.items() for link in ll]
+
     prov = {}
-    for n1, ll in n2l.items():
-        for link in ll:
-            if link[2]:
-                edges.append(f'{n1} {link[1]} {link[0]}')
-            else:
-                edges.append(f'{link[0]} {link[1]} {n1}')
-    # now get the prov for those edges
+    total_sym = []
+
+    # with ThreadPoolExecutor(max_workers=4) as executor:
     with get_redis_pipeline(4) as p:
         for edgegroup in grouper(1000, edges):
+            symmetric_edges = [get_edge_symmetric(edge) for edge in edgegroup if edge is None]
+
             for edge in edgegroup:
-                p.get(edge)
+                if edge is not None:
+                    p.get(edge)
             ns = p.execute()
+
             for edge, n in zip(edgegroup, ns):
-                if n is None: # This is true in the latest redundantMinus GTex rdb
-                    continue
-                # Convert the svelte key-value attribute into a fat trapi-style attribute :)
-                prov[edge] = process_prov(n)
+                if n is None:
+                    symmetric_edges.append(get_edge_symmetric(edge))
+                else:
+                    prov[edge] = process_prov(n)
+
+            if symmetric_edges:
+                total_sym.append(len(symmetric_edges))
+
+                for sym_edge in symmetric_edges:
+                    p.get(sym_edge)
+
+                sym_ns = p.execute()
+
+                for sym_edge, n in zip(symmetric_edges, sym_ns):
+                    if n:
+                        prov[sym_edge] = process_prov(n)
+                    else:
+                        print(f'{sym_edge} not exist!')
     return prov
+
+# def get_provs(n2l):
+#     # Now we are going to hit redis to get the provenances for all of the links.
+#     # our unique_links are the keys
+#     # Convert n2l to edges
+#     def process_prov(prov_data):
+#         if isinstance(prov_data, (str, bytes)):
+#             prov_data = orjson.loads(prov_data)
+#         return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
+#                 prov_data.items()]
+#
+#     edges = []
+#     prov = {}
+#     for n1, ll in n2l.items():
+#         for link in ll:
+#             if link[2]:
+#                 edges.append(f'{n1} {link[1]} {link[0]}')
+#             else:
+#                 edges.append(f'{link[0]} {link[1]} {n1}')
+#     # now get the prov for those edges
+#     total_sym = []
+#     with get_redis_pipeline(4) as p:
+#         for edgegroup in grouper(1000, edges):
+#             symmetric_edges = []
+#             for edge in edgegroup:
+#                 p.get(edge)
+#             ns = p.execute()
+#             for edge, n in zip(edgegroup, ns):
+#                 if n is None: #flip the edge
+#                     subject, b = edge.split('{')
+#                     edge_predicate, obj = b.split('}')
+#                     edge_predicate = '{'+edge_predicate+'}'
+#                     edge = f'{obj.lstrip()} {edge_predicate} {subject.rstrip()}'
+#                     symmetric_edges.append(edge)
+#                 else:
+#                     prov[edge] = process_prov(n)
+#             if symmetric_edges:
+#                 total_sym.append(len(symmetric_edges))
+#                 for sym_edge in symmetric_edges:
+#                     # Check if the symmetric edge exists in the Redis database
+#                     p.get(sym_edge)
+#                 sym_ns = p.execute()
+#                 for sym_edge, n in zip(symmetric_edges, sym_ns):
+#                     if n:
+#                         prov[sym_edge] = process_prov(n)
+#                     # else:
+#                     #     print(f'{sym_edge} not exist!')
+#     return prov
 
 def filter_opportunities_(opportunities, nodes_to_links):
     unique_links = set()

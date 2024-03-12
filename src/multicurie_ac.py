@@ -199,7 +199,7 @@ def combine_multihoprule_results(source, original_query_graph, query,
                 analyses = {'resource_id': resource_id,
                                'edge_bindings': eb,
                                # 'score': r['analyses'][0].get('score'),
-                               'attributes': update_supporting_study_cohort(r['analyses'][0].get('attributes'))}
+                               'attributes': update_supporting_study_cohort(r['analyses'][0].get('attributes'), q_node)}
                                # 'support_graphs': [aux_graph_id_0]}
 
                 # update the kg edges with the support graphs
@@ -226,9 +226,6 @@ def combine_multihoprule_results(source, original_query_graph, query,
 
     with open(f"OneResults{datetime.now()}.json", 'w') as outf:
         json.dump(result, outf, indent=2)
-    # merge_results = merge_results_by_node(result, a_node, original_result["results"])
-    # with open(f"mergedResults{datetime.now()}.json", 'w') as outf:
-    #     json.dump(merge_results, outf, indent=2)
     return result
 
 
@@ -249,14 +246,12 @@ def expandmultihopquery(query, allnodes, is_set):
         qgtemp.append(qg)
 
     result_messages = processqg(qgtemp, intermediate_qnodes)
-    # with open(f"prototyping_results/ResultsList{datetime.now()}.json", 'w') as outf:
-    #     json.dump(result_messages, outf, indent=2)
     return result_messages
 
-def update_supporting_study_cohort(attributes):
+def update_supporting_study_cohort(attributes, q_node):
     index_to_update = next((index for index, attr in enumerate(attributes) if attr["attribute_type_id"] == "biolink:supporting_study_cohort"), None)
     if index_to_update is not None:
-        attributes[index_to_update]["value"] = "gene"
+        attributes[index_to_update]["value"] = q_node
     return attributes
 def get_infer_parameters(input_message):
     keydicts = []
