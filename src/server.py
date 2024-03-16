@@ -13,7 +13,6 @@ from reasoner_pydantic import Response as PDResponse
 
 from src.util import LoggingUtil
 from src.multicurie_ac import multiCurieLookup
-from set_trapi_template import qg_template
 
 import fastapi
 from fastapi import FastAPI, HTTPException
@@ -182,6 +181,38 @@ def get_qg(curie, predicates, source_category, target_category, is_source, objec
         print(e)
     return query
 
+
+def qg_template():
+    return '''{
+        "query_graph": {
+            "nodes": {
+                "$source": {
+                    "ids": $source_id,
+                    "is_set": false,
+                    "categories":  $source_category
+                },
+                "$target": {
+                    "ids": $target_id,
+                    "is_set": true,
+                    "constraints": [],
+                    "categories": $target_category
+                    }
+            },
+            "edges": {
+                "e00": {
+                    "subject": "$source",
+                    "object": "$target",
+                    "predicates":
+                        $predicate
+                    ,
+                    "attribute_constraints": [],
+                    "qualifier_constraints": $qualifier
+
+                }
+            }
+        }
+    }
+'''
 def log_exception(method):
     """Wrap method."""
     @wraps(method)
