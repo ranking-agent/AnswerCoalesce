@@ -4,6 +4,8 @@ import logging
 import requests
 import yaml
 import json
+from typing import List
+from string import Template
 
 from enum import Enum
 from functools import wraps
@@ -11,9 +13,11 @@ from reasoner_pydantic import Response as PDResponse
 
 from src.util import LoggingUtil
 from src.multicurie_ac import multiCurieLookup
+from set_trapi_template import qg_template
 
-from fastapi import FastAPI
-from fastapi.responses import JSONResponse, Response
+import fastapi
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
@@ -46,7 +50,7 @@ with open(conf_path, 'r') as inf:
     conf = json.load(inf)
 
 
-@APP.post('/query/', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
+@APP.post('/query/', tags=["MultiCurie AC Prototype"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
 async def coalesce_handler(request: PDResponse):
     # """ Answer coalesce operations. You may choose all, property, graph. """
 
@@ -94,6 +98,89 @@ async def coalesce_handler(request: PDResponse):
 
     return JSONResponse(content=in_message, status_code=status_code)
 
+@APP.get('/query/', summary="Get the enrichment for the multicurie(s) entered.", description="MultiCurie AC Prototype")
+async def get_enrichment_handler(
+    curie: List[str] = fastapi.Query([], description="List of curies to enrich",
+        example=["NCBIGene:3952", "NCBIGene:9370"], min_items=1),
+    predicates: List[str] = fastapi.Query([], description="List of curies to predicates",
+        example=["biolink:affects"], min_items=1,),
+    source_category: str = fastapi.Query(example="biolink:Gene", description="subject label for the source list"),
+    target_category: str = fastapi.Query(example="biolink:ChemicalEntity", description="The return type"),
+    object_aspect_qualifier: str = fastapi.Query(example="activity_or_abundance", description="Qualifier"),
+    object_direction_qualifier: str = fastapi.Query(example="increased", description="Qualifier direction"),
+    is_source: bool = fastapi.Query(True, description="Whether the genelist is subject or target"),
+):
+    """
+    Get value(s) for key(s) using redis MGET
+    """
+
+    in_message = get_qg(curie, predicates, source_category, target_category, is_source, object_aspect_qualifier, object_direction_qualifier)
+    coalesced = in_message["message"]
+
+    # init the status code
+    status_code: int = 200
+    # turn it back into a full trapi message
+    try:
+        # call the operation with the message in the request message
+
+        coalesced = multiCurieLookup(APP, coalesced)
+
+        # turn it back into a full trapi message
+        in_message['message'] = coalesced
+
+        assert PDResponse.parse_obj(in_message)
+
+    except Exception as e:
+        # put the error in the response
+        logger.exception(f"Exception encountered {str(e)}")
+        status_code = 500
+        raise HTTPException(detail="Error occurred during processing.", status_code=status_code)
+
+    return JSONResponse(content=in_message, status_code=status_code)
+
+def get_qg(curie, predicates, source_category, target_category, is_source, object_aspect_qualifier=None, object_direction_qualifier=None):
+    source_ids = [], target_ids = [],
+
+    if is_source:
+        source_ids = curie
+    else:
+        target_ids = curie
+    source = source_category.split(":")[1].lower() if source_category else 'n0'
+    target = target_category.split(":")[1].lower() if target_category else 'n1'
+    query_template = Template(qg_template())
+    query = {}
+
+    source_ids = source_ids if source_ids == None else []
+
+    is_source = True if source_ids else False
+
+    quali = []
+    if object_aspect_qualifier and object_direction_qualifier:
+            quali = [{
+                "qualifier_type_id": "biolink:object_aspect_qualifier",
+                "qualifier_value": object_aspect_qualifier
+            },
+                {
+                    "qualifier_type_id": "biolink:object_direction_qualifier",
+                    "qualifier_value": object_direction_qualifier
+                }
+            ]
+
+    qs = query_template.substitute(source=source, target=target, source_id=json.dumps(source_ids),
+                                   target_id=json.dumps(target_ids),
+                                   source_category=json.dumps([source_category]),
+                                   target_category=json.dumps([target_category]), predicate=json.dumps(predicates),
+                                   qualifier=json.dumps(quali))
+
+    try:
+        query = json.loads(qs)
+        if is_source:
+            del query["query_graph"]["nodes"][target]["ids"]
+        else:
+            del query["query_graph"]["nodes"][source]["ids"]
+    except UnicodeDecodeError as e:
+        print(e)
+    return query
 
 def log_exception(method):
     """Wrap method."""
