@@ -97,90 +97,46 @@ async def coalesce_handler(request: PDResponse):
 
     return JSONResponse(content=in_message, status_code=status_code)
 
-@APP.get('/query/', summary="Get the enrichment for the multicurie(s) entered.", description="MultiCurie AC Prototype")
+@APP.get('/query/{qg}', summary="Get the enrichment for the multicurie(s) entered.", description="MultiCurie AC Prototype")
 async def get_enrichment_handler(
     curie: List[str] = fastapi.Query([], description="List of curies to enrich",
         example=["NCBIGene:3952", "NCBIGene:9370"], min_items=1),
     predicates: List[str] = fastapi.Query([], description="List of curies to predicates",
         example=["biolink:affects"], min_items=1,),
-    source_category: str = fastapi.Query(example="biolink:Gene", description="subject label for the source list"),
-    target_category: str = fastapi.Query(example="biolink:ChemicalEntity", description="The return type"),
+    target_category: str = fastapi.Query(example="biolink:Gene", description="node type of the input list"),
+    source_category: str = fastapi.Query(example="biolink:ChemicalEntity", description="Return type"),
     object_aspect_qualifier: str = fastapi.Query(example="activity_or_abundance", description="Qualifier"),
     object_direction_qualifier: str = fastapi.Query(example="increased", description="Qualifier direction"),
-    is_source: bool = fastapi.Query(True, description="Whether the genelist is subject or target"),
+    is_source: bool = fastapi.Query(False, description="Whether the genelist is subject or target"),
 ):
     """
-    Get value(s) for key(s) using redis MGET
+    Get trapi parameters
     """
 
-    in_message = get_qg(curie, predicates, source_category, target_category, is_source, object_aspect_qualifier, object_direction_qualifier)
-    coalesced = in_message["message"]
+    # in_message = get_qg(curie, predicates, source_category, target_category, is_source, object_aspect_qualifier, object_direction_qualifier)
+    # coalesced = in_message["message"]
+    #
+    # # init the status code
+    # status_code: int = 200
+    # # turn it back into a full trapi message
+    # try:
+    #     # call the operation with the message in the request message
+    #
+    #     coalesced = multiCurieLookup(coalesced)
+    #
+    #     # turn it back into a full trapi message
+    #     in_message['message'] = coalesced
+    #
+    #     assert PDResponse.parse_obj(in_message)
+    #
+    # except Exception as e:
+    #     # put the error in the response
+    #     logger.exception(f"Exception encountered {str(e)}")
+    #     status_code = 500
+    #     raise HTTPException(detail="Error occurred during processing.", status_code=status_code)
 
-    # init the status code
-    status_code: int = 200
-    # turn it back into a full trapi message
-    try:
-        # call the operation with the message in the request message
-
-        coalesced = multiCurieLookup(APP, coalesced)
-
-        # turn it back into a full trapi message
-        in_message['message'] = coalesced
-
-        assert PDResponse.parse_obj(in_message)
-
-    except Exception as e:
-        # put the error in the response
-        logger.exception(f"Exception encountered {str(e)}")
-        status_code = 500
-        raise HTTPException(detail="Error occurred during processing.", status_code=status_code)
-
-    return JSONResponse(content=in_message, status_code=status_code)
-
-def get_qg(curie, predicates, source_category, target_category, is_source, object_aspect_qualifier=None, object_direction_qualifier=None):
-    source_ids = [], target_ids = [],
-
-    if is_source:
-        source_ids = curie
-    else:
-        target_ids = curie
-    source = source_category.split(":")[1].lower() if source_category else 'n0'
-    target = target_category.split(":")[1].lower() if target_category else 'n1'
-    query_template = Template(qg_template())
-    query = {}
-
-    source_ids = source_ids if source_ids == None else []
-
-    is_source = True if source_ids else False
-
-    quali = []
-    if object_aspect_qualifier and object_direction_qualifier:
-            quali = [{
-                "qualifier_type_id": "biolink:object_aspect_qualifier",
-                "qualifier_value": object_aspect_qualifier
-            },
-                {
-                    "qualifier_type_id": "biolink:object_direction_qualifier",
-                    "qualifier_value": object_direction_qualifier
-                }
-            ]
-
-    qs = query_template.substitute(source=source, target=target, source_id=json.dumps(source_ids),
-                                   target_id=json.dumps(target_ids),
-                                   source_category=json.dumps([source_category]),
-                                   target_category=json.dumps([target_category]), predicate=json.dumps(predicates),
-                                   qualifier=json.dumps(quali))
-
-    try:
-        query = json.loads(qs)
-        if is_source:
-            del query["query_graph"]["nodes"][target]["ids"]
-        else:
-            del query["query_graph"]["nodes"][source]["ids"]
-    except UnicodeDecodeError as e:
-        print(e)
-    return query
-
+    # return JSONResponse(content=in_message, status_code=status_code)
+    return {"message": multiCurieLookup(get_qg(curie, predicates, source_category, target_category, is_source, object_aspect_qualifier, object_direction_qualifier))}
 
 def qg_template():
     return '''{
@@ -188,12 +144,13 @@ def qg_template():
             "nodes": {
                 "$source": {
                     "ids": $source_id,
+                    "constraints": [],
                     "is_set": false,
                     "categories":  $source_category
                 },
                 "$target": {
                     "ids": $target_id,
-                    "is_set": true,
+                    "is_set": false,
                     "constraints": [],
                     "categories": $target_category
                     }
@@ -213,6 +170,60 @@ def qg_template():
         }
     }
 '''
+
+def get_qg(curie, predicates, source_category, target_category, is_source, object_aspect_qualifier=None, object_direction_qualifier=None):
+    if is_source:
+        target_ids = curie
+        source_ids = []
+    else:
+        source_ids = curie
+        target_ids = []
+
+    source = source_category.split(":")[1].lower() if source_category else 'n0'
+    target = target_category.split(":")[1].lower() if target_category else 'n1'
+    query_template = Template(qg_template())
+    query = {}
+
+    # source_ids = source_ids if source_ids != None else []
+
+    # is_source = True if source_ids else False
+
+    quali = []
+    if object_aspect_qualifier and object_direction_qualifier:
+        quali = [
+            {
+                "qualifier_set": [
+                    {
+                        "qualifier_type_id": "biolink:object_aspect_qualifier",
+                        "qualifier_value": object_aspect_qualifier
+                    },
+                    {
+                        "qualifier_type_id": "biolink:object_direction_qualifier",
+                        "qualifier_value": object_direction_qualifier
+                    }
+                ]
+            }
+        ]
+
+
+    qs = query_template.substitute(source=source, target=target, source_id=json.dumps(source_ids),
+                                   target_id=json.dumps(target_ids),
+                                   source_category=json.dumps([source_category]),
+                                   target_category=json.dumps([target_category]), predicate=json.dumps(predicates),
+                                   qualifier=json.dumps(quali))
+
+    try:
+        query = json.loads(qs)
+        if is_source:
+            del query["query_graph"]["nodes"][source]["ids"]
+            query["query_graph"]["nodes"][target]["is_set"] = True
+        else:
+            del query["query_graph"]["nodes"][target]["ids"]
+            query["query_graph"]["nodes"][source]["is_set"] = True
+    except UnicodeDecodeError as e:
+        print(e)
+    return query
+
 def log_exception(method):
     """Wrap method."""
     @wraps(method)
