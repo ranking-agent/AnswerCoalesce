@@ -122,6 +122,18 @@ def test_graph_coalesce_qualified():
             assert qual["qualifier_type_id"].startswith("biolink:")
     assert extra_edge
 
+def test_cvs_isopropyl():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    testfilename = os.path.join(dir_path,jsondir, 'cvs_iso.json')
+    with open(testfilename, 'r') as tf:
+        answerset = json.load(tf)
+        assert PDResponse.parse_obj(answerset)
+        answerset = answerset['message']
+    #now generate new answers
+    newset = snc.coalesce(answerset, method='graph', pvalue_threshold=0.1)
+    assert newset
+
+
 def test_graph_coalesce():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
