@@ -8,7 +8,6 @@ import redis
 import json
 import ast
 import itertools
-import time
 import orjson
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -71,14 +70,20 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
 
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
     # unique_link_nodes: bringing all the nodes that each chemical in allnodes maps through nodes_to_links as a set
-    # unique_links:
 
+    #We need to handle symmetric links
+    new_unique_links = set()
+    for ul in unique_links:
+        if "biolink:related_to" in ul[1]:
+            new_unique_links.add( (ul[0], ul[1], not ul[2], ul[3]) )
+    unique_links.update(new_unique_links)
     lcounts = get_link_counts(unique_links)
     nodetypedict = get_node_types(unique_link_nodes)
     nodenamedict = get_node_names(unique_link_nodes)
 
     # provs: One chemical to many enrich nodes
-    provs = get_provs(nodes_to_links)
+    #provs = get_provs(nodes_to_links)
+    provs = []
 
     total_node_counts = get_total_node_counts(set([o.get_qg_semantic_type() for o in opportunities]))
 
@@ -156,9 +161,9 @@ def coalesce_by_graph(opportunities, predicates_to_exclude=None, pvalue_threshol
                 # Need to get the right node type.
                 patch.add_extra_node(newcurie, e[8], edge_pred_and_qual=edge_key, newnode_is=nni,
                                      newnode_name=nodenamedict[newcurie])
-            pprovs = {pk: provs[pk] for pk in provkeys}
+            #pprovs = {pk: provs[pk] for pk in provkeys}
+            pprovs = {}
             patch.add_provenance(pprovs)
-            # print(patch)
             patches.append(patch)
 
         logger.debug('end of opportunity')
@@ -173,8 +178,6 @@ def get_node_types(unique_link_nodes):
     nodetypedict = {}
     with get_redis_pipeline(1) as p:
         for ncg in grouper(2000, unique_link_nodes):
-            # print(ncg)
-            # for ncg in (unique_link_nodes):
             for newcurie in ncg:
                 p.get(newcurie)
             all_typestrings = p.execute()
@@ -255,12 +258,15 @@ def get_provs(n2l):
             for edge in edgegroup:
                 p.get(edge)
             ns = p.execute()
-            # print(ns)
             for edge, n in zip(edgegroup, ns):
-                if n is None:
-                    print(f"n is None: {edge}")
                 # Convert the svelte key-value attribute into a fat trapi-style attribute
-                prov[edge] = process_prov(n)
+                try:
+                    prov[edge] = process_prov(n)
+                #This is cheating.  It's to make up for the fact that we added in inverted edges for
+                # related to, but the prov doesn't know about it. This is not a long term fix, it's a hack
+                # for the prototype and must be fixed.
+                except:
+                    prov[edge] = [{}]
     return prov
 
 
@@ -283,14 +289,10 @@ def uniquify_links(nodes_to_links, opportunities):
     unique_link_nodes = set()
     io = 0
     for opportunity in opportunities:
-        # print('new op', io, dt.now())
         io += 1
         kn = opportunity.get_kg_ids()
-        # print('',len(kn))
         seen = set()
         for n in kn:
-            # if len(nodes_to_links[n]) > 10000:
-            #    print(' ',n,len(nodes_to_links[n]),opportunity.get_qg_semantic_type())
             for l in nodes_to_links[n]:
                 # The link as defined uses the input node as is_source, but the lookup into redis uses the
                 # linked node as the is_source, so gotta flip it
@@ -302,7 +304,6 @@ def uniquify_links(nodes_to_links, opportunities):
                     unique_link_nodes.add(tl[0])
                 else:
                     seen.add(tl)
-        # print('','end',dt.now())
     return unique_link_nodes, unique_links
 
 
@@ -322,10 +323,18 @@ def create_nodes_to_links(allnodes):
                     links = []
                 else:
                     links = orjson.loads(linkstring)
+                    # this is a bit hacky.  If we're pulling in redundant, then high level symmetric predicates
+                    # have been assigned one direction only. We're going to invert them as well to allow matching
+                    newlinks = []
+                    for link in links:
+                        # Note that this should really be done for any symmetric predicate.
+                        # or fixed at the graph level.
+                        if "biolink:related_to" in link[1]:
+                            newlinks.append([link[0], link[1], not link[2]])
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
                 # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
+                links += newlinks
                 nodes_to_links[node] = links
-        # print(len(nodes_to_links))
     return nodes_to_links
 
 
@@ -359,8 +368,18 @@ def create_node_to_type(opportunities):
 #    return nodes_to_links
 
 def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
-                       predicates_to_exclude=None, pvalue_threshold=None):
+                       predicates_to_exclude=["biolink:related_to_at_instance_level", "biolink:related_to_at_concept_level"],
+                       pvalue_threshold=None):
     logger.info(f'{len(nodes)} enriched node links to process.')
+
+    predicates_to_exclude = ["biolink:related_to_at_instance_level", "biolink:related_to_at_concept_level"]
+
+    #These are trash curies that we never want to see
+    blocklist = ["HP:0000118", "MONDO:0000001", "MONDO:0700096", "UMLS:C1333305", "CHEBI:24431",
+                 "CHEBI:23367", "CHEBI:33579", "CHEBI:36357", "CHEBI:33675", "CHEBI:33302", "CHEBI:33304",
+                 "CHEBI:33582", "CHEBI:25806", "CHEBI:50860", "CHEBI:51143", "CHEBI:32988", "CHEBI:33285",
+                 "CHEBI:33256", "CHEBI:36962", "CHEBI:35352", "CHEBI:36963", "CHEBI:25367", "CHEBI:72695",
+                 "CHEBI:33595", "CHEBI:33832", "CHEBI:37577", "CHEBI:24532", "CHEBI:5686", "NCBITaxon:9606"]
 
     if not pvalue_threshold:
         # Use the specified pcut as the enrichment p-value threshold
@@ -408,12 +427,18 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             # n is total number of Type I objects (nodes with that property).
             # The random variate represents the number of Type I objects in N drawn
             #  without replacement from the total population (len curies).
+            # Fail fast on these. Don't do a bunch of calculations that we're just going to throw away.
+            if json.loads(predicate)["predicate"] in predicates_to_exclude:
+                continue
+            if newcurie in blocklist:
+                continue
 
             # length of the set of chemicals that mapped to the tuple
             x = len(nodeset)  # draws with the property
 
             # total_node_count = get_total_node_count(semantic_type)
-            total_node_count = total_node_counts[semantic_type]
+            #total_node_count = total_node_counts[semantic_type]
+            total_node_count = 1000000
 
             # total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
             # Note that is_source is from the point of view of the input nodes, not newcurie
@@ -423,13 +448,23 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             # logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
             # n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
             n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
-            # logger.debug (f'end get_hit_node_count() = {n}, start get_hit_nodecount_old()')
-            # o = rm.get_hit_nodecount_old(newcurie, predicate, newcurie_is_source, semantic_type)
+            if "biolink:related_to" in predicate:
+                try:
+                    n += lcounts[(newcurie, predicate, not newcurie_is_source, semantic_type)]
+                except:
+                    # no reverse edges
+                    pass
 
-            # if n != o:
-            #     logger.info (f'New and old node count mismatch for ({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type}: n:{n}, o:{o}')
+            if x > 0  and n == 0:
+                print("???")
+                print(newcurie, predicate, newcurie_is_source, semantic_type)
+                return []
 
             ndraws = len(nodes)
+
+            # I only care about things that occur more than by chance, not less than by chance
+            if x <  n * ndraws / total_node_count:
+                continue
 
             # The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
             # For most cases, it is ok to approximate it.  There are multiple levels of approximation as described

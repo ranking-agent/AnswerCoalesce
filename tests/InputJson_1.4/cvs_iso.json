@@ -1,0 +1,51 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "input": {
+                    "categories": [
+                        "biolink:NamedThing"
+                    ]
+                }
+            },
+            "edges": {}
+        },
+        "knowledge_graph": {
+            "nodes": {
+                "MONDO:0010778": {},
+                "PUBCHEM.COMPOUND:3776": {}
+            },
+            "edges": {}
+        },
+        "results": [
+            {
+                "node_bindings": {
+                    "input": [
+                        {
+                            "id": "HP:0002017"
+                        }
+                    ]
+                },
+                "analyses": []
+            },
+            {
+                "node_bindings": {
+                    "input": [
+                        {
+                            "id": "PUBCHEM.COMPOUND:3776"
+                        }
+                    ]
+                },
+                "analyses": []
+            }
+        ]
+    },
+    "workflow": [
+        {
+            "id": "enrich_results",
+            "parameters": {
+                "pvalue_threshold": 1.0
+            }
+        }
+    ]
+}

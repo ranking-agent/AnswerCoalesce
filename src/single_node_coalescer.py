@@ -1,5 +1,5 @@
 from collections import defaultdict
-from copy import deepcopy
+# from copy import deepcopy
 # from datetime import datetime as dt
 
 from src.components import Opportunity, Answer
@@ -101,16 +101,15 @@ def patch_answers(answerset, patches):
         for patch in patches:
             # Patches: includes all enriched nodes attached to a certain enrichment by an edge as well as the enriched nodes +attributes
             i += 1
-            print(f'{i} / {len(patches)}')
 
             all_new_answer, qg, kg, kg_indexes = patch.apply(answers, qg, kg, kg_indexes, i)
             # .apply adds the enrichment and edges to the kg and return individual enriched node attached to a certain enrichment by an edge
 
-        """Serialize the answer back to ReasonerStd JSON 1.0"""
-        for answer in all_new_answer:
-            new_answers.append(answer.to_json())
-            auxiliary_graphs.update(answer.get_auxiliarygraph())
-        aux_g = auxiliary_graphs
+            """Serialize the answer back to ReasonerStd JSON 1.0"""
+            for answer in all_new_answer:
+                new_answers.append(answer.to_json())
+                auxiliary_graphs.update(answer.get_auxiliarygraph())
+            aux_g = auxiliary_graphs
         return new_answers, dict(sorted(aux_g.items(), key=lambda x: int(x[0].split('_')[3]))), qg, kg
     else:
         for answer in answers:
