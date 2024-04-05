@@ -1,6 +1,7 @@
 from copy import deepcopy
 from collections import defaultdict
-import ast
+import ast, json
+from string import Template
 
 class Opportunity:
     def __init__(self, hash, qg, kg, a_i, ai2kg):
@@ -98,6 +99,7 @@ class PropertyPatch:
         for answer in answers:
             if answer in comb_answers:
                 if all_extra_k_edges:
+                    #Then this is a graph oalsece
                     for node_no, extra_k_edges in enumerate(all_extra_k_edges):
                         answer.add_bindings(extra_k_edges, f'{patch_no}_{node_no}')
                     answer.add_properties(self.qg_id, self.new_props, f'{patch_no}_{node_no}')
@@ -110,7 +112,6 @@ class PropertyPatch:
                         node_no = 0
                         answer.add_property_bindings(all_extra_k_edges, self.qg_id, self.new_props, f'{patch_no}_{node_no}')
             all_new_answers.append(answer)
-
         return all_new_answers, question, graph, graph_index
 
 
@@ -258,6 +259,141 @@ class PropertyPatch:
             all_extra_edges.append(extra_edges)
         return kg, all_extra_edges,kg_index
 
+class PropertyPatch_query:
+    def __init__(self,qg_id,curies,curies_types,curies_names,props,answer_ids):
+        self.qg_id = qg_id
+        self.set_curies = curies
+        self.curies_types = curies_types
+        self.curies_names = curies_names
+        self.new_props = props
+        self.answer_indices = answer_ids
+        self.added_nodes = []
+        self.provmap = {}
+    def add_provenance(self,provmap):
+        self.provmap = provmap
+    def add_extra_node(self,newnode, newnodetype, edge_pred_and_qual, newnode_is,newnode_name):
+        """Optionally, we can patch by adding a new node, which will share a relationship of
+        some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
+        of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
+        or away from it (newnode_is = 'source') """
+        self.added_nodes.append( NewNode(newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name) )
+
+    def apply_(self, nodeset, graph, graph_index, patch_no):
+
+        all_new_answers = []
+        graph, all_extra_k_edges, graph_index = self.update_kg_(graph, graph_index)
+
+        if all_extra_k_edges:
+            for node_no, extra_k_edges in enumerate(all_extra_k_edges):
+                answer = self.create_resullt(extra_k_edges, nodeset)
+            all_new_answers.extend(answer)
+
+        return all_new_answers, graph, graph_index
+
+    def create_resullt(self, extra_k_edges, nodeset):
+        answer = {}
+        result = []
+        for qg_edge in nodeset.get('answer_edge'):
+            answer['node_bindings'] = {self.qg_id: [{'id': curie, 'qnode_id': curie} for curie in self.set_curies],
+                                     nodeset.get('answer_id', 'answer'): [{'id': newnode.newnode} for newnode in
+                                                                          self.added_nodes]}
+            answer['analyses'] = [{"resource_id": "infores:automat-robokop",
+                                   "edge_bindings": {
+                                       qg_edge: [
+                                           {
+                                               "id": kedge
+                                           } for kedge in extra_k_edges
+                                       ]
+                                   },
+                                   "score": 0.
+                                   }]
+            answer['analyses'][0].update(self.new_props)
+            result.append(answer)
+        return result
+
+    def update_kg_(self, kg, kg_index):
+        if not kg:
+            kg['nodes'] = {}
+            kg['edges'] = {}
+
+        if len(kg_index) == 0:
+            kg_index['nodes'] = set(kg.get('nodes', {}).keys())
+            kg_index['edges'] = {(edge['subject'], edge['object'], edge['predicate']): edge_id for edge_id, edge in
+                                 kg.get('edges', {}).items()}
+        all_extra_edges = []
+        for newnode in self.added_nodes:
+            extra_edges = []
+            # See if the newnode is already in the KG, and if not, add it.
+            found = False
+            if newnode.newnode not in kg_index['nodes']:
+                if not isinstance(newnode.newnode_type, list):
+                    newnode.newnode_type = [newnode.newnode_type]
+
+                kg['nodes'].update(
+                    {newnode.newnode: {'name': newnode.newnode_name, 'categories': newnode.newnode_type}})
+                kg_index['nodes'].add(newnode.newnode)
+
+
+            # Add new edges
+            for curie in self.set_curies:  # try to add a new edge from this curie to newnode
+                if curie not in kg['nodes']:
+                    kg['nodes'].update(
+                        {curie: {'name': self.curies_names.get(curie), 'categories': self.curies_types.get(curie)}}
+                    )
+                    kg_index['nodes'].add(curie)
+                if curie == newnode.newnode:
+                    continue  # no self edge please
+
+                # check to see if the edge we want to add is already present in the kg
+                if newnode.newnode_is == 'source':
+                    source_id = newnode.newnode
+                    target_id = curie
+                else:
+                    source_id = curie
+                    target_id = newnode.newnode
+                eid = None
+                ekey = (source_id, target_id, newnode.new_edges)
+                if ekey not in kg_index['edges']:
+                    try:
+                        provs = self.provmap[f'{source_id} {newnode.new_edges} {target_id}']
+                    except KeyError:
+                        provs = []
+                    edge_def = ast.literal_eval(newnode.new_edges)
+
+                    sources = []
+                    for prov in provs:
+                        source1 = {'resource_id': 'infores:automat-robokop',
+                                   'resource_role': 'aggregator_knowledge_source'}
+                        source2 = {'resource_id': 'infores:aragorn', 'resource_role': 'aggregator_knowledge_source'}
+                        source1['upstream_resource_ids'] = [prov.get('resource_id', None)]
+                        source2['upstream_resource_ids'] = [source1.get('resource_id', None)]
+                        sources.extend([source1, source2])
+                    source_pov = provs + sources
+
+                    edge = {'subject': source_id, 'object': target_id, 'predicate': edge_def["predicate"],
+                            'sources': source_pov, 'attributes': []}
+
+                    if len(edge_def) > 1:
+                        edge["qualifiers"] = [{"qualifier_type_id": f"biolink:{ekey}", "qualifier_value": eval}
+                                              for ekey, eval in edge_def.items() if not ekey == "predicate"]
+                    # Need to make a key for the edge, but the attributes & quals make it annoying
+                    ek = deepcopy(edge)
+
+                    ek['attributes'] = str(ek['attributes'])
+                    ek['sources'] = str(ek['sources'])
+                    if 'qualifiers' in ek:
+                        ek['qualifiers'] = str(ek['qualifiers'])
+                    eid = str(hash(frozenset(ek.items())))
+                    kg['edges'].update({eid: edge})
+                    kg_index['edges'][ekey] = eid
+                eid = kg_index['edges'][ekey]
+                extra_edges.append(str(eid))
+
+            all_extra_edges.append(extra_edges)
+        return kg, all_extra_edges, kg_index
+
+
+
 class Answer:
     def __init__(self, json_answer, json_question, json_kg):
         """Take the json answer and turn it into a more usable structure"""
@@ -377,3 +513,323 @@ class Answer:
         self.binding_properties[qg_id].update(bps)
         self.aux_graph[f'_n_ac_{counter}'].update(bps)
 
+class GEnrichment:
+    def __init__(self, kg, qg, auxg_edgeattributes, answer_qnode, log):
+        self.kg = kg
+        self.auxg_edgeattributes = auxg_edgeattributes
+        self.knodes = self.kg['nodes']
+        self.kedges = self.kg['edges']
+        self.answer_qnode = answer_qnode
+        self.logs = log
+        self.qg_answercategory = self.get_qg_anwercategory(qg['nodes'])
+        self.rule_index = {}
+
+
+    def get_qg_anwercategory(self, qnodes):
+        default = ["biolink:NamedEntity"]
+        qg_answercategory = [qnode.get("categories", default) for qnode in qnodes.values() if not qnode.get("ids")]
+        return qg_answercategory[-1] if qg_answercategory else default
+
+    def make_rules(self, othertype= None):
+        predicates_to_exclude = [
+            "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+            "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
+        ]
+
+        messages = []
+        enrichednode_ids, is_source, predicate, qualifiers = self.get_ac_edgeinfo(self.auxg_edgeattributes)
+        if qualifiers and len(qualifiers)>=2:
+            ekey = {(is_source, predicate, qualifiers[0].get("qualifier_value", ""),
+                      qualifiers[1].get("qualifier_value", "")): enrichednode_ids}
+        else:
+            ekey = {(is_source, predicate):enrichednode_ids}
+        ekey = tuple(ekey.items())
+        if predicate not in predicates_to_exclude or ekey not in self.rule_index:
+            enrichednode_category = self.get_node_category(enrichednode_ids)
+            query_template = Template(qg_template())
+            if is_source:
+                source_type = [enrichednode_category]
+                source = enrichednode_category.split(":")[1].lower()
+                if othertype:
+                    #wanna make a room for disease to disease trapi query
+                    target_type = [othertype]
+                else:
+                    target_type = self.qg_answercategory
+                # target_type = self.qg_answercategory
+                target = self.answer_qnode
+                # if the enriched node is the source node in the kg, then it becomes the object node in the templated query
+                qs = query_template.substitute(source=source, target=target, source_id=enrichednode_ids, target_id="",
+                                               source_category=json.dumps(source_type),
+                                               target_category=json.dumps(target_type), predicate=predicate,
+                                               qualifiers=json.dumps(qualifiers))
+            else:
+                if othertype:
+                    #wanna make a room for disease to disease trapi query
+                    source_type = [othertype]
+                else:
+                    source_type = self.qg_answercategory
+                # source_type = self.qg_answercategory
+                source = self.answer_qnode
+                target_type = [enrichednode_category]
+                target = enrichednode_category.split(":")[1].lower()
+                qs = query_template.substitute(source=source, target=target, target_id=enrichednode_ids, source_id="",
+                                               source_category=json.dumps(source_type),
+                                               target_category=json.dumps(target_type), predicate=predicate,
+                                               qualifiers=json.dumps(qualifiers))
+            query = json.loads(qs)
+            if is_source:
+                del query["query_graph"]["nodes"][target]["ids"]
+            else:
+                del query["query_graph"]["nodes"][source]["ids"]
+            message = {"message": query}
+            if self.logs:
+                message["logs"] = self.logs
+            messages.append(message)
+            self.rule_index[ekey]= enrichednode_ids
+        return messages
+
+    def get_ac_edgeinfo(self, enriched_edge_attributes):
+
+        is_source = None
+        enriched_node = None
+        object_aspect_qualifier = None
+        object_direction_qualifier = None
+        predicate_value = None
+        direction = {'biolink:object': False, 'biolink:subject': True}
+
+        for attrib in enriched_edge_attributes:
+            attribute_type = attrib["attribute_type_id"]
+            value = attrib["value"]
+
+            if attribute_type in ("biolink:object", "biolink:subject"):
+                enriched_node = value
+                is_source = direction.get(attribute_type)
+            elif attribute_type == "biolink:predicate":
+                predicate_value = value
+            elif attribute_type == "biolink:object_aspect_qualifier":
+                object_aspect_qualifier = value
+            elif attribute_type == "biolink:object_direction_qualifier":
+                object_direction_qualifier = value
+
+        qualifiers = []
+        if object_aspect_qualifier is not None:
+            qualifiers.append({
+                "qualifier_type_id": "biolink:object_aspect_qualifier",
+                "qualifier_value": object_aspect_qualifier
+            })
+        if object_direction_qualifier is not None:
+            qualifiers.append({
+                "qualifier_type_id": "biolink:object_direction_qualifier",
+                "qualifier_value": object_direction_qualifier
+            })
+
+        return enriched_node, is_source, predicate_value, qualifiers
+
+    def get_node_category(self, node):
+        # We are assuming the most probable type is the first item in the category/label list
+        return self.knodes[node].get('categories', [])[0]
+
+    def get_ac_input_category(self, input_ids):
+        input_category = self.get_input_category(input_ids)
+        return input_category
+
+# class PEnrichment:
+#     def __init__(self,json_answer, kg, qg, question_qnode, answer_qnode, auxgraph):
+#         self.node_bindings = json_answer['node_bindings']
+#         self.enrichments = json_answer['enrichments']
+#         self.analyses = json_answer['analyses']
+#         self.auxiliary_graphs = auxgraph
+#         self.kg = kg
+#         self.question_qnode = question_qnode
+#         self.answer_qnode = answer_qnode
+#         self.question_edge_ids = next(iter(set(qg['edges'].keys())))   #eg 'e00'
+#         self.original_predicate = [qg['edges'][edge]['predicates'][0] for edge in qg['edges']][0] #eg biolink:treats
+#         # Using this to save up the qnode_id in addition to the id
+#         # EG:'MONDO:1234'
+#         self.question_qnode_ids = qg['nodes'][question_qnode]['ids'][0]
+#         # EG: 'disease'
+#
+#         self.qg_answercategory = self.get_qg_anwercategory(qg['nodes'])
+#
+#     def get_qg_anwercategory(self, qnodes):
+#         default = ["biolink:NamedEntity"]
+#         qg_answercategory = [qnode.get("categories", default) for qnode in qnodes.values() if not qnode.get("ids")]
+#         return qg_answercategory[-1] if qg_answercategory else default
+#
+#     def update_kg_and_binding(self, enrichment):
+#         kg_index = {}
+#         if len(kg_index) == 0:
+#             kg_index['nodes'] = set( self.kg['nodes'].keys() )
+#             kg_index['edges'] = { (edge['subject'],edge['object'],edge['predicate']):edge_id for edge_id,edge in self.kg['edges'].items() }
+#         result_bindings = []
+#         for newnode in (self.new_nodes):
+#             for nnkey, _ in newnode.items():
+#                 #See if the newnode is already in the KG, and if not, add it.
+#                 if nnkey in kg_index['nodes']:
+#                     continue
+#                 self.kg['nodes'].update(newnode)
+#                 kg_index['nodes'].add(nnkey)
+#                 source_id = nnkey
+#                 target_id = self.question_qnode_ids
+#                 ekey = (source_id, target_id, self.original_predicate)
+#                 if ekey not in kg_index['edges']:
+#                     edge = {'subject': source_id, 'object': target_id, 'predicate': self.original_predicate,
+#                         'sources': [self.add_provenance()], 'attributes': [{'attribute_type_id': "biolink:support_graphs", "value": [enrichment]}]}
+#                     ek = deepcopy(edge)
+#                     ek['sources'] = str(ek['sources'])
+#                     ek['attributes'] = str(ek['attributes'])
+#                     eid = self.makehash(str(ek))
+#                     self.kg['edges'].update({eid: edge})
+#                     kg_index['edges'][ekey] = eid
+#                     if self.add_binding(nnkey, eid):
+#                         result_bindings.append(self.add_binding(nnkey, eid))
+#                     # else:
+#                 else:
+#                     edgeid = kg_index['edges'].get(ekey)
+#                     self.add_support_edge(self, edgeid, enrichment)
+#
+#         return result_bindings
+#
+#         # result binding
+#     def add_binding(self, nnkey, eid):
+#         binding = None
+#         if nnkey == self.node_bindings[self.answer_qnode][0]['id']:
+#             self.analyses[0]['edge_bindings'][self.question_edge_ids].append({'id':eid})
+#         else:
+#             binding = {
+#                 "node_bindings": {
+#                     self.answer_qnode: [
+#                         {
+#                             "id": nnkey
+#                         }
+#                     ],
+#                     self.question_qnode: [
+#                         {
+#                             "id": self.question_qnode_ids,
+#                             "qnode_id": self.question_qnode_ids
+#                         }
+#                     ]
+#                 },
+#                 "analyses": [
+#                     {
+#                         "resource_id": "infores:aragorn",
+#                         "edge_bindings": {
+#                             self.question_edge_ids: [
+#                                 {
+#                                     "id": eid
+#                                 }
+#                             ]
+#                         }
+#                     }
+#                 ]
+#             }
+#         return binding
+#
+#     def makehash(self, text):
+#         return hashlib.sha256(text.encode('utf-8')).hexdigest()
+#
+#     def add_support_edge(self, edgeid, enrichment):
+#         self.kg['edge'][edgeid]['attributes'][0]['value'].append(enrichment)
+#
+#     def add_provenance(self):
+#         provmap = {"resource_id": "infores:aragorn", "resource_role": "aggregator_knowledge_source",
+#                           "upstream_resource_ids": ["infores:automat-aragorn"]}
+#         return provmap
+#
+#     def get_property_creativeresult(self, enrichment, property, guid):
+#         '''
+#         param: Enriched_node property -> 'CHEBI_Role_Drug'
+#         Return: neo4j nodes having such property -> .json()
+#         '''
+#         automat_url = 'https://automat.renci.org/robokopkg/cypher'
+#         logger.info(f"{guid}:Calling {automat_url} for enriched property creative lookup")
+#
+#         try:
+#             query = {"query": "MATCH (n:`%s` {`%s`:True}) RETURN n AS nodes, labels(n) AS labels" % (
+#             self.qg_answercategory[0], property[0])}
+#             pe_response = requests.post(automat_url, json=query).json()
+#
+#             if pe_response['results'][0]['data']:
+#                 # 1. Format the neo4j result as node data
+#                 self.new_nodes = [self.format_node_data(res['row']) for res in pe_response['results'][0]['data']]
+#                 logger.info(f'Cypher query run for ({property}) complete, found {len(self.new_nodes)} results')
+#                 # 2. update kg with the new node and make edges; then format the new result as pydantic result
+#                 result_bindings = self.update_kg_and_binding(enrichment)
+#                 return result_bindings, 200
+#         except Exception as e:
+#             # Do not come here
+#             logger.exception(f"{guid}: Exception {e} posting property enriched to {automat_url}")
+#             return {}, 500
+#
+#     def format_node_data(self, newnode):
+#         '''
+#         params: Raw node data from neo4j
+#         Return: Coalesced formated node
+#         '''
+#         if isinstance(newnode[0], str):
+#             # if the format is 'CHEBI_ROLE_drug', create the node data
+#             return {newnode[0]: {'categories': [],
+#                               'name': None,
+#                               'attributes': [{'attribute_type_id': 'biolink:same_as',
+#                                               'value': None, 'value_type_id': 'metatype:uriorcurie',
+#                                               'original_attribute_name': None
+#                                               }]
+#                               }
+#                     }
+#         if isinstance(newnode[0], dict):
+#             # if the format is {'id': 'NCBIGene003', 'name': 'TestingGene', 'tpsa': '2', ...}, from neo4j
+#             # create node data with the neo4j graph node properties
+#             ids = newnode[0].pop('id')
+#             name = newnode[0].pop('name')
+#             return {ids: {'categories': newnode[1],
+#                           'name': name,
+#                           'attributes': [{'attribute_type_id': 'biolink:same_as',
+#                                           'value': v, 'value_type_id': 'metatype:uriorcurie',
+#                                           'original_attribute_name': k
+#                                           } if k == 'equivalent_identifiers'
+#                                          else {'attribute_type_id': 'biolink:Attribute',
+#                                                'value': v, 'value_type_id': 'EDAM:data_0006',
+#                                                'original_attribute_name': k
+#                                                }
+#                                          for k, v in newnode[0].items()
+#                                          ]
+#                           }
+#                     }
+
+def qg_template():
+    return '''{
+        "query_graph": {
+            "nodes": {
+                "$source": {
+                    "ids": [
+                        "$source_id"
+                    ],
+                    "categories": 
+                        $source_category
+
+                },
+                "$target": {
+                    "ids": [
+                        "$target_id"
+                    ],
+                    "categories": 
+                        $target_category
+                }
+            },
+            "edges": {
+                "e00": {
+                    "subject": "$source",
+                    "object": "$target",
+                    "predicates": [
+                        "$predicate"
+                    ],
+                    "qualifier_constraints": [
+                        {
+                            "qualifier_set": $qualifiers
+                        }
+                    ]
+                }
+            }
+        }
+    }
+'''

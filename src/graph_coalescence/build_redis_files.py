@@ -2,7 +2,7 @@ import csv
 from collections import defaultdict
 import json,jsonlines
 import requests
-from bmt import Toolkit
+import bmt
 
 #A link is: link = (other_node, predicate, source)
 # source is a boolean that is true if node is the source, and false if other_node is the source
@@ -29,13 +29,13 @@ def parse_line(line):
     if source_id.startswith('CAID'):
         if target_id.startswith('UBERON'):
             if pred == 'biolink:affects_expression_of':
-                return source_id, target_id, None
+                return source_id, target_id, None, None
     if source_id.startswith('UBERON'):
         if target_id.startswith('NCBIGene'):
             if pred == 'biolink:expresses':
-                return source_id, target_id, None
+                return source_id, target_id, None, None
     if pred == 'biolink:expressed_in' and target_id.startswith('UBERON'):
-        return source_id, target_id, None
+        return source_id, target_id, None, None
     predicate_parts = {'predicate': line['predicate']}
     for key,value in line.items():
         if 'qualifier' in key:
@@ -82,13 +82,15 @@ def go(input_node_file="nodes.jsonl", output_nodelabels='nodelabels.txt', output
      True and False (subject) edges into True. Then, in the TRAPI version, we'll need to be careful
      to make sure and look for the right thing, even if the input TRAPI is pointed into a False direction.
     """
-    tk = Toolkit()
+    tk = bmt.Toolkit()
     filter_nodes = get_filter_nodes()
     filter_predicates = ["biolink:related_to_at_concept_level", "biolink:related_to_at_instance_level"]
     categories = {}
     catcount = defaultdict(int)
     with jsonlines.open(input_node_file,'r') as nodefile, open(output_nodelabels, 'w') as labelfile, open(output_nodenames, 'w') as namefile:
         for node in nodefile:
+            if node["id"].startswith('CAID'):
+                continue
             if node["id"] in filter_nodes:
                 continue
             labelfile.write(f'{node["id"]}\t{node["category"]}\n')
@@ -107,6 +109,8 @@ def go(input_node_file="nodes.jsonl", output_nodelabels='nodelabels.txt', output
     with jsonlines.open(input_edge_file, 'r') as inf, open(output_prov, 'w') as provout:
         nl = 0
         for line in inf:
+            if line["subject"].startswith('CAID') or line["object"].startswith('CAID'):
+                continue
             nl += 1
             source_id, target_id, pred, just_predicate = parse_line(line)
             if source_id in filter_nodes or target_id in filter_nodes:
@@ -132,6 +136,8 @@ def go(input_node_file="nodes.jsonl", output_nodelabels='nodelabels.txt', output
                 edgecounts[ (target_id, pred, target_is_source, scategory) ] += 1
             pkey=f'{source_id} {pred} {target_id}'
             prov = {x:line[x] for x in ['biolink:primary_knowledge_source','biolink:aggregator_knowledge_source'] if x in line}
+            if not prov or not pkey:
+                continue
             provout.write(f'{pkey}\t{json.dumps(prov)}\n')
             if nl % 1000000 == 0:
                 print(nl)
