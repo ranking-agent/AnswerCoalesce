@@ -61,7 +61,7 @@ def xtest_multicurieac():
 
 
 import asyncio
-from pyinstrument import Profiler
+# from pyinstrument import Profiler
 # from pathlib import Path
 # TESTS_ROOT = Path.cwd()
 
