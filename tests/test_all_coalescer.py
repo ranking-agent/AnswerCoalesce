@@ -1,5 +1,5 @@
 import pytest
-import os, json
+import os, json, asyncio
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
@@ -57,7 +57,7 @@ def xtest_all_ui_message():
     print(f'\n==Coalesce for{name}===')
     #now generate new answers
     # Local redis only do property enrichment because there is no sufficient datss for graph enrichment
-    newset = snc.coalesce(answerset, method='all', predicates_to_exclude= predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold)
+    newset = asyncio.run(snc.coalesce(answerset, method='all', predicates_to_exclude= predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold))
 
     assert PDResponse.parse_obj({'message': newset})
     with open(dir_path+'/'+common_diseasesdir+'/ac_results/'+name.split('.')[0]+'_output.json', 'w') as qw:
@@ -94,7 +94,7 @@ def xtest_all_coalesce_creative_long():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph')
+    newset = asyncio.run(snc.coalesce(answerset, method='graph'))
     assert PDResponse.parse_obj({'message':newset})
     kgedges = newset['knowledge_graph']['edges']
     for _ ,eedge in kgedges.items():
@@ -120,7 +120,7 @@ def test_all_coalesce_with_workflow():
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     original_node_ids = set([node for node in answerset['knowledge_graph']['nodes']])
     # now generate new answers
-    newset = snc.coalesce(answerset, method='all')
+    newset = asyncio.run(snc.coalesce(answerset, method='all'))
     assert PDResponse.parse_obj({'message': newset})
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
@@ -176,7 +176,7 @@ def test_all_coalesce_with_pred_exclude():
         answerset = answerset['message']
 
     # now generate new answers
-    newset = snc.coalesce(answerset, method='all', predicates_to_exclude=predicates_to_exclude)
+    newset = asyncio.run(snc.coalesce(answerset, method='all', predicates_to_exclude=predicates_to_exclude))
     assert PDResponse.parse_obj({'message': newset})
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])

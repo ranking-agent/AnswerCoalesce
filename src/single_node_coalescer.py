@@ -16,7 +16,7 @@ ROBOKOP_URL = "https://aragorn.renci.org/robokop/query"
 MAX_CONNS = os.environ.get("MAX_CONNECTIONS", 5)
 NRULES = int(os.environ.get("MAXIMUM_ROBOKOPKG_RULES", 11))
 TRACK = {}
-def coalesce(answerset, method='all', mode = 'coalesce', predicates_to_exclude=[], properties_to_exclude=[], nodesets_to_exclude=[], pvalue_threshold=0, result_length=0):
+async def coalesce(answerset, method='all', mode = 'coalesce', predicates_to_exclude=[], properties_to_exclude=[], nodesets_to_exclude=[], pvalue_threshold=0, result_length=0):
     """
     Given a set of answers coalesce them and return some combined answers.
     In this case, we are going to first look for places where answers are all the same
@@ -25,10 +25,6 @@ def coalesce(answerset, method='all', mode = 'coalesce', predicates_to_exclude=[
     There are plenty of ways to extend this, including adding edges to the coalescent
     entities.
     """
-
-    # # reformat answerset
-    # # NB: we could remove this once it's certain that every query is trapi1.4 compliant
-    # answerset['results'] = is_trapi1_4(answerset['results'])
 
     # Look for places to combine
     patches = []
@@ -42,9 +38,15 @@ def coalesce(answerset, method='all', mode = 'coalesce', predicates_to_exclude=[
     else:
         if mode == 'infer':
             # We need to do lookup first before coalescing
-            answerset, status_code = robokop_lookup(answerset)
+            response, question_node = robokop_lookup(answerset)
+            result = response.json()
+            status_code = response.status_code
             if status_code != 200:
+                logger.error(f'Error: {status_code} from {ROBOKOP_URL}')
                 return answerset
+            else:
+                answerset = drop_lookup_subclasses(result['message'], question_node)
+
         # Either way
         coalescence_opportunities = identify_coalescent_nodes(answerset)
 
@@ -66,29 +68,28 @@ def coalesce(answerset, method='all', mode = 'coalesce', predicates_to_exclude=[
     # Enrichment done and commonalities found, at this point we can rewrite the results
     if mode == 'query':
         new_answers = patch_answers_(answerset, coalescence_opportunities, patches)
-
         new_answerset = new_answers['message']
-
         return new_answerset
     else:
         new_answers, aux_graphs, updated_qg, updated_kg = patch_answers(answerset, patches)
-
         new_answerset = {'query_graph': updated_qg, 'knowledge_graph': updated_kg, 'results': new_answers,
                          'auxiliary_graphs': aux_graphs}
 
         if mode == 'infer':
             # uncomment this to save the result to the directory
-            # with open("enrichment2024.json", 'r') as tf:
-            #     # json.dump(answerset, tf, indent=4)
-            #    answerset = json.load(tf)
-            #
-            # with open("lookup2024.json", 'r') as tf:
-            #     # json.dump(new_answerset, tf, indent=4)
-            #     new_answerset = json.load(tf)
-
-            new_answerset = enrichment_based_infer(new_answerset, answerset, predicates_to_exclude)
-            #     #STOPPPPP
-            return new_answerset['message']
+            # with open("enrichment.json", 'w+') as tf:
+            #     json.dump(new_answerset, tf, indent=4)
+            #    # answerset = json.load(tf)
+            # #
+            # with open("lookup.json", 'w+') as tf:
+            #     json.dump(answerset, tf, indent=4)
+                # new_answerset = json.load(tf)
+            if aux_graphs:
+                new_answerset = await enrichment_based_infer(new_answerset, answerset, predicates_to_exclude)
+                return new_answerset['message']
+            else:
+                logger.error(f'Empty Auxiliary_graphs; No enriched result')
+                return response.json()
         else:
             return new_answerset
 
@@ -339,13 +340,8 @@ def robokop_lookup(answerset):
         edge_data.pop("knowledge_type", None)
 
     lookup_response = requests.post(ROBOKOP_URL, json={"message":answerset})
-    if lookup_response.status_code == 200:
-        lookup_message = lookup_response.json()
-        lookup_message = drop_lookup_subclasses(lookup_message['message'], question_node)
-        return lookup_message, 200
-    else:
-        logger.error(f'{ROBOKOP_URL} not reacheable' )
-        return answerset, 500
+     # logger.error(f'{ROBOKOP_URL} not reacheable' )
+    return lookup_response, question_node
 def drop_lookup_subclasses(lookup_result, question_qnode):
     question_qnode_ids = lookup_result['query_graph']['nodes'][question_qnode]['ids'][0] #MONDO....
     results = []
@@ -355,12 +351,12 @@ def drop_lookup_subclasses(lookup_result, question_qnode):
         results.append(lookup_result['results'][i])
     lookup_result['results'] = results
     return lookup_result
-def enrichment_based_infer(coalesced_message, lookup_message, predicates_to_exclude):
+async def enrichment_based_infer(coalesced_message, lookup_message, predicates_to_exclude):
     qg = lookup_message.get("query_graph", {})
     for qg_id, node_data in qg.get("nodes", {}).items():
         if node_data.get('ids', []):
             question_qnode = qg_id
-            qnode_ids = node_data['ids'][0]
+            # qnode_ids = node_data['ids'][0]
             question_category = node_data.get('categories', [])
         else:
             answer_qnode = qg_id
@@ -376,7 +372,7 @@ def enrichment_based_infer(coalesced_message, lookup_message, predicates_to_excl
         return {"message": lookup_message}, 200
     else:
         logger.info(f"{len(enriched_results)} of the {len(lookup_message['results'])} lookup results is enriched")
-        messages_result = robokop_enrich_multistrider(coalesced_message, enriched_results, lookup_message, question_qnode, answer_qnode, question_category, qg_edge, predicates_to_exclude)
+        messages_result = await robokop_enrich_multistrider(coalesced_message, enriched_results, lookup_message, question_qnode, answer_qnode, question_category, qg_edge, predicates_to_exclude)
         return messages_result
 def track_question2lookup_edges(rmsg, question_qnode, answer_node):
     # ab = {}
@@ -426,12 +422,12 @@ def filter_enriched_message(coalesced_message):
 
     enriched_results = filter(lambda result: result.get('enrichments'), coalesced_message.get('results', []))
     return list(enriched_results)
-def robokop_enrich_multistrider(coalesced_message, enriched_results, lookup_message, question_qnode, answer_qnode, question_category, qg_edge, predicates_to_exclude):
+async def robokop_enrich_multistrider(coalesced_message, enriched_results, lookup_message, question_qnode, answer_qnode, question_category, qg_edge, predicates_to_exclude):
     enrichment_rules, pe_finalresult_list, updated_kg = expand_enriched_results(coalesced_message, enriched_results, question_qnode, answer_qnode, finaltype = question_category)
     qg = (coalesced_message["query_graph"]).copy()
-    mergedresults = parse_robokop_messages(lookup_message, updated_kg, enrichment_rules, qg, question_qnode, answer_qnode, qg_edge, predicates_to_exclude)
+    mergedresults = await parse_robokop_messages(lookup_message, updated_kg, enrichment_rules, qg, question_qnode, answer_qnode, qg_edge, predicates_to_exclude)
     return mergedresults
-def finalenrich2lookup_edges(rmsg, question_qnode, answer_qnode, qg_edge, qg_predicate, predicates_to_exclude):
+async def finalenrich2lookup_edges(rmsg, question_qnode, answer_qnode, qg_edge, qg_predicate, predicates_to_exclude):
     original_query_graph = rmsg["message"]["query_graph"]
     qnode_ids = original_query_graph['nodes'][question_qnode]["ids"][0]
     rmsg_edges = rmsg["message"]["knowledge_graph"]["edges"]
@@ -450,7 +446,7 @@ def finalenrich2lookup_edges(rmsg, question_qnode, answer_qnode, qg_edge, qg_pre
                   r['analyses'][0]['edge_bindings'].get(bdedge)]  # Serves as edges for auxgraph3
         f = r["node_bindings"][mid][0]['id']
 
-        #To uphold the exclusion of those predicates in the enrichment calculation
+        #To uphold the exclusion of those bad predicates in the enrichment calculation
         f_preds = [rmsg_edges[edge_0].get("predicate") for edge_0 in new_a2f_edges if rmsg_edges[edge_0].get("predicate") not in predicates_to_exclude]
         if not f_preds:
             continue
@@ -619,23 +615,22 @@ def expand_enriched_results(coalesced_message, enriched_results, question_qnode,
     # mergedresults, merges_status = await parse_messages(lookup_kg, enrichment_rules, qg, guid, params)
 
     return enrichment_rules, pe_finalresult_list, kg
-def parse_robokop_messages(lookup_message, updated_kg, rule_qgs,  qg, question_qnode, answer_qnode, qg_edge, predicates_to_exclude):
+async def parse_robokop_messages(lookup_message, updated_kg, rule_qgs,  qg, question_qnode, answer_qnode, qg_edge, predicates_to_exclude):
     original_predicate = [qg['edges'][edge]['predicates'][0] for edge in qg['edges']][0]
     logger.info(f"sending {len(rule_qgs)} rules to {ROBOKOP_URL}")
     result_messages = []
     limit = asyncio.Semaphore(MAX_CONNS)
     # async timeout in 1 hour
-    # async with httpx.AsyncClient(timeout=httpx.Timeout(timeout=5 * 60)) as client:
-    tasks = []
-    for rule in list(rule_qgs)[:NRULES]:
-        tasks.append(requests.post(ROBOKOP_URL, json=rule))
-            # make_one_requestasyncio.create_task(client, ROBOKOP_URL, rule, limit)))
-    # responses = asyncio.gather(*tasks)
+    async with httpx.AsyncClient(timeout=httpx.Timeout(timeout=5 * 60)) as client:
+        tasks = []
+        for message in list(rule_qgs)[:NRULES]:
+            tasks.append(asyncio.create_task(make_one_request(client, ROBOKOP_URL, message, limit)))
+
+        responses = await asyncio.gather(*tasks)
 
     total_results = 0
-    for response in tasks:
+    for response in responses:
         if response.status_code == 200:
-            # Validate and clean
             rmessage = PDResponse(**response.json()).dict(exclude_none=True)
             filter_repeated_nodes(rmessage)
             num_results = len(rmessage["message"].get("results", []))
@@ -648,16 +643,20 @@ def parse_robokop_messages(lookup_message, updated_kg, rule_qgs,  qg, question_q
     if len(result_messages) > 0:
         logger.info(f"Returned {total_results} results")
         # We have to stitch stuff together again
-        resource_id = 'robokop'
 
-        mergedresults = combine_enriched_messages(original_predicate, qg,
-                                           lookup_message, updated_kg, result_messages, question_qnode, answer_qnode, qg_edge, predicates_to_exclude, resource_id)
+        mergedresults = await combine_enriched_messages(original_predicate, qg,
+                                           lookup_message, updated_kg, result_messages, question_qnode, answer_qnode, qg_edge, predicates_to_exclude)
 
         return mergedresults
     else:
         mergedresults = {"message": {"knowledge_graph": {"nodes": {}, "edges": {}}, "results": []}}
     # The merged results will have some expanded query, we want the original query.
     return mergedresults
+
+async def make_one_request(client, automat_url, message, sem):
+    async with sem:
+        r = await client.post(f"{automat_url}", json=message)
+    return r
 
 def filter_repeated_nodes(response):
     """We have some rules that include e.g. 2 chemicals.   We don't want responses in which those two
@@ -742,9 +741,8 @@ def filter_kgraph_orphans(message):
         logger.error(e)
         return None,500
 
-def combine_enriched_messages(original_predicate, qg,
-                                           lookup_message, updated_kg, result_messages, question_qnode, answer_qnode, qg_edge, predicates_to_exclude, resource_id):
-        # original_predicate, original_query_graph, lookup_messages, result_messages,  question_qnode, answer_qnode, qg_edge, resource_id):
+async def combine_enriched_messages(original_predicate, qg,
+                                           lookup_message, updated_kg, result_messages, question_qnode, answer_qnode, qg_edge, predicates_to_exclude):
     pydantic_kgraph = KnowledgeGraph.parse_obj({"nodes": {}, "edges": {}})
     for rm in result_messages:
         pydantic_kgraph.update(KnowledgeGraph.parse_obj(rm["message"]["knowledge_graph"]))
@@ -760,22 +758,13 @@ def combine_enriched_messages(original_predicate, qg,
     result["message"]["knowledge_graph"] = pydantic_kgraph.dict()
 
     # The result with the direct lookup needs to be handled specially.   It's the one with the lookup query graph
-    lookup_results = []  # in case we don't have any
     for result_message in result_messages:
-        if queries_equivalent(result_message["message"]["query_graph"], lookup_message.get('query_graph', {})):
-            lookup_results = result_message["message"]["results"]
-        else:
+        if not queries_equivalent(result_message["message"]["query_graph"], lookup_message.get('query_graph', {})):
             result["message"]["results"].extend(result_message["message"]["results"])
-    lookup_results = lookup_results if lookup_results else lookup_message["results"]
-
-    result = finalenrich2lookup_edges(result, question_qnode, answer_qnode, qg_edge, original_predicate, predicates_to_exclude)
-    scored_result = score(result)
-    if scored_result.status_code == 200:
-        return merge_enriched_results_by_node(scored_result, answer_qnode, lookup_results)
-    else:
-    # with open(f"OneResults{dt.now()}.json", 'w') as outf:
-    #     json.dump(mergedresults, outf, indent=2)
-        return merge_enriched_results_by_node(result, answer_qnode, lookup_results)
+    lookup_results = lookup_message["results"]
+    result = await finalenrich2lookup_edges(result, question_qnode, answer_qnode, qg_edge, original_predicate, predicates_to_exclude)
+    merged_result = merge_enriched_results_by_node(result, answer_qnode, lookup_results)
+    return merged_result
 def queries_equivalent(query1,query2):
     """Compare 2 query graphs.  The nuisance is that there is flexiblity in e.g. whether there is a qualifier constraint
     as none or it's not in there or its an empty list.  And similar for is_set and is_set is False.
@@ -864,7 +853,7 @@ def merge_answer(result_message, answer, results, qnode_ids, robokop=False):
             creative_edgesets.add(creative_edges)
             creative_results.append(result)
     results["creative"] = creative_results
-    # 1. Create node bindings for the original creative qnodes and lookup qnodes
+    # Create node bindings for the original creative qnodes and lookup qnodes
     mergedresult = {"node_bindings": {}, "analyses": []}
     serkeys = defaultdict(set)
     for q in qnode_ids:
@@ -874,50 +863,29 @@ def merge_answer(result_message, answer, results, qnode_ids, robokop=False):
                 serialized_binding = json.dumps(nb,sort_keys=True)
                 if serialized_binding not in serkeys[q]:
                     mergedresult["node_bindings"][q].append(nb)
+                    mergedresult["node_bindings"][q] = [{k: v for d in mergedresult["node_bindings"][q] for k, v in d.items()}]
                     serkeys[q].add(serialized_binding)
 
-    # 2. convert the analysis of each input result into an auxiliary graph
-    aux_graph_ids = []
-    if "auxiliary_graphs" not in result_message["message"] or result_message["message"]["auxiliary_graphs"] is None:
-        result_message["message"]["auxiliary_graphs"] = {}
-    for result in results["creative"]:
-        for analysis in result["analyses"]:
-            aux_graph_id, aux_graph = create_aux_graph(analysis)
-            result_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
-            aux_graph_ids.append(aux_graph_id)
-
-    # 3. Create a knowledge edge corresponding to the original creative query edge
-    # 4. and add the aux graphs as support for this knowledge edge
-    knowledge_edge_ids = []
-    if len(aux_graph_ids) > 0:
-        #only do this if there are creative results.  There could just be a lookup
-        for nid in answer:
-            knowledge_edge_id = add_knowledge_edge(result_message, aux_graph_ids, nid, robokop)
-            knowledge_edge_ids.append(knowledge_edge_id)
-
-    # 5. create an analysis with an edge binding from the original creative query edge to the new knowledge edge
+    # create an analysis with an edge binding from the original creative query edge to the new knowledge edge
+    knowledge_edge_ids = creative_edgesets.union(lookup_edgesets)
+    knowledge_edge_ids = set(list(kid)[0] for kid in knowledge_edge_ids)
+    # create an analysis with an edge binding from the original creative query edge to the new knowledge edge
     qedge_id = list(result_message["message"]["query_graph"]["edges"].keys())[0]
-    if robokop:
-        source = "infores:robokop"
-    else:
-        source = "infores:aragorn"
+    source = "infores:aragorn-robokop"
     analysis = {
         "resource_id": source,
-        "edge_bindings": {qedge_id:[ { "id":kid } for kid in knowledge_edge_ids ] }
-                }
+        "edge_bindings": {qedge_id: [{"id": kid} for kid in knowledge_edge_ids]}
+    }
     mergedresult["analyses"].append(analysis)
 
-    # 6. add any lookup edges to the analysis directly
+    # add any lookup edges to the analysis directly
     for result in results["lookup"]:
         for analysis in result["analyses"]:
             for qedge in analysis["edge_bindings"]:
                 if qedge not in mergedresult["analyses"][0]["edge_bindings"]:
                     mergedresult["analyses"][0]["edge_bindings"][qedge] = []
                 mergedresult["analyses"][0]["edge_bindings"][qedge].extend(analysis["edge_bindings"][qedge])
-
-    #result_message["message"]["results"].append(mergedresult)
     return mergedresult
-
 # TODO move into operations? Make a translator op out of this
 def merge_results_by_node(result_message, merge_qnode, lookup_results, robokop=False):
     """This assumes a single result message, with a single merged KG.  The goal is to take all results that share a
@@ -932,62 +900,6 @@ def merge_results_by_node(result_message, merge_qnode, lookup_results, robokop=F
         new_results.append(new_result)
     result_message["message"]["results"] = new_results
     return result_message
-import  uuid
-def create_aux_graph(analysis):
-    """Given an analysis, create an auxiliary graph.
-    Look through the analysis edge bindings, get all the knowledge edges, and put them in an aux graph.
-    Give it a random uuid as an id."""
-    aux_graph_id = str(uuid.uuid4())
-    aux_graph = { "edges": [] }
-    for edge_id, edgelist in analysis["edge_bindings"].items():
-        for edge in edgelist:
-            aux_graph["edges"].append(edge["id"])
-    return aux_graph_id, aux_graph
-
-def add_knowledge_edge(result_message, aux_graph_ids, answer, robokop):
-    """Create a new knowledge edge in the result message, with the aux graph ids as support."""
-    # Find the subject, object, and predicate of the original query
-    query_graph = result_message["message"]["query_graph"]
-    #get the first key and value from the edges
-    qedge_id, qedge = next(iter(query_graph["edges"].items()))
-    #For the nodes, if there is an id, then use it in the knowledge edge. If there is not, then use the answer
-    qnode_subject_id = qedge["subject"]
-    qnode_object_id = qedge["object"]
-    if "ids" in query_graph["nodes"][qnode_subject_id] and query_graph["nodes"][qnode_subject_id]["ids"] is not None:
-        qnode_subject = query_graph["nodes"][qnode_subject_id]["ids"][0]
-        qnode_object = answer
-    else:
-        qnode_subject = answer
-        qnode_object = query_graph["nodes"][qnode_object_id]["ids"][0]
-    predicate = qedge["predicates"][0]
-    if "qualifier_constraints" in qedge and qedge["qualifier_constraints"] is not None and len(qedge["qualifier_constraints"]) > 0:
-        qualifiers = qedge["qualifier_constraints"][0]["qualifier_set"]
-    else:
-        qualifiers = None
-    # Create a new knowledge edge
-    new_edge_id = str(uuid.uuid4())
-    if robokop:
-        source = "infores:robokop"
-    else:
-        source = "infores:aragorn"
-    new_edge = {
-        "subject": qnode_subject,
-        "object": qnode_object,
-        "predicate": predicate,
-        "attributes": [
-            {
-                "attribute_type_id": "biolink:support_graphs",
-                "value": aux_graph_ids
-            }
-        ],
-        # Aragorn is the primary ks because aragorn inferred the existence of this edge.
-        "sources": [{"resource_id":source, "resource_role":"primary_knowledge_source"}]
-    }
-    if qualifiers is not None:
-        new_edge["qualifiers"] = qualifiers
-    result_message["message"]["knowledge_graph"]["edges"][new_edge_id] = new_edge
-    return new_edge_id
-
 def get_edgeset(result):
     """Given a result, return a frozenset of any knowledge edges in it"""
     edgeset = set()
@@ -995,21 +907,3 @@ def get_edgeset(result):
         for edge_id, edgelist in analysis["edge_bindings"].items():
             edgeset.update([e["id"] for e in edgelist])
     return frozenset(edgeset)
-def score(message) -> (dict, int):
-    """
-    Calls weight correctness followed by scoring
-    :param message:
-    :param params:
-    :param guid:
-    :return:
-    """
-
-    ranker_url = os.environ.get("RANKER_URL", "https://aragorn-ranker.renci.org/1.4/score")
-    try:
-        response = requests.post(ranker_url, json=message)
-        return response
-    except ConnectionError as err:
-        logger.error(f'{ranker_url}: {err}')
-        return message
-
-

@@ -57,8 +57,20 @@ def xtest_multicurieac():
         if 'ids' in node_data and node_data.get('is_set'):
             nodeset = set(node_data.get('ids', []))
     assert len(newset['results']) >= len(nodeset)
-@pytest.mark.nongithub
-def xtest_infer():
+# @pytest.mark.nongithub
+
+
+import asyncio
+from pyinstrument import Profiler
+# from pathlib import Path
+# TESTS_ROOT = Path.cwd()
+
+# @pytest.fixture(autouse=True)
+def test_infer():
+    # PROFILE_ROOT = (TESTS_ROOT / ".profiles")
+    # # Turn profiling on
+
+
     """We can comment this out since the same appears in test_endpoint.py"""
     """Lookup Trapi with added workflow parameters"""
     """Make sure that results are well formed."""
@@ -75,13 +87,15 @@ def xtest_infer():
         pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', 0)
         predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
         properties_to_exclude = answerset.get('workflow', [])[0].get('parameters').get('properties_to_exclude',
-                                                                                           None)
-    newset = snc.coalesce(answerset['message'], method='all', mode='infer', predicates_to_exclude= predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold)
-    #uncomment this to save the result to the directory
-    with open(f"infered_newset{datetime.now()}.json", 'w') as outf:
-        json.dump(newset, outf, indent=4)
-    assert PDResponse.parse_obj({'message':newset})
-
+                                                                                       None)
+    # profiler = Profiler()
+    # with profiler:
+    newset = asyncio.run(snc.coalesce(answerset['message'], method='all', mode='infer', predicates_to_exclude=predicates_to_exclude,
+                          properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold))
+    # PROFILE_ROOT.mkdir(exist_ok=True)
+    # results_file = PROFILE_ROOT / f"{request.node.name}.html"
+    # profiler.print()
+    assert PDResponse.parse_obj({'message': newset})
 
 def resolvename(name):
     name_resolver_url = f'https://name-resolution-sri.renci.org/lookup?string={name}&offset=0&limit=2'

@@ -1,7 +1,6 @@
 import pytest
 from copy import deepcopy
-import json
-import os
+import json, os, asyncio
 import src.single_node_coalescer as snc
 from collections import defaultdict
 from src.components import PropertyPatch,Answer
@@ -312,11 +311,11 @@ def test_round_trip():
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset,method='property')
-    qg = json.dumps(newset['query_graph'])
-    kg = json.dumps(newset['knowledge_graph'])
-    rs = json.dumps(newset['results'])
-    newset_json = json.dumps(newset)
+    newset = asyncio.run(snc.coalesce(answerset,method='property'))
+    # qg = json.dumps(newset['query_graph'])
+    # kg = json.dumps(newset['knowledge_graph'])
+    # rs = json.dumps(newset['results'])
+    # newset_json = json.dumps(newset)
     assert True
 
 def test_apply_property_patches_add_two_new_nodes():
@@ -404,7 +403,7 @@ def test_automat_treat_diabetes_properties():
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset,method='property')
+    newset = asyncio.run(snc.coalesce(answerset,method='property'))
     rs = newset['results']
     assert len(rs) > 10
     # assert rs[0]['node_bindings']['n1'][0]['p_values'][0] < 1e-20
@@ -420,7 +419,7 @@ def xtest_automat_asthma_graph():
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
-    newset = snc.coalesce(answerset,method='graph')
+    newset = asyncio.run(snc.coalesce(answerset,method='graph'))
     rs = newset['results']
     assert len(rs) > 2
 #    print(rs[0]['node_bindings'])

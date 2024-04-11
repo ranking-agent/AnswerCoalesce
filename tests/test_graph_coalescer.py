@@ -1,5 +1,5 @@
 import pytest
-import os, json
+import os, json, asyncio
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Opportunity,Answer
@@ -69,11 +69,9 @@ def test_graph_coalescer_perf_test():
     # open the file and load it
     with open(test_filename,'r') as tf:
         incoming = json.load(tf)
-        incoming = incoming['message']
-
-
+    incoming = incoming['message']
     # call function that does property coalesce
-    coalesced = coalesce(incoming, method='graph')
+    coalesced = asyncio.run(coalesce(incoming, method='graph'))
     assert PDResponse.parse_obj({'message': coalesced})
     # get the amount of time it took
     diff = datetime.datetime.now() - t1
@@ -96,8 +94,8 @@ def test_graph_coalesce_with_params_1e7():
     # Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
     # now generate new answers
-    newset = snc.coalesce(answerset, method='graph', predicates_to_exclude=predicates_to_exclude,
-                          pvalue_threshold=pvalue_threshold)
+    newset = asyncio.run(snc.coalesce(answerset, method='graph', predicates_to_exclude=predicates_to_exclude,
+                          pvalue_threshold=pvalue_threshold))
     # Must be at least the length of the initial answers
     assert len(newset['results']) == len(answerset['results'])
     kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
@@ -156,7 +154,7 @@ def test_graph_coalesce_qualified():
     #Some of these edges are old, we need to know which ones...
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph')
+    newset = asyncio.run(snc.coalesce(answerset, method='graph'))
 
     assert PDResponse.parse_obj({'message':newset})
     kgedges = newset['knowledge_graph']['edges']
@@ -178,7 +176,7 @@ def test_cvs_isopropyl():
         assert PDResponse.parse_obj(answerset)
         answerset = answerset['message']
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph', pvalue_threshold=0.1)
+    newset = asyncio.run(snc.coalesce(answerset, method='graph', pvalue_threshold=0.1))
     assert newset
 
 def test_graph_coalesce():
@@ -193,7 +191,7 @@ def test_graph_coalesce():
     original_edge_ids = set([eid for eid,_ in answerset['knowledge_graph']['edges'].items()])
     original_node_ids = set([node for node in answerset['knowledge_graph']['nodes']])
     #now generate new answers
-    newset = snc.coalesce(answerset, method='graph')
+    newset = asyncio.run(snc.coalesce(answerset, method='graph'))
     assert PDResponse.parse_obj({'message': newset})
     kgnodes = set([nid for nid,n in newset['knowledge_graph']['nodes'].items()])
     kgedges = newset['knowledge_graph']['edges']
@@ -247,7 +245,7 @@ def test_graph_coalesce_strider():
         # Note: Assert PDResponse cannot work here since the categories are depicted as :
         # "categories": ["biolink:C", "biolink:H",...]
         answerset = answerset['message']
-    newset = snc.coalesce(answerset, method='graph')
+    newset = asyncio.run(snc.coalesce(answerset, method='graph'))
     #  Opportunities(5) contain nodes that we dont have links for, so they were filtered out and the patches =[]
     print(newset)
 

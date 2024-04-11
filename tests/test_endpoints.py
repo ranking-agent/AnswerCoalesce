@@ -1,14 +1,8 @@
-import os
-
-import jsonschema
-import pytest
-import yaml
-import json
+import os, pytest, json
 from fastapi.testclient import TestClient
 from reasoner_pydantic import Response as PDResponse
 
 from src.server import APP
-
 
 client = TestClient(APP)
 
@@ -74,7 +68,7 @@ def test_coalesce_basic():
     assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
     assert( len(ret['results'])==len(answerset['message']['results']))
 @pytest.mark.nongithub
-def xtest_query():
+def test_query():
     # Sample MultiCurie query
     answerset = {
         "message": {
@@ -128,7 +122,7 @@ def xtest_query():
     #     json.dump(ret, f, indent=4)
     assert(len(ret) == 3)
 @pytest.mark.nongithub
-def xtest_infer():
+def test_infer():
     # Sample lookup query with infered knowledge_type
     answerset = {
       "workflow": [
@@ -187,7 +181,7 @@ def xtest_infer():
 
     # check the data
     ret = jret['message']
-    # with open("jret", "w+") as f:
+    # with open("jretfinal", "w+") as f:
     #     json.dump(ret, f, indent=4)
 
     assert(len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
@@ -330,7 +324,7 @@ def xtest_lookup_graph_coalesce():
     assert(response.status_code == 200)
 
     original_answers = len(answerset['message']['results'])
-    final_answers    = len(response.json()['message']['results'])
+    final_answers = len(response.json()['message']['results'])
     rj = response.json()
     assert final_answers > original_answers
 
