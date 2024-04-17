@@ -13,7 +13,7 @@ redis~=3.5.3
 fastapi==0.103.1
 sanic~=23.6.0
 httpx~=0.24.1
-gunicorn==21.2.0
+gunicorn==22.0.0
 numpy
 pydantic==1.10.10
 uvicorn==0.23.2
