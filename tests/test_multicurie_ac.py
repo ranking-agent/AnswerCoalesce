@@ -62,7 +62,7 @@ def xtest_multicurieac():
 
 import asyncio
 # from pyinstrument import Profiler
-def test_infer():
+def xtest_infer():
     """We can comment this out since the same appears in test_endpoint.py"""
     """Lookup Trapi with added workflow parameters"""
     """Make sure that results are well formed."""
