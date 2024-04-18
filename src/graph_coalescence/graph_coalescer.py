@@ -119,7 +119,7 @@ def coalesce_by_graph(opportunities, mode="coalesce", predicates_to_exclude=[], 
             enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
                                             total_node_counts, predicates_to_exclude=predicates_to_exclude,
                                             pvalue_threshold=pvalue_threshold)
-            max_ret = len(nodes)
+            max_ret = len(nodes) if mode=='coalesce' else 100
 
         logger.info(f'{len(enriched_links)} enriched links discovered.')
 
@@ -127,16 +127,21 @@ def coalesce_by_graph(opportunities, mode="coalesce", predicates_to_exclude=[], 
         # It's POC, really you'd like to include many of these.  But we don't want
         # to end up with more answers than we started with, so we need to parameterize, and
         # that's more work that we can do later.
-        # (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset) )
+        processed_links = 0
         for i in range(len(enriched_links)):
             link = enriched_links[i]
-            if not result_length and i >=  max_ret:
+            best_enrich_node = link[1]
+            # We do not want (triangle) enrichment to point to the same lookup node
+            # Eg MONDO:001 - treats -> PUBCHEM.COMPOUND:0001 - treats -> MONDO:001
+            if mode == 'infer' and enrich_equal_qnode(opportunity.answer_hash, best_enrich_node):
+                continue
+            if not result_length and processed_links >= max_ret:
                     break
-            if result_length and result_length > 0 and i >= result_length:
+            if result_length and result_length > 0 and processed_links >= result_length:
                     break
+            processed_links += 1
             # Extract the pvalue and the set of chemical nodes that mapped the enriched link tuples
             best_enrich_p = link[0]
-            best_enrich_node = link[1]
             enrich_direction = direction.get(link[3])
             best_grouping = link[7]
             if mode == 'query':
@@ -212,7 +217,6 @@ def get_node_types(unique_link_nodes):
                 nodetypedict[newcurie] = node_types
     return nodetypedict
 
-
 def get_node_names(unique_link_nodes):
     # p = get_redis_pipeline(3)
     nodenames = {}
@@ -227,7 +231,6 @@ def get_node_names(unique_link_nodes):
                 except:
                     nodenames[newcurie] = ''
     return nodenames
-
 
 def get_link_counts(unique_links):
     # Now we are going to hit redis to get the counts for all of the links.
@@ -247,7 +250,6 @@ def get_link_counts(unique_links):
                     lcounts[ul] = 0
     return lcounts
 
-
 def check_prov_value_type(value):
     if isinstance(value, list):
         val = ','.join(value)
@@ -257,13 +259,11 @@ def check_prov_value_type(value):
     # This function coerce such to string
     # Also, the newer pydantic accepts 'primary_knowledge_source' instead of 'biolink:primary_knowledge_source' in the old
     return val.replace('biolink:', '')
-
 def get_edge_symmetric(edge):
     subject, b = edge.split('{')
     edge_predicate, obj = b.split('}')
     edge_predicate = '{' + edge_predicate + '}'
     return f'{obj.lstrip()} {edge_predicate} {subject.rstrip()}'
-
 def get_provs(n2l):
     # Now we are going to hit redis to get the provenances for all of the links.
     # our unique_links are the keys
@@ -308,7 +308,6 @@ def get_provs(n2l):
                         logger.info(f'{sym_edge} not exist!')
     return prov
 
-
 def filter_opportunities(opportunities, nodes_to_links):
     new_opportunities = []
     for opportunity in opportunities:
@@ -349,6 +348,10 @@ def create_nodes_to_links(allnodes):
     # Create a dict from node->links by looking up in redis.  Each link is a potential node to add.
     # This is across all opportunities as well
     # Could pipeline
+    #Noticed some qualifiers are have either but not both
+    # eg ['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}', True]
+    #  VS['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', True]
+    standard_qualifiers = {"object_aspect_qualifier", "object_direction_qualifier"}
     nodes_to_links = {}
     with get_redis_pipeline(0) as p:
         for group in grouper(1000, allnodes.keys()):
@@ -360,6 +363,9 @@ def create_nodes_to_links(allnodes):
                     links = []
                 else:
                     links = orjson.loads(linkstring)
+                        ## Redundant edges with only object_aspect_qualifier but no object_direction
+                        # [lstring for lstring in orjson.loads(linkstring) if standard_qualifiers.issubset(set(orjson.loads(lstring[1]).keys())) or
+                        # not any(element in set(orjson.loads(lstring[1]).keys()) for element in standard_qualifiers)]
                     # this is a bit hacky.  If we're pulling in redundant, then high level symmetric predicates
                     # have been assigned one direction only. We're going to invert them as well to allow matching
                 newlinks = []
@@ -409,6 +415,11 @@ def filter_opportunities_and_unify(opportunities, nodes_to_links):
 
     return new_nodes_to_links, nodes_indices, unique_link_nodes, unique_links
 
+def enrich_equal_qnode(qnode_hash, best_enrich_node):
+    for _, val in qnode_hash:
+        if best_enrich_node in val:
+            return True
+    return False
 
 # def get_shared_links(nodes, stype, nodes_type_list: dict):
 #    """Return the intersection of the superclasses of every node in nodes"""
@@ -504,18 +515,22 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
                     pass
 
             if x > 0  and n == 0:
-                print(f"x == {x}; n == 0???")
-                print(newcurie, predicate, newcurie_is_source, semantic_type)
+                logger.info(f"x == {x}; n == 0??? : {newcurie} {predicate} {newcurie_is_source} {semantic_type} ")
+
+                # print(f"x == {x}; n == 0???")
+                # print(newcurie, predicate, newcurie_is_source, semantic_type)
                 continue
 
             ndraws = len(nodes)
 
             # I only care about things that occur more than by chance, not less than by chance
             if x < n * ndraws / total_node_count:
-                print(f"x == {x} < {n * ndraws / total_node_count}")
-                print(newcurie, predicate, newcurie_is_source, semantic_type)
-                print("occur less than by chance")
-                print()
+                logger.info(f"x == {x} < {n * ndraws / total_node_count} : {newcurie} {predicate} {newcurie_is_source} {semantic_type} occur less than by chance")
+
+                # print(f"x == {x} < {n * ndraws / total_node_count}")
+                # print(newcurie, predicate, newcurie_is_source, semantic_type)
+                # print("occur less than by chance")
+                # print()
                 continue
 
             # The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.

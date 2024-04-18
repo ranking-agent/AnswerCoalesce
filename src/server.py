@@ -40,7 +40,6 @@ APP.add_middleware(
     allow_headers=["*"],
 )
 
-
 # declare the types of answer coalesce methods
 class MethodName(str, Enum):
     all = "all"

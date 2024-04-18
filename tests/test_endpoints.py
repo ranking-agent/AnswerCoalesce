@@ -128,11 +128,13 @@ def test_infer():
       "workflow": [
             {
                 "id": "enrich_results",
-                "parameters": {"pvalue_threshold": 1e-7,
-                "predicates_to_exclude": [
-                    "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
-                    "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
-                  ]
+                "parameters": {
+                    "pvalue_threshold": 1e-7,
+                    "result_length":100,
+                    "predicates_to_exclude": [
+                        "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+                        "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event", "biolink:related_to"
+                      ]
                 }
             }
         ],
@@ -171,18 +173,21 @@ def test_infer():
 
     assert PDResponse.parse_obj(answerset)
     # make a good request
+    # from pyinstrument import Profiler
+    # profiler = Profiler()
+    # with profiler:
     response = client.post('/infer', json=answerset)
-
+    # profiler.print()
     # was the request successful
     assert(response.status_code == 200)
 
     # convert the response to a json object
     jret = json.loads(response.content)
 
+    with open("EDGAR-UI/jretfinalnew11", "w+") as f:
+        json.dump(jret, f, indent=4)
     # check the data
     ret = jret['message']
-    # with open("jretfinal", "w+") as f:
-    #     json.dump(ret, f, indent=4)
 
     assert(len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
 

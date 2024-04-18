@@ -62,15 +62,7 @@ def xtest_multicurieac():
 
 import asyncio
 # from pyinstrument import Profiler
-# from pathlib import Path
-# TESTS_ROOT = Path.cwd()
-
-# @pytest.fixture(autouse=True)
 def test_infer():
-    # PROFILE_ROOT = (TESTS_ROOT / ".profiles")
-    # # Turn profiling on
-
-
     """We can comment this out since the same appears in test_endpoint.py"""
     """Lookup Trapi with added workflow parameters"""
     """Make sure that results are well formed."""
@@ -92,8 +84,6 @@ def test_infer():
     # with profiler:
     newset = asyncio.run(snc.coalesce(answerset['message'], method='all', mode='infer', predicates_to_exclude=predicates_to_exclude,
                           properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold))
-    # PROFILE_ROOT.mkdir(exist_ok=True)
-    # results_file = PROFILE_ROOT / f"{request.node.name}.html"
     # profiler.print()
     assert PDResponse.parse_obj({'message': newset})
 
