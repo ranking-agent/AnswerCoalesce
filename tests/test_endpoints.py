@@ -184,8 +184,8 @@ def test_infer():
     # convert the response to a json object
     jret = json.loads(response.content)
 
-    with open("EDGAR-UI/jretfinalnew11", "w+") as f:
-        json.dump(jret, f, indent=4)
+    # with open("EDGAR-UI/jretfinalnew11", "w+") as f:
+    #     json.dump(jret, f, indent=4)
     # check the data
     ret = jret['message']
 

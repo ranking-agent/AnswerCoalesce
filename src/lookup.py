@@ -279,9 +279,9 @@ def normalize_qgraph_ids(unique_link_nodes, return_category):
 def format_node(nnresults, return_category):
     result = {}
     for key, value in nnresults.items():
-        if not value['id'].get('label'):
+        if not value.get('id', {}).get('label'):
             continue
-        if not value['type']:
+        if not value.get('type'):
             continue
         if return_category:
             if set(return_category).intersection(value['equivalent_identifiers']) == set():
