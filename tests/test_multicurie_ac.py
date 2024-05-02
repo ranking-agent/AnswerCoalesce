@@ -60,87 +60,8 @@ def xtest_multicurieac():
 # @pytest.mark.nongithub
 
 
-import asyncio
-# from pyinstrument import Profiler
-def xtest_infer():
-    """We can comment this out since the same appears in test_endpoint.py"""
-    """Lookup Trapi with added workflow parameters"""
-    """Make sure that results are well formed."""
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'alzheimers_qg.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    assert PDResponse.parse_obj(answerset)
-    predicates_to_exclude = None
-    pvalue_threshold = None
-    properties_to_exclude = None
-    if 'workflow' in answerset and 'parameters' in answerset['workflow'][0]:
-        pvalue_threshold = answerset.get('workflow')[0].get('parameters').get('pvalue_threshold', 0)
-        predicates_to_exclude = answerset.get('workflow')[0].get('parameters').get('predicates_to_exclude', None)
-        properties_to_exclude = answerset.get('workflow', [])[0].get('parameters').get('properties_to_exclude',
-                                                                                       None)
-    # profiler = Profiler()
-    # with profiler:
-    newset = asyncio.run(snc.coalesce(answerset['message'], method='all', mode='infer', predicates_to_exclude=predicates_to_exclude,
-                          properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold))
-    # profiler.print()
-    assert PDResponse.parse_obj({'message': newset})
-
-def resolvename(name):
-    name_resolver_url = f'https://name-resolution-sri.renci.org/lookup?string={name}&offset=0&limit=2'
-    res = requests.post(name_resolver_url).json()
-    curie = ''
-    for rs in res:
-        if rs['label']==name or rs['label'].lower() == name.lower():
-            curie = rs['curie']
-            break
-    return curie
-
-# TO run the test from terminal. Specially made for profiling
-def xtest_multicurierac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers):
-    # target_ids =  ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
-    # target = 'gene'
-    # source_id = 'chemical'
-    # input_category = 'biolink:Gene'
-    # output_category = 'biolink:ChemicalEntity'
-    # predicate = 'affects'
-    # qualifiers = 'increased_activity'
-# def test_pathfinderac(target_ids =[], target = '', input_category = '', source_ids='', source = '', output_category='',  predicate='', qualifiers='')
-# def test_pathfinderac():
-##Sources: https://link.springer.com/article/10.1007/s41048-019-0086-2
-    # target_ids = ['JUN', 'GDI1', 'GNAI2']#["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
-    # target_ids= ["NCBIGene:3693", "NCBIGene:19894", "NCBIGene:2778", "NCBIGene:7070", "NCBIGene:103178432"]
-    # target_ids = ['NPM1','FLT3','NRAS','BCL2']
-    # target='gene'
-    # target_category='biolink:Gene'
-    # predicate= ['biolink:genetically_associated_with', 'biolink:genetic_association',
-    #             'biolink:genetically_interacts_with', 'biolink:physically_interacts_with',
-    #             'biolink:interacts_with', 'biolink:directly_physically_interacts_with', 'biolink:binds']
-    #                                       #'biolink:affects'
-    # source_ids=None
-    # source='genes'
-    # source_category='biolink:Gene'
-    # qualifiers = 'increased_activity'
-    # qualifiers=''
-
-    if not target_ids:
-        """Make sure that results are well formed."""
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        testfilename = os.path.join(dir_path, jsondir, 'sampleset.json')
-        with open(testfilename, 'r') as tf:
-            answerset = json.load(tf)
-            assert PDResponse.parse_obj(answerset)
-            answerset = answerset['message']
-    else:
-        if isinstance(target_ids, str):
-            target_ids = target_ids.split(',')
-        if target_ids[0].find(':')<0:
-            target_ids = [resolvename(name) for name in target_ids]
-
-        # print('=====: ', target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers, end='\n')
-        answerset = get_qg(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)
-        # print(answerset)
+def xtest_profile_multicurie_ac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers):
+    answerset = get_qg(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)
     with cProfile.Profile() as profile:
         newset = snc.coalesce(answerset, method='graph')
     s = io.StringIO()
@@ -153,9 +74,6 @@ def xtest_multicurierac(target_ids, target, target_category, predicate, source_i
     print()
     print(f"*** {len(newset['results'])} *** results returned")
     print(f"nodeset: {nodeset}")
-    #uncomment this to save the result to the directory
-    # with open(f"newset{datetime.now()}.json", 'w') as outf:
-    #     json.dump(newset, outf, indent=4)
     assert PDResponse.parse_obj({'message': newset})
     if newset['results']:
         print(f"Samples: {[newset['knowledge_graph']['nodes'][idx]['name'] for idx in random.sample(list(set(newset['knowledge_graph']['nodes']).difference(nodeset)), 2)]}")
@@ -223,9 +141,7 @@ def get_qg(target_ids, target, target_category, predicate, source_ids, source, s
     query_template = Template(qg_template())
     query = {}
     source_ids = source_ids if source_ids== None else []
-    # print('source_ids: ', source_ids)
     is_source = True if source_ids else False
-    # print('is_source: ', is_source)
     if isinstance(predicate, str):
         predicate = predicate.split(',')
     quali = []
@@ -285,4 +201,4 @@ if __name__ == '__main__':
             "Example: test_acPathfinder.py NCBIGene:3693,NCBIGene:19894 gene 'biolink:Gene' 'biolink:affects' None chemical 'biolink:ChemicalEntity' '' ")
         sys.exit(1)
     # Call your function with the provided or default values
-    xtest_multicurierac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)
+    xtest_profile_multicurie_ac(target_ids, target, target_category, predicate, source_ids, source, source_category, qualifiers)
