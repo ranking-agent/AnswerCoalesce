@@ -270,41 +270,41 @@ def create_result(source_id, target_id, eid, anode, qnode, qedge, answerset):
 
     return answerset
 
-def normalize_qgraph_ids(unique_link_nodes, return_category):
-    url = f'https://nodenormalization-sri.renci.org/get_normalized_nodes'
-    normalized_curies = {}
-    nnp = { "curies": list(unique_link_nodes), "conflate": True }
-    nnresult = requests.post(url, json=nnp)
-    if nnresult.status_code == 200:
-        nnresults = nnresult.json()
-        normalized_curies = format_node(nnresults, return_category)
-    else:
-        logger.error(f"Error reaching node normalizer: {nnresult.status_code}")
-    return normalized_curies
+# def normalize_qgraph_ids(unique_link_nodes, return_category):
+#     url = f'https://nodenormalization-sri.renci.org/get_normalized_nodes'
+#     normalized_curies = {}
+#     nnp = { "curies": list(unique_link_nodes), "conflate": True }
+#     nnresult = requests.post(url, json=nnp)
+#     if nnresult.status_code == 200:
+#         nnresults = nnresult.json()
+#         normalized_curies = format_node(nnresults, return_category)
+#     else:
+#         logger.error(f"Error reaching node normalizer: {nnresult.status_code}")
+#     return normalized_curies
 
-def format_node(nnresults, return_category):
-    result = {}
-    for key, value in nnresults.items():
-        if not value.get('id', {}).get('label'):
-            continue
-        if not value.get('type'):
-            continue
-        if return_category:
-            if return_category.intersection([item['identifier'] for item in value['equivalent_identifiers']]) == set():
-                continue
-        result[key] = {'name': value['id']['label'], 'categories': value['type'], 'attributes': [{
-            "attribute_type_id": "biolink:same_as",
-            "value": [item['identifier'] for item in value['equivalent_identifiers']],
-            "value_type_id": "metatype:uriorcurie",
-            "original_attribute_name": "equivalent_identifiers"
-        },
-            {
-                "attribute_type_id": "biolink:Attribute",
-                "value": value.get('information_content', 0),
-                "value_type_id": "EDAM:data_0006",
-                "original_attribute_name": "information_content"
-            }]}
-    return result
+# def format_node(nnresults, return_category):
+#     result = {}
+#     for key, value in nnresults.items():
+#         if not value.get('id', {}).get('label'):
+#             continue
+#         if not value.get('type'):
+#             continue
+#         if return_category:
+#             if return_category.intersection([item['identifier'] for item in value['equivalent_identifiers']]) == set():
+#                 continue
+#         result[key] = {'name': value['id']['label'], 'categories': value['type'], 'attributes': [{
+#             "attribute_type_id": "biolink:same_as",
+#             "value": [item['identifier'] for item in value['equivalent_identifiers']],
+#             "value_type_id": "metatype:uriorcurie",
+#             "original_attribute_name": "equivalent_identifiers"
+#         },
+#             {
+#                 "attribute_type_id": "biolink:Attribute",
+#                 "value": value.get('information_content', 0),
+#                 "value_type_id": "EDAM:data_0006",
+#                 "original_attribute_name": "information_content"
+#             }]}
+#     return result
 
 def lookup(answerset):
     opportunity = get_opportunity(answerset)
