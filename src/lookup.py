@@ -37,7 +37,6 @@ def get_redis_pipeline(dbnum):
 
 
 def get_node_types(unique_link_nodes):
-    # p = get_redis_pipeline(1)
     nodetypedict = {}
     with get_redis_pipeline(1) as p:
         for ncg in grouper(2000, unique_link_nodes):
@@ -49,9 +48,7 @@ def get_node_types(unique_link_nodes):
                 nodetypedict[newcurie] = node_types
     return nodetypedict
 
-
 def get_node_names(unique_link_nodes):
-    # p = get_redis_pipeline(3)
     nodenames = {}
     with get_redis_pipeline(3) as p:
         for ncg in grouper(1000, unique_link_nodes):
@@ -65,22 +62,31 @@ def get_node_names(unique_link_nodes):
                     nodenames[newcurie] = ''
     return nodenames
 
-
-def check_prov_value_type(value):
-    if isinstance(value, list):
-        val = ','.join(value)
-    else:
-        val = value
-    # I noticed some values are lists eg. ['infores:sri-reference-kg']
-    # This function coerce such to string
-    # Also, the newer pydantic accepts 'primary_knowledge_source' instead of 'biolink:primary_knowledge_source' in the old
-    return val.replace('biolink:', '')
-
+def get_node_properties(unique_link_nodes, return_category_set):
+    nodetypedict = get_node_types(unique_link_nodes)
+    nodenamedict = get_node_names(unique_link_nodes)
+    nodes = {}
+    for node in unique_link_nodes:
+        if return_category_set and return_category_set.intersection(nodetypedict[node]):
+            nodes.update({node: {'name': nodenamedict[node], 'categories': nodetypedict[node], 'attributes': []}})
+    return nodes
 
 def get_provs(edges):
     # Now we are going to hit redis to get the provenances for all of the links.
     # our unique_links are the keys
     # Convert n2l to edges
+    # we could reuse the function in Graph Coalesce, except that the condition below doesnt apply there:
+        # if "infores:text-mining-provider-targeted" in n.decode('utf-8'):
+        #     continue
+    def check_prov_value_type(value):
+        if isinstance(value, list):
+            val = ','.join(value)
+        else:
+            val = value
+        # I noticed some values are lists eg. ['infores:sri-reference-kg']
+        # This function coerce such to string
+        # Also, the newer pydantic accepts 'primary_knowledge_source' instead of 'biolink:primary_knowledge_source' in the old
+        return val.replace('biolink:', '')
 
     def get_edge_symmetric(edge):
         subject, b = edge.split('{')
@@ -123,7 +129,6 @@ def get_provs(edges):
                         logger.info(f'{sym_edge} not exist!')
     return prov
 
-
 def get_opportunity(answerset):
     query_graph = answerset.get("query_graph", {})
     allpreds = set()
@@ -140,19 +145,20 @@ def get_opportunity(answerset):
             qnode_ids = subject["ids"]
             is_source = True
         else:
-            qnode_ids = object["ids"]
             is_source = False
-            opportunity['answer_categories'].update(edge_data.get('categories', []))
+            qnode_ids = object["ids"]
+
         eid.add(qg_eid)
         if is_source:
             opportunity['q_node'] = edge_data.get('subject')
             opportunity['a_node'] = edge_data.get('object')
-            return_category = object.get('categories', [])[0]
+            return_category = object.get('categories', [])
         else:
             opportunity['q_node'] = edge_data.get('object')
             opportunity['a_node'] = edge_data.get('subject')
-            return_category = subject.get('categories', [])[0]
+            return_category = subject.get('categories', [])
 
+        opportunity['answer_categories'].update(return_category)
         for qnode_id in qnode_ids:
             edgepredicate = {}; qualifiers = {}
             if 'qualifier_constraints' in edge_data and len(edge_data.get('qualifier_constraints', [])) > 0:
@@ -161,20 +167,20 @@ def get_opportunity(answerset):
             for predicate in edge_data['predicates']:
                 edgepredicate.update(qualifiers)
                 edgepredicate.update({'predicate': predicate})
-                alledges.add(f'{qnode_id}\t{json.dumps(edgepredicate)}\t{is_source}\t{return_category}')
+                alledges.add(f'{qnode_id}\t{json.dumps(edgepredicate)}\t{is_source}\t{return_category[0]}')
 
     opportunity['qg_curies'] = qnode_ids
     opportunity['edges'] = alledges
     opportunity['all_preds'] = allpreds
     opportunity['qg_eid'] = eid
 
+
     return opportunity
 
-def get_curie2pred_link(opportunity):
+def get_curie_to_lookup_links(opportunity):
     """
     Finds keys in Redis whose values contain a specific pattern.
     """
-
     curie = opportunity['qg_curies'][0]
     unique_link_nodes_with_prov = set([curie])
     predicate_links = defaultdict(set)
@@ -284,7 +290,7 @@ def format_node(nnresults, return_category):
         if not value.get('type'):
             continue
         if return_category:
-            if set(return_category).intersection(value['equivalent_identifiers']) == set():
+            if return_category.intersection([item['identifier'] for item in value['equivalent_identifiers']]) == set():
                 continue
         result[key] = {'name': value['id']['label'], 'categories': value['type'], 'attributes': [{
             "attribute_type_id": "biolink:same_as",
@@ -302,9 +308,10 @@ def format_node(nnresults, return_category):
 
 def lookup(answerset):
     opportunity = get_opportunity(answerset)
-    links, unique_link_nodes, provs = get_curie2pred_link(opportunity)
+    links, unique_link_nodes, provs = get_curie_to_lookup_links(opportunity)
     if links:
-        normalized_nodes = normalize_qgraph_ids(unique_link_nodes, opportunity['answer_categories'])
+        # normalized_nodes = normalize_qgraph_ids(unique_link_nodes, opportunity.get('answer_categories'))
+        normalized_nodes = get_node_properties(unique_link_nodes, opportunity.get('answer_categories'))
         qnodes = set(normalized_nodes.keys()).intersection(opportunity.get('qg_curies'))
         kg_and_result = make_kg_and_results(normalized_nodes, links, provs, qnodes, opportunity)
         kg_and_result.update({'query_graph': answerset["query_graph"]})
