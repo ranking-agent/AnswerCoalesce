@@ -1,0 +1,35 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "chemical": {
+                    "categories": [
+                        "biolink:ChemicalEntity"
+                    ],
+                    "is_set": false,
+                    "constraints": []
+                },
+                "gene": {
+                    "ids": ["NCBIGene:5111", "NCBIGene:8856", "UniProtKB:P24462"],
+                    "categories": [
+                        "biolink:Gene"
+                    ],
+                    "is_set": true,
+                    "constraints": []
+                }
+            },
+            "edges": {
+                "e00": {
+                    "subject": "chemical",
+                    "object": "gene",
+                    "predicates": [
+                        "biolink:affects"
+                    ],
+                    "knowledge_type": "inferred",
+                    "attribute_constraints": [],
+                    "qualifier_constraints": []
+                }
+            }
+        }
+  }
+}

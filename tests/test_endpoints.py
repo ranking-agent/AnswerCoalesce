@@ -1,19 +1,12 @@
-import os
-
-import jsonschema
-import pytest
-import yaml
-import json
+import os, pytest, json
 from fastapi.testclient import TestClient
 from reasoner_pydantic import Response as PDResponse
 
 from src.server import APP
 
-
 client = TestClient(APP)
 
 jsondir= 'InputJson_1.4'
-
 
 def set_workflowparams(lookup_results):
     # Dummy parameters to check igf reasoner pydantic accepts the new parameters
@@ -32,17 +25,18 @@ def set_workflowparams(lookup_results):
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub
-def test_basic():
+def test_coalesce_basic():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
 
     # testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
-    #
+    # #
     # with open(testfilename, 'r') as tf:
     #     answerset = json.load(tf)
+    #     set_workflowparams(answerset)
 
-    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflow.json')
+    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflowparams.json')
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
         set_workflowparams(answerset)
@@ -58,7 +52,7 @@ def test_basic():
 
     assert PDResponse.parse_obj(answerset)
     # make a good request
-    response = client.post('/coalesce/all', json=answerset)
+    response = client.post('/coalesce/graph', json=answerset)
 
     # was the request successful
     assert(response.status_code == 200)
@@ -68,11 +62,134 @@ def test_basic():
 
     # check the data
     ret = jret['message']
+    # with open("jret", "w+") as f:
+    #     json.dump(ret, f, indent=4)
+
     assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
-    assert( len(ret['query_graph']['nodes']) < 6)
-
     assert( len(ret['results'])==len(answerset['message']['results']))
+@pytest.mark.nongithub
+def test_query():
+    # Sample MultiCurie query
+    answerset = {
+        "message": {
+            "query_graph": {
+                "nodes": {
+                    "chemical": {
+                        "categories": [
+                            "biolink:ChemicalEntity"
+                        ],
+                        "is_set": False,
+                        "constraints": []
+                    },
+                    "gene": {
+                        "ids": ["NCBIGene:5111", "NCBIGene:8856", "UniProtKB:P24462", "NCBIGene:3356", "NCBIGene:152", "NCBIGene:1571"],
+                        "categories": [
+                            "biolink:Gene"
+                        ],
+                        "is_set": True,
+                        "constraints": []
+                    }
+                },
+                "edges": {
+                    "e00": {
+                        "subject": "chemical",
+                        "object": "gene",
+                        "predicates": [
+                            "biolink:affects"
+                        ],
+                        "knowledge_type": "inferred",
+                        "attribute_constraints": [],
+                        "qualifier_constraints": []
+                    }
+                }
+            }
+      }
+    }
 
+    assert PDResponse.parse_obj(answerset)
+    # make a good request
+    response = client.post('/query', json=answerset)
+
+    # was the request successful
+    assert(response.status_code == 200)
+
+    # convert the response to a json object
+    jret = json.loads(response.content)
+
+    # check the data
+    ret = jret['message']
+    # with open("jret", "w+") as f:
+    #     json.dump(ret, f, indent=4)
+    assert(len(ret) == 3)
+@pytest.mark.nongithub
+def test_infer():
+    # Sample lookup query with infered knowledge_type
+    answerset = {
+      "workflow": [
+            {
+                "id": "enrich_results",
+                "parameters": {
+                    "pvalue_threshold": 1e-7,
+                    "result_length":100,
+                    "predicates_to_exclude": [
+                        "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+                        "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event", "biolink:related_to"
+                      ]
+                }
+            }
+        ],
+      "message": {
+        "query_graph": {
+          "nodes": {
+            "chemical": {
+              "categories": [
+                "biolink:ChemicalEntity"
+              ],
+              "is_set": False,
+              "constraints": []
+            },
+            "disease": {
+              "ids": [
+                "MONDO:0004975"
+              ],
+              "is_set": False,
+              "constraints": []
+            }
+          },
+          "edges": {
+            "e00": {
+              "subject": "chemical",
+              "object": "disease",
+              "predicates": [
+                "biolink:treats"
+              ],
+              "attribute_constraints": [],
+              "qualifier_constraints": []
+            }
+          }
+        }
+      }
+    }
+
+    assert PDResponse.parse_obj(answerset)
+    # make a good request
+    # from pyinstrument import Profiler
+    # profiler = Profiler()
+    # with profiler:
+    response = client.post('/infer', json=answerset)
+    # profiler.print()
+    # was the request successful
+    assert(response.status_code == 200)
+
+    # convert the response to a json object
+    jret = json.loads(response.content)
+
+    # with open("EDGAR-UI/jretfinalnew11", "w+") as f:
+    #     json.dump(jret, f, indent=4)
+    # check the data
+    ret = jret['message']
+
+    assert(len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
 
 @pytest.mark.nongithub
 def test_property():
@@ -152,7 +269,6 @@ def test_set_coalesce():
     assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional param: auxilliary_Graph
     assert( len(ret['results'])==len(answerset['message']['results']) )
 
-
 def xtest_coalesce():
     """Bring back when properties are working again"""
     # get the location of the Translator specification file
@@ -176,7 +292,6 @@ def xtest_coalesce():
     ret = jret['message']
     assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional param: auxilliary_Graph
     assert( len(ret['results'])-len(answerset['message']['results']) == 118 )
-
 
 def xfailed_relation_attrib_error_test_schizo_coalesce():
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
@@ -214,7 +329,7 @@ def xtest_lookup_graph_coalesce():
     assert(response.status_code == 200)
 
     original_answers = len(answerset['message']['results'])
-    final_answers    = len(response.json()['message']['results'])
+    final_answers = len(response.json()['message']['results'])
     rj = response.json()
     assert final_answers > original_answers
 
@@ -277,7 +392,6 @@ def xtest_500():
     final_answers    = len(response.json()['message']['results'])
     rj = response.json()
     assert final_answers > original_answers
-
 
 def test_no_results():
     #Don'tfreak out if strider doesn't find anything

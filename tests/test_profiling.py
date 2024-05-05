@@ -8,6 +8,9 @@ import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
 
+'''
+Using results from translator UI to test AC for speed
+'''
 def set_workflowparams(lookup_results):
     # Dummy parameters to check igf reasoner pydantic accepts the new parameters
     return lookup_results.update({"workflow": [

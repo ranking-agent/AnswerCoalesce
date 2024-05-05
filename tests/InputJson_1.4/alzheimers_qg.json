@@ -1,0 +1,45 @@
+{
+  "workflow": [
+        {
+            "id": "lookup",
+            "parameters": {"pvalue_threshold": 1e-7,
+            "predicates_to_exclude": [
+                "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+                "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
+              ]
+            }
+        }
+    ],
+  "message": {
+    "query_graph": {
+      "nodes": {
+        "chemical": {
+          "categories": [
+            "biolink:ChemicalEntity"
+          ],
+          "is_set": false,
+          "constraints": []
+        },
+        "disease": {
+          "ids": [
+            "MONDO:0004975"
+          ],
+          "is_set": false,
+          "constraints": []
+        }
+      },
+      "edges": {
+        "e00": {
+          "subject": "chemical",
+          "object": "disease",
+          "predicates": [
+            "biolink:treats"
+          ],
+          "knowledge_type": "inferred",
+          "attribute_constraints": [],
+          "qualifier_constraints": []
+        }
+      }
+    }
+  }
+}
