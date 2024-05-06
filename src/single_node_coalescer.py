@@ -482,7 +482,7 @@ def finalenrich2lookup_edges(rmsg, question_qnode, answer_qnode, qg_edge, qg_pre
             if {'id': kgedge} in existing_bd['analyses'][0]['edge_bindings'][qg_edge]:
                 continue
             else:
-                existing_bd['analyses'][0]['edge_bindings'][qg_edge].append({'id': kgedge})
+                existing_bd['analyses'][0]['edge_bindings'][qg_edge].append({'id': kgedge, 'attributes': []})
         else:
             binding_dict[new_a] = one_result
 

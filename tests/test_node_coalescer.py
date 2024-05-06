@@ -11,7 +11,7 @@ def test_bindings():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.4','asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         assert PDResponse.parse_obj(answerset)
@@ -33,7 +33,7 @@ def test_hash_one_hop():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.4','asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -61,7 +61,7 @@ def test_hash_one_hop_with_different_predicates():
     we should end up with as many classes as combinations of predicates when n0 is the variable node
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1','asthma_one_hop_many_preds.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5','asthma_one_hop_many_preds.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -79,7 +79,7 @@ def test_hash_one_hop_with_different_predicates():
 
 
     for result in answerset['results']:
-        ebs = result['edge_bindings']
+        ebs = result["analyses"][0]['edge_bindings']
         ps = set()
         for eb_id,eblist in ebs.items():
             #all the qg_id should be e1, but just in case
@@ -106,7 +106,7 @@ def x_test_hash_topology():
     change.  The other gene spot varies, and has related process variation.  Most variations
     include only one gene, but there are a couple that include 2"""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1','robokop_degreaser.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5','robokop_degreaser.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -307,7 +307,7 @@ def test_round_trip():
     It contains the robokop answer for (chemical_substance)-[contributes_to]->(Asthma).
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     #note that this json also contains support edges which are in the edge bindings, but not in the question
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1','asthma_one_hop.json')
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5','asthma_one_hop.json')
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
@@ -399,7 +399,7 @@ def test_automat_treat_diabetes_properties():
     It contains the robokop answer for
     If the chemical substance is allowed to vary, every answer should give the same hash."""
     fn = 'mychem_treats_diabetes.json'
-    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.1',fn)
+    testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5',fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)
         answerset = answerset['message']
