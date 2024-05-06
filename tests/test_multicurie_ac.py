@@ -7,7 +7,7 @@ import src.single_node_coalescer as snc
 from src.query_graph_templates import qg_template
 from reasoner_pydantic import Response as PDResponse
 
-jsondir ='InputJson_1.4'
+jsondir ='InputJson_1.5'
 
 #Used in test_graph_coalesce to extract values from attributes, which can be a list or a string
 def flatten(ll):

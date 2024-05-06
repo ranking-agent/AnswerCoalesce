@@ -1,0 +1,42 @@
+{
+    "message": {
+        "query_graph": {
+            "nodes": {
+                "n0": {
+                    "ids": [
+                        "SNOMEDCT:197358007"
+                    ],
+                    "categories": null,
+                    "is_set": false,
+                    "constraints": null,
+                    "name": "drug-induced liver injury"
+                },
+                "n1": {
+                    "ids": null,
+                    "categories": [
+                        "biolink:DiseaseOrPhenotypicFeature"
+                    ],
+                    "is_set": false,
+                    "constraints": null,
+                    "name": "Disease Or Phenotypic Feature"
+                }
+            },
+            "edges": {
+                "e0": {
+                    "subject": "n0",
+                    "object": "n1",
+                    "predicates": [
+                        "biolink:correlated_with"
+                    ],
+                    "relation": null,
+                    "constraints": null
+                }
+            }
+        },
+        "knowledge_graph": {
+            "nodes": {},
+            "edges": {}
+        },
+        "results": []
+    }
+}

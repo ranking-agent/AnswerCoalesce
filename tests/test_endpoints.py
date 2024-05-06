@@ -6,7 +6,7 @@ from src.server import APP
 
 client = TestClient(APP)
 
-jsondir= 'InputJson_1.4'
+jsondir= 'InputJson_1.5'
 
 def set_workflowparams(lookup_results):
     # Dummy parameters to check igf reasoner pydantic accepts the new parameters

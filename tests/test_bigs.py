@@ -3,10 +3,10 @@ import json
 import os
 import src.single_node_coalescer as snc
 
-input_dir = 'InputJson_1.1'
+input_dir = 'InputJson_1.5'
 
 def xtest_killer_graphbased():
-    fn = f'InputJson_1.2/killer.json'
+    fn = f'InputJson_1.5/killer.json'
     testfilename = os.path.join(os.path.abspath(os.path.dirname(__file__)),fn)
     with open(testfilename,'r') as tf:
         answerset = json.load(tf)

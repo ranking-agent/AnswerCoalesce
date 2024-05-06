@@ -201,7 +201,7 @@ class PropertyPatch:
                 if not isinstance(newnode.newnode_type, list):
                     newnode.newnode_type = [newnode.newnode_type]
 
-                kg['nodes'].update({ newnode.newnode:{'name': newnode.newnode_name, 'categories': newnode.newnode_type}})
+                kg['nodes'].update({ newnode.newnode:{'name': newnode.newnode_name, 'categories': newnode.newnode_type, 'attributes': []}})
                 kg_index['nodes'].add(newnode.newnode)
             #Add new edges
             for curie in self.set_curies: #try to add a new edge from this curie to newnode
@@ -294,7 +294,7 @@ class PropertyPatch_query:
         answer = {}
         result = []
         for qg_edge in nodeset.get('answer_edge'):
-            answer['node_bindings'] = {self.qg_id: [{'id': curie, 'qnode_id': curie} for curie in self.set_curies],
+            answer['node_bindings'] = {self.qg_id: [{'id': curie, 'qnode_id': curie, 'attributes': []} for curie in self.set_curies],
                                      nodeset.get('answer_id', 'answer'): [{'id': newnode.newnode} for newnode in
                                                                           self.added_nodes]}
             answer['analyses'] = [{"resource_id": "infores:automat-robokop",
@@ -330,7 +330,7 @@ class PropertyPatch_query:
                     newnode.newnode_type = [newnode.newnode_type]
 
                 kg['nodes'].update(
-                    {newnode.newnode: {'name': newnode.newnode_name, 'categories': newnode.newnode_type}})
+                    {newnode.newnode: {'name': newnode.newnode_name, 'categories': newnode.newnode_type, 'attributes': []}})
                 kg_index['nodes'].add(newnode.newnode)
 
 
@@ -338,7 +338,7 @@ class PropertyPatch_query:
             for curie in self.set_curies:  # try to add a new edge from this curie to newnode
                 if curie not in kg['nodes']:
                     kg['nodes'].update(
-                        {curie: {'name': self.curies_names.get(curie), 'categories': self.curies_types.get(curie)}}
+                        {curie: {'name': self.curies_names.get(curie), 'categories': self.curies_types.get(curie), 'attributes': []}}
                     )
                     kg_index['nodes'].add(curie)
                 if curie == newnode.newnode:
@@ -457,7 +457,7 @@ class Answer:
     #
     def to_json(self):
         """Serialize the answer back to ReasonerStd JSON 1.0"""
-        json_node_bindings = { q : [ {"id": kid} for kid in k ] for q,k in self.node_bindings.items() }
+        json_node_bindings = { q : [ {"id": kid, "attributes": []} for kid in k ] for q,k in self.node_bindings.items() }
 
         # Initially the edge bindings have qnode_id, rewrite them in the node_bindings
         for q_node, q_nodeid in zip(self.question_node, self.question_node_ids):
@@ -465,13 +465,13 @@ class Answer:
                 json_node_bindings[q_node][0]["qnode_id"] = q_nodeid
 
         json_analyses = [ {'resource_id':analysis['resource_id'],
-                           'edge_bindings': {key:[{"id": list(value)[0]}]  for key, value in analysis['edge_bindings'].items()},
+                           'edge_bindings': {key:[{"id": list(value)[0], "attributes":[]}]  for key, value in analysis['edge_bindings'].items()},
                             'score': analysis['score']
                     }
                         for analysis in self.analyses
                 ]
         for analysis in json_analyses:
-            analysis['edge_bindings'].update({q: [{"id": kid} for kid in k] for q, k in self.support_edge_bindings.items()})
+            analysis['edge_bindings'].update({q: [{"id": kid, "attributes": []} for kid in k] for q, k in self.support_edge_bindings.items()})
 
         json_enrichments = [eb_dict for eb_dict in self.enrichments['edges'] ]
 

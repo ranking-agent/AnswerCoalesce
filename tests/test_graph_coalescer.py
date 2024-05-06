@@ -6,7 +6,7 @@ from src.components import Opportunity,Answer
 from reasoner_pydantic import Response as PDResponse
 
 
-jsondir='InputJson_1.4'
+jsondir='InputJson_1.5'
 
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]

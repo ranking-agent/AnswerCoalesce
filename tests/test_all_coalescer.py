@@ -4,7 +4,7 @@ import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
 
-jsondir ='InputJson_1.4'
+jsondir ='InputJson_1.5'
 
 def set_workflowparams(lookup_results):
     # Dummy parameters to check igf reasoner pydantic accepts the new parameters
