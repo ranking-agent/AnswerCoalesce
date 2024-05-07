@@ -67,9 +67,49 @@ async def property_enrich(input_ids):
      """
     #TODO: Ola to implement based on coalesce
 
-async def create_mcq_trapi_response(in_message, enrichment_results, qnode_id):
-    """Create a TRAPI multi-curie answer. Go out and get the provenance or other features as needed."""
+async def create_mcq_trapi_response(in_message, enrichment_results, input_qnode_id):
+    """Create a TRAPI multi-curie answer. Go out and get the provenance or other features as needed.
+    in_message: the original TRAPI message in dict form
+    enrichment_results: the enriched nodes and edges
+    input_qnode_id: the id of the input node.
+    """
+    # We need to have knowledge_graph edges for member_of the inputs (if they don't already exist).
+    # We will also need access to those edges by result node to create the auxiliary graphs.
+    member_of_edges = await create_or_find_member_of_edges(in_message, input_qnode_id)
+    # Each enrichment is a result.
     #TODO: Ola to implement
+
+async def create_or_find_member_of_edges(in_message, input_qnode_id):
+    """Create or find the member_of edges for the input nodes from the member_ids element of input_qnode_id.
+    Return a dictionary of the form
+    { input_curie: edge_id }"""
+    # if knowledge_graph is not in the message, add it
+    if 'knowledge_graph' not in in_message['message']:
+        in_message['message']['knowledge_graph'] = {'nodes': {}, 'edges': {}}
+    # Get the member_ids
+    member_ids = in_message['message']['query_graph']['nodes'][input_qnode_id]['member_ids']
+    # Get the id of the input_qnode
+    input_qnode_uuid = in_message['message']['query_graph']['nodes'][input_qnode_id]['ids'][0]
+    # Loop over the knowledge graph edges and find the member_of edges that have the input_qnode_uuid
+    # as the object. Add them to a member_of_edges dictionary with the subject of the edge as the key.
+    member_of_edges = {}
+    for edge_id, edge in in_message['message']['knowledge_graph']['edges'].items():
+        if edge['object'] == input_qnode_uuid:
+            member_of_edges[edge['subject']] = edge_id
+    # Now loop over the member_ids and add any that are not in the member_of_edges to the knowledge graph
+    # and add them to the member_of_edges dictionary.
+    for member_id in member_ids:
+        if member_id not in member_of_edges:
+            edge_id = f"e_{member_id}_member_of_{input_qnode_uuid}"
+            in_message['message']['knowledge_graph']['edges'][edge_id] = {
+                "subject": member_id,
+                "object": input_qnode_uuid,
+                "predicate": "biolink:member_of"
+            }
+            member_of_edges[member_id] = edge_id
+    return member_of_edges
+
+
 
 async def create_infer_trapi_response(in_message, enrichment_results, qnode_id):
     """Create a TRAPI EDGAR answer. Go out and get the provenance or other features as needed."""
