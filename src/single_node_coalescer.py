@@ -18,7 +18,7 @@ MAX_CONNS = os.environ.get("MAX_CONNECTIONS", 5)
 NRULES = int(os.environ.get("MAXIMUM_ROBOKOPKG_RULES", 11))
 TRACK = {}
 
-async def query(in_message, parameters):
+async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
     qnode_id, input_ids = await get_mcq_inputs(in_message)

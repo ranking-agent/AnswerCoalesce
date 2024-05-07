@@ -10,7 +10,7 @@ from functools import wraps
 from reasoner_pydantic import Response as PDResponse
 
 from src.util import LoggingUtil
-from src.single_node_coalescer import coalesce#, infer
+from src.single_node_coalescer import infer, multi_curie_query
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse, Response
