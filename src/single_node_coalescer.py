@@ -17,6 +17,70 @@ ROBOKOP_URL = "https://aragorn.renci.org/robokop/query"
 MAX_CONNS = os.environ.get("MAX_CONNECTIONS", 5)
 NRULES = int(os.environ.get("MAXIMUM_ROBOKOPKG_RULES", 11))
 TRACK = {}
+
+async def query(in_message, parameters):
+    """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
+    # Get the list of nodes that you want to enrich:
+    qnode_id, input_ids = await get_mcq_inputs(in_message)
+    enrichment_results = await graph_enrich(input_ids)
+    return await create_mcq_trapi_response(in_message, enrichment_results, qnode_id)
+
+async def infer(in_message, parameters):
+    """Takes a TRAPI infer query and returns a TRAPI infer answer."""
+    input_ids = lookup(in_message)
+    graph_enrichment_results = await graph_enrich(input_ids)
+    property_enrichment_results = await property_enrich(input_ids)
+    return await create_infer_trapi_response(in_message, graph_enrichment_results, property_enrichment_results)
+
+async def lookup(in_message):
+    """Given an infer query, look up internally the non-inferred answers to the query.
+    Return them as a list of curies"""
+    #TODO: Ola to implement based on current lookup
+    return []
+
+async def get_mcq_inputs(in_message):
+    """Given a TRAPI multi-curie query, return the list of input ids.  The structure
+    of the input is in_message["message"]["query_graph"]["nodes"] and then ond of the nodes should
+    have a member_ids field, and we should return its qnode_id, and the value of the member_ids field"""
+    #TODO: Ola to implement
+
+async def graph_enrich(input_ids):
+    """Given a list of ids, find the graph-based enrichments for each.  Returns a list of enrichments.  Each
+     enrichment is a dictionary with the form:
+     {
+        "enriched_node": curie,
+        "enriched_edge": qualified_predicate,
+        "attached_nodes": the list of input curies that have direct edges to the enriched_node,
+        "enrichment_attributes": the p-value and other stats for the enrichment
+     }
+     """
+    #TODO: Ola to implement based on coalesce
+
+async def property_enrich(input_ids):
+    """Given a list of ids, find the property based enrichments for each.  Returns a list of enrichments.  Each
+     enrichment is a dictionary with the form:
+     {
+        "enriched_property": curie,
+        "attached_nodes": the list of input curies that have direct edges to the enriched_node,
+        "enrichment_attributes": the p-value and other stats for the enrichment
+     }
+     """
+    #TODO: Ola to implement based on coalesce
+
+async def create_mcq_trapi_response(in_message, enrichment_results, qnode_id):
+    """Create a TRAPI multi-curie answer. Go out and get the provenance or other features as needed."""
+    #TODO: Ola to implement
+
+async def create_infer_trapi_response(in_message, enrichment_results, qnode_id):
+    """Create a TRAPI EDGAR answer. Go out and get the provenance or other features as needed."""
+    #TODO: Ola to implement
+
+######################################
+#
+# Everything after this is to be mined for spare parts then discarded.
+#
+###################################
+
 async def coalesce(answerset, method='all', mode = 'coalesce', predicates_to_exclude=[], properties_to_exclude=[], nodesets_to_exclude=[], pvalue_threshold=0, result_length=0):
     """
     Given a set of answers coalesce them and return some combined answers.

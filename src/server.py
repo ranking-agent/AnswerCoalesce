@@ -53,191 +53,62 @@ conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'conf
 with open(conf_path, 'r') as inf:
     conf = json.load(inf)
 
-
-@APP.post('/coalesce/{method}', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
-async def coalesce_handler(request: PDResponse, method: MethodName):
-    """ Answer coalesce operations. You may choose all, property, graph. """
-
-    # convert the incoming message into a dict
-    in_message = request.dict()
-
-    # save the logs for the response (if any)
-    if 'logs' not in in_message or in_message['logs'] is None:
-        in_message['logs'] = []
-
-    # these timestamps are causing json serialization issues in call to the normalizer
-    # so here we convert them to strings.
-    for log in in_message['logs']:
-        log['timestamp'] = str(log['timestamp'])
-
-    # make sure there are results to coalesce
-    # 0 results is perfectly legal, there's just nothing to do.
-    if 'results' not in in_message['message'] or in_message['message']['results'] is None or len(in_message['message']['results']) == 0:
-        status_code = 200
-        logger.error(f"No results to coalesce")
-        # in_message['logs'].append(create_log_entry(f'No results to coalesce', "WARNING"))
-        return JSONResponse(content=in_message, status_code=status_code)
-
-    elif 'knowledge_graph' not in in_message['message'] or in_message['message']['knowledge_graph'] is None or len(in_message['message']['knowledge_graph']) == 0:
-        # This is a 422 b/c we do have results, but there's no graph to use.
-        status_code = 422
-        logger.error(f"No knowledge graph to coalesce")
-        # in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
-        return JSONResponse(content=in_message, status_code=status_code)
-
-    mode = 'coalesce'
-    return await sync_query(in_message, method=method, mode=mode)
-    # # init the status code
-    # status_code: int = 200
-    #
-    # # get the message to work on
-    # coalesced = in_message['message']
-    #
-    # #The newly added parameters
-    # predicates_to_exclude = []
-    # properties_to_exclude = []
-    # pvalue_threshold = None
-    # result_length = None
-    #
-    # if in_message.get('workflow'):
-    #     if in_message.get('workflow')[0].get('parameters', {}):
-    #         predicates_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('predicates_to_exclude', [])
-    #         properties_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('properties_to_exclude', [])
-    #         pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 0)
-    #         result_length = in_message.get('workflow', [])[0].get('parameters', {}).get('result_length', None)
-    #
-    # try:
-    #     mode = 'coalesce'
-    #     # call the operation with the message in the request message
-    #
-    #     coalesced = coalesce(coalesced, method=method, mode=mode, predicates_to_exclude=predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold, result_length=result_length)
-    #
-    #     # turn it back into a full trapi message
-    #     in_message['message'] = coalesced
-    #
-    #     # assert PDResponse.parse_obj(in_message)
-    #     # import json
-    #     # with open('ac_out_attributes.json', 'w') as tf:
-    #     #     tf.write(json.dumps(in_message, default=str))
-    #
-    #     # # Normalize the data
-    #     # coalesced = normalize(in_message)
-    #     #
-    #     # # save the response in the incoming message
-    #     # in_message['message'] = coalesced['message']
-    #
-    # except Exception as e:
-    #     # put the error in the response
-    #     status_code = 500
-    #     logger.exception(f"Exception encountered {str(e)}")
-    #     # in_message['logs'].append(create_log_entry(f'Exception {str(e)}', "ERROR"))
-    #
-    # # return the result to the caller
-    # # return Response(content=json.dumps(in_message), media_type='application/json', status_code=status_code)
-    # return JSONResponse(content=in_message, status_code=status_code)
-
-
 @APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
-async def coalesce_handler(request: PDResponse):
+async def query_handler(request: PDResponse):
     # """ Answer coalesce operations. You may choose all, property, graph. """
 
-    # convert the incoming message into a dict
-    in_message = request.dict()
-
-    # save the logs for the response (if any)
-    if 'logs' not in in_message or in_message['logs'] is None:
-        in_message['logs'] = []
-
-    # these timestamps are causing json serialization issues in call to the normalizer
-    # so here we convert them to strings.
-    for log in in_message['logs']:
-        log['timestamp'] = str(log['timestamp'])
-
-    # make sure there are results to coalesce
-    # 0 results is perfectly legal, there's just nothing to do.
-    if 'query_graph' not in in_message['message'] or len(in_message['message']['query_graph']) == 0:
-        # This is a 422 b/c we do have results, but there's no graph to use.
-        status_code = 422
-        logger.error(f"No set to coalesce")
-        # in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
-        return JSONResponse(content=in_message, status_code=status_code)
-
-    mode = 'query'
-    method = 'graph'
-    return await sync_query(in_message, method=method, mode=mode)
-
-@APP.post('/infer', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
-async def coalesce_handler(request: PDResponse):
-    """ Answer coalesce operations. You may choose all, property, graph. """
-
-    # convert the incoming message into a dict
-    in_message = request.dict()
-
-    # save the logs for the response (if any)
-    if 'logs' not in in_message or in_message['logs'] is None:
-        in_message['logs'] = []
-
-    # these timestamps are causing json serialization issues in call to the normalizer
-    # so here we convert them to strings.
-    for log in in_message['logs']:
-        log['timestamp'] = str(log['timestamp'])
-
-    # make sure there are results to coalesce
-    # 0 results is perfectly legal, there's just nothing to do.
-    if 'query_graph' not in in_message['message'] or len(in_message['message']['query_graph']) == 0:
-        # This is a 422 b/c we do have results, but there's no graph to use.
-        status_code = 422
-        logger.error(f"No query graph to to EDGAR")
-        # in_message['logs'].append(create_log_entry(f'No knowledge graph to coalesce', "ERROR"))
-        return JSONResponse(content=in_message, status_code=status_code)
-
-    mode = 'infer'
-    method = 'graph'
-    return await sync_query(in_message, method=method, mode=mode)
-
-async def sync_query(in_message, method, mode=None):
-    """Performs a synchronous query operation which compiles data from numerous ARAGORN ranking agent services.
-    The services are called in the following order, each passing their output to the next service as an input:
-
-    Strider -> (optional) Answer Coalesce -> ARAGORN-Ranker:omnicorp overlay -> ARAGORN-Ranker:weight correctness -> ARAGORN-Ranker:score
-    """
-    # init the status code
-    status_code: int = 200
-
-    # get the message to work on
-    coalesced = in_message['message']
-
-    # The newly added parameters
-    predicates_to_exclude = []
-    properties_to_exclude = []
-    pvalue_threshold = None
-    result_length = None
-
-    if in_message.get('workflow'):
-        if in_message.get('workflow')[0].get('parameters', {}):
-            predicates_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('predicates_to_exclude',
-                                                                                                [])
-            properties_to_exclude = in_message.get('workflow', [])[0].get('parameters', {}).get('properties_to_exclude',
-                                                                                                [])
-            pvalue_threshold = in_message.get('workflow', [])[0].get('parameters', {}).get('pvalue_threshold', 0)
-            result_length = in_message.get('workflow', [])[0].get('parameters', {}).get('result_length', None)
-
     try:
+        # convert the incoming message into a dict
+        in_message = request.dict()
 
-        # call the operation with the message in the request message
-        coalesced = await coalesce(coalesced, method=method, mode=mode, predicates_to_exclude=predicates_to_exclude, properties_to_exclude=properties_to_exclude, pvalue_threshold=pvalue_threshold, result_length=result_length)
+        # save the logs for the response (if any)
+        if 'logs' not in in_message or in_message['logs'] is None:
+            in_message['logs'] = []
 
-        # turn it back into a full trapi message
-        in_message['message'] = coalesced
+        # these timestamps are causing json serialization issues in call to the normalizer
+        # so here we convert them to strings.
+        for log in in_message['logs']:
+            log['timestamp'] = str(log['timestamp'])
 
-        assert PDResponse.parse_obj(in_message)
+        parameters = await get_parameters()
+
+        if await is_infer_query( in_message ):
+            return await infer( in_message, parameters )
+        elif await is_multi_curie_query( in_message ):
+            return await multi_curie_query( in_message, parameters )
+
+        # This isn't a valid query
+        status_code = 422
+        logger.error(f"Invalid query.  Must be either a multi-curie query or an infer query.")
+        return JSONResponse(content=in_message, status_code=status_code)
 
     except Exception as e:
         # put the error in the response
         status_code = 500
         logger.exception(f"Exception encountered {str(e)}")
+        return JSONResponse(content=in_message, status_code=status_code)
 
-    return JSONResponse(content=in_message, status_code=status_code)
+
+async def get_parameters(in_message):
+    """Get the parameters from the incoming message.  If they are not present, return the defaults."""
+    parameters = {}
+    parameters["predicates_to_exclude"] = in_message.get('parameters',{}).get('predicates_to_exclude', [])
+    parameters["properties_to_exclude"] = in_message.get('parameters', {}).get('properties_to_exclude', [])
+    parameters["pvalue_threshold"] = in_message.get('parameters', {}).get('pvalue_threshold', None)
+    parameters["result_length"] = in_message.get('parameters', {}).get('result_length', None)
+    return parameters
+
+async def is_infer_query( in_message ):
+    """Check if the query is an infer query.  An infer query is a 1-hop with a single bound node.
+    The one edge has "knowledge_type: inferred" """
+    # TODO: Ola to implement
+    return False
+
+async def is_multi_curie_query(in_message):
+    """Check if the query is a MCQ.  An MCQ has set_interpretation: MANY, and member_ids."""
+    # TODO: Ola to implement
+    return False
+
 
 def log_exception(method):
     """Wrap method."""
