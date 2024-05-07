@@ -101,14 +101,36 @@ async def get_parameters(in_message):
 async def is_infer_query( in_message ):
     """Check if the query is an infer query.  An infer query is a 1-hop with a single bound node.
     The one edge has "knowledge_type: inferred" """
-    # TODO: Ola to implement
+    # Check the basic structure
+    if not count_query_nodes(in_message) == 2:
+        return False
+    if not count_query_edges(in_message) == 1:
+        return False
+    #TODO: Ola to implement
     return False
 
 async def is_multi_curie_query(in_message):
     """Check if the query is a MCQ.  An MCQ has set_interpretation: MANY, and member_ids."""
-    # TODO: Ola to implement
+    # Check the basic structure
+    if not count_query_nodes(in_message) == 2:
+        return False
+    if not count_query_edges(in_message) == 1:
+        return False
+    # One of the query nodes must have set_interpretation: MANY and member_ids
+    for node in in_message['message']['query_graph']['nodes']:
+        if 'set_interpretation' in in_message['message']['query_graph']['nodes'][node]:
+            if in_message['message']['query_graph']['nodes'][node]['set_interpretation'] == 'MANY':
+                if 'member_ids' in in_message['message']['query_graph']['nodes'][node]:
+                    return True
     return False
 
+def count_query_nodes(in_message):
+    """Count the number of nodes in the query."""
+    return len(in_message['message']['query_graph']['nodes'])
+
+def count_query_edges(in_message):
+    """Count the number of edges in the query."""
+    return len(in_message['message']['query_graph']['edges'])
 
 def log_exception(method):
     """Wrap method."""
