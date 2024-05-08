@@ -128,8 +128,10 @@ def go(input_node_file="nodes.jsonl", output_nodelabels='nodelabels.txt', output
             else:
                 target_is_source = False
             target_link = (source_id,pred,target_is_source)
-            nodes_to_links[source_id].append(source_link)
-            nodes_to_links[target_id].append(target_link)
+            if source_link not in nodes_to_links[source_id]:
+                nodes_to_links[source_id].append(source_link)
+            if target_link not in nodes_to_links[target_id]:
+                nodes_to_links[target_id].append(target_link)
             for tcategory in set(categories[target_id]):
                 edgecounts[ (source_id, pred, True, tcategory) ] += 1
             for scategory in set(categories[source_id]):
