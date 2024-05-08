@@ -3,84 +3,34 @@ from collections import defaultdict
 import ast, json
 from string import Template
 
-class Opportunity:
-    def __init__(self, hash, qg, kg, a_i, ai2kg):
-        """
-        Define a coalescent opportunity by a hash (the fixed parts of the answers)
-        qg: a (qg_id, semantic type) pair
-        kg: kg_ids allowed for the combined answers
-        a_i: indices into the results saying which answers are combined to give this
-             opportunity
-        kg2a_i: dict mapping frozenset of kg -> which answer they appear in.  Used to filter.
-        """
-        self.answer_hash = hash
-        self.qg_id = qg[0]
-        self.qg_semantic_type = qg[1]
-        self.kg_ids = kg
-        self.answer_indices = a_i
-        self.answerid2kg = ai2kg
-    def get_kg_ids(self):
-        return self.kg_ids
-    def get_qg_id(self):
-        return self.qg_id
-    def get_qg_semantic_type(self):
-        stype = self.qg_semantic_type
-        if isinstance(stype, list):
-            stype = stype[0]
-        return stype
-    def get_answer_indices(self):
-        return self.answer_indices
-    def filter(self,new_kg_ids):
-        """We constructed the opportunities without regard to what nodes we have data on.  Now, we want to filter
-        this opportunity to only answers where we actually have info about the nodes.
-        new_kg_ids is a subset of self.kg_ids.  If we have an answer where we don't have all the nodes, we want to
-        get rid of that answer, and return a new (filtered) opp.  If we get rid of all answers, return None"""
-        if len(new_kg_ids) == len(self.kg_ids):
-            #No filtering required
-            return self
-        nkgids = set(new_kg_ids)
-        new_ai2kg = {}
-        for answer_i, kgs in self.answerid2kg.items():
-            keep = True
-            for kg_i in kgs:
-                if kg_i not in nkgids:
-                    keep = False
-                    break
-            if keep:
-                new_ai2kg[answer_i] = kgs
-        if len(new_ai2kg) == 0:
-            return None
-        #If we removed any answers, we might also need to remove some kg_ids that weren't explicitly filtered
-        final_kg_ids = set()
-        for kgi in new_ai2kg.values():
-            final_kg_ids.update(kgi)
-        return Opportunity(self.answer_hash, (self.qg_id , self.qg_semantic_type ), list(final_kg_ids), list(new_ai2kg.keys()), new_ai2kg)
-
 class NewNode:
-    def __init__(self,newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name):
+    def __init__(self,newnode, newnodetype, edge_pred_and_qual, newnode_is):
         self.newnode = newnode
         self.newnode_type = newnodetype
         self.new_edges = edge_pred_and_qual
         self.newnode_is = newnode_is
-        self.newnode_name = newnode_name
 
-class PropertyPatch:
-    def __init__(self,qg_id,curies,props,answer_ids):
-        self.qg_id = qg_id
+class Enrichment:
+    def __init__(self,p_value,newnode, predicate, is_source, ndraws, n, total_node_count, curies, node_type):
+        self.p_value = p_value
         self.set_curies = curies
-        self.new_props = props
-        self.answer_indices = answer_ids
+        #self.new_props = props
+        #self.answer_indices = answer_ids
         self.added_nodes = []
         self.provmap = {}
+        self.add_extra_node(newnode, node_type, predicate, is_source)
+        self.counts = [ndraws, n, total_node_count]
     def add_provenance(self,provmap):
         self.provmap = provmap
-    def add_extra_node(self,newnode, newnodetype, edge_pred_and_qual, newnode_is,newnode_name):
+    def add_extra_node(self,newnode, newnodetype, edge_pred_and_qual, newnode_is):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
-        self.added_nodes.append( NewNode(newnode, newnodetype, edge_pred_and_qual, newnode_is, newnode_name) )
-    def apply(self,answers,question,graph,graph_index,patch_no):
+        self.added_nodes.append( NewNode(newnode, newnodetype, edge_pred_and_qual, newnode_is) )
+
+    #TODO: this should not exist in here any more, we are just making a data class
+    def x_apply(self,answers,question,graph,graph_index,patch_no):
         # Find the answers to combine.  It's not necessarily the answer_ids.  Those were the
         # answers that were originally in the opportunity, but we might have only found commonality
         # among a subset of them

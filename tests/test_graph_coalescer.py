@@ -2,27 +2,103 @@ import pytest
 import os, json, asyncio
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
-from src.components import Opportunity,Answer
+#from src.components import Opportunity,Answer
 from reasoner_pydantic import Response as PDResponse
 
 
 jsondir='InputJson_1.5'
 
+def test_get_links_and_predicate_filter():
+    """We expect that this UniProt has 28 links.
+    1 edge with predicate affects, object_aspect_qualifier activity, and object_direction_qualifier diecreased
+    1 edge with in_taxon
+    24 with predicate directly_physically_interacts_with"""
+    curies = ["UniProtKB:P0C6U8"]
+    nodes_to_links = gc.create_nodes_to_links(curies)
+    assert len(nodes_to_links) == 1
+    # Hand counted
+    assert len(nodes_to_links[curies[0]]) == 28
+
+    # Test exclude a single predicate, "biolink:directly_physically_interacts_with"
+    constraint = {"predicate": "biolink:directly_physically_interacts_with"}
+    filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='exclude')
+    assert len(filtered_nodes_to_links[curies[0]]) == 2
+
+    # Test include a single predicate "biolink:in_taxon"
+    constraint = {"predicate": "biolink:in_taxon"}
+    filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
+    assert len(filtered_nodes_to_links[curies[0]]) == 1
+
+    # Test include a single constraint with predicate and qualifier
+    constraint = {"predicate": "biolink:affects", "object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased"}
+    filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
+    assert len(filtered_nodes_to_links[curies[0]]) == 1
+
+    # Test exclude a single constraint with the affects predicate but no qualifier.  Nothing should be excluded b/c the matchs is imperfect
+    constraint = {"predicate": "biolink:affects"}
+    filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
+    assert len(filtered_nodes_to_links[curies[0]]) == 0
+
+    # Test exclude multiple constraints, including some that are not present at all
+    constraint1 = {"predicate": "biolink:affects", "object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased"}
+    constraint2 = {"predicate": "biolink:in_taxon"}
+    constraint3 = {"predicate": "biolink:related_to"}
+    filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3], predicate_constraint_style='exclude')
+    assert len(filtered_nodes_to_links[curies[0]]) == 26
+
+
+    filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3],
+                                                       predicate_constraint_style='include')
+    assert len(filtered_nodes_to_links[curies[0]]) == 2
+
+import pytest
+from unittest.mock import MagicMock
+from src.graph_coalescence.graph_coalescer import filter_links_by_node_type
+
+def test_filter_links_by_node_type():
+    # Mocking the nodes_to_links dictionary
+    nodes_to_links = {
+        "node1": [("node3", "predicate1", True), ("node4", "predicate2", False)],
+        "node2": [("MONDO:0000001", "predicate1", False), ("node5", "predicate3", True)],
+    }
+    # Mocking the link_node_types dictionary
+    link_node_types = {
+        "node3": "biolink:Gene",
+        "node4": "biolink:SmallMolecule",
+        "MONDO:0000001": "biolink:Disease",
+        "node5": "biolink:ChemicalEntity",
+    }
+
+
+    # Mocking the node_constraints list
+    node_constraints = ["biolink:NamedThing"]
+    # Expected output after filtering. The node constraint should let everythign past,
+    # but the blocklist should get rid of the MONDO
+    expected_output = { "node1": [("node3", "predicate1", True), ("node4", "predicate2", False)],
+                        "node2": [("node5", "predicate3", True)] }
+
+    # Call the function with the mocked data and assert the expectation
+    result = filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
+    assert result == expected_output
+
+    # Now try with a different node constraint: Chemical Entity which should remove node1
+    node_constraints = ["biolink:ChemicalEntity"]
+    expected_output = { "node1": [ ("node4", "predicate2", False)],
+                        "node2": [("node5", "predicate3", True)] }
+
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
-    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,[0,1,2],{i:[curies[i]] for i in [0,1,2]})
-    opportunities=[opportunity]
-    patches = gc.coalesce_by_graph(opportunities)
-    assert len(patches) >= 1
-    #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
-    p = patches[0]
-    assert p.qg_id == 'qg_0'
-    assert len(p.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
-    atts=p.new_props['attributes']
-    kv = { x['attribute_type_id']: x['value'] for x in atts}
-    assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
-    assert kv['biolink:p_value'] < 1e-10
-    assert len(p.added_nodes)==1
+    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene' )
+    assert len(enrichments) >= 1
+    e = enrichments[0]
+    assert len(e.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
+    #TODO: add attribute testing to TRAPI tests
+    #atts=p.new_props['attributes']
+    #kv = { x['attribute_type_id']: x['value'] for x in atts}
+    #assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
+    #assert kv['biolink:p_value'] < 1e-10
+    assert e.p_value < 1e-10
+    assert len(e.added_nodes)==1
 
 def test_graph_coalescer_double_check():
     curies = ['NCBIGene:191',
@@ -39,20 +115,14 @@ def test_graph_coalescer_double_check():
  'NCBIGene:23066',
  'NCBIGene:7514',
  'NCBIGene:10128']
-    cts = [i for i in range(len(curies))]
-    opportunity = Opportunity('hash',('qg_0','biolink:Gene'),curies,cts,{i:[curies[i]] for i in cts})
-    opportunities=[opportunity]
-    patches = gc.coalesce_by_graph(opportunities)
-    assert len(patches) == 14
-    #patch = [qg_id that is being replaced, curies (kg_ids) in the new combined set, props for the new curies, answers being collapsed]
-    p = patches[0]
-    assert p.qg_id == 'qg_0'
-    #assert len(p.set_curies) == 3 #  Don't really know how many there are.
-    atts=p.new_props['attributes']
-    kv = { x['attribute_type_id']: x['value'] for x in atts}
-    assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
-    assert kv['biolink:p_value'] < 1e-10
-    assert len(p.added_nodes)==1
+    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene')
+    assert len(enrichments) == 14
+    e = enrichments[0]
+    #atts=p.new_props['attributes']
+    #kv = { x['attribute_type_id']: x['value'] for x in atts}
+    #assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
+    assert e.p_value < 1e-10
+    assert len(e.added_nodes)==1
 
 def test_graph_coalescer_perf_test():
     # Two opprtunities but,

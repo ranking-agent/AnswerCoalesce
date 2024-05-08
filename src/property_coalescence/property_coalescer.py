@@ -4,7 +4,7 @@ from ast import literal_eval
 import sqlite3
 import os.path
 
-from src.components import PropertyPatch
+#from src.components import PropertyPatch
 
 bad_property = ['CHEBI_ROLE_pharmaceutical', 'CHEBI_ROLE_drug', 'CHEBI_ROLE_pharmacological_role', "sp2_c",
                         "sp_c", "halogen", "hetero_sp2_c", "oh_nh", 'rotb', 'o_n']

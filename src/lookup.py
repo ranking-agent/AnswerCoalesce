@@ -1,5 +1,5 @@
 from collections import defaultdict
-from src.components import PropertyPatch, PropertyPatch_query
+#from src.components import PropertyPatch, PropertyPatch_query
 from src.util import LoggingUtil
 import logging
 from copy import deepcopy

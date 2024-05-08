@@ -1,12 +1,8 @@
 from collections import defaultdict
 import os, logging, requests, asyncio, httpx, json
 from copy import deepcopy
-from string import Template
-# from copy import deepcopy
-from datetime import datetime as dt
 from reasoner_pydantic import Response as PDResponse, KnowledgeGraph
 
-from src.components import Opportunity, Answer, GEnrichment
 from src.lookup import lookup
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
@@ -21,15 +17,21 @@ TRACK = {}
 async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
-    qnode_id, input_ids = await get_mcq_inputs(in_message)
-    enrichment_results = await graph_enrich(input_ids)
+    qnode_id, input_ids, input_type, node_constraints, predicate_constraints = await get_mcq_inputs(in_message)
+    enrichment_results = await coalesce_by_graph(input_ids,
+                                                 input_type,
+                                                 node_constraints= node_constraints,
+                                                 predicates_constraints=predicate_constraints,
+                                                 predicate_constraint_style="include",
+                                                 pvalue_threshold=parameters["pvalue_threshold"],
+                                                 result_length=parameters["result_length"])
     return await create_mcq_trapi_response(in_message, enrichment_results, qnode_id)
 
 async def infer(in_message, parameters):
     """Takes a TRAPI infer query and returns a TRAPI infer answer."""
     input_ids = lookup(in_message)
-    graph_enrichment_results = await graph_enrich(input_ids)
-    property_enrichment_results = await property_enrich(input_ids)
+    graph_enrichment_results = await coalesce_by_graph(input_ids)
+    property_enrichment_results = await coalesce_by_property(input_ids)
     return await create_infer_trapi_response(in_message, graph_enrichment_results, property_enrichment_results)
 
 async def lookup(in_message):
@@ -41,7 +43,10 @@ async def lookup(in_message):
 async def get_mcq_inputs(in_message):
     """Given a TRAPI multi-curie query, return the list of input ids.  The structure
     of the input is in_message["message"]["query_graph"]["nodes"] and then ond of the nodes should
-    have a member_ids field, and we should return its qnode_id, and the value of the member_ids field"""
+    have a member_ids field, and we should return its qnode_id, and the value of the member_ids field, and
+    the category of that field.
+    We also need to return the output node type and expected predicates as node and edge constraints.
+    See graph_coalescer for the expected format of these constraints."""
     #TODO: Ola to implement
 
 async def graph_enrich(input_ids):
@@ -76,8 +81,24 @@ async def create_mcq_trapi_response(in_message, enrichment_results, input_qnode_
     # We need to have knowledge_graph edges for member_of the inputs (if they don't already exist).
     # We will also need access to those edges by result node to create the auxiliary graphs.
     member_of_edges = await create_or_find_member_of_edges(in_message, input_qnode_id)
-    # Each enrichment is a result.
+    for enrichment in enrichment_results:
+        await create_enrichment(in_message, enrichment, member_of_edges, input_qnode_id)
+
+async def create_enrichment(in_message, enrichment, member_of_edges, input_qnode_id):
+    """
+     Each enrichment is a result.  For each enrichment we need to
+     1. (possibly) add the new node to the knowledge graph
+     2. Add the edges between the new node and the member nodes to the knowledge graph
+     3. Create an auxiliary graph for each element of the member_id consisting of the edge from the member_id to the new node
+        and the member_of edge connecting the member_id to the input node.
+     4. Add the inferred edge from the new node to the input uuid to the knowledge graph
+     5. Add the auxiliary graphs created above to the inferred edge
+     6. Create a new result
+     7. In the result, create the node_bindings
+     8. In the result, create the analysis and add edge_bindings to it.
+     """
     #TODO: Ola to implement
+
 
 async def create_or_find_member_of_edges(in_message, input_qnode_id):
     """Create or find the member_of edges for the input nodes from the member_ids element of input_qnode_id.

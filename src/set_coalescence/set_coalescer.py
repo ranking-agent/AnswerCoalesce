@@ -1,6 +1,6 @@
 from collections import defaultdict
 from scipy.stats import hypergeom, poisson, binom, norm
-from src.components import PropertyPatch
+#from src.components import PropertyPatch
 from src.util import LoggingUtil
 import logging
 import os
