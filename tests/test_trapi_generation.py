@@ -1,6 +1,55 @@
 import pytest
 from src import single_node_coalescer as snc
 
+import pytest
+from src.trapi import get_mcq_components
+
+from reasoner_pydantic import Response
+@pytest.mark.asyncio
+async def test_get_mcq_components():
+    # Mocking the input message
+    in_message = {
+        "message": {
+            "query_graph": {
+                "nodes": {
+                    "n1": {"set_interpretation": "MANY",
+                           "member_ids": ["CURIE:1", "CURIE:2"],
+                           "categories":["biolink:SmallMolecule"],
+                           "ids": ["UUID:1"]},
+                    "n2": {"categories": ["biolink:Gene"]}
+                },
+                "edges": {
+                    "e1": {"subject": "n1",
+                           "predicate": "biolink:affects",
+                           "object": "n2",
+                           "qualifiers_constraints": [
+                               {"qualifier_set": [
+                                   {"qualifier_type_id": "biolink:object_aspect_qualifier",
+                                    "qualifier_value": "expression"}
+                               ]
+                            }
+                           ]
+                       }
+                    }
+                }
+            }
+    }
+    # First, did we make a valid query_graph?
+    response = Response(**in_message)
+    # Expected output after parsing
+    expected_output = {
+        "group_node": {"curies": ["CURIE:1", "CURIE:2"], "qnode_id": "n1", "uuid": "UUID:1", "semantic_type": "biolink:SmallMolecule"},
+        "enriched_node": {"qnode_id": "n2", "semantic_types": ["biolink:Gene"]},
+        "edge": {"predicate": {"predicate": "biolink:affects", "biolink:object_aspect_qualifier": "expression"},
+                "qedge_id": "e1", "group_is_subject": True}
+    }
+
+    # Call the function with the mocked data
+    result = await get_mcq_components(in_message)
+
+    # Assert that the function output is as expected
+    assert result == expected_output
+
 @pytest.mark.asyncio
 async def test_create_or_find_member_of_edges_existing_edges():
     """In this test there is already one member_of edge (for id1) But not for id2"""

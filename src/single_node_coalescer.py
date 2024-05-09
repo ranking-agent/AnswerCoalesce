@@ -18,15 +18,16 @@ TRACK = {}
 async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
-    qnode_uuid, input_ids, input_type, node_constraints, predicate_constraints = await trapi.get_mcq_inputs(in_message)
-    enrichment_results = await coalesce_by_graph(input_ids,
-                                                 input_type,
-                                                 node_constraints= node_constraints,
-                                                 predicates_constraints=predicate_constraints,
+    mcq_definition = await trapi.get_mcq_components(in_message)
+    #qnode_uuid, input_ids, input_type, node_constraints, predicate_constraints = await trapi.get_mcq_inputs(in_message)
+    enrichment_results = await coalesce_by_graph(mcq_definition["group_node"]["curies"],
+                                                 mcq_definition["group_node"]["semantic_type"],
+                                                 node_constraints= mcq_definition["enriched_node"]["semantic_types"],
+                                                 predicates_constraints=mcq_definition["edge"]["predicate"],
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters["pvalue_threshold"],
                                                  result_length=parameters["result_length"])
-    return await create_mcq_trapi_response(in_message, enrichment_results, qnode_uuid)
+    return await create_mcq_trapi_response(in_message, enrichment_results, mcq_definition)
 
 async def infer(in_message, parameters):
     """Takes a TRAPI infer query and returns a TRAPI infer answer."""
@@ -53,7 +54,7 @@ async def property_enrich(input_ids):
      """
     #TODO: Ola to implement based on coalesce
 
-async def create_mcq_trapi_response(in_message, enrichment_results, input_qnode_id):
+async def create_mcq_trapi_response(in_message, enrichment_results, mcq_definition):
     """Create a TRAPI multi-curie answer. Go out and get the provenance or other features as needed.
     in_message: the original TRAPI message in dict form
     enrichment_results: the enriched nodes and edges

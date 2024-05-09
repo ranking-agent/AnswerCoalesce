@@ -10,17 +10,18 @@ async def get_mcq_components(in_message):
     This is the structure:
     MCQ = {"group_node": {"curies": [],
                           "qnode_id": None,
-                          "uuid": None},
+                          "uuid": None,
+                          "semantic_type": None},
            "enriched_node": {"qnode_id": None,
-                             "semantic_type": None},
+                             "semantic_types": None},
            "edge": {"predicate": None,
                     "qedge_id": None,
                     "group_is_subject": None}}
     The qnode_ids and qedge_id are the keys in the "nodes" and "edges" dictionaries in the query_graph.
     Predicate is a dictionary containing the predicate and any qualifiers.
     """
-    MCQ = {"group_node": {"curies": [], "qnode_id": None, "uuid": None},
-           "enriched_node": {"qnode_id": None, "semantic_type": None},
+    MCQ = {"group_node": {"curies": [], "qnode_id": None, "uuid": None, "semantic_type": None},
+           "enriched_node": {"qnode_id": None, "semantic_types": None},
            "edge": {"predicate": None, "qedge_id": None, "group_is_subject": None}}
     query_graph = in_message["message"]["query_graph"]
     for qnode_id, qnode in query_graph["nodes"].items():
@@ -28,6 +29,7 @@ async def get_mcq_components(in_message):
             MCQ["group_node"]["curies"] = qnode["member_ids"]
             MCQ["group_node"]["qnode_id"] = qnode_id
             MCQ["group_node"]["uuid"] = qnode["ids"][0]
+            MCQ["group_node"]["semantic_type"] = qnode["categories"][0]
         else:
             MCQ["enriched_node"]["qnode_id"] = qnode_id
             MCQ["enriched_node"]["semantic_types"] = qnode["categories"]
@@ -37,7 +39,7 @@ async def get_mcq_components(in_message):
         else:
             MCQ["edge"]["group_is_subject"] = False
         MCQ["edge"]["qedge_id"] = qedge_id
-        MCQ["edge"]["predicate"] = qedge["predicate"]
+        MCQ["edge"]["predicate"] = {"predicate": qedge["predicate"]}
         qualifier_constraints = qedge.get("qualifiers_constraints",[])
         if len(qualifier_constraints) > 0:
             qc = qualifier_constraints[0]
