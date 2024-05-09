@@ -3,6 +3,49 @@ import uuid
 
 infores = "infores:answercoalesce"
 
+async def get_mcq_components(in_message):
+    """Parse the input message and extract the defining information of the query in a TRPAPI independent way.
+    In MCQ there are two query nodes, one is the group node, with the input curies and the other is the enriched node,
+    which is the output. There is also a single edge connecting the group node to the enriched node.
+    This is the structure:
+    MCQ = {"group_node": {"curies": [],
+                          "qnode_id": None,
+                          "uuid": None},
+           "enriched_node": {"qnode_id": None,
+                             "semantic_type": None},
+           "edge": {"predicate": None,
+                    "qedge_id": None,
+                    "group_is_subject": None}}
+    The qnode_ids and qedge_id are the keys in the "nodes" and "edges" dictionaries in the query_graph.
+    Predicate is a dictionary containing the predicate and any qualifiers.
+    """
+    MCQ = {"group_node": {"curies": [], "qnode_id": None, "uuid": None},
+           "enriched_node": {"qnode_id": None, "semantic_type": None},
+           "edge": {"predicate": None, "qedge_id": None, "group_is_subject": None}}
+    query_graph = in_message["message"]["query_graph"]
+    for qnode_id, qnode in query_graph["nodes"].items():
+        if qnode.get("set_interpretation","") == "MANY":
+            MCQ["group_node"]["curies"] = qnode["member_ids"]
+            MCQ["group_node"]["qnode_id"] = qnode_id
+            MCQ["group_node"]["uuid"] = qnode["ids"][0]
+        else:
+            MCQ["enriched_node"]["qnode_id"] = qnode_id
+            MCQ["enriched_node"]["semantic_types"] = qnode["categories"]
+    for qedge_id, qedge in query_graph["edges"].items():
+        if qedge["subject"] == MCQ["group_node"]["qnode_id"]:
+            MCQ["edge"]["group_is_subject"] = True
+        else:
+            MCQ["edge"]["group_is_subject"] = False
+        MCQ["edge"]["qedge_id"] = qedge_id
+        MCQ["edge"]["predicate"] = qedge["predicate"]
+        qualifier_constraints = qedge.get("qualifiers_constraints",[])
+        if len(qualifier_constraints) > 0:
+            qc = qualifier_constraints[0]
+            qs = qc.get("qualifier_set",[])
+            for q in qs:
+                MCQ["edge"]["predicate"][q["qualifier_type_id"]] = q["qualifier_value"]
+    return MCQ
+
 def create_knowledge_graph_node(curie,category,name):
     """
     Create a TRAPI knowledge graph node.

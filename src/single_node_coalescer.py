@@ -18,7 +18,7 @@ TRACK = {}
 async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
-    qnode_id, input_ids, input_type, node_constraints, predicate_constraints = await get_mcq_inputs(in_message)
+    qnode_uuid, input_ids, input_type, node_constraints, predicate_constraints = await trapi.get_mcq_inputs(in_message)
     enrichment_results = await coalesce_by_graph(input_ids,
                                                  input_type,
                                                  node_constraints= node_constraints,
@@ -26,7 +26,7 @@ async def multi_curie_query(in_message, parameters):
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters["pvalue_threshold"],
                                                  result_length=parameters["result_length"])
-    return await create_mcq_trapi_response(in_message, enrichment_results, qnode_id)
+    return await create_mcq_trapi_response(in_message, enrichment_results, qnode_uuid)
 
 async def infer(in_message, parameters):
     """Takes a TRAPI infer query and returns a TRAPI infer answer."""
@@ -40,16 +40,6 @@ async def lookup(in_message):
     Return them as a list of curies"""
     #TODO: Ola to implement based on current lookup
     return []
-
-async def get_mcq_inputs(in_message):
-    """Given a TRAPI multi-curie query, return the list of input ids.  The structure
-    of the input is in_message["message"]["query_graph"]["nodes"] and then ond of the nodes should
-    have a member_ids field, and we should return its qnode_id, and the value of the member_ids field, and
-    the category of that field.
-    We also need to return the output node type and expected predicates as node and edge constraints.
-    See graph_coalescer for the expected format of these constraints."""
-    #TODO: Ola to implement
-
 
 # should probably just be a call out to something property coalescer instead
 async def property_enrich(input_ids):
