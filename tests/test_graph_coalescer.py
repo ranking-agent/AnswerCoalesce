@@ -115,8 +115,9 @@ def test_graph_coalescer_double_check():
  'NCBIGene:23066',
  'NCBIGene:7514',
  'NCBIGene:10128']
-    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene')
-    assert len(enrichments) == 14
+    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene', result_length=100)
+    #We aren't cutting this off in graph coalesce any more
+    assert len(enrichments) == 100
     e = enrichments[0]
     #atts=p.new_props['attributes']
     #kv = { x['attribute_type_id']: x['value'] for x in atts}

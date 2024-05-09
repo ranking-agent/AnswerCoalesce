@@ -7,6 +7,7 @@ from src.lookup import lookup
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
+import src.trapi as trapi
 
 logger = logging.getLogger(__name__)
 ROBOKOP_URL = "https://aragorn.renci.org/robokop/query"
@@ -49,18 +50,8 @@ async def get_mcq_inputs(in_message):
     See graph_coalescer for the expected format of these constraints."""
     #TODO: Ola to implement
 
-async def graph_enrich(input_ids):
-    """Given a list of ids, find the graph-based enrichments for each.  Returns a list of enrichments.  Each
-     enrichment is a dictionary with the form:
-     {
-        "enriched_node": curie,
-        "enriched_edge": qualified_predicate,
-        "attached_nodes": the list of input curies that have direct edges to the enriched_node,
-        "enrichment_attributes": the p-value and other stats for the enrichment
-     }
-     """
-    #TODO: Ola to implement based on coalesce
 
+# should probably just be a call out to something property coalescer instead
 async def property_enrich(input_ids):
     """Given a list of ids, find the property based enrichments for each.  Returns a list of enrichments.  Each
      enrichment is a dictionary with the form:
@@ -97,8 +88,22 @@ async def create_enrichment(in_message, enrichment, member_of_edges, input_qnode
      7. In the result, create the node_bindings
      8. In the result, create the analysis and add edge_bindings to it.
      """
-    #TODO: Ola to implement
-
+    # 1.(possibly) add the new node to the knowledge graph
+    trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node )
+    aux_graph_ids = []
+    for edge in enrichment.links:
+        # 2. Add the edges between the new node and the member nodes to the knowledge graph
+        direct_edge_id = trapi.add_edge_to_knowledge_graph(in_message, edge)
+        # 3. Create an auxiliary graph for each element of the member_id consisting of the edge from the member_id to the new node
+        aux_graph_id = trapi.add_auxgraph_for_enrichment(in_message, direct_edge_id, member_of_edges, enrichment.enriched_node.new_curie)
+        aux_graph_ids.append(aux_graph_id)
+    # 4. Add the inferred edge from the new node to the input uuid to the knowledge graph and
+    # 5. Add the auxiliary graphs created above to the inferred edge
+    enrichment_edge_id = trapi.add_enrichment_edge(in_message, enrichment, input_qnode_id, aux_graph_ids)
+    # 6. Create a new result
+    # 7. In the result, create the node_bindings
+    # 8. In the result, create the analysis and add edge_bindings to it.
+    trapi.add_enrichment_result(in_message, enrichment.enriched_node, enrichment_edge_id)
 
 async def create_or_find_member_of_edges(in_message, input_qnode_id):
     """Create or find the member_of edges for the input nodes from the member_ids element of input_qnode_id.

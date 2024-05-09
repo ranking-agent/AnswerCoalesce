@@ -4,30 +4,52 @@ import ast, json
 from string import Template
 
 class NewNode:
-    def __init__(self,newnode, newnodetype, edge_pred_and_qual, newnode_is):
-        self.newnode = newnode
+    def __init__(self, newnode, newnodetype): #edge_pred_and_qual, newnode_is):
+        self.new_curie = newnode
         self.newnode_type = newnodetype
-        self.new_edges = edge_pred_and_qual
-        self.newnode_is = newnode_is
+
+class NewEdge:
+    def __init__(self, source, predicate, target):
+        self.source = source
+        self.predicate = predicate
+        self.target = target
+    def get_prov_link(self):
+        return f"{self.source} {self.predicate} {self.target}"
+    def add_prov(self,prov):
+        self.prov = prov
 
 class Enrichment:
     def __init__(self,p_value,newnode, predicate, is_source, ndraws, n, total_node_count, curies, node_type):
+        """Here the curies are the curies that actually link to newnode, not just the input curies."""
         self.p_value = p_value
-        self.set_curies = curies
-        #self.new_props = props
-        #self.answer_indices = answer_ids
-        self.added_nodes = []
+        self.linked_curies = curies
+        self.enriched_node = None
+        self.predicate = predicate
         self.provmap = {}
-        self.add_extra_node(newnode, node_type, predicate, is_source)
+        self.add_extra_node(newnode, node_type)
+        self.add_extra_edges(newnode, predicate, is_source)
         self.counts = [ndraws, n, total_node_count]
-    def add_provenance(self,provmap):
-        self.provmap = provmap
-    def add_extra_node(self,newnode, newnodetype, edge_pred_and_qual, newnode_is):
+    #def add_provenance(self,provmap):
+    #    self.provmap = provmap
+    def add_extra_node(self,newnode, newnodetype):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
-        self.added_nodes.append( NewNode(newnode, newnodetype, edge_pred_and_qual, newnode_is) )
+        self.enriched_node = NewNode(newnode, newnodetype)
+    def add_extra_node_name(self,name_dict):
+        self.enriched_node.newnode_name = name_dict.get(self.enriched_node.newnode, None)
+    def add_extra_edges(self, newnode, predicate, newnode_is_source):
+        """Return the link associated with this enrichment that can be used to look up the provenance """
+        if newnode_is_source:
+            self.links = [NewEdge(self.enriched_node.newnode,json.dumps(self.enriched_node.new_edges,sort_keys=True),curie) for curie in self.linked_curies]
+        else:
+            self.links = [NewEdge(curie,json.dumps(self.enriched_node.new_edges,sort_keys=True),self.enriched_node.newnode) for curie in self.linked_curies]
+    def get_prov_links(self):
+        return [link.get_prov_link() for link in self.links]
+    def add_provenance(self,prov):
+        for link in self.links:
+            link.add_prov(prov[link.get_prov_link()])
 
     #TODO: this should not exist in here any more, we are just making a data class
     def x_apply(self,answers,question,graph,graph_index,patch_no):

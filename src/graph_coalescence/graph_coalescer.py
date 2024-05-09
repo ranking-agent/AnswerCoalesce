@@ -9,13 +9,10 @@ import json
 import ast
 import itertools
 import orjson
-import bmt
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir + '/')
-
-biolink_toolkit = bmt.Toolkit()
 
 def grouper(n, iterable):
     it = iter(iterable)
@@ -68,8 +65,8 @@ def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_c
 def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types):
     """Filter out links that don't meet the node constraints
     node constraints is a list of acceptable node types for the returned nodes.  The node type of the other node
-    in the links is used to determine if the link is kept.  The only thing that makes this a little tricky is that
-    we need to keep not just exact matches but also subclasses.  So we need to check the biolink model
+    in the links is used to determine if the link is kept.  Fortunately, link_node_types holds all of the superclasses
+    of the node type, so we can just check if the link node type is in the set of acceptable types.
 
     Also, we want to filter out links that end up with block-list nodes
     """
@@ -82,11 +79,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 
     #Collect the accepted types, which are any subclass of what gets passed into node constraints.
     # We're going to special case named thing - if that's in there, we just bypass all the type checks.
-    accepted_types = set()
-    for constraint in node_constraints:
-        if constraint == "biolink:NamedThing":
-            break
-        accepted_types.add(biolink_toolkit.get_descendants(constraint,formatted=True))
+    accept_all_types = ( "biolink:NamedThing" in node_constraints )
 
     new_nodes_to_links = {}
     for node, links in nodes_to_links.items():
@@ -95,11 +88,13 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
             othernode = link[0]
             if othernode in blocklist:
                 continue
-            if "biolink:NamedThing" in node_constraints:
+            if accept_all_types:
                 new_links.append(link)
             else:
-                link_node_type = link_node_types[othernode]
-                if link_node_type in accepted_types:
+                # we have 2 lists: node constraints and link_node_types_othernode.  We want to see if there is any overlap
+                # between the two lists.  If there is, then we want to keep the link.
+                accepted_types = set(node_constraints) & set(link_node_types[othernode])
+                if len(accepted_types) > 0:
                     new_links.append(link)
         new_nodes_to_links[node] = new_links
 
@@ -141,10 +136,6 @@ def coalesce_by_graph(input_ids, input_node_type,
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, input_node_type)
     lcounts = get_link_counts(unique_links)
 
-    #Maybe these get moved out...  I only need them for stuff that gets into a result
-    # Also, these are needed for both query and edgar, and should probably go into some generic TRAPI creating stuff
-    nodenamedict = get_node_names(unique_link_nodes)
-    provs = get_provs(nodes_to_links)
 
     total_node_counts = get_total_node_counts(input_node_type)
 
@@ -152,11 +143,74 @@ def coalesce_by_graph(input_ids, input_node_type,
     # so we're gonna cache those
     sf_cache = {}
 
-    direction = {True: 'biolink:object', False: 'biolink:subject'}
+    #direction = {True: 'biolink:object', False: 'biolink:subject'}
 
     enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
                                         total_node_counts)
+
+    if pvalue_threshold:
+        enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
+    if result_length:
+        enriched_links = enriched_links[:result_length]
+
+    augment_enrichments(enriched_links, nodetypedict)
+
     return enriched_links
+
+def augment_enrichments(enriched_links, nodetypes):
+    """Having found the set of enrichments we want to return, make sure that each enrichment has the node name and the node type."""
+    enriched_curies = set([link.enriched_node.new_curie for link in enriched_links])
+    nodenamedict = get_node_names(enriched_curies)
+    for enrichment in enriched_links:
+        enrichment.add_extra_node_name(nodenamedict)
+    add_provs(enriched_links)
+
+
+def add_provs(enrichments):
+    # Now we are going to hit redis to get the provenances for all of the links.
+    # our unique_links are the keys
+    # Convert n2l to edges
+    def process_prov(prov_data):
+        if isinstance(prov_data, (str, bytes)):
+            prov_data = orjson.loads(prov_data)
+        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
+                prov_data.items()]
+
+    edges = []
+    for enrichment in enrichments:
+        new_edges = enrichment.get_prov_links()
+        edges += new_edges
+
+    prov = {}
+
+    # now get the prov for those edges
+    with get_redis_pipeline(4) as p:
+        for edgegroup in grouper(1000, edges):
+            for edge in edgegroup:
+                p.get(edge)
+            ns = p.execute()
+            symmetric_edges = []
+            for edge, n in zip(edgegroup, ns):
+                # Convert the svelte key-value attribute into a fat trapi-style attribute
+                if not n:
+                    symmetric_edges.append(get_edge_symmetric(edge))
+                else:
+                    prov[edge] = process_prov(n)
+                # This is cheating.  It's to make up for the fact that we added in inverted edges for
+                # related to, but the prov doesn't know about it. This is not a long term fix, it's a hack
+                # for the prototype and must be fixed. FIXED!!!
+            if symmetric_edges:
+                for sym_edge in symmetric_edges:
+                    p.get(sym_edge)
+                sym_ns = p.execute()
+                for sym_edge, sn in zip(symmetric_edges, sym_ns):
+                    if sn:
+                        prov[sym_edge] = process_prov(sn)
+                    else:
+                        prov[sym_edge] = [{}]
+                        logger.info(f'{sym_edge} not exist!')
+    for enrichment in enrichments:
+        enrichment.add_provenance(prov)
 
 
 def leftovers():
@@ -301,49 +355,6 @@ def get_edge_symmetric(edge):
     edge_predicate, obj = b.split('}')
     edge_predicate = '{' + edge_predicate + '}'
     return f'{obj.lstrip()} {edge_predicate} {subject.rstrip()}'
-def get_provs(n2l):
-    # Now we are going to hit redis to get the provenances for all of the links.
-    # our unique_links are the keys
-    # Convert n2l to edges
-    def process_prov(prov_data):
-        if isinstance(prov_data, (str, bytes)):
-            prov_data = orjson.loads(prov_data)
-        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
-                prov_data.items()]
-
-    edges = [f'{n1} {link[1]} {link[0]}' if link[2] else f'{link[0]} {link[1]} {n1}' for n1, ll in n2l.items() for link
-             in ll]
-
-
-    prov = {}
-
-    # now get the prov for those edges
-    with get_redis_pipeline(4) as p:
-        for edgegroup in grouper(1000, edges):
-            for edge in edgegroup:
-                p.get(edge)
-            ns = p.execute()
-            symmetric_edges = []
-            for edge, n in zip(edgegroup, ns):
-                # Convert the svelte key-value attribute into a fat trapi-style attribute
-                if not n:
-                    symmetric_edges.append(get_edge_symmetric(edge))
-                else:
-                    prov[edge] = process_prov(n)
-                #This is cheating.  It's to make up for the fact that we added in inverted edges for
-                # related to, but the prov doesn't know about it. This is not a long term fix, it's a hack
-                # for the prototype and must be fixed. FIXED!!!
-            if symmetric_edges:
-                for sym_edge in symmetric_edges:
-                    p.get(sym_edge)
-                sym_ns = p.execute()
-                for sym_edge, sn in zip(symmetric_edges, sym_ns):
-                    if sn:
-                        prov[sym_edge] = process_prov(sn)
-                    else:
-                        prov[sym_edge] = [{}]
-                        logger.info(f'{sym_edge} not exist!')
-    return prov
 
 def filter_opportunities(opportunities, nodes_to_links):
     new_opportunities = []
