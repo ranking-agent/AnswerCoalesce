@@ -3,6 +3,55 @@ from collections import defaultdict
 import ast, json
 from string import Template
 
+###
+# These classes are used to extract the meaning from the TRAPI MCQ query into a more usable form
+###
+
+class MCQGroupNode:
+    def __init__(self, query_graph):
+        for qnode_id, qnode in query_graph["nodes"].items():
+            if qnode.get("set_interpretation", "") == "MANY":
+                self.curies = qnode["member_ids"]
+                self.qnode_id = qnode_id
+                self.uuid = qnode["ids"][0]
+                self.semantic_type = qnode["categories"][0]
+
+class MCQEnrichedNode:
+    def __init__(self, query_graph):
+        for qnode_id, qnode in query_graph["nodes"].items():
+            if qnode.get("set_interpretation", "") != "MANY":
+                self.qnode_id = qnode_id
+                self.semantic_types = qnode["categories"]
+
+class MCQEdge:
+    def __init__(self, query_graph,groupnode_qnodeid):
+        for qedge_id, qedge in query_graph["edges"].items():
+            if qedge["subject"] == groupnode_qnodeid:
+                self.group_is_subject = True
+            else:
+                self.group_is_subject = False
+            self.qedge_id = qedge_id
+            self.predicate_only = qedge["predicate"]
+            self.predicate = {"predicate": qedge["predicate"]}
+            qualifier_constraints = qedge.get("qualifiers_constraints", [])
+            if len(qualifier_constraints) > 0:
+                qc = qualifier_constraints[0]
+                qs = qc.get("qualifier_set", [])
+                for q in qs:
+                    self.predicate[q["qualifier_type_id"]] = q["qualifier_value"]
+
+class MCQDefinition:
+    def __init__(self,in_message):
+        query_graph = in_message["message"]["query_graph"]
+        self.group_node = MCQGroupNode(query_graph)
+        self.enriched_node = MCQEnrichedNode(query_graph)
+        self.edge = MCQEdge(query_graph,self.group_node.qnode_id)
+
+
+###
+# These components are about holding the results of Graph enrichment in a TRAPI independent way
+###
+
 class NewNode:
     def __init__(self, newnode, newnodetype): #edge_pred_and_qual, newnode_is):
         self.new_curie = newnode

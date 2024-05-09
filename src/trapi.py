@@ -3,50 +3,7 @@ import uuid
 
 infores = "infores:answercoalesce"
 
-async def get_mcq_components(in_message):
-    """Parse the input message and extract the defining information of the query in a TRPAPI independent way.
-    In MCQ there are two query nodes, one is the group node, with the input curies and the other is the enriched node,
-    which is the output. There is also a single edge connecting the group node to the enriched node.
-    This is the structure:
-    MCQ = {"group_node": {"curies": [],
-                          "qnode_id": None,
-                          "uuid": None,
-                          "semantic_type": None},
-           "enriched_node": {"qnode_id": None,
-                             "semantic_types": None},
-           "edge": {"predicate": None,
-                    "qedge_id": None,
-                    "group_is_subject": None}}
-    The qnode_ids and qedge_id are the keys in the "nodes" and "edges" dictionaries in the query_graph.
-    Predicate is a dictionary containing the predicate and any qualifiers.
-    """
-    MCQ = {"group_node": {"curies": [], "qnode_id": None, "uuid": None, "semantic_type": None},
-           "enriched_node": {"qnode_id": None, "semantic_types": None},
-           "edge": {"predicate": None, "qedge_id": None, "group_is_subject": None}}
-    query_graph = in_message["message"]["query_graph"]
-    for qnode_id, qnode in query_graph["nodes"].items():
-        if qnode.get("set_interpretation","") == "MANY":
-            MCQ["group_node"]["curies"] = qnode["member_ids"]
-            MCQ["group_node"]["qnode_id"] = qnode_id
-            MCQ["group_node"]["uuid"] = qnode["ids"][0]
-            MCQ["group_node"]["semantic_type"] = qnode["categories"][0]
-        else:
-            MCQ["enriched_node"]["qnode_id"] = qnode_id
-            MCQ["enriched_node"]["semantic_types"] = qnode["categories"]
-    for qedge_id, qedge in query_graph["edges"].items():
-        if qedge["subject"] == MCQ["group_node"]["qnode_id"]:
-            MCQ["edge"]["group_is_subject"] = True
-        else:
-            MCQ["edge"]["group_is_subject"] = False
-        MCQ["edge"]["qedge_id"] = qedge_id
-        MCQ["edge"]["predicate"] = {"predicate": qedge["predicate"]}
-        qualifier_constraints = qedge.get("qualifiers_constraints",[])
-        if len(qualifier_constraints) > 0:
-            qc = qualifier_constraints[0]
-            qs = qc.get("qualifier_set",[])
-            for q in qs:
-                MCQ["edge"]["predicate"][q["qualifier_type_id"]] = q["qualifier_value"]
-    return MCQ
+
 
 def create_knowledge_graph_node(curie,category,name):
     """
@@ -137,31 +94,16 @@ def add_auxgraph_for_enrichment(in_message, direct_edge_id, member_of_ids, new_c
     in_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
     return aux_graph_id
 
-def add_enrichment_edge(in_message, enrichment, aux_graph_ids, input_qnode_id):
+def add_enrichment_edge(in_message, enrichment, mcq_definition, aux_graph_ids):
     """
     Add an enrichment edge to the TRAPI response.
     The enrichment edge is an inferred edge connecting the enriched node to the input node.
     It should match the predicate and query direction of the input query graph
     """
     edges = in_message["message"]["knowledge_graph"]["edges"]
-    query_graph = in_message["message"]["query_graph"]
-    for qid, qnode in query_graph["nodes"].items():
-        if qnode.get("ids",["no"])[0] == input_qnode_id:
-            input_qid = qid
-        else:
-            enriched_qid = qid
-    qg_edges = query_graph["edges"]
-    # is the predicate pointing to or from the group(input) node?
-    for qge_id, edge in qg_edges.items():
-        if edge["subject"] == input_qid:
-            group_is_subject = True
-        else:
-            group_is_subject = False
-        predicate = edge["predicate"]
-        qualifier_constraints = edge.get("qualifiers_constraints",[])
     #Create the edge, orienting it correctly
     new_edge = {
-        "predicate": predicate,
+        "predicate": mcq_definition["edge"]["predicate"],
         "attributes": []
     }
     if group_is_subject:

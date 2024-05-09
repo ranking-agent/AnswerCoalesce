@@ -7,6 +7,7 @@ from src.lookup import lookup
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.set_coalescence.set_coalescer import coalesce_by_set
+from src.components import MCQDefinition
 import src.trapi as trapi
 
 logger = logging.getLogger(__name__)
@@ -18,12 +19,12 @@ TRACK = {}
 async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
-    mcq_definition = await trapi.get_mcq_components(in_message)
+    mcq_definition = MCQDefinition(in_message)
     #qnode_uuid, input_ids, input_type, node_constraints, predicate_constraints = await trapi.get_mcq_inputs(in_message)
-    enrichment_results = await coalesce_by_graph(mcq_definition["group_node"]["curies"],
-                                                 mcq_definition["group_node"]["semantic_type"],
-                                                 node_constraints= mcq_definition["enriched_node"]["semantic_types"],
-                                                 predicates_constraints=mcq_definition["edge"]["predicate"],
+    enrichment_results = await coalesce_by_graph(mcq_definition.group_node.curies,
+                                                 mcq_definition.group_node.semantic_type,
+                                                 node_constraints= mcq_definition.enriched_node.semantic_types,
+                                                 predicates_constraints=mcq_definition.edge.predicate,
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters["pvalue_threshold"],
                                                  result_length=parameters["result_length"])
@@ -62,11 +63,12 @@ async def create_mcq_trapi_response(in_message, enrichment_results, mcq_definiti
     """
     # We need to have knowledge_graph edges for member_of the inputs (if they don't already exist).
     # We will also need access to those edges by result node to create the auxiliary graphs.
-    member_of_edges = await create_or_find_member_of_edges(in_message, input_qnode_id)
+    member_of_edges = await create_or_find_member_of_edges(in_message, mcq_definition)
     for enrichment in enrichment_results:
-        await create_enrichment(in_message, enrichment, member_of_edges, input_qnode_id)
+        await create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition)
+    return in_message
 
-async def create_enrichment(in_message, enrichment, member_of_edges, input_qnode_id):
+async def create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition):
     """
      Each enrichment is a result.  For each enrichment we need to
      1. (possibly) add the new node to the knowledge graph
@@ -90,16 +92,18 @@ async def create_enrichment(in_message, enrichment, member_of_edges, input_qnode
         aux_graph_ids.append(aux_graph_id)
     # 4. Add the inferred edge from the new node to the input uuid to the knowledge graph and
     # 5. Add the auxiliary graphs created above to the inferred edge
-    enrichment_edge_id = trapi.add_enrichment_edge(in_message, enrichment, input_qnode_id, aux_graph_ids)
+    enrichment_edge_id = trapi.add_enrichment_edge(in_message, enrichment, mcq_definition, aux_graph_ids)
     # 6. Create a new result
     # 7. In the result, create the node_bindings
     # 8. In the result, create the analysis and add edge_bindings to it.
     trapi.add_enrichment_result(in_message, enrichment.enriched_node, enrichment_edge_id)
 
-async def create_or_find_member_of_edges(in_message, input_qnode_id):
+async def create_or_find_member_of_edges(in_message, mcq_definition):
     """Create or find the member_of edges for the input nodes from the member_ids element of input_qnode_id.
     Return a dictionary of the form
     { input_curie: edge_id }"""
+    # get input qnode id
+    input_qnode_id = mcq_definition.group_node.qnode_id
     # if knowledge_graph is not in the message, add it
     if 'knowledge_graph' not in in_message['message']:
         in_message['message']['knowledge_graph'] = {'nodes': {}, 'edges': {}}
