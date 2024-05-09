@@ -37,8 +37,11 @@ def test_redis_build():
             if f'{line["subject"]}\t{json.dumps([(line["object"], predicate_string, True)])}\n' not in assertion:
                 assertion.append(f'{line["subject"]}\t{json.dumps([(line["object"], predicate_string, True)])}\n')
             if tk.get_element(line['predicate'])["symmetric"]:
-                assert f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, True)])}\n' in linkfile_content
-                if f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, True)])}\n' not in assertion:
-                    assertion.append(f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, True)])}\n')
-                assert assertion == linkfile_content
+                is_target = True
+            else:
+                is_target = False
+            assert f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, is_target)])}\n' in linkfile_content
+            if f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, is_target)])}\n' not in assertion:
+                assertion.append(f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, is_target)])}\n')
+        assert assertion == linkfile_content
 
