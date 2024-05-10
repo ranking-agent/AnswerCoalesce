@@ -1,3 +1,4 @@
+from src.components import  MCQDefinition
 import uuid
 #This is the single place to create TRAPI elements.  It is the only place that should be creating TRAPI elements.
 
@@ -5,26 +6,57 @@ infores = "infores:answercoalesce"
 
 
 
-def create_knowledge_graph_node(curie,category,name):
+def create_knowledge_graph_node(curie,category,name=None):
     """
     Create a TRAPI knowledge graph node.
     """
     return {
-        "category": [category],
-        "id": curie,
+        "categories": [category],
         "name": name,
         "attributes": []
     }
 
-def add_node_to_knowledge_graph(response,node):
+def create_knowledge_graph_edge(subject, object, predicate, qualifiers=None, sources=[], attributes=[]):
+    """
+    Create a TRAPI knowledge graph edge.
+    """
+    edge = {
+        "subject": subject,
+        "object": object,
+        "predicate": predicate,
+        "attributes": attributes,
+        "sources": sources
+    }
+    if qualifiers:
+        edge["qualifiers"] = qualifiers
+    if len(edge["sources"]) == 0:
+        add_local_prov(edge)
+    return edge
+
+def add_node_to_knowledge_graph(response,node_id,node):
     """
     Add a TRAPI knowledge graph node to a TRAPI knowledge graph.
     """
+    if "knowledge_graph" not in response["message"]:
+        response["message"]["knowledge_graph"] = {"nodes": {}, "edges": {}}
+    if "nodes" not in response["message"]["knowledge_graph"]:
+        response["message"]["knowledge_graph"]["nodes"] = {}
     nodes = response["message"]["knowledge_graph"]["nodes"]
-    if node.new_curie not in nodes:
-        nodes[node.new_curie] = create_knowledge_graph_node(node.new_curie,node.category,node.name)
+    if node_id not in nodes:
+        nodes[node_id] = node
 
-def add_edge_to_knowledge_graph(response,edge):
+def add_edge_to_knowledge_graph(response, edge_id, edge):
+    """
+    Add a TRAPI knowledge graph edge to a TRAPI knowledge graph.
+    """
+    if "knowledge_graph" not in response["message"]:
+        response["message"]["knowledge_graph"] = {"nodes": {}, "edges": {}}
+    if "edges" not in response["message"]["knowledge_graph"]:
+        response["message"]["knowledge_graph"]["edges"] = {}
+    edges = response["message"]["knowledge_graph"]["edges"]
+    edges[edge_id] = edge
+
+def add_enrichment_edge_to_knowledge_graph(response,edge):
     """
     Add a TRAPI knowledge graph edge to a TRAPI knowledge graph.
     The edge is defined as NewEdge in components.
@@ -94,7 +126,7 @@ def add_auxgraph_for_enrichment(in_message, direct_edge_id, member_of_ids, new_c
     in_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
     return aux_graph_id
 
-def add_enrichment_edge(in_message, enrichment, mcq_definition, aux_graph_ids):
+def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, aux_graph_ids):
     """
     Add an enrichment edge to the TRAPI response.
     The enrichment edge is an inferred edge connecting the enriched node to the input node.
@@ -106,17 +138,16 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition, aux_graph_ids):
         "predicate": mcq_definition["edge"]["predicate"],
         "attributes": []
     }
-    if group_is_subject:
-        new_edge["subject"] = input_qnode_id
+    if mcq_definition.edge.group_is_subject:
+        new_edge["subject"] = mcq_definition.group_node.uuid
         new_edge["object"] = enrichment.enriched_node.new_curie
     else:
-        new_edge["object"] = input_qnode_id
+        new_edge["object"] = mcq_definition.group_node.uuid
         new_edge["subject"] = enrichment.enriched_node.new_curie
     # Add any qualifiers
-    qualifiers = convert_qualifier_constraint_to_qualifiers(qualifier_constraints)
-    new_edge["qualifiers"] = qualifiers
+    new_edge["qualifiers"] = mcq_definition.edge.qualifiers
     # Add provenance
-    add_enrichment_prov(new_edge,enrichment)
+    add_local_prov(new_edge, enrichment)
     # Add KL/AT
     add_prediction_klat(new_edge)
     # Add the auxiliary graphs
@@ -138,32 +169,38 @@ def convert_qualifier_constraint_to_qualifiers(qualifier_constraints):
     qualifiers = qs
     return qualifiers
 
-def add_enrichment_prov(new_edge,enrichment):
+def add_local_prov(edge):
     """
     Add the provenance information to an enrichment edge.
     """
     new_provenance = {"resource_id": infores,
                       "resource_role": "primary_knowledge_source"}
-    new_edge["sources"] = [new_provenance]
+    edge["sources"] = [new_provenance]
 
-def add_prediction_klat(new_edge):
+def add_klat(edge, kl, at):
     """
     Add the knowledge level and attribute type to an edge.
     """
-    source = {"name": infores}
-    attributes = new_edge["attributes"]
+    attributes = edge["attributes"]
     attributes += [
         {
             "attribute_type_id": "biolink:agent_type",
-            "value": "computational_model",
-            "attribute_source": source
+            "value": at,
+            "attribute_source": infores
         },
         {
             "attribute_type_id": "biolink:knowledge_level",
-            "value": "prediction",
-            "attribute_source": source
+            "value": kl,
+            "attribute_source": infores
         }
     ]
+
+def add_prediction_klat(edge):
+    add_klat(edge, "prediction", "computational_model")
+
+#TODO: what are the appropriate KL/AT if we are adding member_of edges?
+def add_member_of_klat(edge):
+    add_klat(edge, "???", "???")
 
 def add_aux_graphs(new_edge,aux_graph_ids):
     """
@@ -172,12 +209,19 @@ def add_aux_graphs(new_edge,aux_graph_ids):
     new_edge["attributes"].append(
         {
             "attribute_type_id": "biolink:support_graphs",
-            "value": aux_graph_ids
+            "value": aux_graph_ids,
+            "attribute_source": infores
         }
     )
 
-def add_enrichment_result(in_message, enriched_node, enrichment_edge_id):
+def add_enrichment_result(in_message, enriched_node, enrichment_edge_id, mcq_definition):
     if "results" not in in_message["message"]:
         in_message["message"]["results"] = []
     result = {"node_bindings": {}, "analyses": [{"edge_bindings": {}, "attributes": []}]}
     in_message["message"]["results"].append(result)
+    # There should be a node binding from the input (group) node qnode_id to the input node uuid
+    result["node_bindings"][mcq_definition.group_node.qnode_id] = [{"id": mcq_definition.group_node.uuid}]
+    # There should be a node binding from the enriched node qnode_id to the enriched node curie
+    result["node_bindings"][mcq_definition.enriched_node.qnode_id] = [{"id": enriched_node.new_curie}]
+    # There should be an edge binding from the enrichment edge qedge_id to the enrichment edge uuid
+    result["analyses"][0]["edge_bindings"][mcq_definition.enrichment_edge.qedge_id] = [{"id": enrichment_edge_id}]

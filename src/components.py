@@ -2,11 +2,13 @@ from copy import deepcopy
 from collections import defaultdict
 import ast, json
 from string import Template
+from typing import LiteralString
 
 ###
 # These classes are used to extract the meaning from the TRAPI MCQ query into a more usable form
 ###
 
+# TODO: Handle the case where we are not gifted a category for the group node
 class MCQGroupNode:
     def __init__(self, query_graph):
         for qnode_id, qnode in query_graph["nodes"].items():
@@ -36,8 +38,8 @@ class MCQEdge:
             qualifier_constraints = qedge.get("qualifiers_constraints", [])
             if len(qualifier_constraints) > 0:
                 qc = qualifier_constraints[0]
-                qs = qc.get("qualifier_set", [])
-                for q in qs:
+                self.qualifiers = qc.get("qualifier_set", [])
+                for q in self.qualifiers:
                     self.predicate[q["qualifier_type_id"]] = q["qualifier_value"]
 
 class MCQDefinition:
@@ -68,7 +70,7 @@ class NewEdge:
         self.prov = prov
 
 class Enrichment:
-    def __init__(self,p_value,newnode, predicate, is_source, ndraws, n, total_node_count, curies, node_type):
+    def __init__(self,p_value,newnode: LiteralString, predicate, is_source, ndraws, n, total_node_count, curies, node_type):
         """Here the curies are the curies that actually link to newnode, not just the input curies."""
         self.p_value = p_value
         self.linked_curies = curies
@@ -89,11 +91,11 @@ class Enrichment:
     def add_extra_node_name(self,name_dict):
         self.enriched_node.newnode_name = name_dict.get(self.enriched_node.newnode, None)
     def add_extra_edges(self, newnode, predicate, newnode_is_source):
-        """Return the link associated with this enrichment that can be used to look up the provenance """
+        """Add edges between the newnode (curie) and the curies that they were linked to"""
         if newnode_is_source:
-            self.links = [NewEdge(self.enriched_node.newnode,json.dumps(self.enriched_node.new_edges,sort_keys=True),curie) for curie in self.linked_curies]
+            self.links = [NewEdge(newnode,json.dumps(self.enriched_node.new_edges,sort_keys=True),curie) for curie in self.linked_curies]
         else:
-            self.links = [NewEdge(curie,json.dumps(self.enriched_node.new_edges,sort_keys=True),self.enriched_node.newnode) for curie in self.linked_curies]
+            self.links = [NewEdge(curie,json.dumps(self.enriched_node.new_edges,sort_keys=True),newnode) for curie in self.linked_curies]
     def get_prov_links(self):
         return [link.get_prov_link() for link in self.links]
     def add_provenance(self,prov):

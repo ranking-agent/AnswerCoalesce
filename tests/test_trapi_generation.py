@@ -1,8 +1,8 @@
 import pytest
 from src import single_node_coalescer as snc
+from src.components import  MCQDefinition
 
 import pytest
-from src.trapi import get_mcq_components
 
 from reasoner_pydantic import Response
 @pytest.mark.asyncio
@@ -36,19 +36,26 @@ async def test_get_mcq_components():
     }
     # First, did we make a valid query_graph?
     response = Response(**in_message)
-    # Expected output after parsing
-    expected_output = {
-        "group_node": {"curies": ["CURIE:1", "CURIE:2"], "qnode_id": "n1", "uuid": "UUID:1", "semantic_type": "biolink:SmallMolecule"},
-        "enriched_node": {"qnode_id": "n2", "semantic_types": ["biolink:Gene"]},
-        "edge": {"predicate": {"predicate": "biolink:affects", "biolink:object_aspect_qualifier": "expression"},
-                "qedge_id": "e1", "group_is_subject": True}
-    }
 
     # Call the function with the mocked data
-    result = await get_mcq_components(in_message)
+    mcqdef = MCQDefinition(in_message)
 
     # Assert that the function output is as expected
-    assert result == expected_output
+    # Group Node
+    assert mcqdef.group_node.qnode_id == "n1"
+    assert mcqdef.group_node.uuid == "UUID:1"
+    assert mcqdef.group_node.curies == ["CURIE:1", "CURIE:2"]
+    assert mcqdef.group_node.semantic_type == "biolink:SmallMolecule"
+    # New (Enriched) Node
+    assert mcqdef.enriched_node.qnode_id == "n2"
+    assert mcqdef.enriched_node.semantic_types == ["biolink:Gene"]
+    # Edge
+    assert mcqdef.edge.qedge_id == "e1"
+    assert mcqdef.edge.predicate_only == "biolink:affects"
+    assert mcqdef.edge.qualifiers == [{"qualifier_type_id": "biolink:object_aspect_qualifier",
+                                       "qualifier_value": "expression"}]
+    assert mcqdef.edge.predicate == {"predicate": "biolink:affects", "biolink:object_aspect_qualifier": "expression"}
+    assert mcqdef.edge.group_is_subject == True
 
 @pytest.mark.asyncio
 async def test_create_or_find_member_of_edges_existing_edges():
@@ -59,7 +66,9 @@ async def test_create_or_find_member_of_edges_existing_edges():
                 "nodes": {
                     "qnode1": {
                         "ids": ["uuid:1234"],
-                        "member_ids": ["id1", "id2"]
+                        "member_ids": ["id1", "id2"],
+                        "categories": ["biolink:SmallMolecule"],
+                        "set_interpretation": "MANY"
                     },
                     "qnode2": {
                         "categories": ["biolink:Gene"]
@@ -78,13 +87,16 @@ async def test_create_or_find_member_of_edges_existing_edges():
                 "edge1": {
                     "subject": "id1",
                     "object": "uuid:1234",
-                    "predicate": "biolink:member_of"
+                    "predicate": "biolink:member_of",
+                    "attributes": [],
+                    "sources": []
                 }
             }
         }
     }
     }
-    result = await snc.create_or_find_member_of_edges(message, "qnode1")
+    mcqdef = MCQDefinition(message)
+    result = await snc.create_or_find_member_of_edges_and_nodes(message, mcqdef)
     # assert that result contains keys for both id1 and id2
     assert "id1" in result
     assert "id2" in result
@@ -96,3 +108,4 @@ async def test_create_or_find_member_of_edges_existing_edges():
     assert message["message"]["knowledge_graph"]["edges"][result["id2"]]["subject"] == "id2"
     assert message["message"]["knowledge_graph"]["edges"][result["id2"]]["object"] == "uuid:1234"
     assert message["message"]["knowledge_graph"]["edges"][result["id2"]]["predicate"] == "biolink:member_of"
+    check = Response(**message)
