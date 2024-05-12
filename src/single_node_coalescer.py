@@ -3,7 +3,6 @@ import os, logging, requests, asyncio, httpx, json
 from copy import deepcopy
 from reasoner_pydantic import Response as PDResponse, KnowledgeGraph
 
-from src.lookup import lookup
 from src.property_coalescence.property_coalescer import coalesce_by_property
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links
 from src.set_coalescence.set_coalescer import coalesce_by_set

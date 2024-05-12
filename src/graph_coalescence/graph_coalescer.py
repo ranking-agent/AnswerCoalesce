@@ -161,7 +161,7 @@ def coalesce_by_graph(input_ids, input_node_type,
 
 def augment_enrichments(enriched_links, nodetypes):
     """Having found the set of enrichments we want to return, make sure that each enrichment has the node name and the node type."""
-    enriched_curies = set([link.enriched_node.newnode for link in enriched_links])
+    enriched_curies = set([link.enriched_node.new_curie for link in enriched_links])
     nodenamedict = get_node_names(enriched_curies)
     for enrichment in enriched_links:
         enrichment.add_extra_node_name(nodenamedict)
