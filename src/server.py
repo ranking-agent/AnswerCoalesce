@@ -70,7 +70,7 @@ async def query_handler(request: PDResponse):
         for log in in_message['logs']:
             log['timestamp'] = str(log['timestamp'])
 
-        parameters = await get_parameters()
+        parameters = await get_parameters( in_message )
 
         if await is_infer_query( in_message ):
             return await infer( in_message, parameters )
@@ -106,7 +106,12 @@ async def is_infer_query( in_message ):
         return False
     if not count_query_edges(in_message) == 1:
         return False
-    #TODO: Ola to implement
+
+    # TODO: Ola to implement
+    for edge_id, qedges in in_message.get("message", {}).get("query_graph", {}).get("edges", {}).items():
+        if qedges.get("knowledge_type", "") == "inferred":
+            return True
+
     return False
 
 async def is_multi_curie_query(in_message):
