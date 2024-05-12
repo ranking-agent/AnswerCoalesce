@@ -5,7 +5,7 @@ from reasoner_pydantic import Response as PDResponse, KnowledgeGraph
 
 from src.lookup import lookup
 from src.property_coalescence.property_coalescer import coalesce_by_property
-from src.graph_coalescence.graph_coalescer import coalesce_by_graph
+from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links
 from src.set_coalescence.set_coalescer import coalesce_by_set
 from src.components import MCQDefinition
 import src.trapi as trapi
@@ -32,16 +32,47 @@ async def multi_curie_query(in_message, parameters):
 
 async def infer(in_message, parameters):
     """Takes a TRAPI infer query and returns a TRAPI infer answer."""
-    input_ids = lookup(in_message)
-    graph_enrichment_results = await coalesce_by_graph(input_ids)
+    curies, predicate_parts, output_semantic_type, input_qnode, output_qnode, qedge_id = get_qg_parameters( in_message )
+    input_ids = lookup(curies, predicate_parts.get("predicate"))
+    graph_enrichment_results = await coalesce_by_graph(input_ids, output_semantic_type, predicate_constraints=parameters.get("predicates_to_exclude", []))
     property_enrichment_results = await coalesce_by_property(input_ids)
     return await create_infer_trapi_response(in_message, graph_enrichment_results, property_enrichment_results)
 
-async def lookup(in_message):
+def lookup( curie, params_predicate ):
     """Given an infer query, look up internally the non-inferred answers to the query.
     Return them as a list of curies"""
     #TODO: Ola to implement based on current lookup
-    return []
+    link_ids = create_nodes_to_links(curie, params_predicate)
+    return link_ids
+
+def get_qg_parameters( in_message ):
+    for qedge_id, qedges in in_message.get("message", {}).get("query_graph", {}).get("edges", {}).items():
+        subject = in_message.get("message", {}).get("query_graph", {}).get("nodes", {})[qedges["subject"]]
+        object = in_message.get("message", {}).get("query_graph", {}).get("nodes", {})[qedges["object"]]
+        if subject.get("ids",[]):
+            is_source = True
+        else:
+            is_source = False
+        if is_source:
+            curies = subject["ids"]
+            input_qnode = qedges["subject"]
+            output_qnode = qedges["object"]
+            semantic_type = object.get("categories", [])[0]
+        else:
+            curies = object["ids"]
+            input_qnode = qedges["object"]
+            output_qnode = qedges["subject"]
+            semantic_type = subject.get("categories", [])[0]
+        predicate_parts={"predicate": qedges["predicates"][0]}
+        qualifier_constraints = qedges.get("qualifier_constraints", [])
+        if len(qualifier_constraints) > 0:
+            qc = qualifier_constraints[0]
+            qs = qc.get("qualifier_set", [])
+            for q in qs:
+                predicate_parts[q["qualifier_type_id"].split(":")[1]] = q["qualifier_value"]
+
+    return curies, predicate_parts, semantic_type, input_qnode, output_qnode, qedge_id
+
 
 # should probably just be a call out to something property coalescer instead
 async def property_enrich(input_ids):
