@@ -545,7 +545,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             # get the real labels/types of the enriched node
             node_types = typecache[newcurie]
 
-            enrichment = Enrichment(enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types)
+            enrichment = Enrichment(enrichp, newcurie, predicate, newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
             enriched.append( enrichment )
 
         if len(enriched) > 0:

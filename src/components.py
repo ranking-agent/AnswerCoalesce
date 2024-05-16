@@ -41,6 +41,8 @@ class MCQEdge:
                 self.qualifiers = qc.get("qualifier_set", [])
                 for q in self.qualifiers:
                     self.predicate[q["qualifier_type_id"]] = q["qualifier_value"]
+            else:
+                self.qualifiers = []
 
 class MCQDefinition:
     def __init__(self,in_message):
@@ -58,6 +60,7 @@ class NewNode:
     def __init__(self, newnode, newnodetype): #edge_pred_and_qual, newnode_is):
         self.new_curie = newnode
         self.newnode_type = newnodetype
+        self.name = None
 
 class NewEdge:
     def __init__(self, source, predicate, target):
@@ -70,7 +73,7 @@ class NewEdge:
         self.prov = prov
 
 class Enrichment:
-    def __init__(self,p_value,newnode: LiteralString, predicate, is_source, ndraws, n, total_node_count, curies, node_type):
+    def __init__(self,p_value,newnode: LiteralString, predicate: LiteralString, is_source, ndraws, n, total_node_count, curies, node_type):
         """Here the curies are the curies that actually link to newnode, not just the input curies."""
         self.p_value = p_value
         self.linked_curies = curies
@@ -89,17 +92,20 @@ class Enrichment:
         or away from it (newnode_is = 'source') """
         self.enriched_node = NewNode(newnode, newnodetype)
     def add_extra_node_name(self,name_dict):
-        self.enriched_node.newnode_name = name_dict.get(self.enriched_node.newnode, None)
+        self.enriched_node.newnode_name = name_dict.get(self.enriched_node.new_curie, None)
     def add_extra_edges(self, newnode, predicate, newnode_is_source):
         """Add edges between the newnode (curie) and the curies that they were linked to"""
         if newnode_is_source:
-            self.links = [NewEdge(newnode,json.dumps(self.enriched_node.new_edges,sort_keys=True),curie) for curie in self.linked_curies]
+            self.links = [NewEdge(newnode,self.predicate,curie) for curie in self.linked_curies]
         else:
-            self.links = [NewEdge(curie,json.dumps(self.enriched_node.new_edges,sort_keys=True),newnode) for curie in self.linked_curies]
+            self.links = [NewEdge(curie,self.predicate,newnode) for curie in self.linked_curies]
     def get_prov_links(self):
         return [link.get_prov_link() for link in self.links]
     def add_provenance(self,prov):
         for link in self.links:
+            provlink = link.get_prov_link()
+            if provlink not in prov:
+                print("what the hell")
             link.add_prov(prov[link.get_prov_link()])
 
     #TODO: this should not exist in here any more, we are just making a data class

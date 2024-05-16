@@ -91,14 +91,14 @@ def test_graph_coalescer():
     enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene' )
     assert len(enrichments) >= 1
     e = enrichments[0]
-    assert len(e.set_curies) == 3 # 3 of the 3 curies are subclasses of the output
+    assert len(e.linked_curies) == 3 # 3 of the 3 curies are subclasses of the output
     #TODO: add attribute testing to TRAPI tests
     #atts=p.new_props['attributes']
     #kv = { x['attribute_type_id']: x['value'] for x in atts}
     #assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
     #assert kv['biolink:p_value'] < 1e-10
     assert e.p_value < 1e-10
-    assert len(e.added_nodes)==1
+    assert e.enriched_node.new_curie == "HGNC.FAMILY:1384"
 
 def test_graph_coalescer_double_check():
     curies = ['NCBIGene:191',
@@ -116,14 +116,9 @@ def test_graph_coalescer_double_check():
  'NCBIGene:7514',
  'NCBIGene:10128']
     enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene', result_length=100)
-    #We aren't cutting this off in graph coalesce any more
     assert len(enrichments) == 100
     e = enrichments[0]
-    #atts=p.new_props['attributes']
-    #kv = { x['attribute_type_id']: x['value'] for x in atts}
-    #assert kv['biolink:supporting_study_method_type'] == 'graph_enrichment'
     assert e.p_value < 1e-10
-    assert len(e.added_nodes)==1
 
 def test_graph_coalescer_perf_test():
     # Two opprtunities but,

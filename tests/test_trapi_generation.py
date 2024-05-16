@@ -1,6 +1,8 @@
 import pytest
 from src import single_node_coalescer as snc
 from src.components import  MCQDefinition
+from src.components import Enrichment
+from src.single_node_coalescer import create_mcq_trapi_response
 
 import pytest
 
@@ -109,3 +111,49 @@ async def test_create_or_find_member_of_edges_existing_edges():
     assert message["message"]["knowledge_graph"]["edges"][result["id2"]]["object"] == "uuid:1234"
     assert message["message"]["knowledge_graph"]["edges"][result["id2"]]["predicate"] == "biolink:member_of"
     check = Response(**message)
+
+@pytest.mark.asyncio
+async def test_full_trapi_generation():
+    """In this test there is already one member_of edge (for id1) But not for id2"""
+    message = {
+        "message": {
+            "query_graph": {
+                "nodes": {
+                    "qnode1": {
+                        "ids": ["uuid:1234"],
+                        "member_ids": ["id1", "id2"],
+                        "categories": ["biolink:SmallMolecule"],
+                        "set_interpretation": "MANY"
+                    },
+                    "qnode2": {
+                        "categories": ["biolink:Gene"]
+                    }
+                },
+                "edges": {
+                    "edge1": {
+                        "subject": "qnode1",
+                        "object": "qnode2",
+                        "predicate": "biolink:related_to"
+                    }
+                }
+            },
+            "knowledge_graph": {
+                "edges": {
+                    "edge1": {
+                        "subject": "id1",
+                        "object": "uuid:1234",
+                        "predicate": "biolink:member_of",
+                        "attributes": [],
+                        "sources": []
+                    }
+                }
+            }
+        }
+    }
+    mcqdef = MCQDefinition(message)
+    enrichment = Enrichment(1e-10, "curie:newnode", '{"predicate": "biolink:related_to"}', True,
+   100, 10, 1000, ["id1"], "biolink:Gene")
+    prov = {'curie:newnode {"predicate": "biolink:related_to"} id1': [{'resource_id': 'infores:whatever', 'resource_role': 'primary_knowledge_source'}]}
+    enrichment.add_provenance(prov)
+    new_trapi = await create_mcq_trapi_response(message, [enrichment], mcqdef)
+    check = Response(**new_trapi)

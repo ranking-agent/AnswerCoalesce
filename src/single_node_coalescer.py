@@ -20,7 +20,6 @@ async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
     mcq_definition = MCQDefinition(in_message)
-    #qnode_uuid, input_ids, input_type, node_constraints, predicate_constraints = await trapi.get_mcq_inputs(in_message)
     enrichment_results = await coalesce_by_graph(mcq_definition.group_node.curies,
                                                  mcq_definition.group_node.semantic_type,
                                                  node_constraints= mcq_definition.enriched_node.semantic_types,
@@ -35,6 +34,9 @@ async def infer(in_message, parameters):
     input_ids = lookup(in_message)
     graph_enrichment_results = await coalesce_by_graph(input_ids)
     property_enrichment_results = await coalesce_by_property(input_ids)
+    # get the rules
+    # do another lookup
+    # format the results
     return await create_infer_trapi_response(in_message, graph_enrichment_results, property_enrichment_results)
 
 async def lookup(in_message):
@@ -82,12 +84,13 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
      8. In the result, create the analysis and add edge_bindings to it.
      """
     # 1.(possibly) add the new node to the knowledge graph
-    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.id, enrichment.enriched_node.category, enrichment.enriched_node.name)
-    trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.id, node )
+    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type, enrichment.enriched_node.name)
+    trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.new_curie, node )
     aux_graph_ids = []
     for edge in enrichment.links:
         # 2. Add the edges between the new node and the member nodes to the knowledge graph
-        direct_edge_id = trapi.add_edge_to_knowledge_graph(in_message, edge)
+        trapi_edge = trapi.create_knowledge_graph_edge_from_component(edge)
+        direct_edge_id = trapi.add_edge_to_knowledge_graph(in_message, edge=trapi_edge)
         # 3. Create an auxiliary graph for each element of the member_id consisting of the edge from the member_id to the new node
         aux_graph_id = trapi.add_auxgraph_for_enrichment(in_message, direct_edge_id, member_of_edges, enrichment.enriched_node.new_curie)
         aux_graph_ids.append(aux_graph_id)
@@ -119,10 +122,10 @@ async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
     # and add them to the member_of_edges dictionary.
     for member_id in member_ids:
         if member_id not in member_of_edges:
-            edge_id = f"e_{member_id}_member_of_{input_qnode_uuid}"
+            edge_id = f"e_{member_id}_member_of_{"_".join(input_qnode_uuid.split(':'))}"
             new_edge = trapi.create_knowledge_graph_edge(member_id, input_qnode_uuid, "biolink:member_of")
             trapi.add_member_of_klat(new_edge)
-            trapi.add_edge_to_knowledge_graph(in_message, edge_id, new_edge )
+            trapi.add_edge_to_knowledge_graph(in_message, new_edge, edge_id)
             member_of_edges[member_id] = edge_id
     # We also want to make sure that all the member_ids are in the knowledge graph as nodes.
     for member_id in member_ids:

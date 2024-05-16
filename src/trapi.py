@@ -1,5 +1,7 @@
-from src.components import  MCQDefinition
+from src.components import  MCQDefinition, NewEdge
+from typing import Dict
 import uuid
+import orjson
 #This is the single place to create TRAPI elements.  It is the only place that should be creating TRAPI elements.
 
 infores = "infores:answercoalesce"
@@ -15,6 +17,18 @@ def create_knowledge_graph_node(curie,category,name=None):
         "name": name,
         "attributes": []
     }
+
+def create_knowledge_graph_edge_from_component(input_edge: NewEdge):
+    # The NewEdge predicate has both the predicate and qualifiers in it:
+    jsonpred = orjson.loads(input_edge.predicate)
+    predicate_only = jsonpred["predicate"]
+    qualifiers = []
+    for key,value in jsonpred.items():
+        if key != "predicate":
+            qualifiers.append({"qualifier_type_id":key,"qualifier_value":value})
+    return create_knowledge_graph_edge(input_edge.source, input_edge.target, predicate_only,
+                                       qualifiers=qualifiers, sources=input_edge.prov)
+
 
 def create_knowledge_graph_edge(subject, object, predicate, qualifiers=None, sources=[], attributes=[]):
     """
@@ -45,7 +59,7 @@ def add_node_to_knowledge_graph(response,node_id,node):
     if node_id not in nodes:
         nodes[node_id] = node
 
-def add_edge_to_knowledge_graph(response, edge_id, edge):
+def add_edge_to_knowledge_graph(response, edge: Dict, edge_id=None):
     """
     Add a TRAPI knowledge graph edge to a TRAPI knowledge graph.
     """
@@ -54,7 +68,10 @@ def add_edge_to_knowledge_graph(response, edge_id, edge):
     if "edges" not in response["message"]["knowledge_graph"]:
         response["message"]["knowledge_graph"]["edges"] = {}
     edges = response["message"]["knowledge_graph"]["edges"]
+    if edge_id is None:
+        edge_id = str(uuid.uuid4())
     edges[edge_id] = edge
+    return edge_id
 
 def add_enrichment_edge_to_knowledge_graph(response,edge):
     """
@@ -123,6 +140,8 @@ def add_auxgraph_for_enrichment(in_message, direct_edge_id, member_of_ids, new_c
         "attributes": []
     }
     aux_graph_id = str(uuid.uuid4())
+    if "auxiliary_graphs" not in in_message["message"]:
+        in_message["message"]["auxiliary_graphs"] = {}
     in_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
     return aux_graph_id
 
@@ -135,7 +154,7 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, a
     edges = in_message["message"]["knowledge_graph"]["edges"]
     #Create the edge, orienting it correctly
     new_edge = {
-        "predicate": mcq_definition["edge"]["predicate"],
+        "predicate": mcq_definition.edge.predicate_only,
         "attributes": []
     }
     if mcq_definition.edge.group_is_subject:
@@ -147,7 +166,7 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, a
     # Add any qualifiers
     new_edge["qualifiers"] = mcq_definition.edge.qualifiers
     # Add provenance
-    add_local_prov(new_edge, enrichment)
+    add_local_prov(new_edge)
     # Add KL/AT
     add_prediction_klat(new_edge)
     # Add the auxiliary graphs
@@ -155,6 +174,7 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, a
     # Add the edge to the KG
     new_edge_id = str(uuid.uuid4())
     edges[new_edge_id] = new_edge
+    return new_edge_id
 
 def convert_qualifier_constraint_to_qualifiers(qualifier_constraints):
     """
@@ -214,14 +234,14 @@ def add_aux_graphs(new_edge,aux_graph_ids):
         }
     )
 
-def add_enrichment_result(in_message, enriched_node, enrichment_edge_id, mcq_definition):
+def add_enrichment_result(in_message, enriched_node, enrichment_edge_id, mcq_definition: MCQDefinition):
     if "results" not in in_message["message"]:
         in_message["message"]["results"] = []
-    result = {"node_bindings": {}, "analyses": [{"edge_bindings": {}, "attributes": []}]}
+    result = {"node_bindings": {}, "analyses": [{"edge_bindings": {}, "resource_id": infores, "attributes": []}]}
     in_message["message"]["results"].append(result)
     # There should be a node binding from the input (group) node qnode_id to the input node uuid
-    result["node_bindings"][mcq_definition.group_node.qnode_id] = [{"id": mcq_definition.group_node.uuid}]
+    result["node_bindings"][mcq_definition.group_node.qnode_id] = [{"id": mcq_definition.group_node.uuid, "attributes": []}]
     # There should be a node binding from the enriched node qnode_id to the enriched node curie
-    result["node_bindings"][mcq_definition.enriched_node.qnode_id] = [{"id": enriched_node.new_curie}]
+    result["node_bindings"][mcq_definition.enriched_node.qnode_id] = [{"id": enriched_node.new_curie, "attributes": []}]
     # There should be an edge binding from the enrichment edge qedge_id to the enrichment edge uuid
-    result["analyses"][0]["edge_bindings"][mcq_definition.enrichment_edge.qedge_id] = [{"id": enrichment_edge_id}]
+    result["analyses"][0]["edge_bindings"][mcq_definition.edge.qedge_id] = [{"id": enrichment_edge_id, "attributes": []}]
