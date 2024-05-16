@@ -192,10 +192,13 @@ def add_provs(enrichments):
                 p.get(edge)
             ns = p.execute()
             symmetric_edges = []
+            inverted_to_original = {}
             for edge, n in zip(edgegroup, ns):
                 # Convert the svelte key-value attribute into a fat trapi-style attribute
                 if not n:
-                    symmetric_edges.append(get_edge_symmetric(edge))
+                    inverted = get_edge_symmetric(edge)
+                    symmetric_edges.append(inverted)
+                    inverted_to_original[inverted] = edge
                 else:
                     prov[edge] = process_prov(n)
                 # This is cheating.  It's to make up for the fact that we added in inverted edges for
@@ -207,7 +210,8 @@ def add_provs(enrichments):
                 sym_ns = p.execute()
                 for sym_edge, sn in zip(symmetric_edges, sym_ns):
                     if sn:
-                        prov[sym_edge] = process_prov(sn)
+                        #This has to be for the original edge, otherwise we don't find it later
+                        prov[inverted_to_original[sym_edge]] = process_prov(sn)
                     else:
                         prov[sym_edge] = [{}]
                         logger.info(f'{sym_edge} not exist!')

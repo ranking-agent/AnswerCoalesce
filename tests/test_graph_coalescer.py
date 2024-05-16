@@ -12,12 +12,13 @@ def test_get_links_and_predicate_filter():
     """We expect that this UniProt has 28 links.
     1 edge with predicate affects, object_aspect_qualifier activity, and object_direction_qualifier diecreased
     1 edge with in_taxon
-    24 with predicate directly_physically_interacts_with"""
+    26 with predicate directly_physically_interacts_with
+    The 26 get doubled on read because they are symmetric, so leads to a total of 54"""
     curies = ["UniProtKB:P0C6U8"]
     nodes_to_links = gc.create_nodes_to_links(curies)
     assert len(nodes_to_links) == 1
     # Hand counted
-    assert len(nodes_to_links[curies[0]]) == 28
+    assert len(nodes_to_links[curies[0]]) == 54
 
     # Test exclude a single predicate, "biolink:directly_physically_interacts_with"
     constraint = {"predicate": "biolink:directly_physically_interacts_with"}
