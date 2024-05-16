@@ -125,20 +125,15 @@ def test_query():
 def test_infer():
     # Sample lookup query with infered knowledge_type
     answerset = {
-      "workflow": [
-            {
-                "id": "enrich_results",
-                "parameters": {
+      "parameters": {
                     "pvalue_threshold": 1e-7,
-                    "result_length":100,
+                    "result_length": 100,
                     "predicates_to_exclude": [
                         "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
-                        "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event", "biolink:related_to"
+                        "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
                       ]
-                }
-            }
-        ],
-      "message": {
+                },
+        "message": {
         "query_graph": {
           "nodes": {
             "chemical": {
@@ -163,6 +158,7 @@ def test_infer():
               "predicates": [
                 "biolink:treats"
               ],
+              "knowledge_type": "inferred",
               "attribute_constraints": [],
               "qualifier_constraints": []
             }
@@ -176,7 +172,7 @@ def test_infer():
     # from pyinstrument import Profiler
     # profiler = Profiler()
     # with profiler:
-    response = client.post('/infer', json=answerset)
+    response = client.post('/query', json=answerset)
     # profiler.print()
     # was the request successful
     assert(response.status_code == 200)

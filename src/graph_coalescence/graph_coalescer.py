@@ -9,10 +9,12 @@ import json
 import ast
 import itertools
 import orjson
+import bmt
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir + '/')
+tk = bmt.Toolkit()
 
 def grouper(n, iterable):
     it = iter(iterable)
@@ -52,12 +54,12 @@ def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_c
     for node, links in nodes_to_links.items():
         new_links = []
         for link in links:
-            link_dict = json.loads(link[1])
+            # link_dict = json.loads(link[1])
             if predicate_constraint_style == "include":
-                if any(constraint == link_dict for constraint in predicate_constraints):
+                if any(constraint in link[1] for constraint in predicate_constraints):
                     new_links.append(link)
             elif predicate_constraint_style == "exclude":
-                if not any(constraint == link_dict for constraint in predicate_constraints):
+                if not any(constraint in link[1] for constraint in predicate_constraints):
                     new_links.append(link)
         new_nodes_to_links[node] = new_links
     return new_nodes_to_links
@@ -383,13 +385,14 @@ def uniquify_links(nodes_to_links, input_type):
             unique_link_nodes.add(tl[0])
     return unique_link_nodes, unique_links
 
-def create_nodes_to_links(allnodes):
+def create_nodes_to_links(allnodes, params_predicate = ""):
     """Given a list of nodes identifiers, pull all their links"""
     # Create a dict from node->links by looking up in redis.
     #Noticed some qualifiers are have either but not both
     # eg ['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}', True]
     #  VS['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', True]
     nodes_to_links = {}
+
     with get_redis_pipeline(0) as p:
         for group in grouper(1000, allnodes):
             for node in group:
@@ -407,17 +410,28 @@ def create_nodes_to_links(allnodes):
                     # have been assigned one direction only. We're going to invert them as well to allow matching
                 newlinks = []
                 for link in links:
-                    # Note that this should really be done for any symmetric predicate.
-                    # or fixed at the graph level.
-                    # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
-                    if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
-                        newlinks.append([link[0], link[1], not link[2]])
+                    link_predicate = orjson.loads(link[1])["predicate"]
+                    if params_predicate:
+                        # For lookup operation
+                        if link_predicate != params_predicate:
+                            continue
+                        newlinks.append(link[0])
+                    else:
+                        # Note that this should really be done for any symmetric predicate.
+                        # or fixed at the graph level.
+                        # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
+                        # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
+                        if tk.get_element(link_predicate)["symmetric"]:
+                            newlinks.append([link[0], link[1], not link[2]])
+
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
                 # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
-                links += newlinks
-                nodes_to_links[node] = links
+                if params_predicate:
+                    nodes_to_links = newlinks
+                else:
+                    links += newlinks
+                    nodes_to_links[node] = links
     return nodes_to_links
-
 def create_node_to_type(opportunities):
     # Create a dict from node->type(node) for all nodes in every opportunity
     allnodes = {}
@@ -506,7 +520,8 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
 
             #TODO: Ola handle symmetry
-            if "biolink:related_to" in predicate:
+            # if "biolink:related_to" in predicate:
+            if tk.get_element(orjson.loads(predicate)["predicate"])["symmetric"]:
                 try:
                     n += lcounts[(newcurie, predicate, not newcurie_is_source, semantic_type)]
                 except:
