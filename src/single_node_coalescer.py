@@ -22,7 +22,7 @@ async def multi_curie_query(in_message, parameters):
     enrichment_results = await coalesce_by_graph(mcq_definition.group_node.curies,
                                                  mcq_definition.group_node.semantic_type,
                                                  node_constraints= mcq_definition.enriched_node.semantic_types,
-                                                 predicates_constraints=mcq_definition.edge.predicate,
+                                                 predicate_constraints=mcq_definition.edge.predicate,
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters["pvalue_threshold"],
                                                  result_length=parameters["result_length"])

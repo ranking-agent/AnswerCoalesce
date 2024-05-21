@@ -2,7 +2,6 @@ import pytest
 import os, json, asyncio
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
-#from src.components import Opportunity,Answer
 from reasoner_pydantic import Response as PDResponse
 
 
@@ -87,9 +86,10 @@ def test_filter_links_by_node_type():
     expected_output = { "node1": [ ("node4", "predicate2", False)],
                         "node2": [("node5", "predicate3", True)] }
 
-def test_graph_coalescer():
+@pytest.mark.asyncio
+async def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
-    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene' )
+    enrichments = await gc.coalesce_by_graph(curies, 'biolink:Gene' )
     assert len(enrichments) >= 1
     e = enrichments[0]
     assert len(e.linked_curies) == 3 # 3 of the 3 curies are subclasses of the output
@@ -101,7 +101,8 @@ def test_graph_coalescer():
     assert e.p_value < 1e-10
     assert e.enriched_node.new_curie == "HGNC.FAMILY:1384"
 
-def test_graph_coalescer_double_check():
+@pytest.mark.asyncio
+async def test_graph_coalescer_double_check():
     curies = ['NCBIGene:191',
  'NCBIGene:55832',
  'NCBIGene:645',
@@ -116,7 +117,7 @@ def test_graph_coalescer_double_check():
  'NCBIGene:23066',
  'NCBIGene:7514',
  'NCBIGene:10128']
-    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene', result_length=100)
+    enrichments = await gc.coalesce_by_graph(curies, 'biolink:Gene', result_length=100)
     assert len(enrichments) == 100
     e = enrichments[0]
     assert e.p_value < 1e-10
@@ -136,10 +137,9 @@ def test_graph_coalescer_perf_test():
     # open the file and load it
     with open(test_filename,'r') as tf:
         incoming = json.load(tf)
-    incoming = incoming['message']
-    # call function that does property coalesce
-    coalesced = asyncio.run(coalesce(incoming, method='graph'))
-    assert PDResponse.parse_obj({'message': coalesced})
+    # call function that does McQ
+    coalesced = asyncio.run(snc.multi_curie_query(incoming, parameters={"pvalue_threshold": None,"result_length": None}))
+    assert PDResponse.parse_obj(coalesced)
     # get the amount of time it took
     diff = datetime.datetime.now() - t1
 

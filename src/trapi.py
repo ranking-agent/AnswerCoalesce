@@ -8,12 +8,12 @@ infores = "infores:answercoalesce"
 
 
 
-def create_knowledge_graph_node(curie,category,name=None):
+def create_knowledge_graph_node(curie,categories,name=None):
     """
     Create a TRAPI knowledge graph node.
     """
     return {
-        "categories": [category],
+        "categories": categories,
         "name": name,
         "attributes": []
     }

@@ -106,7 +106,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
     return new_nodes_to_links
 
 
-def coalesce_by_graph(input_ids, input_node_type,
+async def coalesce_by_graph(input_ids, input_node_type,
                       node_constraints = ["biolink:NamedThing"], predicate_constraints=[], predicate_constraint_style = "exclude",
                       pvalue_threshold=None, result_length = None):
     """
@@ -167,7 +167,7 @@ def augment_enrichments(enriched_links, nodetypes):
     enriched_curies = set([link.enriched_node.new_curie for link in enriched_links])
     nodenamedict = get_node_names(enriched_curies)
     for enrichment in enriched_links:
-        enrichment.add_extra_node_name(nodenamedict)
+        enrichment.add_extra_node_name_and_label(nodenamedict, nodetypes)
     add_provs(enriched_links)
 
 
