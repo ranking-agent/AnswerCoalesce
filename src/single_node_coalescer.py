@@ -25,7 +25,7 @@ async def multi_curie_query(in_message, parameters):
                                                  predicate_constraints=mcq_definition.edge.predicate,
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters["pvalue_threshold"],
-                                                 result_length=parameters["result_length"])
+                                                 result_length=parameters.get("result_length",None))
     return await create_mcq_trapi_response(in_message, enrichment_results, mcq_definition)
 
 async def infer(in_message, parameters):
@@ -114,7 +114,8 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
      8. In the result, create the analysis and add edge_bindings to it.
      """
     # 1.(possibly) add the new node to the knowledge graph
-    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type, enrichment.enriched_node.name)
+    #the newnode_type is a single type here but it needs to go into this function as a list.
+    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.new_curie, [enrichment.enriched_node.newnode_type], enrichment.enriched_node.name)
     trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.new_curie, node )
     aux_graph_ids = []
     for edge in enrichment.links:
@@ -160,7 +161,8 @@ async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
     # We also want to make sure that all the member_ids are in the knowledge graph as nodes.
     for member_id in member_ids:
         if member_id not in in_message['message'].get('knowledge_graph',{}).get('nodes',{}):
-            new_node = trapi.create_knowledge_graph_node(member_id, mcq_definition.group_node.semantic_type)
+            # the mcq group node keeps a single semantic type, but create_KG node takes a list
+            new_node = trapi.create_knowledge_graph_node(member_id, [mcq_definition.group_node.semantic_type])
             trapi.add_node_to_knowledge_graph(in_message, member_id, new_node)
     return member_of_edges
 

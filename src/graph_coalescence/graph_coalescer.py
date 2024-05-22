@@ -428,7 +428,10 @@ def create_nodes_to_links(allnodes, params_predicate = ""):
                         # or fixed at the graph level.
                         # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
                         # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
-                        if tk.get_element(link_predicate)["symmetric"]:
+                        element = tk.get_element(link_predicate)
+                        if element is None:
+                            print("???")
+                        if element["symmetric"]:
                             newlinks.append([link[0], link[1], not link[2]])
 
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))

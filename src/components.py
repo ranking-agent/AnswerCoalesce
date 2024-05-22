@@ -33,8 +33,8 @@ class MCQEdge:
             else:
                 self.group_is_subject = False
             self.qedge_id = qedge_id
-            self.predicate_only = qedge["predicates"][0]
-            self.predicate = {"predicate": qedge["predicates"][0]}
+            self.predicate_only = qedge.get("predicates",["biolink:related_to"])[0]
+            self.predicate = {"predicate": self.predicate_only }
             qualifier_constraints = qedge.get("qualifiers_constraints", [])
             if len(qualifier_constraints) > 0:
                 qc = qualifier_constraints[0]
