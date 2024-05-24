@@ -12,8 +12,9 @@ def create_knowledge_graph_node(curie,category,name=None):
     """
     Create a TRAPI knowledge graph node.
     """
+    category = category if isinstance(category, list) else [category]
     return {
-        "categories": [category],
+        "categories": category,
         "name": name,
         "attributes": []
     }
@@ -51,7 +52,7 @@ def add_node_to_knowledge_graph(response,node_id,node):
     """
     Add a TRAPI knowledge graph node to a TRAPI knowledge graph.
     """
-    if "knowledge_graph" not in response["message"]:
+    if not response["message"].get("knowledge_graph"):
         response["message"]["knowledge_graph"] = {"nodes": {}, "edges": {}}
     if "nodes" not in response["message"]["knowledge_graph"]:
         response["message"]["knowledge_graph"]["nodes"] = {}

@@ -1,12 +1,13 @@
 from collections import defaultdict
-import os, logging, requests, asyncio, httpx, json
+from itertools import chain
+import os, logging, requests, asyncio, httpx, json, uuid
 from copy import deepcopy
 from reasoner_pydantic import Response as PDResponse, KnowledgeGraph
 
 from src.property_coalescence.property_coalescer import coalesce_by_property
-from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links
+from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links, get_node_types, filter_links_by_node_type, get_node_names, add_provs
 from src.set_coalescence.set_coalescer import coalesce_by_set
-from src.components import MCQDefinition
+from src.components import MCQDefinition, Lookup_params, Lookup
 import src.trapi as trapi
 
 logger = logging.getLogger(__name__)
@@ -30,49 +31,44 @@ async def multi_curie_query(in_message, parameters):
 
 async def infer(in_message, parameters):
     """Takes a TRAPI infer query and returns a TRAPI infer answer."""
-    curies, predicate_parts, output_semantic_type, input_qnode, output_qnode, qedge_id = get_qg_parameters( in_message )
-    input_ids = lookup(curies, predicate_parts.get("predicate"))
-    graph_enrichment_results = await coalesce_by_graph(input_ids, output_semantic_type, predicate_constraints=parameters.get("predicates_to_exclude", []))
-    property_enrichment_results = await coalesce_by_property(input_ids)
-    # get the rules
-    # do another lookup
-    # format the results
-    return await create_infer_trapi_response(in_message, graph_enrichment_results, property_enrichment_results)
+    params = Lookup_params( in_message )
+    # We are dealing with a single curie so just the top result works
+    lookup_results = lookup( [params.curie], [params.predicate_parts], params.is_source, params.output_semantic_type )[0]
 
-def lookup( curie, params_predicate ):
+    input_ids = lookup_results.link_ids
+
+    graph_enrichment_results = coalesce_by_graph(input_ids,
+                                                 params.output_semantic_type,
+                                                 predicate_constraints=parameters.get("predicates_to_exclude", []),
+                                                 # pvalue_threshold=parameters.get("pvalue_threshold", 1e-6),
+                                                 # result_length=parameters.get("result_length", 100),
+                                                 get_pred_superclass=True
+                                                 )
+    graph_enrichment_results = filter_graph_enrichment_results(graph_enrichment_results, input_ids + [params.curie],
+                                                               pvalue_threshold=parameters.get("pvalue_threshold", 1e-6),
+                                                               result_length=parameters.get("result_length", 100))
+    # lookup_results = merge_lookup_and_graph_enrichment_results(graph_enrichment_results, lookup_results)# I need this to run faster for now
+    # property_enrichment_results = await coalesce_by_property(input_ids, params.output_semantic_type)
+    return await create_infer_trapi_response(in_message, params, lookup_results, input_ids, graph_enrichment_results)
+
+def lookup( curie, predicate_parts, is_source=False, output_semantic_type=None ):
     """Given an infer query, look up internally the non-inferred answers to the query.
     Return them as a list of curies"""
     #TODO: Ola to implement based on current lookup
-    link_ids = create_nodes_to_links(curie, params_predicate)
-    return link_ids
+    link_ids = create_nodes_to_links(curie, param_predicates=predicate_parts)
+    links = []
+    all_ids = list(frozenset(chain.from_iterable(link_ids.values()))) + curie
+    all_node_types = get_node_types(all_ids)
+    all_node_names = get_node_names(all_ids)
 
-def get_qg_parameters( in_message ):
-    for qedge_id, qedges in in_message.get("message", {}).get("query_graph", {}).get("edges", {}).items():
-        subject = in_message.get("message", {}).get("query_graph", {}).get("nodes", {})[qedges["subject"]]
-        object = in_message.get("message", {}).get("query_graph", {}).get("nodes", {})[qedges["object"]]
-        if subject.get("ids",[]):
-            is_source = True
-        else:
-            is_source = False
-        if is_source:
-            curies = subject["ids"]
-            input_qnode = qedges["subject"]
-            output_qnode = qedges["object"]
-            semantic_type = object.get("categories", [])[0]
-        else:
-            curies = object["ids"]
-            input_qnode = qedges["object"]
-            output_qnode = qedges["subject"]
-            semantic_type = subject.get("categories", [])[0]
-        predicate_parts={"predicate": qedges["predicates"][0]}
-        qualifier_constraints = qedges.get("qualifier_constraints", [])
-        if len(qualifier_constraints) > 0:
-            qc = qualifier_constraints[0]
-            qs = qc.get("qualifier_set", [])
-            for q in qs:
-                predicate_parts[q["qualifier_type_id"].split(":")[1]] = q["qualifier_value"]
+    for curie_nodes, id_links in link_ids.items():
+        link_id = filter_links_by_node_type({curie_nodes: id_links}, [output_semantic_type], all_node_types)
+        for curie_node, id_link in link_id.items():
+            links.append(Lookup(curie_node, predicate_parts[0], is_source, all_node_names, all_node_types, id_link, output_semantic_type))
+    add_provs(links)
 
-    return curies, predicate_parts, semantic_type, input_qnode, output_qnode, qedge_id
+    return links
+
 
 
 # should probably just be a call out to something property coalescer instead
@@ -114,8 +110,8 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
      8. In the result, create the analysis and add edge_bindings to it.
      """
     # 1.(possibly) add the new node to the knowledge graph
-    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type, enrichment.enriched_node.name)
-    trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.new_curie, node )
+    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.id, enrichment.enriched_node.category, enrichment.enriched_node.name)
+    trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.id, node )
     aux_graph_ids = []
     for edge in enrichment.links:
         # 2. Add the edges between the new node and the member nodes to the knowledge graph
@@ -152,7 +148,7 @@ async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
     # and add them to the member_of_edges dictionary.
     for member_id in member_ids:
         if member_id not in member_of_edges:
-            edge_id = f"e_{member_id}_member_of_{"_".join(input_qnode_uuid.split(':'))}"
+            edge_id = f"e_{member_id}_member_of_{'_'.join(input_qnode_uuid.split(':'))}"
             new_edge = trapi.create_knowledge_graph_edge(member_id, input_qnode_uuid, "biolink:member_of")
             trapi.add_member_of_klat(new_edge)
             trapi.add_edge_to_knowledge_graph(in_message, new_edge, edge_id)
@@ -166,9 +162,321 @@ async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
 
 
 
-async def create_infer_trapi_response(in_message, enrichment_results, qnode_id):
+async def create_infer_trapi_response(in_message, params, lookup_results, input_ids, enrichment_results):
     """Create a TRAPI EDGAR answer. Go out and get the provenance or other features as needed."""
-    #TODO: Ola to implement
+    # TODO: Ola to implement
+    enrichment_ids, enrichment_predicates = uniqufy_enrichment_ids_and_predicates(enrichment_results)
+    inferred_results = lookup(enrichment_ids, enrichment_predicates, output_semantic_type=params.output_semantic_type)
+
+    # Temporarily add the lookup and enrichment results to the KG
+    create_partial_result_from_lookup(in_message, lookup_results)
+    create_partial_result_from_enrichment(in_message, enrichment_results)
+
+    create_inference_results(in_message, params, input_ids, lookup_results, enrichment_results, inferred_results)
+
+    return in_message
+
+
+
+def create_partial_result_from_lookup(in_message, lookup_results):
+    """
+    Each result maps one input curie to its lookup result.  For each result we need to
+     1.  Add the curie node to the knowledge graph
+     2. Add the edges between the curie node and the lookup nodes to the knowledge graph
+     3. Add the lookup nodes to the knowledge graph
+    """
+    # In a single curie trapi, lookup_results is meant to be of length 1
+    # 1. add the curie node to the knowledge graph
+    node = trapi.create_knowledge_graph_node(lookup_results.input_qnode_curie.new_curie,
+                                             lookup_results.input_qnode_curie.newnode_type,
+                                             lookup_results.input_qnode_curie.name)
+    trapi.add_node_to_knowledge_graph(in_message, lookup_results.input_qnode_curie.new_curie, node)
+
+
+    group_uuid = str(uuid.uuid4())
+
+    for lookup_link in lookup_results.lookup_links:
+        # 2. Add the edges between the curie node and lookup nodes to the knowledge graph
+        add_edge_from_link(in_message, lookup_link.link_edge, edge_prefix = "Lookup")#, return_edge=True)
+        # Let's put the kg_edge_id for the link in the link instance NOPE
+        # lookup_result.add_linked_kg_edges_id(link_edge_id)
+        # 3. add the individual lookup answer node to the knowledge graph
+        node = trapi.create_knowledge_graph_node(lookup_link.link_id,
+                                                 lookup_link.link_type,
+                                                 lookup_link.link_name)
+        trapi.add_node_to_knowledge_graph(in_message, lookup_link.link_id, node)
+
+        # C2 - member_of - Group
+        group_memebers_edge_id = f"{lookup_link.link_id}_member_of_{group_uuid}"
+        group_memebers_new_edge = trapi.create_knowledge_graph_edge(lookup_link.link_id, group_uuid, "biolink:member_of")
+        trapi.add_member_of_klat(group_memebers_new_edge)
+        trapi.add_edge_to_knowledge_graph(in_message, group_memebers_new_edge, group_memebers_edge_id)
+
+
+def add_edge_from_link(in_message, link, edge_prefix = '', return_edge=False):
+    # 1. Separate link into component parts
+    source = link.source
+    target = link.target
+    predicate = link.predicate
+    prov = link.prov
+    # 2. Add the edges between the curie node and lookup nodes to the knowledge graph
+    edge_id = f"{source}_{edge_prefix}_{predicate}_{target}"
+    new_edge = trapi.create_knowledge_graph_edge(source, target, predicate, sources=prov)
+    trapi.add_edge_to_knowledge_graph(in_message, new_edge, edge_id)
+
+    if return_edge:
+        return edge_id, new_edge
+
+def create_partial_result_from_enrichment(in_message, enrichment_results):
+    """
+    Each enrichment maps one or more links from the lookup efforts.  For each result we need to
+     1.  Add the enriched node to the knowledge graph
+     2. Add the edges between the enriched node and the lookup nodes to the knowledge graph
+    """
+
+    # add individual enrichment nodes and edges between them and lookup links
+    for enriched_result in enrichment_results:
+        # 1. add the enriched node to the knowledge graph
+        new_node = trapi.create_knowledge_graph_node(enriched_result.enriched_node.new_curie, enriched_result.enriched_node.newnode_type,
+                                                     enriched_result.enriched_node.newnode_name)
+        trapi.add_node_to_knowledge_graph(in_message, enriched_result.enriched_node.new_curie, new_node)
+
+        for link in enriched_result.links:
+            # 2. Add the edges between the enriched curie node and lookup nodes to the knowledge graph
+            eid = add_edge_from_link(in_message, link, edge_prefix="Enriched", return_edge=True)
+            enriched_result.add_linked_kg_edges_id(eid)
+
+def create_inference_results(in_message, params, input_ids, lookup_results, enrichment_results, inferred_results):
+    """Each INFERRED is a result.  For each INFERRED we need to"""
+    """
+         Each enrichment is a result.  For each enrichment we need to
+         1. (possibly) add the new node to the knowledge graph
+         2. Add the edges between the new node and the member nodes to the knowledge graph
+         3. Create an auxiliary graph for each element of the member_id consisting of the edge from the member_id to the new node
+            and the member_of edge connecting the member_id to the input node.
+         4. Add the inferred edge from the new node to the input uuid to the knowledge graph
+         5. Add the auxiliary graphs created above to the inferred edge
+         6. Create a new result
+         7. In the result, create the node_bindings
+         8. In the result, create the analysis and add edge_bindings to it.
+         """
+
+    input_qnode_curie = params.curie
+    predicate_part = params.predicate_parts
+    output_semantic_type = params.output_semantic_type
+    is_source = params.is_source
+    lookup_ids = lookup_results.link_ids
+
+    sg_mapping_dict = {}
+    auxg_mapping_dict = {}
+
+
+    # 1.Make the groupset id for the new nodes to the knowledge graph
+    member_of_edgarset = set()
+    inferred_group_uuid = str(uuid.uuid4())
+
+    for i, inferred_result in enumerate(inferred_results):
+
+        # 2. Add the edges between enriched node and the group node And its support graph
+        enr2group_edge_id, enr2group_edge, enr2group_aux_graph_ids = add_enriched_to_all_inferred_groupnode(inferred_group_uuid, inferred_result, sg_mapping_dict)
+        trapi.add_edge_to_knowledge_graph(in_message, enr2group_edge, enr2group_edge_id)
+        member_edges_list = []
+        inferred2curies_list = []
+        for j, link in enumerate(inferred_result.lookup_links):
+
+            # 3. Add the edges between the enriched node and inferred nodes to the knowledge graph (NO SUPPORT NEEDED)
+            infer_to_enrich_eid,  infer_to_enrich_edge = add_edge_from_link(in_message, link.link_edge, edge_prefix = 'Inferred', return_edge=True)
+            # Let's put the kg_edge_id for the link in the link instance
+            # inferred_result.add_linked_kg_edges_id(infer_to_enrich_eid)
+            auxg_mapping_dict.setdefault(enr2group_aux_graph_ids, []).append(infer_to_enrich_eid)
+
+            # Process every individual inferred nodes
+            member_id = inferred_result.link_ids[j]
+
+            if member_id not in member_of_edgarset and member_id not in input_ids:
+
+                # 4. Add the edges between the individual inferred node and the qg curie nodes by the qg_predicate to the knowledge graph
+                inferred_edge_id, inferred_edge = create_inferred_edge(member_id, input_qnode_curie, predicate_part, is_source, return_edge=True)
+                inferred2curies_list.append(inferred_edge_id)
+
+                # Add the individual Inferred edge to the KG
+                trapi.add_edge_to_knowledge_graph(in_message, inferred_edge, inferred_edge_id)
+
+                # the straight/long supportg between inferred node and qg curie
+                straight_aux_g = f"{member_id}_Inferred_to_{predicate_part}_{input_qnode_curie}"
+
+
+
+                # 5. Add the edges between each inferred node and the group nodes to the knowledge graph: C2-member_of-Group
+                group_memebers_edge_id = f"inferred_{member_id}_member_of_{inferred_group_uuid}"
+                group_memebers_new_edge = trapi.create_knowledge_graph_edge(member_id, inferred_group_uuid, "biolink:member_of")
+                trapi.add_member_of_klat(group_memebers_new_edge)
+                trapi.add_edge_to_knowledge_graph(in_message, group_memebers_new_edge, group_memebers_edge_id)
+                new_node = trapi.create_knowledge_graph_node(member_id,
+                                                             inferred_result.link_type[j],
+                                                             inferred_result.link_names[j])
+                trapi.add_node_to_knowledge_graph(in_message, member_id, new_node)
+
+                # Keep the edge for group_to-enrichmentX auxiliaryG
+                auxg_mapping_dict.setdefault(enr2group_aux_graph_ids, []).append(group_memebers_edge_id)
+
+                member_edges_list.append(group_memebers_edge_id)
+                member_of_edgarset.add(member_id)
+
+                #Save the group_edge_id for the group to inferred support graph
+                # group_qgcurie_support_edges.append(group_edge_id)
+
+
+                # make and add the support_graph_id to the KG_edge for individual inferred node and the qg nodes
+                # make_and_add_support_graph(aux_graph_ids0, inferred_edge)
+                # trapi.add_aux_graphs(inferred_edge, support_graph_id)
+
+                # support pattern: X - group
+                # aux_graph_ids1_edges = [edge_id]
+
+
+                # Add the support edges to the auxilliary graph
+                # add_aux_graph(in_message, aux_graph_ids0, [infer_to_enrich_eid])
+
+        # phys - X
+        sg_mapping_dict.setdefault(straight_aux_g, []).extend(enrichment_results[i].link_kg_edges_ids)
+
+                # 5. On the inferred edge add support graph
+
+        # 7. add the group node to the KG
+        new_node = trapi.create_knowledge_graph_node(inferred_group_uuid, output_semantic_type, "inferred_set")
+        # 7b add its members to the attributes
+        new_node["attributes"].append({"member_ids": [member_of_edgarset]})
+        trapi.add_node_to_knowledge_graph(in_message, inferred_group_uuid, new_node)
+
+        # 8. we need inferred group node--original_predicate--qg_curies: group-AD
+        group_inferred_edge_id, group_inferred_edge = create_inferred_edge(inferred_group_uuid, input_qnode_curie, predicate_part,
+                                                         is_source, return_edge=True)
+        members2input_aux_graph_ids = f"{inferred_group_uuid}_rel_by_{predicate_part}_to_{input_qnode_curie}"
+        sg_mapping_dict.setdefault(group_inferred_edge_id, []).append(members2input_aux_graph_ids)
+        auxg_mapping_dict.setdefault(members2input_aux_graph_ids, []).extend(member_edges_list+inferred2curies_list)
+
+        #
+        # # support pattern: group - AD
+        # aux_graph_ids2_edges = [group_inferred_edge_id]
+
+        # Add the Inferred edge to the KG
+        trapi.add_edge_to_knowledge_graph(in_message, group_inferred_edge, group_inferred_edge_id)
+
+        # # Add the support edges to the auxilliary graph
+        # add_aux_graph(in_message, aux_graph_ids, group_qgcurie_support_edges)
+
+        # complete_inferred_support = f"Reasons{i}"
+        # complete_inferred_gupport_edges = aux_graph_ids2_edges+aux_graph_ids1_edges+aux_graph_ids0_edges
+        # add_aux_graph(in_message, complete_inferred_support, complete_inferred_gupport_edges)
+
+    for edge, sg_list in sg_mapping_dict.items():
+        in_message["message"]["knowledge_graph"]["edges"][edge]["attributes"].append({
+            "attribute_type_id": "biolink:support_graphs",
+            "value": sg_list,
+            "attribute_source": "infores:answercoalesce"
+        })
+
+    for aug, auxedges in auxg_mapping_dict.items():
+        in_message["message"]["auxiliary_graphs"][aug]= {"edges": auxedges}
+
+    return in_message
+def add_enriched_to_all_inferred_groupnode(inferred_group_uuid, inferred_result, sg_mapping_dict):
+    if inferred_result.is_source:
+        source = inferred_result.input_qnode_curie.new_curie
+        target = inferred_group_uuid
+    else:
+        source = inferred_group_uuid
+        target = inferred_result.input_qnode_curie.new_curie
+    predicate = inferred_result.predicate
+    enriched_to_inferredgroup_edge = trapi.create_knowledge_graph_edge(source, target, predicate)
+
+    edge_id = f"{inferred_result.input_qnode_curie.new_curie}_{predicate}_group_{target}"
+    aux_graph_ids = f"{source}_rel_by_{predicate}_to_{target}"
+    sg_mapping_dict.setdefault(edge_id, []).append(aux_graph_ids)
+    # make_and_add_support_graph(aux_graph_ids, enriched_to_inferredgroup_edge) #GeneX-group
+    # trapi.add_aux_graphs(enriched_to_inferredgroup_edge, aux_graph_ids)
+
+    # trapi.add_member_of_klat(new_edge)
+    return edge_id, enriched_to_inferredgroup_edge, aux_graph_ids
+
+def make_and_add_support_graph(aux_graph_ids,new_edge):
+
+    """
+    Add the auxiliary graphs to an edge.
+    """
+
+    new_edge.update({"attributes":[
+        {
+            "attribute_type_id": "biolink:support_graphs",
+            "value": aux_graph_ids,
+            "attribute_source": "infores:answercoalesce"
+        }]}
+    )
+
+
+def add_aux_graph(in_message, support_graph_id, support_edges):
+    if in_message["message"]["auxiliary_graphs"] == None:
+        in_message["message"]["auxiliary_graphs"] = {}
+
+    edges = in_message["message"]["auxiliary_graphs"].setdefault(support_graph_id, {}).setdefault("edges", [])
+    edges.extend(support_edges)
+
+
+def create_inferred_edge(new_node, qg_curie, qg_predicate, is_source = False, return_edge = False):
+    # 1. Make the link into component parts
+    if is_source:
+        source = qg_curie
+        target = new_node
+    else:
+        source = new_node
+        target = qg_curie
+    predicate = qg_predicate
+
+    # 2. Add the edges between the curie node and lookup nodes to the knowledge graph
+    edge_id = f"Inferred_{source}_{predicate}_{target}"
+    new_edge = trapi.create_knowledge_graph_edge(source, target, predicate)
+
+    if return_edge:
+        return edge_id, new_edge
+
+def uniqufy_enrichment_ids_and_predicates(enrichment_results):
+    seen_nodes = set()
+    filtered_nodes = []
+    filtered_nodepred = []
+
+    for node, pred in zip([enrichment_result.enriched_node.new_curie for enrichment_result in enrichment_results],
+                          [enrichment_result.predicate for enrichment_result in enrichment_results]):
+        if (node,pred.get("predicate")) in seen_nodes:
+            continue
+        filtered_nodes.append(node)
+        filtered_nodepred.append(pred)
+        seen_nodes.add((node,pred.get("predicate")))
+    return filtered_nodes, filtered_nodepred
+def filter_graph_enrichment_results(enrichment_results, input_ids, pvalue_threshold=None, result_length=None):
+    """We do not want a circle, so, we filter out lookup and inout curies from the enrichment results."""
+    results = [enrichment_result for enrichment_result in enrichment_results if
+     enrichment_result.enriched_node.new_curie not in input_ids]
+
+    if pvalue_threshold:
+        results = [enrichment_result for enrichment_result in results if enrichment_result.p_value < pvalue_threshold]
+
+    if result_length:
+       results = [enrichment_result for enrichment_result in results if enrichment_result.enriched_node.new_curie not in input_ids][:result_length]
+
+    return results
+def merge_lookup_and_graph_enrichment_results(enrichment_results, lookup_results):
+    """We do not want a circle, so, we filter out lookup and inout curies from the enrichment results."""
+    for enrichment_result in enrichment_results:
+        # Find the index positions of matches using filter and a generator expression
+        lookup_indices = list(filter(lambda idx: lookup_results.link_ids[idx] in enrichment_result.linked_curies, range(len(lookup_results.link_ids))))
+
+        lookup_results.add_enrichment(lookup_indices, enrichment_result.enriched_node, enrichment_result.predicate, enrichment_result.is_source, enrichment_result.p_value)
+    return lookup_results
+
+def uniqufy_enrichment_link(enrichment_link_dict):
+    return set(chain.from_iterable(enrichment_link_dict.values()))
+
 
 ######################################
 #

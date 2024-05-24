@@ -126,7 +126,7 @@ def test_infer():
     # Sample lookup query with infered knowledge_type
     answerset = {
       "parameters": {
-                    "pvalue_threshold": 1e-7,
+                    "pvalue_threshold": 1e-10,
                     "result_length": 100,
                     "predicates_to_exclude": [
                         "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
@@ -168,10 +168,7 @@ def test_infer():
     }
 
     assert PDResponse.parse_obj(answerset)
-    # make a good request
-    # from pyinstrument import Profiler
-    # profiler = Profiler()
-    # with profiler:
+
     response = client.post('/query', json=answerset)
     # profiler.print()
     # was the request successful

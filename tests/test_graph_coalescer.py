@@ -1,5 +1,7 @@
 import pytest
 import os, json, asyncio
+
+import src.graph_coalescence.graph_coalescer
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 #from src.components import Opportunity,Answer
@@ -7,6 +9,8 @@ from reasoner_pydantic import Response as PDResponse
 
 
 jsondir='InputJson_1.5'
+predicates_to_exclude =["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+                        "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"]
 
 def test_get_links_and_predicate_filter():
     """We expect that this UniProt has 28 links.
@@ -86,6 +90,78 @@ def test_filter_links_by_node_type():
     node_constraints = ["biolink:ChemicalEntity"]
     expected_output = { "node1": [ ("node4", "predicate2", False)],
                         "node2": [("node5", "predicate3", True)] }
+
+
+
+
+def test_get_qualified_results():
+    """
+    Scenario 1***************:
+      result 1 and 2;
+             4 and 5;
+             6 and 7;
+        has :
+            the same enrichenode and pvalue
+            ordinary then qualified predicates
+
+      Task: Consolidate the result into one using the most specific predicate ie the qualified one
+      input = [result1, result2, result4, result5, result6, result7]
+      output: [result1, result5, result7]
+
+
+    Scenario 2***************:
+      result 3 has :
+                a distinct enrichenode and pvalue
+      Task: Return the same since it has no commonality with any other results
+      input: [result3]
+      output: [result3]
+
+
+    Scenario 3***************:
+      result 8 has :
+                same enrichenode as result 6 and 7
+                'related_to' predicate
+      Task: remove the result8 because of the 'related_to' edge
+
+      """
+    result1 = EnrichedResult({'predicate': 'affect', 'object_aspect_qualifier': 'activity'}, 'enrichednode1', 1e-1)
+    result2 = EnrichedResult({'predicate': 'affect'}, 'enrichednode1', 1e-1)
+    result3 = EnrichedResult({'object_aspect_qualifier': 'transport', 'predicate': 'biolink:affects'}, 'enrichednode2', 1e-2)
+    result4 = EnrichedResult({'predicate': 'affect', 'object_aspect_qualifier': 'activity'}, 'enrichednode3', 1e-3)
+    result5 = EnrichedResult({'predicate': 'affect', 'object_aspect_qualifier': 'activity', 'object_direction_qualifier': 'increased'}, 'enrichednode3', 1e-3)
+    result6 = EnrichedResult({'object_direction_qualifier': 'downregulated', 'predicate': 'biolink:regulates'}, 'enrichednode4', 1e-4)
+    result7 = EnrichedResult({'object_direction_qualifier': 'decreased', 'predicate': 'biolink:regulates'}, 'enrichednode4', 1e-4)
+    result8 = EnrichedResult({'predicate': 'biolink:related_to'}, 'enrichednode4', 1e-6)
+
+    # Scenario 1 ***************
+    result = src.graph_coalescence.graph_coalescer.filter_result_repeated_subclass([result1, result2, result4, result5, result6, result7])
+    assert [result1, result5, result7] == result
+
+    # Scenario 2 ***************
+    result = src.graph_coalescence.graph_coalescer.filter_result_repeated_subclass([result3])
+    assert [result3] == result
+
+    # Scenario 3 ***************
+    result = src.graph_coalescence.graph_coalescer.exclude_predicate_by_hierarchy([result6, result7, result8], predicates_to_exclude)
+    assert [result6, result7] == result
+
+    print("All test cases passed!")
+
+class Enrichednode:
+    def __init__(self, new_curie):
+        self.new_curie = new_curie
+
+class EnrichedResult:
+    def __init__(self, predicate, enriched_node, pvalue):
+        self.predicate = predicate
+        self.p_value = pvalue
+        self.add_curie(enriched_node)
+    def add_curie(self, enriched_node):
+        self.enriched_node = Enrichednode(enriched_node)
+
+
+
+
 
 def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
