@@ -22,7 +22,7 @@ async def test_get_mcq_components():
                 },
                 "edges": {
                     "e1": {"subject": "n1",
-                           "predicate": "biolink:affects",
+                           "predicates": ["biolink:affects"],
                            "object": "n2",
                            "qualifiers_constraints": [
                                {"qualifier_set": [
@@ -80,7 +80,7 @@ async def test_create_or_find_member_of_edges_existing_edges():
                     "edge1": {
                         "subject": "qnode1",
                         "object": "qnode2",
-                        "predicate": "biolink:related_to"
+                        "predicates": ["biolink:related_to"]
                 }
             }
         },
@@ -133,7 +133,7 @@ async def test_full_trapi_generation():
                     "edge1": {
                         "subject": "qnode1",
                         "object": "qnode2",
-                        "predicate": "biolink:related_to"
+                        "predicates": ["biolink:related_to"]
                     }
                 }
             },

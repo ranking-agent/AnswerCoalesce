@@ -107,7 +107,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
     return new_nodes_to_links
 
 
-def coalesce_by_graph(input_ids, input_node_type,
+async def coalesce_by_graph(input_ids, input_node_type,
                       node_constraints = ["biolink:NamedThing"], predicate_constraints=[], predicate_constraint_style = "exclude",
                       pvalue_threshold=None, result_length = None, get_pred_superclass = False):
     """
@@ -171,7 +171,7 @@ def augment_enrichments(enriched_links, nodetypes):
     enriched_curies = set([link.enriched_node.new_curie for link in enriched_links])
     nodenamedict = get_node_names(enriched_curies)
     for enrichment in enriched_links:
-        enrichment.add_extra_node_name(nodenamedict)
+        enrichment.add_extra_node_name_and_label(nodenamedict, nodetypes)
     add_provs(enriched_links)
 
 def exclude_predicate_by_hierarchy(enriched_links, predicate_constraints):
@@ -437,7 +437,10 @@ def create_nodes_to_links(allnodes, param_predicates = []):
                         # or fixed at the graph level.
                         # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
                         # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
-                        if tk.get_element(link_predicate)["symmetric"]:
+                        element = tk.get_element(link_predicate)
+                        if element is None:
+                            print("???")
+                        if element["symmetric"]:
                             newlinks.append([link[0], link[1], not link[2]])
 
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))

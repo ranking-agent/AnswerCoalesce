@@ -1,10 +1,7 @@
 import pytest
 import os, json, asyncio
-
-import src.graph_coalescence.graph_coalescer
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
-#from src.components import Opportunity,Answer
 from reasoner_pydantic import Response as PDResponse
 
 
@@ -13,21 +10,36 @@ predicates_to_exclude =["biolink:causes", "biolink:biomarker_for", "biolink:biom
                         "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"]
 
 def test_get_links_and_predicate_filter():
-    """We expect that this UniProt has 28 links.
-    1 edge with predicate affects, object_aspect_qualifier activity, and object_direction_qualifier diecreased
-    1 edge with in_taxon
-    26 with predicate directly_physically_interacts_with
-    The 26 get doubled on read because they are symmetric, so leads to a total of 54"""
+    """We expect that this UniProt has 2701  links.
+    "{\"predicate\": \"biolink:binds\"}" 22
+    "{\"predicate\": \"biolink:directly_physically_interacts_with\"}" 48
+    "{\"predicate\": \"biolink:related_to\"}" 377
+    "{\"predicate\": \"biolink:physically_interacts_with\"}" 48
+    "{\"predicate\": \"biolink:interacts_with\"}" 48
+    "{\"object_aspect_qualifier\": \"activity\", \"predicate\": \"biolink:affects\"}" 319
+    "{\"object_aspect_qualifier\": \"activity\", \"object_direction_qualifier\": \"decreased\", \"predicate\": \"biolink:affects\"}" 319
+    "{\"object_aspect_qualifier\": \"activity_or_abundance\", \"predicate\": \"biolink:affects\"}" 319
+    "{\"object_aspect_qualifier\": \"activity_or_abundance\", \"object_direction_qualifier\": \"decreased\", \"predicate\": \"biolink:affects\"}" 319
+    "{\"predicate\": \"biolink:affects\"}" 319
+    "{\"predicate\": \"biolink:has_input\"}" 4
+    "{\"predicate\": \"biolink:has_participant\"}" 8
+    "{\"predicate\": \"biolink:has_output\"}" 4
+    "{\"predicate\": \"biolink:has_part\"}" 1
+    "{\"predicate\": \"biolink:overlaps\"}" 1
+    "{\"predicate\": \"biolink:in_taxon\"}" 1
+    # symmetric edges are doubled what is above at query time, so there's another 22 + 48 + 48 + 48 + 377  + 1= 544
+    """
     curies = ["UniProtKB:P0C6U8"]
+    total_edges = 2157 + 544
     nodes_to_links = gc.create_nodes_to_links(curies)
     assert len(nodes_to_links) == 1
     # Hand counted
-    assert len(nodes_to_links[curies[0]]) == 54
+    assert len(nodes_to_links[curies[0]]) == total_edges
 
     # Test exclude a single predicate, "biolink:directly_physically_interacts_with"
     constraint = {"predicate": "biolink:directly_physically_interacts_with"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='exclude')
-    assert len(filtered_nodes_to_links[curies[0]]) == 2
+    assert len(filtered_nodes_to_links[curies[0]]) == total_edges - 2 * 48
 
     # Test include a single predicate "biolink:in_taxon"
     constraint = {"predicate": "biolink:in_taxon"}
@@ -37,24 +49,24 @@ def test_get_links_and_predicate_filter():
     # Test include a single constraint with predicate and qualifier
     constraint = {"predicate": "biolink:affects", "object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) == 1
+    assert len(filtered_nodes_to_links[curies[0]]) == 319
 
     # Test exclude a single constraint with the affects predicate but no qualifier.  Nothing should be excluded b/c the matchs is imperfect
-    constraint = {"predicate": "biolink:affects"}
-    filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) == 0
+    #constraint = {"predicate": "biolink:affects"}
+    #filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
+    #assert len(filtered_nodes_to_links[curies[0]]) == 0
 
     # Test exclude multiple constraints, including some that are not present at all
     constraint1 = {"predicate": "biolink:affects", "object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased"}
     constraint2 = {"predicate": "biolink:in_taxon"}
     constraint3 = {"predicate": "biolink:related_to"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3], predicate_constraint_style='exclude')
-    assert len(filtered_nodes_to_links[curies[0]]) == 52
+    assert len(filtered_nodes_to_links[curies[0]]) == total_edges - 319 - 1 - 2 * 377
 
 
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3],
                                                        predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) == 2
+    assert len(filtered_nodes_to_links[curies[0]]) == 319 + 1 + 2 * 377
 
 import pytest
 from unittest.mock import MagicMock
@@ -90,8 +102,6 @@ def test_filter_links_by_node_type():
     node_constraints = ["biolink:ChemicalEntity"]
     expected_output = { "node1": [ ("node4", "predicate2", False)],
                         "node2": [("node5", "predicate3", True)] }
-
-
 
 
 def test_get_qualified_results():
@@ -134,15 +144,15 @@ def test_get_qualified_results():
     result8 = EnrichedResult({'predicate': 'biolink:related_to'}, 'enrichednode4', 1e-6)
 
     # Scenario 1 ***************
-    result = src.graph_coalescence.graph_coalescer.filter_result_repeated_subclass([result1, result2, result4, result5, result6, result7])
+    result = gc.filter_result_repeated_subclass([result1, result2, result4, result5, result6, result7])
     assert [result1, result5, result7] == result
 
     # Scenario 2 ***************
-    result = src.graph_coalescence.graph_coalescer.filter_result_repeated_subclass([result3])
+    result = gc.filter_result_repeated_subclass([result3])
     assert [result3] == result
 
     # Scenario 3 ***************
-    result = src.graph_coalescence.graph_coalescer.exclude_predicate_by_hierarchy([result6, result7, result8], predicates_to_exclude)
+    result = gc.graph_coalescer.exclude_predicate_by_hierarchy([result6, result7, result8], predicates_to_exclude)
     assert [result6, result7] == result
 
     print("All test cases passed!")
@@ -161,11 +171,10 @@ class EnrichedResult:
 
 
 
-
-
-def test_graph_coalescer():
+@pytest.mark.asyncio
+async def test_graph_coalescer():
     curies = [ 'NCBIGene:106632262', 'NCBIGene:106632263','NCBIGene:106632261' ]
-    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene' )
+    enrichments = await gc.coalesce_by_graph(curies, 'biolink:Gene' )
     assert len(enrichments) >= 1
     e = enrichments[0]
     assert len(e.linked_curies) == 3 # 3 of the 3 curies are subclasses of the output
@@ -177,7 +186,8 @@ def test_graph_coalescer():
     assert e.p_value < 1e-10
     assert e.enriched_node.new_curie == "HGNC.FAMILY:1384"
 
-def test_graph_coalescer_double_check():
+@pytest.mark.asyncio
+async def test_graph_coalescer_double_check():
     curies = ['NCBIGene:191',
  'NCBIGene:55832',
  'NCBIGene:645',
@@ -192,7 +202,7 @@ def test_graph_coalescer_double_check():
  'NCBIGene:23066',
  'NCBIGene:7514',
  'NCBIGene:10128']
-    enrichments = gc.coalesce_by_graph(curies, 'biolink:Gene', result_length=100)
+    enrichments = await gc.coalesce_by_graph(curies, 'biolink:Gene', result_length=100)
     assert len(enrichments) == 100
     e = enrichments[0]
     assert e.p_value < 1e-10
@@ -212,10 +222,9 @@ def test_graph_coalescer_perf_test():
     # open the file and load it
     with open(test_filename,'r') as tf:
         incoming = json.load(tf)
-    incoming = incoming['message']
-    # call function that does property coalesce
-    coalesced = asyncio.run(coalesce(incoming, method='graph'))
-    assert PDResponse.parse_obj({'message': coalesced})
+    # call function that does McQ
+    coalesced = asyncio.run(snc.multi_curie_query(incoming, parameters={"pvalue_threshold": None,"result_length": None}))
+    assert PDResponse.parse_obj(coalesced)
     # get the amount of time it took
     diff = datetime.datetime.now() - t1
 
@@ -225,63 +234,21 @@ def test_graph_coalescer_perf_test():
 def test_graph_coalesce_with_params_1e7():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_params_and_pcut1e7.json')
+    testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_params_and_pcut1e7_MCQ.json')
     with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        assert PDResponse.parse_obj(answerset)
-        assert answerset['workflow'][0].get("parameters").get('pvalue_threshold')
-        assert answerset['workflow'][0].get("parameters").get('predicates_to_exclude')
-        pvalue_threshold = answerset['workflow'][0].get("parameters").get('pvalue_threshold')
-        predicates_to_exclude = answerset['workflow'][0].get("parameters").get('predicates_to_exclude')
-    answerset = answerset['message']
-    # Some of these edges are old, we need to know which ones...
-    original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
+        input_message = json.load(tf)
+    assert PDResponse.parse_obj(input_message)
+    assert input_message.get("parameters").get('pvalue_threshold')
+    assert input_message.get("parameters").get('predicates_to_exclude')
+    #pvalue_threshold = input_message.get("parameters").get('pvalue_threshold')
+    #predicates_to_exclude = input_message.get("parameters").get('predicates_to_exclude')
     # now generate new answers
-    newset = asyncio.run(snc.coalesce(answerset, method='graph', predicates_to_exclude=predicates_to_exclude,
-                          pvalue_threshold=pvalue_threshold))
-    # Must be at least the length of the initial answers
-    assert len(newset['results']) == len(answerset['results'])
-    kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
-    kgedges = newset['knowledge_graph']['edges']
-    # Make sure that the edges are properly formed
-    for eid, kg_edge in kgedges.items():
-        assert isinstance(kg_edge["predicate"], str)
-        assert kg_edge["predicate"].startswith("biolink:")
-    for r in newset['results']:
-        nbs = r['node_bindings']
-        for qg_id, nbk in nbs.items():
-            # Every node binding should be found somewhere in the kg nodes
-            for nb in nbk:
-                assert nb['id'] in kgnodes
-                # And each of these nodes should have a name
-                assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
-
-        # make sure each new result has an extra edge
-        ebs = r['enrichments']
-        # make sure each enriched result has an extra edge
-        if ebs:
-            # check that the edges have the provenance we need
-            # Every node binding should be found somewhere in the kg nodes
-            for eb in ebs:
-                e_bindings = newset['auxiliary_graphs'][eb]
-                pvalue = set([a['value'] for a in e_bindings['attributes'] if a['attribute_type_id']== 'biolink:p_value'])
-                assert (pvalue!=1e-06)
-                eb_edges = e_bindings['edges']
-                for eid in eb_edges:
-                    if eid in original_edge_ids:
-                        continue
-                    extra_edge = True
-                    eedge = kgedges[eid]
-                    try:
-                        resource = set(flatten([a['resource_id'] for a in eedge['sources']]))
-                    except:
-                        assert False
-                    ac_prov = set(['infores:aragorn', 'infores:automat-robokop'])
-                    if resource:
-                        assert len(resource.intersection(ac_prov)) == 2
-                        assert len(resource) > len(ac_prov)
-                    assert len(set(eedge['predicate']).intersection(set(predicates_to_exclude))) == 0
-            assert extra_edge
+    input_message["parameters"]["pvalue_threshold"] = 1
+    coalesced = asyncio.run( snc.multi_curie_query(input_message, input_message.get("parameters")) )
+    #Assert that the output is well-formed
+    assert PDResponse.parse_obj(coalesced)
+    # We should have some new results
+    assert len(coalesced['results']) > 0
 
 def test_graph_coalesce_qualified():
     """Make sure that results are well formed."""

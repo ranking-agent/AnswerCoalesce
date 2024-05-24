@@ -33,8 +33,8 @@ class MCQEdge:
             else:
                 self.group_is_subject = False
             self.qedge_id = qedge_id
-            self.predicate_only = qedge["predicate"]
-            self.predicate = {"predicate": qedge["predicate"]}
+            self.predicate_only = qedge.get("predicates",["biolink:related_to"])[0]
+            self.predicate = {"predicate": self.predicate_only }
             qualifier_constraints = qedge.get("qualifiers_constraints", [])
             if len(qualifier_constraints) > 0:
                 qc = qualifier_constraints[0]
@@ -192,8 +192,9 @@ class Enrichment:
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
         or away from it (newnode_is = 'source') """
         self.enriched_node = NewNode(newnode, newnodetype)
-    def add_extra_node_name(self,name_dict):
+    def add_extra_node_name_and_label(self,name_dict,label_dict):
         self.enriched_node.newnode_name = name_dict.get(self.enriched_node.new_curie, None)
+        self.enriched_node.nodenode_categories = label_dict.get(self.enriched_node.new_curie, [])
     def add_extra_edges(self, newnode, predicate, newnode_is_source):
         """Add edges between the newnode (curie) and the curies that they were linked to"""
         if newnode_is_source:
