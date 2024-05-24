@@ -104,7 +104,7 @@ def test_filter_links_by_node_type():
                         "node2": [("node5", "predicate3", True)] }
 
 
-def test_get_qualified_results():
+def test_filter_enrichment_results():
     """
     Scenario 1***************:
       result 1 and 2;
@@ -152,7 +152,7 @@ def test_get_qualified_results():
     assert [result3] == result
 
     # Scenario 3 ***************
-    result = gc.graph_coalescer.exclude_predicate_by_hierarchy([result6, result7, result8], predicates_to_exclude)
+    result = gc.exclude_predicate_by_hierarchy([result6, result7, result8], predicates_to_exclude)
     assert [result6, result7] == result
 
     print("All test cases passed!")

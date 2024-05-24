@@ -2,7 +2,7 @@ from copy import deepcopy
 from collections import defaultdict
 import ast, json, uuid
 from string import Template
-from typing_extensions import LiteralString
+from typing import LiteralString
 
 ###
 # These classes are used to extract the meaning from the TRAPI MCQ query into a more usable form

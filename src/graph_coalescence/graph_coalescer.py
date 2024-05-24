@@ -149,12 +149,11 @@ async def coalesce_by_graph(input_ids, input_node_type,
     # so we're gonna cache those
     sf_cache = {}
 
-    #direction = {True: 'biolink:object', False: 'biolink:subject'}
 
     enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
                                         total_node_counts, get_pred_superclass)
 
-    # Gets rid of predicates to exclude regardless of their hierarchy
+    # Gets rid of predicate_constraints to exclude regardless of their hierarchy
     if get_pred_superclass:
         enriched_links = exclude_predicate_by_hierarchy(enriched_links, predicate_constraints)
     if pvalue_threshold:
@@ -175,6 +174,7 @@ def augment_enrichments(enriched_links, nodetypes):
     add_provs(enriched_links)
 
 def exclude_predicate_by_hierarchy(enriched_links, predicate_constraints):
+    # To exclude the constraint predicates and their super/sub classes
     return [enriched_link for enriched_link in enriched_links if len(set(predicate_constraints) & set(
         tk.get_descendants(enriched_link.predicate["predicate"], formatted=True))) < 1]
 
