@@ -2,7 +2,6 @@ from copy import deepcopy
 from collections import defaultdict
 import ast, json
 from string import Template
-from typing import LiteralString
 
 ###
 # These classes are used to extract the meaning from the TRAPI MCQ query into a more usable form
@@ -57,10 +56,10 @@ class MCQDefinition:
 ###
 
 class NewNode:
-    def __init__(self, newnode, newnodetype): #edge_pred_and_qual, newnode_is):
+    def __init__(self, newnode, newnodetype: list[str]): #edge_pred_and_qual, newnode_is):
         self.new_curie = newnode
         self.newnode_type = newnodetype
-        self.name = None
+        self.newnode_name = None
 
 class NewEdge:
     def __init__(self, source, predicate, target):
@@ -73,7 +72,7 @@ class NewEdge:
         self.prov = prov
 
 class Enrichment:
-    def __init__(self,p_value,newnode: LiteralString, predicate: LiteralString, is_source, ndraws, n, total_node_count, curies, node_type):
+    def __init__(self,p_value,newnode: str, predicate: str, is_source, ndraws, n, total_node_count, curies, node_type: list[str]):
         """Here the curies are the curies that actually link to newnode, not just the input curies."""
         self.p_value = p_value
         self.linked_curies = curies
@@ -85,7 +84,7 @@ class Enrichment:
         self.counts = [ndraws, n, total_node_count]
     #def add_provenance(self,provmap):
     #    self.provmap = provmap
-    def add_extra_node(self,newnode, newnodetype):
+    def add_extra_node(self,newnode, newnodetype: list[str]):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
@@ -93,7 +92,7 @@ class Enrichment:
         self.enriched_node = NewNode(newnode, newnodetype)
     def add_extra_node_name_and_label(self,name_dict,label_dict):
         self.enriched_node.newnode_name = name_dict.get(self.enriched_node.new_curie, None)
-        self.enriched_node.nodenode_categories = label_dict.get(self.enriched_node.new_curie, [])
+        self.enriched_node.newnode_type = label_dict.get(self.enriched_node.new_curie, [])
     def add_extra_edges(self, newnode, predicate, newnode_is_source):
         """Add edges between the newnode (curie) and the curies that they were linked to"""
         if newnode_is_source:

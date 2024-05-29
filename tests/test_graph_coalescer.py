@@ -3,51 +3,71 @@ import os, json, asyncio
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from reasoner_pydantic import Response as PDResponse
+import pytest
+from src.graph_coalescence.graph_coalescer import filter_links_by_node_type
+from src.components import Enrichment
 
 
 jsondir='InputJson_1.5'
 
 def test_get_links_and_predicate_filter():
-    """We expect that this UniProt has 2701  links.
-    "{\"predicate\": \"biolink:binds\"}" 22
-    "{\"predicate\": \"biolink:directly_physically_interacts_with\"}" 48
-    "{\"predicate\": \"biolink:related_to\"}" 377
-    "{\"predicate\": \"biolink:physically_interacts_with\"}" 48
-    "{\"predicate\": \"biolink:interacts_with\"}" 48
-    "{\"object_aspect_qualifier\": \"activity\", \"predicate\": \"biolink:affects\"}" 319
-    "{\"object_aspect_qualifier\": \"activity\", \"object_direction_qualifier\": \"decreased\", \"predicate\": \"biolink:affects\"}" 319
-    "{\"object_aspect_qualifier\": \"activity_or_abundance\", \"predicate\": \"biolink:affects\"}" 319
-    "{\"object_aspect_qualifier\": \"activity_or_abundance\", \"object_direction_qualifier\": \"decreased\", \"predicate\": \"biolink:affects\"}" 319
-    "{\"predicate\": \"biolink:affects\"}" 319
-    "{\"predicate\": \"biolink:has_input\"}" 4
-    "{\"predicate\": \"biolink:has_participant\"}" 8
-    "{\"predicate\": \"biolink:has_output\"}" 4
-    "{\"predicate\": \"biolink:has_part\"}" 1
-    "{\"predicate\": \"biolink:overlaps\"}" 1
-    "{\"predicate\": \"biolink:in_taxon\"}" 1
-    # symmetric edges are doubled what is above at query time, so there's another 22 + 48 + 48 + 48 + 377  + 1= 544
+    """We expect that this Gene has 2701  links.
+    "{\"predicate\": \"biolink:coexpressed_with\", \"species_context_qualifier\": \"NCBITaxon:9606\"}" 1540
+    "{\"predicate\": \"biolink:correlated_with\", \"species_context_qualifier\": \"NCBITaxon:9606\"}" 1540
+    "{\"predicate\": \"biolink:related_to\", \"species_context_qualifier\": \"NCBITaxon:9606\"}" 1826
+    "{\"predicate\": \"biolink:associated_with\", \"species_context_qualifier\": \"NCBITaxon:9606\"}" 1540
+    "{\"predicate\": \"biolink:physically_interacts_with\", \"species_context_qualifier\": \"NCBITaxon:9606\"}" 270
+    "{\"predicate\": \"biolink:interacts_with\", \"species_context_qualifier\": \"NCBITaxon:9606\"}" 270
+    "{\"predicate\": \"biolink:directly_physically_interacts_with\"}" 78
+    "{\"predicate\": \"biolink:physically_interacts_with\"}" 78
+    "{\"predicate\": \"biolink:interacts_with\"}" 110
+    "{\"predicate\": \"biolink:related_to\"}" 211
+    "{\"predicate\": \"biolink:genetically_interacts_with\"}" 10
+    "{\"predicate\": \"biolink:located_in\"}" 62
+    "{\"predicate\": \"biolink:has_part\"}" 6
+    "{\"predicate\": \"biolink:overlaps\"}" 6
+    "{\"predicate\": \"biolink:regulates\"}" 22
+    "{\"predicate\": \"biolink:affects\"}" 22
+    "{\"predicate\": \"biolink:actively_involved_in\"}" 19
+    "{\"predicate\": \"biolink:participates_in\"}" 22
+    "{\"predicate\": \"biolink:catalyzes\"}" 3
+    "{\"object_direction_qualifier\": \"downregulated\", \"predicate\": \"biolink:regulates\"}" 10
+    "{\"object_direction_qualifier\": \"decreased\", \"predicate\": \"biolink:regulates\"}" 10
+    "{\"predicate\": \"biolink:correlated_with\"}" 6
+    "{\"predicate\": \"biolink:associated_with\"}" 7
+    "{\"predicate\": \"biolink:subclass_of\"}" 4
+    "{\"object_direction_qualifier\": \"upregulated\", \"predicate\": \"biolink:regulates\"}" 6
+    "{\"object_direction_qualifier\": \"increased\", \"predicate\": \"biolink:regulates\"}" 6
+    "{\"predicate\": \"biolink:genetically_associated_with\"}" 1
+    # symmetric edges are doubled what is above at query time, so there's another
+    # 3*1540 + 1826 + 2*270 + 2*78 + 110 + 211+ 10 + 6 + 6 + +7 + 1 = 7493
     """
-    curies = ["UniProtKB:P0C6U8"]
-    total_edges = 2157 + 544
+    curies = ["NCBIGene:10469"]
+    total_edges = 7685 + 7493
     nodes_to_links = gc.create_nodes_to_links(curies)
     assert len(nodes_to_links) == 1
     # Hand counted
+    from collections import defaultdict
+    dd = defaultdict(int)
+    for link in nodes_to_links[curies[0]]:
+        p = link[1]
+        dd[p] += 1
     assert len(nodes_to_links[curies[0]]) == total_edges
 
     # Test exclude a single predicate, "biolink:directly_physically_interacts_with"
     constraint = {"predicate": "biolink:directly_physically_interacts_with"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='exclude')
-    assert len(filtered_nodes_to_links[curies[0]]) == total_edges - 2 * 48
+    assert len(filtered_nodes_to_links[curies[0]]) == total_edges - 2 * 78
 
-    # Test include a single predicate "biolink:in_taxon"
-    constraint = {"predicate": "biolink:in_taxon"}
+    # Test include a single symmetric predicate
+    constraint = {"predicate": "biolink:associated_with"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) == 1
+    assert len(filtered_nodes_to_links[curies[0]]) == 14
 
     # Test include a single constraint with predicate and qualifier
-    constraint = {"predicate": "biolink:affects", "object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased"}
+    constraint = {"object_direction_qualifier": "upregulated", "predicate": "biolink:regulates"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint], predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) == 319
+    assert len(filtered_nodes_to_links[curies[0]]) == 6
 
     # Test exclude a single constraint with the affects predicate but no qualifier.  Nothing should be excluded b/c the matchs is imperfect
     #constraint = {"predicate": "biolink:affects"}
@@ -56,19 +76,23 @@ def test_get_links_and_predicate_filter():
 
     # Test exclude multiple constraints, including some that are not present at all
     constraint1 = {"predicate": "biolink:affects", "object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased"}
-    constraint2 = {"predicate": "biolink:in_taxon"}
+    constraint2 = {"predicate": "biolink:overlaps"}
     constraint3 = {"predicate": "biolink:related_to"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3], predicate_constraint_style='exclude')
-    assert len(filtered_nodes_to_links[curies[0]]) == total_edges - 319 - 1 - 2 * 377
+    assert len(filtered_nodes_to_links[curies[0]]) == total_edges - 2*(211 + 6)
 
 
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3],
                                                        predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) == 319 + 1 + 2 * 377
+    assert len(filtered_nodes_to_links[curies[0]]) == 2 * (211 + 6)
 
-import pytest
-from unittest.mock import MagicMock
-from src.graph_coalescence.graph_coalescer import filter_links_by_node_type
+def test_get_prov():
+    enrichment1 = Enrichment(1e-10, "NCBIGene:2932", '{"predicate": "biolink:interacts_with"}', True, 100, 10, 1000, ["NCBIGene:1500"], ["biolink:Gene"])
+    enrichment2 = Enrichment(1e-10, "NCBIGene:1500", '{"predicate": "biolink:interacts_with"}', True, 100, 10, 1000, ["NCBIGene:2932"], ["biolink:Gene"])
+    gc.add_provs([enrichment1,enrichment2])
+    assert enrichment1.prov
+    assert enrichment2.prov
+
 
 def test_filter_links_by_node_type():
     # Mocking the nodes_to_links dictionary
@@ -154,6 +178,10 @@ def test_graph_coalescer_perf_test():
         incoming = json.load(tf)
     # call function that does McQ
     coalesced = asyncio.run(snc.multi_curie_query(incoming, parameters={"pvalue_threshold": None,"result_length": None}))
+    for eid,edge in coalesced["message"]['knowledge_graph']['edges'].items():
+        sources = edge.get('sources')[0]
+        if len(sources) == 0:
+            print(json.dumps(edge,indent=2))
     assert PDResponse.parse_obj(coalesced)
     # get the amount of time it took
     diff = datetime.datetime.now() - t1

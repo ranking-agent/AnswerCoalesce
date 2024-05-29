@@ -115,7 +115,7 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
      """
     # 1.(possibly) add the new node to the knowledge graph
     #the newnode_type is a single type here but it needs to go into this function as a list.
-    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.new_curie, [enrichment.enriched_node.newnode_type], enrichment.enriched_node.name)
+    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type, enrichment.enriched_node.newnode_name)
     trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.new_curie, node )
     aux_graph_ids = []
     for edge in enrichment.links:
