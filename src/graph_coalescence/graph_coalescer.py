@@ -2,6 +2,7 @@ from collections import defaultdict
 from scipy.stats import hypergeom, poisson, binom, norm
 from src.components import Enrichment
 from src.util import LoggingUtil
+from itertools import zip_longest
 import logging
 import os
 import redis
@@ -90,7 +91,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
     for node, links in nodes_to_links.items():
         new_links = []
         for link in links:
-            othernode = link[0]
+            othernode = link[0] if isinstance(link, list) else link
             if othernode in blocklist:
                 continue
             if accept_all_types:
@@ -108,7 +109,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 
 async def coalesce_by_graph(input_ids, input_node_type,
                       node_constraints = ["biolink:NamedThing"], predicate_constraints=[], predicate_constraint_style = "exclude",
-                      pvalue_threshold=None, result_length = None):
+                      pvalue_threshold=None, result_length = None, get_pred_superclass = False):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -130,7 +131,7 @@ async def coalesce_by_graph(input_ids, input_node_type,
     nodes_to_links = create_nodes_to_links(input_ids)
     # Filter the links by predicates.  This is how we are handling the input predicate for query and the
     # excluded predicates for EDGAR.
-    nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
+    # nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
     # Find the unique link nodes and get their types
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, input_node_type)
     nodetypedict = get_node_types(unique_link_nodes)
@@ -148,11 +149,13 @@ async def coalesce_by_graph(input_ids, input_node_type,
     # so we're gonna cache those
     sf_cache = {}
 
-    #direction = {True: 'biolink:object', False: 'biolink:subject'}
 
     enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                        total_node_counts)
+                                        total_node_counts, get_pred_superclass)
 
+    # Gets rid of predicate_constraints to exclude regardless of their hierarchy
+    if get_pred_superclass:
+        enriched_links = exclude_predicate_by_hierarchy(enriched_links, predicate_constraints)
     if pvalue_threshold:
         enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
     if result_length:
@@ -169,6 +172,11 @@ def augment_enrichments(enriched_links, nodetypes):
     for enrichment in enriched_links:
         enrichment.add_extra_node_name_and_label(nodenamedict, nodetypes)
     add_provs(enriched_links)
+
+def exclude_predicate_by_hierarchy(enriched_links, predicate_constraints):
+    # To exclude the constraint predicates and their super/sub classes
+    return [enriched_link for enriched_link in enriched_links if len(set(predicate_constraints) & set(
+        tk.get_descendants(enriched_link.predicate["predicate"], formatted=True))) < 1]
 
 
 def add_provs(enrichments):
@@ -392,7 +400,7 @@ def uniquify_links(nodes_to_links, input_type):
             unique_link_nodes.add(tl[0])
     return unique_link_nodes, unique_links
 
-def create_nodes_to_links(allnodes, params_predicate = ""):
+def create_nodes_to_links(allnodes, param_predicates = []):
     """Given a list of nodes identifiers, pull all their links"""
     # Create a dict from node->links by looking up in redis.
     #Noticed some qualifiers are have either but not both
@@ -401,7 +409,9 @@ def create_nodes_to_links(allnodes, params_predicate = ""):
     nodes_to_links = {}
 
     with get_redis_pipeline(0) as p:
-        for group in grouper(1000, allnodes):
+        for group, param_predicate in zip_longest(grouper(1000, allnodes), param_predicates):
+            if not group:
+                continue
             for node in group:
                 p.get(node)
             linkstrings = p.execute()
@@ -417,13 +427,12 @@ def create_nodes_to_links(allnodes, params_predicate = ""):
                     # have been assigned one direction only. We're going to invert them as well to allow matching
                 newlinks = []
                 for link in links:
-                    link_predicate = orjson.loads(link[1])["predicate"]
-                    if params_predicate:
+                    if param_predicate:
                         # For lookup operation
-                        if link_predicate != params_predicate:
-                            continue
-                        newlinks.append(link[0])
+                        if link[1] == param_predicate:
+                            newlinks.append(link[0])
                     else:
+                        link_predicate = orjson.loads(link[1])["predicate"]
                         # Note that this should really be done for any symmetric predicate.
                         # or fixed at the graph level.
                         # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
@@ -436,8 +445,8 @@ def create_nodes_to_links(allnodes, params_predicate = ""):
 
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
                 # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
-                if params_predicate:
-                    nodes_to_links = newlinks
+                if param_predicate:
+                    nodes_to_links[node] = list(set(newlinks))
                 else:
                     links += newlinks
                     nodes_to_links[node] = links
@@ -482,7 +491,7 @@ def enrich_equal_qnode(qnode_hash, best_enrich_node):
             return True
     return False
 
-def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts):
+def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts, get_pred_superclass = False):
     """Given a set of nodes and the links that they share, as well as some counts, return the enrichments based
     on the links.
     If you want to restrict the answers, then you filter nodes_to_links ahead of time.'
@@ -529,6 +538,7 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
             n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
 
+
             #TODO: Ola handle symmetry
             # if "biolink:related_to" in predicate:
             if tk.get_element(orjson.loads(predicate)["predicate"])["symmetric"]:
@@ -570,16 +580,59 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             # get the real labels/types of the enriched node
             node_types = typecache[newcurie]
 
-            enrichment = Enrichment(enrichp, newcurie, predicate, newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
+            enrichment = Enrichment(enrichp, newcurie, orjson.loads(predicate), newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
             enriched.append( enrichment )
 
         if len(enriched) > 0:
             results += enriched
 
+    if get_pred_superclass:
+        results = filter_result_repeated_subclass(results)
+
     results.sort(key=lambda x: x.p_value)
 
     logger.debug('end get_enriched_links()')
+
     return results
+
+def filter_result_repeated_subclass(results):
+    enrichment_group_dict = {}
+    for i, result in enumerate(results):
+        # Group results by (enrichnode, pvalue) qualifier or not
+        enrichment_group_dict.setdefault((result.enriched_node.new_curie, result.p_value), []).append(result)
+
+    # Takes care of situation where we have predicate with the same p_value
+    new_results = get_refined_results(enrichment_group_dict)
+
+    return new_results
+
+def get_refined_results(enrichment_group_dict):
+    new_results = []
+    ancestors_dict = {}
+    for _, qualified_result in enrichment_group_dict.items():
+        if len(qualified_result) == 1:
+            new_results.extend(qualified_result)
+        else:
+            if set(["object_aspect_qualifier", "object_direction_qualifier"]) & set([key for result in qualified_result for key in result.predicate ]):
+                superset_dict = {k: v for result in qualified_result for k, v in result.predicate.items()}
+                for result in qualified_result:
+                    if all(result.predicate.get(key) == val for key, val in superset_dict.items()):
+                        new_results.append(result)
+                        break
+            else:
+
+                for result in qualified_result:
+                    ancestors_dict[result.predicate.get("predicate")] = tk.get_ancestors(result.predicate.get("predicate"), formatted=True)
+
+                # The most specific predicate will have the most ancestors
+                most_specific_predicate = max([result.predicate.get("predicate") for result in qualified_result ], key=lambda p: len(ancestors_dict[p]))
+                for result in qualified_result:
+                    if result.predicate.get("predicate") == most_specific_predicate:
+                        new_results.append(result)
+
+
+    return new_results
+
 
 def get_total_node_counts(semantic_type):
     counts = {}
