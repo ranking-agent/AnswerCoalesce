@@ -92,8 +92,10 @@ def test_get_prov():
     enrichment1 = Enrichment(1e-10, "NCBIGene:2932", '{"predicate": "biolink:interacts_with"}', True, 100, 10, 1000, ["NCBIGene:1500"], ["biolink:Gene"])
     enrichment2 = Enrichment(1e-10, "NCBIGene:1500", '{"predicate": "biolink:interacts_with"}', True, 100, 10, 1000, ["NCBIGene:2932"], ["biolink:Gene"])
     gc.add_provs([enrichment1,enrichment2])
-    assert enrichment1.prov
-    assert enrichment2.prov
+    for link in enrichment1.links:
+        assert link.prov
+    for link in enrichment2.links:
+        assert link.prov
 
 
 def test_filter_links_by_node_type():

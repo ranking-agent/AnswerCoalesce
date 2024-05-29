@@ -204,11 +204,13 @@ class Enrichment:
         return [link.get_prov_link() for link in self.links]
     def add_provenance(self,prov):
         for link in self.links:
-            print(link.get_prov_link(), link.get_sym_prov_link())
-            if prov.get(link.get_prov_link()):
-                link.add_prov(prov[link.get_prov_link()])
+            provlink = link.get_prov_link()
+            symprovlink = link.get_sym_prov_link()
+            print(provlink, symprovlink)
+            if prov.get(provlink):
+                link.add_prov(prov[provlink])
             else:
-                link.add_prov(prov[link.get_sym_prov_link()])
+                link.add_prov(prov[symprovlink])
 
     #TODO: this should not exist in here any more, we are just making a data class
     def x_apply(self,answers,question,graph,graph_index,patch_no):
