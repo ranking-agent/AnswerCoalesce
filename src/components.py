@@ -34,6 +34,7 @@ class MCQEdge:
             self.qedge_id = qedge_id
             self.predicate_only = qedge.get("predicates",["biolink:related_to"])[0]
             self.predicate = {"predicate": self.predicate_only }
+            self.qualifiers = []
             qualifier_constraints = qedge.get("qualifiers_constraints", [])
             if len(qualifier_constraints) > 0:
                 qc = qualifier_constraints[0]
@@ -184,8 +185,6 @@ class Enrichment:
         self.add_extra_node(newnode, node_type)
         self.add_extra_edges(newnode, predicate, is_source)
         self.counts = [ndraws, n, total_node_count]
-    #def add_provenance(self,provmap):
-    #    self.provmap = provmap
     def add_extra_node(self,newnode, newnodetype: list[str]):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
@@ -195,17 +194,17 @@ class Enrichment:
     def add_extra_node_name_and_label(self,name_dict,label_dict):
         self.enriched_node.newnode_name = name_dict.get(self.enriched_node.new_curie, None)
         self.enriched_node.newnode_type = label_dict.get(self.enriched_node.new_curie, [])
-    def add_extra_edges(self, newnode, predicate, newnode_is_source):
+    def add_extra_edges(self, newnode, predicate: str, newnode_is_source):
         """Add edges between the newnode (curie) and the curies that they were linked to"""
         if newnode_is_source:
-            self.links = [NewEdge(newnode,json.dumps(predicate,sort_keys=True),curie) for curie in self.linked_curies]
+            self.links = [NewEdge(newnode,predicate,curie) for curie in self.linked_curies]
         else:
-            self.links = [NewEdge(curie,json.dumps(predicate,sort_keys=True),newnode) for curie in self.linked_curies]
+            self.links = [NewEdge(curie,predicate,newnode) for curie in self.linked_curies]
     def get_prov_links(self):
         return [link.get_prov_link() for link in self.links]
     def add_provenance(self,prov):
         for link in self.links:
-            # link.add_prov(prov[link.get_prov_link()])
+            print(link.get_prov_link(), link.get_sym_prov_link())
             if prov.get(link.get_prov_link()):
                 link.add_prov(prov[link.get_prov_link()])
             else:
