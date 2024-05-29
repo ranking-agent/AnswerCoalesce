@@ -91,7 +91,10 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
     for node, links in nodes_to_links.items():
         new_links = []
         for link in links:
-            othernode = link[0] if isinstance(link, list) else link
+            if (isinstance(link,list) or isinstance(link,tuple)):
+                othernode = link[0]
+            else:
+                othernode = link
             if othernode in blocklist:
                 continue
             if accept_all_types:
