@@ -206,7 +206,6 @@ class Enrichment:
         for link in self.links:
             provlink = link.get_prov_link()
             symprovlink = link.get_sym_prov_link()
-            print(provlink, symprovlink)
             if prov.get(provlink):
                 link.add_prov(prov[provlink])
             else:

@@ -274,6 +274,7 @@ def test_graph_coalesce_with_params_1e7():
     #predicates_to_exclude = input_message.get("parameters").get('predicates_to_exclude')
     # now generate new answers
     input_message["parameters"]["pvalue_threshold"] = 1
+    input_message["parameters"]["result_length"] = None
     coalesced = asyncio.run( snc.multi_curie_query(input_message, input_message.get("parameters")) )
     #Assert that the output is well-formed
     assert PDResponse.parse_obj(coalesced)
