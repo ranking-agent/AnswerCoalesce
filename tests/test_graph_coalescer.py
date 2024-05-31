@@ -277,7 +277,7 @@ def test_graph_coalesce_with_params_1e7():
     #Assert that the output is well-formed
     assert PDResponse.parse_obj(coalesced)
     # We should have some new results
-    assert len(coalesced['results']) > 0
+    assert len(coalesced['message']['results']) > 0
 
 def test_graph_coalesce_qualified():
     """Make sure that results are well formed."""

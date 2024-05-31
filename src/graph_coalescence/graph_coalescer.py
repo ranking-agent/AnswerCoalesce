@@ -133,7 +133,7 @@ async def coalesce_by_graph(input_ids, input_node_type,
     logger.info(f'Start of processing.')
 
     # Get the links for all the input nodes
-    nodes_to_links = create_nodes_to_links(input_ids, filter_predicate_hierarchies=filter_predicate_hierarchies)
+    nodes_to_links = create_nodes_to_links(input_ids)
     # Filter the links by predicates.  This is how we are handling the input predicate for query and the
     # excluded predicates for EDGAR.
     # nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
@@ -392,21 +392,35 @@ def uniquify_links(nodes_to_links, input_type):
     # Create the total unique set of links
     unique_links = set()
     unique_link_nodes = set()
+    #This is for caching the edge types as symmetric or not because we are parsing json every time.
+    predicate_is_symmetric = {}
     for n in nodes_to_links:
         for l in nodes_to_links[n]:
             # The link as defined uses the input node as is_source, but the lookup into redis uses the
-            # linked node as the is_source, so gotta flip it
-            if l[0] == "NCBIGene:50514":
-                print("???")
+            # linked node as the is_source, so gotta flip it.   But there is a gross wrinkle here - if the
+            # link is symmetric, then we want the link to always be "True" (Don't flip if it already says True)
             lplus = l + [input_type]
-            lplus[2] = not lplus[2]
+            if (l[1] not in predicate_is_symmetric):
+                predicate_is_symmetric[l[1]] = predicate_string_is_symmetric(l[1])
+            if predicate_is_symmetric[l[1]]:
+                lplus[2] = True
+            else:
+                lplus[2] = not lplus[2]
             tl = tuple(lplus)
             unique_links.add(tl)
             unique_link_nodes.add(tl[0])
     return unique_link_nodes, unique_links
 
-def create_nodes_to_links(allnodes, filter_predicate_hierarchies = False,  param_predicates = []):
-    """Given a list of nodes identifiers, pull all their links"""
+def predicate_string_is_symmetric(predicate: str) -> bool:
+    """Check if a predicate string is symmetric. The predicate here is the whole qualified mess as a string"""
+    bare_predicate = orjson.loads(predicate)["predicate"]
+    return tk.get_element(bare_predicate)["symmetric"]
+
+def create_nodes_to_links(allnodes,  param_predicates = []):
+    """Given a list of nodes identifiers, pull all their links
+    If param_predicates is not empty, it should be a list of the same length as allnodes.
+    It's use is in EDGAR where create_nodes_to_links is used in the final lookup step. In that case,
+    we might be trying to run a bunch of rules at the same time and so the predicates will differ node to node."""
     # Create a dict from node->links by looking up in redis.
     #Noticed some qualifiers are have either but not both
     # eg ['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}', True]
@@ -436,18 +450,18 @@ def create_nodes_to_links(allnodes, filter_predicate_hierarchies = False,  param
                         # For lookup operation
                         if link[1] == param_predicate:
                             newlinks.append(link[0])
-                    else:
-                        if not filter_predicate_hierarchies:
-                            link_predicate = orjson.loads(link[1])["predicate"]
-                            # Note that this should really be done for any symmetric predicate.
-                            # or fixed at the graph level.
-                            # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
-                            # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
-                            element = tk.get_element(link_predicate)
-                            if element is None:
-                                print("???")
-                            if element["symmetric"]:
-                                newlinks.append([link[0], link[1], not link[2]])
+                    #else:
+                    #    if not filter_predicate_hierarchies:
+                    #        link_predicate = orjson.loads(link[1])["predicate"]
+                    #        # Note that this should really be done for any symmetric predicate.
+                    #        # or fixed at the graph level.
+                    #        # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
+                    #        # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
+                    #        element = tk.get_element(link_predicate)
+                    #        if element is None:
+                    #            print("???")
+                    #        if element["symmetric"]:
+                    #            newlinks.append([link[0], link[1], not link[2]])
 
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
                 # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
@@ -540,19 +554,15 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
             total_node_count = total_node_counts[semantic_type]
 
-            newcurie_is_source = not is_source
+            # We only want to do this if the predicate is symmetric
+            #if tk.get_element(orjson.loads(predicate)["predicate"])["symmetric"]:
+            if predicate_string_is_symmetric(predicate):
+                    newcurie_is_source = True
+            else:
+                newcurie_is_source = not is_source
 
             n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
 
-
-            #TODO: Ola handle symmetry
-            # if "biolink:related_to" in predicate:
-            if tk.get_element(orjson.loads(predicate)["predicate"])["symmetric"]:
-                try:
-                    n += lcounts[(newcurie, predicate, not newcurie_is_source, semantic_type)]
-                except:
-                    # no reverse edges
-                    pass
 
             if x > 0  and n == 0:
                 logger.info(f"x == {x}; n == 0??? : {newcurie} {predicate} {newcurie_is_source} {semantic_type} ")
