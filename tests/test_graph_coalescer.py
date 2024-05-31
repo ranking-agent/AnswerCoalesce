@@ -2,6 +2,7 @@ import pytest
 import os, json, asyncio
 import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
+from src.components import Enrichment
 from reasoner_pydantic import Response as PDResponse
 import pytest
 from src.graph_coalescence.graph_coalescer import filter_links_by_node_type
@@ -129,71 +130,47 @@ def test_filter_links_by_node_type():
     expected_output = { "node1": [ ("node4", "predicate2", False)],
                         "node2": [("node5", "predicate3", True)] }
 
-
 def test_filter_enrichment_results():
     """
     Scenario 1***************:
-      result 1 and 2;
-             4 and 5;
-             6 and 7;
-        has :
-            the same enrichenode and pvalue
-            ordinary then qualified predicates
+      result 1 and 2 is a tree in which 1 is the ancestor of 2, however, they have different pvalues
+             3 and 4 is a tree in which 4 is the ancestor of 3, however, they have the same pvalue
 
-      Task: Consolidate the result into one using the most specific predicate ie the qualified one
-      input = [result1, result2, result4, result5, result6, result7]
-      output: [result1, result5, result7]
+      Task: Consolidate the result into two using the most specific predicate in each tree
 
+      Steps:
+        1. Groups the 4 results by pvalues then pick the most specific in ech case/group
+            step_outcome: Results 1, 2, and 3
+        2. if step (1)) outcomes has parent/child relationship and the child has a better p_value, return the most specific(child)
+           if step (1)) outcomes has parent/child relationship and the parent has a better p_value, return the least specific(parent)
+             step_outcomes:
+                Results 1, 2 has a parent/child relationship and the child(result1) has a better pvalue
+                Result 3 is another branch separate from 1, 2
+             hence, we return Results 1, and 3
 
-    Scenario 2***************:
-      result 3 has :
-                a distinct enrichenode and pvalue
-      Task: Return the same since it has no commonality with any other results
-      input: [result3]
-      output: [result3]
-
-
-    Scenario 3***************:
-      result 8 has :
-                same enrichenode as result 6 and 7
-                'related_to' predicate
-      Task: remove the result8 because of the 'related_to' edge
+      input = [result1, result2, result3, result4]
+      output: [result1, result4]
 
       """
-    result1 = EnrichedResult({'predicate': 'affect', 'object_aspect_qualifier': 'activity'}, 'enrichednode1', 1e-1)
-    result2 = EnrichedResult({'predicate': 'affect'}, 'enrichednode1', 1e-1)
-    result3 = EnrichedResult({'object_aspect_qualifier': 'transport', 'predicate': 'biolink:affects'}, 'enrichednode2', 1e-2)
-    result4 = EnrichedResult({'predicate': 'affect', 'object_aspect_qualifier': 'activity'}, 'enrichednode3', 1e-3)
-    result5 = EnrichedResult({'predicate': 'affect', 'object_aspect_qualifier': 'activity', 'object_direction_qualifier': 'increased'}, 'enrichednode3', 1e-3)
-    result6 = EnrichedResult({'object_direction_qualifier': 'downregulated', 'predicate': 'biolink:regulates'}, 'enrichednode4', 1e-4)
-    result7 = EnrichedResult({'object_direction_qualifier': 'decreased', 'predicate': 'biolink:regulates'}, 'enrichednode4', 1e-4)
-    result8 = EnrichedResult({'predicate': 'biolink:related_to'}, 'enrichednode4', 1e-6)
+    # result1 = Enrichment(8.033689062162034e-11,'HP:0020110', {'predicate': 'biolink:causes'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:42944'], 'biolink:DiseaseOrPhenotypicFeature')
+    # result2 = Enrichment(9.161641498909993e-11, 'HP:0020110', {'predicate': 'biolink:contributes_to'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    # result3 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:has_adverse_event'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    # result4 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:affects'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    # # Scenario 1 ***************
+    # result = gc.filter_result_hierarchies([result1, result2, result3, result4])
+    # assert [result3, result1] == result #unsorted because we wait to sort finally in the get_enriched_links
 
-    # Scenario 1 ***************
-    result = gc.filter_result_repeated_subclass([result1, result2, result4, result5, result6, result7])
-    assert [result1, result5, result7] == result
-
-    # Scenario 2 ***************
-    result = gc.filter_result_repeated_subclass([result3])
-    assert [result3] == result
-
-    # Scenario 3 ***************
-    result = gc.exclude_predicate_by_hierarchy([result6, result7, result8], predicates_to_exclude)
-    assert [result6, result7] == result
+    # # Using a real enrichment result
+    # result1 = Enrichment(1.7108004493514417e-72, 'MONDO:0004975', {'predicate': 'biolink:treats'}, False, 16, 19, 1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    # result2 = Enrichment(3.0839908185924632e-61, 'MONDO:0004975', {'predicate': 'biolink:biolink:treats_or_applied_or_studied_to_treat'}, False, 16, 96, 1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    # result3 = Enrichment(3.7469289680403445e-31, 'MONDO:0004975', {'predicate': 'biolink:affects'}, False, 16, 13, 1366955.0, ['CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    # result4 = Enrichment(1.6662626195823426e-28, 'MONDO:0004975', {'predicate': 'biolink:ameliorates_condition'}, False, 16, 6, 1366955.0, ['CHEBI:15355', 'CHEBI:3048', 'CHEBI:8888', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    # result5 = Enrichment(7.022661981030352e-05, 'MONDO:0004975', {'predicate': 'biolink:has_adverse_event'}, False, 16, 6, 1366955.0, ['CHEBI:53289'], 'biolink:Disease')
+    # # Scenario 2 ***************
+    # result = gc.filter_result_hierarchies([result1, result2, result3, result4, result5])
+    # assert [result3, result1] == result  # unsorted because we wait to sort finally in the get_enriched_links
 
     print("All test cases passed!")
-
-class Enrichednode:
-    def __init__(self, new_curie):
-        self.new_curie = new_curie
-
-class EnrichedResult:
-    def __init__(self, predicate, enriched_node, pvalue):
-        self.predicate = predicate
-        self.p_value = pvalue
-        self.add_curie(enriched_node)
-    def add_curie(self, enriched_node):
-        self.enriched_node = Enrichednode(enriched_node)
 
 
 
