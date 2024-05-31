@@ -152,13 +152,13 @@ def test_filter_enrichment_results():
       output: [result1, result4]
 
       """
-    # result1 = Enrichment(8.033689062162034e-11,'HP:0020110', {'predicate': 'biolink:causes'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:42944'], 'biolink:DiseaseOrPhenotypicFeature')
-    # result2 = Enrichment(9.161641498909993e-11, 'HP:0020110', {'predicate': 'biolink:contributes_to'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    # result3 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:has_adverse_event'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    # result4 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:affects'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    # # Scenario 1 ***************
-    # result = gc.filter_result_hierarchies([result1, result2, result3, result4])
-    # assert [result3, result1] == result #unsorted because we wait to sort finally in the get_enriched_links
+    result1 = Enrichment(8.033689062162034e-11,'HP:0020110', {'predicate': 'biolink:causes'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:42944'], 'biolink:DiseaseOrPhenotypicFeature')
+    result2 = Enrichment(9.161641498909993e-11, 'HP:0020110', {'predicate': 'biolink:contributes_to'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    result3 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:has_adverse_event'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    result4 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:affects'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    # Scenario 1 ***************
+    result = gc.filter_result_hierarchies([result1, result2, result3, result4])
+    assert [result3, result1] == result #unsorted because we wait to sort finally in the get_enriched_links
 
     # # Using a real enrichment result
     # result1 = Enrichment(1.7108004493514417e-72, 'MONDO:0004975', {'predicate': 'biolink:treats'}, False, 16, 19, 1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
