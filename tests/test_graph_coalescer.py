@@ -151,16 +151,37 @@ def test_filter_enrichment_results():
       input = [result1, result2, result3, result4]
       output: [result1, result4]
 
-      """
-    # result1 = Enrichment(8.033689062162034e-11,'HP:0020110', {'predicate': 'biolink:causes'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:42944'], 'biolink:DiseaseOrPhenotypicFeature')
-    # result2 = Enrichment(9.161641498909993e-11, 'HP:0020110', {'predicate': 'biolink:contributes_to'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    # result3 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:has_adverse_event'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    # result4 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:affects'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    # # Scenario 1 ***************
-    # result = gc.filter_result_hierarchies([result1, result2, result3, result4])
-    # assert [result3, result1] == result #unsorted because we wait to sort finally in the get_enriched_links
 
-    # # Using a real enrichment result
+    Scenario 2***************:
+      result 1, 2 and 4 is a tree in which 2 is the ancestor of 1, and 1 is the ancestor of 4; however, all have different pvalues
+             3 and 5 is a tree in which 3 is the ancestor of 5, however, they have the different p_value
+
+      Task: Consolidate the result into two using the most specific predicate in each tree
+
+      Steps:
+        1. Groups the 5 results by p_values then pick the most specific in ech case/group
+            step_outcome: Results 1, 2, 3, 4, 5
+        2. The step (1) outcomes has parent/child relationships:
+                (a) 2, 1, 4
+                (b) 3, 5
+             step_outcomes:
+               In (a), the child 1 has a better p_value, but it is the more specific, hence, return result 1
+               In (b), the parent 3 has a better p_value, but it is the least specific of the two, hence, return the parent
+        hence, we return Results 1, and 3
+
+      input = [result1, result2, result3, result4, result5]
+      output: [result3, result1]
+
+      """
+    result1 = Enrichment(8.033689062162034e-11,'HP:0020110', {'predicate': 'biolink:causes'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:42944'], 'biolink:DiseaseOrPhenotypicFeature')
+    result2 = Enrichment(9.161641498909993e-11, 'HP:0020110', {'predicate': 'biolink:contributes_to'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    result3 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:has_adverse_event'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    result4 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:affects'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    # Scenario 1 ***************
+    result = gc.filter_result_hierarchies([result1, result2, result3, result4])
+    assert [result3, result1] == result #unsorted because we wait to sort finally in the get_enriched_links
+
+    # # Using a real enrichment result:
     # result1 = Enrichment(1.7108004493514417e-72, 'MONDO:0004975', {'predicate': 'biolink:treats'}, False, 16, 19, 1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
     # result2 = Enrichment(3.0839908185924632e-61, 'MONDO:0004975', {'predicate': 'biolink:biolink:treats_or_applied_or_studied_to_treat'}, False, 16, 96, 1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
     # result3 = Enrichment(3.7469289680403445e-31, 'MONDO:0004975', {'predicate': 'biolink:affects'}, False, 16, 13, 1366955.0, ['CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
