@@ -113,8 +113,8 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
      8. In the result, create the analysis and add edge_bindings to it.
      """
     # 1.(possibly) add the new node to the knowledge graph
-    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.id, enrichment.enriched_node.category, enrichment.enriched_node.name)
-    trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.id, node )
+    node = trapi.create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type, enrichment.enriched_node.newnode_name)
+    trapi.add_node_to_knowledge_graph(in_message, enrichment.enriched_node.new_curie, node )
     aux_graph_ids = []
     for edge in enrichment.links:
         # 2. Add the edges between the new node and the member nodes to the knowledge graph

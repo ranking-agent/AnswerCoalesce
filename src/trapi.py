@@ -26,7 +26,7 @@ def create_knowledge_graph_edge_from_component(input_edge: NewEdge):
     qualifiers = []
     for key,value in jsonpred.items():
         if key != "predicate":
-            qualifiers.append({"qualifier_type_id":key,"qualifier_value":value})
+            qualifiers.append({"qualifier_type_id":f"biolink:{key}","qualifier_value":value})
     return create_knowledge_graph_edge(input_edge.source, input_edge.target, predicate_only,
                                        qualifiers=qualifiers, sources=input_edge.prov)
 

@@ -152,7 +152,7 @@ async def test_full_trapi_generation():
     }
     mcqdef = MCQDefinition(message)
     enrichment = Enrichment(1e-10, "curie:newnode", '{"predicate": "biolink:related_to"}', True,
-   100, 10, 1000, ["id1"], "biolink:Gene")
+   100, 10, 1000, ["id1"], ["biolink:Gene"])
     prov = {'curie:newnode {"predicate": "biolink:related_to"} id1': [{'resource_id': 'infores:whatever', 'resource_role': 'primary_knowledge_source'}]}
     enrichment.add_provenance(prov)
     new_trapi = await create_mcq_trapi_response(message, [enrichment], mcqdef)

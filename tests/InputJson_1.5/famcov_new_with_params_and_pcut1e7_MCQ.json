@@ -1,0 +1,348 @@
+{
+  "message": {
+    "query_graph": {
+      "edges": {
+        "e1": {
+          "subject": "input",
+          "object": "output"
+        }
+      },
+      "nodes": {
+        "input": {
+          "ids": [
+            "uuid:1"
+          ],
+          "categories": [
+            "biolink:Disease"
+          ],
+          "set_interpretation": "MANY",
+          "member_ids": [
+            "MONDO:0004900",
+            "MONDO:0005249",
+            "MONDO:0056821",
+            "MONDO:0021146",
+            "NCBIGene:7124",
+            "MONDO:0006932",
+            "MONDO:0004730",
+            "MONDO:0004995",
+            "MONDO:0019737",
+            "MONDO:0024355",
+            "MONDO:0002258",
+            "MONDO:0021113",
+            "MONDO:0005113",
+            "MONDO:0019810",
+            "MONDO:0005265",
+            "MONDO:0003785",
+            "MONDO:0001208",
+            "MONDO:0005263",
+            "MONDO:0001673",
+            "MONDO:0005478",
+            "MONDO:0015796",
+            "MONDO:0004652",
+            "MONDO:0015137",
+            "MONDO:0045057",
+            "MONDO:0001243",
+            "NCBITaxon:2697049",
+            "MONDO:0005252"
+          ]
+        },
+        "output": {
+          "categories": [
+            "biolink:NamedThing"
+          ]
+        }
+      }
+    },
+    "knowledge_graph": {
+      "nodes": {
+        "MONDO:0004900": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "peripheral vertigo",
+          "attributes": []
+        },
+        "MONDO:0005249": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "pneumonia",
+          "attributes": []
+        },
+        "MONDO:0056821": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "bronchiolitis obliterans organizing pneumonia",
+          "attributes": []
+        },
+        "MONDO:0021146": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "headache disorder",
+          "attributes": []
+        },
+        "NCBIGene:7124": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:MolecularEntity",
+            "biolink:Gene",
+            "biolink:GeneOrGeneProduct",
+            "biolink:MacromolecularMachine",
+            "biolink:GenomicEntity"
+          ],
+          "name": "TNF",
+          "attributes": []
+        },
+        "MONDO:0006932": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "pulmonary edema",
+          "attributes": []
+        },
+        "MONDO:0004730": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "speech disorder",
+          "attributes": []
+        },
+        "MONDO:0004995": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "cardiovascular disease",
+          "attributes": []
+        },
+        "MONDO:0019737": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "thrombotic microangiopathy",
+          "attributes": []
+        },
+        "MONDO:0024355": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "respiratory tract infectious disease",
+          "attributes": []
+        },
+        "MONDO:0002258": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "pharyngitis",
+          "attributes": []
+        },
+        "MONDO:0021113": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "respiratory failure",
+          "attributes": []
+        },
+        "MONDO:0005113": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "bacterial infectious disease",
+          "attributes": []
+        },
+        "MONDO:0019810": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "toxic epidermal necrolysis",
+          "attributes": []
+        },
+        "MONDO:0005265": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "inflammatory bowel disease",
+          "attributes": []
+        },
+        "MONDO:0003785": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "leukopenia",
+          "attributes": []
+        },
+        "MONDO:0001208": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "acute respiratory failure",
+          "attributes": []
+        },
+        "MONDO:0005263": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "unipolar depression",
+          "attributes": []
+        },
+        "MONDO:0001673": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "diarrheal disease",
+          "attributes": []
+        },
+        "MONDO:0005478": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "torsades de pointes",
+          "attributes": []
+        },
+        "MONDO:0015796": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "acute lung injury",
+          "attributes": []
+        },
+        "MONDO:0004652": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "bacterial pneumonia",
+          "attributes": []
+        },
+        "MONDO:0015137": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "periodic fever syndrome",
+          "attributes": []
+        },
+        "MONDO:0045057": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "delirium",
+          "attributes": []
+        },
+        "MONDO:0001243": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "disseminated intravascular coagulation",
+          "attributes": []
+        },
+        "NCBITaxon:2697049": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:OntologyClass",
+            "biolink:OrganismTaxon"
+          ],
+          "name": "Severe acute respiratory syndrome coronavirus 2",
+          "attributes": []
+        },
+        "MONDO:0005252": {
+          "categories": [
+            "biolink:NamedThing",
+            "biolink:BiologicalEntity",
+            "biolink:Disease",
+            "biolink:DiseaseOrPhenotypicFeature"
+          ],
+          "name": "heart failure",
+          "attributes": []
+        }
+      },
+      "edges": {}
+    },
+    "results": [],
+    "auxiliary_graphs": {}
+  },
+  "parameters": {
+    "pvalue_threshold": 1e-07,
+    "predicates_to_exclude": [
+      "biolink:causes",
+      "biolink:biomarker_for",
+      "biolink:biomarker_for",
+      "biolink:contraindicated_in",
+      "biolink:contributes_to",
+      "biolink:has_adverse_event",
+      "biolink:causes_adverse_event"
+    ]
+  }
+}

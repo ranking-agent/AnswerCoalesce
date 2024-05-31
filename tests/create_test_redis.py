@@ -41,6 +41,12 @@ def filter_links(infname,outfname,input_nodes):
                 link_ids.update(nodes)
                 edges.update([f'{x[0]} {sl[1]} {sl[0]}' for sl in some_links if sl[2]])
                 edges.update([f'{sl[0]} {sl[1]} {x[0]}' for sl in some_links if not sl[2]])
+    for edge in ['NCBIGene:1500 {"predicate": "biolink:interacts_with"} NCBIGene:2932', 'NCBIGene:2932 {"predicate": "biolink:interacts_with"} NCBIGene:1500']:
+        if edge in edges:
+            print('found it:',edge)
+        else:
+            print('did not find it:',edge)
+
     return link_ids,edges
 
 def filter_backlinks(infname,outfname,stypes,link_ids):
@@ -51,10 +57,17 @@ def filter_backlinks(infname,outfname,stypes,link_ids):
                 outf.write(line)
 
 def filter_prov(infname,outfname,edges):
+    """There is a very annoying thing happening where the direction of the edge and the direction
+    of the prov are different, so we can't look for the edge directly, we need to break it up I guess"""
+    #First chop up all the edges.  The edges are strings.  We need to separate them by tabs, put the chunks
+    # into a frozenset and make a set of those
+    edges_by_part = set( [frozenset(edge.split()) for edge in edges] )
     with open(infname,'r') as inf, open(outfname,'w') as outf:
         for line in inf:
             x = line.strip().split("\t")
-            if x[0] in edges:
+            # Now split x[0] in the same way
+            edge_parts = frozenset(x[0].split())
+            if edge_parts in edges_by_part:
                 outf.write(line)
 
 def filter_types(infname,outfname,idents):

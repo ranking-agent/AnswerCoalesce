@@ -2,7 +2,6 @@ from copy import deepcopy
 from collections import defaultdict
 import ast, json, uuid
 from string import Template
-from typing import LiteralString
 
 ###
 # These classes are used to extract the meaning from the TRAPI MCQ query into a more usable form
@@ -35,6 +34,7 @@ class MCQEdge:
             self.qedge_id = qedge_id
             self.predicate_only = qedge.get("predicates",["biolink:related_to"])[0]
             self.predicate = {"predicate": self.predicate_only }
+            self.qualifiers = []
             qualifier_constraints = qedge.get("qualifiers_constraints", [])
             if len(qualifier_constraints) > 0:
                 qc = qualifier_constraints[0]
@@ -55,9 +55,10 @@ class MCQDefinition:
 ###
 
 class NewNode:
-    def __init__(self, newnode, newnodetype): #edge_pred_and_qual, newnode_is):
+    def __init__(self, newnode, newnodetype: list[str]): #edge_pred_and_qual, newnode_is):
         self.new_curie = newnode
         self.newnode_type = newnodetype
+        self.newnode_name = None
 
 class NewEdge:
     def __init__(self, source, predicate, target):
@@ -173,7 +174,7 @@ class Link_enrichment:
         self.p_value = pvalue
 
 class Enrichment:
-    def __init__(self,p_value,newnode: LiteralString, predicate, is_source, ndraws, n, total_node_count, curies, node_type):
+    def __init__(self,p_value,newnode: str, predicate: str, is_source, ndraws, n, total_node_count, curies, node_type: list[str]):
         """Here the curies are the curies that actually link to newnode, not just the input curies."""
         self.p_value = p_value
         self.linked_curies = curies
@@ -184,9 +185,7 @@ class Enrichment:
         self.add_extra_node(newnode, node_type)
         self.add_extra_edges(newnode, predicate, is_source)
         self.counts = [ndraws, n, total_node_count]
-    #def add_provenance(self,provmap):
-    #    self.provmap = provmap
-    def add_extra_node(self,newnode, newnodetype):
+    def add_extra_node(self,newnode, newnodetype: list[str]):
         """Optionally, we can patch by adding a new node, which will share a relationship of
         some sort to the curies in self.set_curies.  The remaining parameters give the edge_type
         of those edges, as well as defining whether the edge points to the newnode (newnode_is = 'target')
@@ -194,22 +193,24 @@ class Enrichment:
         self.enriched_node = NewNode(newnode, newnodetype)
     def add_extra_node_name_and_label(self,name_dict,label_dict):
         self.enriched_node.newnode_name = name_dict.get(self.enriched_node.new_curie, None)
-        self.enriched_node.nodenode_categories = label_dict.get(self.enriched_node.new_curie, [])
-    def add_extra_edges(self, newnode, predicate, newnode_is_source):
+        self.enriched_node.newnode_type = label_dict.get(self.enriched_node.new_curie, [])
+    def add_extra_edges(self, newnode, predicate: str, newnode_is_source):
         """Add edges between the newnode (curie) and the curies that they were linked to"""
         if newnode_is_source:
-            self.links = [NewEdge(newnode,json.dumps(predicate,sort_keys=True),curie) for curie in self.linked_curies]
+            self.links = [NewEdge(newnode,predicate,curie) for curie in self.linked_curies]
         else:
-            self.links = [NewEdge(curie,json.dumps(predicate,sort_keys=True),newnode) for curie in self.linked_curies]
+            self.links = [NewEdge(curie,predicate,newnode) for curie in self.linked_curies]
     def get_prov_links(self):
         return [link.get_prov_link() for link in self.links]
     def add_provenance(self,prov):
         for link in self.links:
-            # link.add_prov(prov[link.get_prov_link()])
-            if prov.get(link.get_prov_link()):
-                link.add_prov(prov[link.get_prov_link()])
+            provlink = link.get_prov_link()
+            symprovlink = link.get_sym_prov_link()
+            print(provlink, symprovlink)
+            if prov.get(provlink):
+                link.add_prov(prov[provlink])
             else:
-                link.add_prov(prov[link.get_sym_prov_link()])
+                link.add_prov(prov[symprovlink])
 
     #TODO: this should not exist in here any more, we are just making a data class
     def x_apply(self,answers,question,graph,graph_index,patch_no):
