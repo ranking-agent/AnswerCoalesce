@@ -109,7 +109,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 
 async def coalesce_by_graph(input_ids, input_node_type,
                       node_constraints = ["biolink:NamedThing"], predicate_constraints=[], predicate_constraint_style = "exclude",
-                      pvalue_threshold=None, result_length = None, get_pred_superclass = False):
+                      pvalue_threshold=None, result_length = None, filter_predicate_hierarchies = False):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -124,11 +124,13 @@ async def coalesce_by_graph(input_ids, input_node_type,
     {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity", "constraint": "include|exclude"}
     By including or not including these constraints, coalesce_by_graph can be used by either an MCQ query or EDGAR.
     result_length determines if we want more answers than we started with, so we need to parameterize.
+    filter_predicate_hierarchies mainly in edgar to exclude/add symmetric edges inline
+    (in create_node_to_link) and filter predicate hierarchies in get_enriched_link enrichment_results
     """
     logger.info(f'Start of processing.')
 
     # Get the links for all the input nodes
-    nodes_to_links = create_nodes_to_links(input_ids)
+    nodes_to_links = create_nodes_to_links(input_ids, filter_predicate_hierarchies=filter_predicate_hierarchies)
     # Filter the links by predicates.  This is how we are handling the input predicate for query and the
     # excluded predicates for EDGAR.
     # nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
@@ -151,11 +153,8 @@ async def coalesce_by_graph(input_ids, input_node_type,
 
 
     enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                        total_node_counts, get_pred_superclass)
+                                        total_node_counts, filter_predicate_hierarchies)
 
-    # Gets rid of predicate_constraints to exclude regardless of their hierarchy
-    if get_pred_superclass:
-        enriched_links = exclude_predicate_by_hierarchy(enriched_links, predicate_constraints)
     if pvalue_threshold:
         enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
     if result_length:
@@ -400,7 +399,7 @@ def uniquify_links(nodes_to_links, input_type):
             unique_link_nodes.add(tl[0])
     return unique_link_nodes, unique_links
 
-def create_nodes_to_links(allnodes, param_predicates = []):
+def create_nodes_to_links(allnodes, filter_predicate_hierarchies = False,  param_predicates = []):
     """Given a list of nodes identifiers, pull all their links"""
     # Create a dict from node->links by looking up in redis.
     #Noticed some qualifiers are have either but not both
@@ -432,16 +431,17 @@ def create_nodes_to_links(allnodes, param_predicates = []):
                         if link[1] == param_predicate:
                             newlinks.append(link[0])
                     else:
-                        link_predicate = orjson.loads(link[1])["predicate"]
-                        # Note that this should really be done for any symmetric predicate.
-                        # or fixed at the graph level.
-                        # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
-                        # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
-                        element = tk.get_element(link_predicate)
-                        if element is None:
-                            print("???")
-                        if element["symmetric"]:
-                            newlinks.append([link[0], link[1], not link[2]])
+                        if not filter_predicate_hierarchies:
+                            link_predicate = orjson.loads(link[1])["predicate"]
+                            # Note that this should really be done for any symmetric predicate.
+                            # or fixed at the graph level.
+                            # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
+                            # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
+                            element = tk.get_element(link_predicate)
+                            if element is None:
+                                print("???")
+                            if element["symmetric"]:
+                                newlinks.append([link[0], link[1], not link[2]])
 
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
                 # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
@@ -491,7 +491,7 @@ def enrich_equal_qnode(qnode_hash, best_enrich_node):
             return True
     return False
 
-def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts, get_pred_superclass = False):
+def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts, filter_predicate_hierarchies = False):
     """Given a set of nodes and the links that they share, as well as some counts, return the enrichments based
     on the links.
     If you want to restrict the answers, then you filter nodes_to_links ahead of time.'
@@ -586,8 +586,8 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
         if len(enriched) > 0:
             results += enriched
 
-    if get_pred_superclass:
-        results = filter_result_repeated_subclass(results)
+    if filter_predicate_hierarchies:
+        results = filter_result_hierarchies(results)
 
     results.sort(key=lambda x: x.p_value)
 
@@ -595,44 +595,195 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
     return results
 
-def filter_result_repeated_subclass(results):
+def filter_result_hierarchies(results):
     enrichment_group_dict = {}
     for i, result in enumerate(results):
-        # Group results by (enrichnode, pvalue) qualifier or not
-        enrichment_group_dict.setdefault((result.enriched_node.new_curie, result.p_value), []).append(result)
+        # Group results by enriched_node
+        enrichment_group_dict.setdefault(result.enriched_node.new_curie, []).append(result)
 
-    # Takes care of situation where we have predicate with the same p_value
-    new_results = get_refined_results(enrichment_group_dict)
+    # Now filter by predicate hierarchies
+    new_results = process_enrichment_group(enrichment_group_dict)
+
 
     return new_results
 
-def get_refined_results(enrichment_group_dict):
+def process_enrichment_group(enrichment_group_dict):
     new_results = []
-    ancestors_dict = {}
-    for _, qualified_result in enrichment_group_dict.items():
-        if len(qualified_result) == 1:
-            new_results.extend(qualified_result)
+    for enriched_node, enriched_results in enrichment_group_dict.items():
+        if len(enriched_results) == 1:
+            new_results.extend(enriched_results)
         else:
-            if set(["object_aspect_qualifier", "object_direction_qualifier"]) & set([key for result in qualified_result for key in result.predicate ]):
-                superset_dict = {k: v for result in qualified_result for k, v in result.predicate.items()}
-                for result in qualified_result:
-                    if all(result.predicate.get(key) == val for key, val in superset_dict.items()):
-                        new_results.append(result)
-                        break
-            else:
+            # Re_group by p_value:
+            p_value_group_dict = {}
+            for enriched_result in enriched_results:
+                p_value_group_dict.setdefault(enriched_result.p_value, []).append(enriched_result)
 
-                for result in qualified_result:
-                    ancestors_dict[result.predicate.get("predicate")] = tk.get_ancestors(result.predicate.get("predicate"), formatted=True)
+            # For each group, find the most specific predicates in each p_value group and put in specific results
+            specific_results = get_specific_results(p_value_group_dict)
 
-                # The most specific predicate will have the most ancestors
-                most_specific_predicate = max([result.predicate.get("predicate") for result in qualified_result ], key=lambda p: len(ancestors_dict[p]))
-                for result in qualified_result:
-                    if result.predicate.get("predicate") == most_specific_predicate:
-                        new_results.append(result)
+            # Pick the most specific in the specific results
+            if specific_results:
+                if len(specific_results) == 1:
+                    best_result = specific_results[0]
 
+                # Now we pick the best representative of an enrichment node from the combined group result by min pvalue
+                # best_result = sorted(specific_results, key=lambda x: x.p_value, reverse=False)[0]
+                # OR Hierarchy again, Most especially if we can get further specificity
+                else:
+                    # Filtering by predicate hierarchy and p_value scoring
+                    best_result = None
 
+                    # NB: Scoring is performed since specific results came from different p_value grouping
+                    best_score = float('inf')#min([result.p_value for result in specific_results]) # Initialize the best score to -ve infinity
+                    i = 0
+
+                    while i < len(specific_results) - 1:
+                        current_predicate = specific_results[i].predicate.get("predicate")
+                        next_predicate = specific_results[i + 1].predicate.get("predicate")
+
+                        if is_child_of(current_predicate, next_predicate):
+                            if specific_results[i].p_value < best_score:
+                                best_score = specific_results[i].p_value
+                                best_result = specific_results[i]
+                        elif is_child_of(next_predicate, current_predicate):
+                            if specific_results[i+1].p_value < best_score:
+                                best_score = specific_results[i+1].p_value
+                                best_result = specific_results[i+1]
+                        elif current_predicate != next_predicate:
+                            # If one is not a child of the other
+                            # We want to append both the most specific in the different branches
+                            current_predicate_ancestors = get_ancestors(current_predicate)
+                            next_predicate_ancestors = get_ancestors(next_predicate)
+
+                            step_backward = None
+                            # The most specific has more ancestors thsn the general predicates, hence save the most
+                            # specific (that completes a branch) and continue the iteration with the least specific
+                            if len(current_predicate_ancestors) > len(next_predicate_ancestors):
+                                new_results.append(specific_results[i])
+                                specific_results.pop(i)
+                                best_score = specific_results[i + 1].p_value
+                                best_result = specific_results[i + 1]
+                                step_backward = 1
+                            elif len(current_predicate_ancestors) < len(next_predicate_ancestors):
+                                new_results.append(specific_results[i+1])
+                                specific_results.pop(i + 1)
+                                best_score = specific_results[i].p_value
+                                best_result = specific_results[i]
+                                step_backward = 2
+                            else:
+                                # This means both of them are the most specific in their respective trees
+                                new_results.append(specific_results[i])
+                                new_results.append(specific_results[i + 1])
+                                specific_results.pop(i)
+                                specific_results.pop(i + 1)
+                                i -= 1   # Adjust i to compensate for the removed element
+                                continue  # Skip the increment step
+
+                            if step_backward:# Decrement i to recheck the previous item
+                                i -= step_backward
+                        else:
+                            # Equal predicates? the lets dig down to the qualifier
+                            if has_qualifier(specific_results[i].predicate) and not has_qualifier(specific_results[i + 1].predicate):
+                                if specific_results[i].p_value < best_score:
+                                    best_score = specific_results[i].p_value
+                                    best_result = specific_results[i]
+                            elif has_qualifier(specific_results[i + 1].predicate) and not has_qualifier(specific_results[i].predicate):
+                                if specific_results[i + 1].p_value < best_score:
+                                    best_score = specific_results[i + 1].p_value
+                                    best_result = specific_results[i + 1]
+                            else:
+                                # if there is qualifier in both, we need to get which one is parent/child
+                                current_qualifier = specific_results[i].predicate.get("object_aspect_qualifier") or \
+                                                    specific_results[i].predicate.get("object_direction_qualifier")
+                                next_qualifier = specific_results[i + 1].predicate.get("object_aspect_qualifier") or \
+                                                 specific_results[i + 1].predicate.get("object_direction_qualifier")
+                                if is_qualifier(current_qualifier, next_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                                    if specific_results[i].p_value < best_score:
+                                        best_score = specific_results[i].p_value
+                                        best_result = specific_results[i]
+                                elif is_qualifier(next_qualifier, current_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                                    if specific_results[i + 1].p_value < best_score:
+                                        best_score = specific_results[i + 1].p_value
+                                        best_result = specific_results[i + 1]
+                                    i += 1  # Skip the next element as it's a child of the current one
+
+                        i += 1  # Increment i for the next iteration
+
+                new_results.append(best_result)
+
+            if not specific_results:
+                print("?????????")
     return new_results
 
+def is_child_of(child, parent):
+    return child in tk.get_children(parent, formatted=True)
+
+def is_qualifier(child, parent, qualifier_Enum):
+    children = tk.get_permissible_value_children(parent, qualifier_Enum) or []
+    return child in children
+
+def has_qualifier(predicate):
+    qualifiers = {"object_aspect_qualifier", "object_direction_qualifier"}
+    return any(q in predicate for q in qualifiers)
+
+def get_ancestors(predicate):
+    return tk.get_ancestors(predicate, formatted=True)
+
+def get_specific_results(pvalue_group_dict):
+    """
+    This function accepts:
+        enrichment result grouped by pvalue, and most-likely, different predicates
+        for instance:
+                0.0001: [(enriched_node1, causes), (enriched_node1, contributes_to)]
+                0.0002: [(enriched_node1, has_advert_event), (enriched_node1, affects)]
+                0.0003: [(enriched_node1, treats_or_applied_or_studied_to_treat), (enriched_node1, treats)]
+    to return specific list representative of enriched_node1:
+                [(enriched_node1, causes),(enriched_node1, has_advert_event), (enriched_node1, treats)]
+
+    NB: No scoring is performed since each group compared shares the same p_value
+    """
+    specific_results = []
+
+
+    for results in pvalue_group_dict.values():
+        if len(results) == 1:
+            specific_results.extend(results)
+        else:
+            best_to_append = None
+
+            for i in range(len(results) - 1):
+                curr_pred = results[i].predicate.get("predicate")
+                next_pred = results[i + 1].predicate.get("predicate")
+
+                if is_child_of(curr_pred, next_pred):
+                    best_to_append = results[i]
+                elif is_child_of(next_pred, curr_pred):
+                    best_to_append = results[i + 1]
+                elif curr_pred == next_pred:
+                    # Equal predicates? then lets dig down to the qualifier
+                    # if one is affects and the other one is affect activity, pick the later
+                    curr_qualifier = results[i].predicate.get("object_aspect_qualifier") or \
+                                     results[i].predicate.get("object_direction_qualifier")
+                    next_qualifier = results[i + 1].predicate.get("object_aspect_qualifier") or \
+                                     results[i + 1].predicate.get("object_direction_qualifier")
+
+                    if has_qualifier(results[i].predicate) and not has_qualifier(results[i + 1].predicate):
+                        best_to_append = results[i]
+                    elif has_qualifier(results[i + 1].predicate) and not has_qualifier(results[i].predicate):
+                        best_to_append = results[i + 1]
+                    elif curr_qualifier and next_qualifier:
+                        if is_qualifier(curr_qualifier, next_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                            best_to_append = results[i]
+                        elif is_qualifier(next_qualifier, curr_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                            best_to_append = results[i + 1]
+
+            if best_to_append is None and len(results) == 2 and results[0].predicate.get("predicate") == results[1].predicate.get("predicate"):
+                best_to_append = results[0]
+
+            if best_to_append:
+                specific_results.append(best_to_append)
+
+    return specific_results
 
 def get_total_node_counts(semantic_type):
     counts = {}
