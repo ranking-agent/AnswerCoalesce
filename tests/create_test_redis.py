@@ -1,10 +1,14 @@
 import json
 
 def load_jsons(input_json):
-    """Given a json file, find all the kg_ids for nodes, except any that are in the qg"""
+    """Given an MCQ json, get the member_ids of the qnodes"""
     with open(input_json,'r') as inf:
         data = json.load(inf)
-    node_ids = set( [node for node in data['message']['knowledge_graph']['nodes']])
+
+    node_ids = set()
+    for nid,node in data['message']['query_graph']['nodes'].items():
+        if 'member_ids' in node:
+            node_ids.update(node['member_ids'])
 
     print(input_json, len(node_ids))
 
@@ -22,10 +26,11 @@ def collect_input_nodes():
                              'NCBIGene:4175', 'NCBIGene:10469', 'NCBIGene:8120', 'NCBIGene:3840', 'NCBIGene:55705',
                              'NCBIGene:2597', 'NCBIGene:23066', 'NCBIGene:7514', 'NCBIGene:10128']))
     # We used to use bigger_new, but it makes the link files too big for github
-    input_jsons = ['famcov_new.json','graph_named_thing_issue.json','EdgeIDAsStrAndPerfTest.json']
+    #input_jsons = ['famcov_new.json','graph_named_thing_issue.json','EdgeIDAsStrAndPerfTest.json']
+    input_jsons = ['famcov_new_with_params_and_pcut1e7_MCQ.json']
     for ij in input_jsons:
-        test_curies.update( load_jsons('InputJson_1.4/'+ij) )
-    test_curies.update( load_jsons('InputJson_1.4/qualified.json'))
+        test_curies.update( load_jsons('InputJson_1.5/'+ij) )
+    #test_curies.update( load_jsons('InputJson_1.4/qualified.json'))
     return test_curies
 
 def filter_links(infname,outfname,input_nodes):
@@ -80,7 +85,9 @@ def filter_types(infname,outfname,idents):
 def go():
     nodes = collect_input_nodes()
     links,edges = filter_links('../src/graph_coalescence/links.txt','test_links.txt',nodes)
-    back_types = set(['biolink:Gene','biolink:NamedThing','biolink:ChemicalEntity'])
+    #Note that we're not getting EVERYthing that could be used, just a subset to make things manageable.
+    # But it does mean that you have to be a little careful in the testing and be aware of what is going on.
+    back_types = set(['biolink:Gene','biolink:NamedThing','biolink:SmallMolecule','biolink:Disease'])
     filter_backlinks('../src/graph_coalescence/backlinks.txt','test_backlinks.txt',back_types,links)
     filter_prov('../src/graph_coalescence/prov.txt','test_prov.txt',edges)
     nodes.update(links)

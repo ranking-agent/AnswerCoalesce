@@ -21,6 +21,8 @@ def create_knowledge_graph_node(curie,categories,name=None):
 
 def create_knowledge_graph_edge_from_component(input_edge: NewEdge):
     # The NewEdge predicate has both the predicate and qualifiers in it:
+    if not isinstance(input_edge.predicate, str):
+        print("wtf")
     jsonpred = orjson.loads(input_edge.predicate)
     predicate_only = jsonpred["predicate"]
     qualifiers = []

@@ -48,10 +48,7 @@ def get_filter_nodes():
     that we don't have anyway, but also a bunch of very generic terms (Disease, Human) that are not useful
     and make lots of links in our database."""
 
-    #At the moment, we are going to get the blocklist from my PR but this can very soon be replaced with
-    # the real one
-    blocklist_url = "https://raw.githubusercontent.com/cbizon/Relay/master/config/blocklist.json"
-    #blocklist_url = "https://raw.githubusercontent.com/NCATSTranslator/Relay/master/config/blocklist.json"
+    blocklist_url = "https://raw.githubusercontent.com/NCATSTranslator/Relay/master/config/blocklist.json"
 
     blocklist = json.loads(requests.get(blocklist_url).text)
     return set(blocklist)

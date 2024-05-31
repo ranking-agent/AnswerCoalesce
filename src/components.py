@@ -61,7 +61,7 @@ class NewNode:
         self.newnode_name = None
 
 class NewEdge:
-    def __init__(self, source, predicate, target):
+    def __init__(self, source, predicate: str, target):
         self.source = source
         self.predicate = predicate
         self.target = target

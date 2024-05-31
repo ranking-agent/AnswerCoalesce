@@ -351,7 +351,8 @@ def get_link_counts(unique_links):
     with get_redis_pipeline(2) as p:
         for ulg in grouper(1000, unique_links):
             for ul in ulg:
-                p.get(str(ul))
+                s = str(ul)
+                p.get(s)
             ns = p.execute()
             for ul, n in zip(ulg, ns):
                 try:
@@ -396,6 +397,8 @@ def uniquify_links(nodes_to_links, input_type):
         for l in nodes_to_links[n]:
             # The link as defined uses the input node as is_source, but the lookup into redis uses the
             # linked node as the is_source, so gotta flip it
+            if l[0] == "NCBIGene:50514":
+                print("???")
             lplus = l + [input_type]
             lplus[2] = not lplus[2]
             tl = tuple(lplus)
@@ -583,7 +586,8 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             # get the real labels/types of the enriched node
             node_types = typecache[newcurie]
 
-            enrichment = Enrichment(enrichp, newcurie, orjson.loads(predicate), newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
+            #enrichment = Enrichment(enrichp, newcurie, orjson.loads(predicate), newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
+            enrichment = Enrichment(enrichp, newcurie, predicate, newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
             enriched.append( enrichment )
 
         if len(enriched) > 0:
