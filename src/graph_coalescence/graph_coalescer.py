@@ -111,7 +111,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 
 
 async def coalesce_by_graph(input_ids, input_node_type,
-                      node_constraints = ["biolink:NamedThing"], predicate_constraints=[], predicate_constraint_style = "exclude",
+                      node_constraints = None, predicate_constraints=None, predicate_constraint_style = "exclude",
                       pvalue_threshold=None, result_length = None, filter_predicate_hierarchies = False):
     """
     Given a list of input_ids, find nodes that are enriched.
@@ -131,12 +131,16 @@ async def coalesce_by_graph(input_ids, input_node_type,
     (in create_node_to_link) and filter predicate hierarchies in get_enriched_link enrichment_results
     """
     logger.info(f'Start of processing.')
-
+    if node_constraints is None:
+        node_constraints = ["biolink:NamedThing"]
+    if predicate_constraints is None:
+        predicate_constraints = []
     # Get the links for all the input nodes
     nodes_to_links = create_nodes_to_links(input_ids)
-    # Filter the links by predicates.  This is how we are handling the input predicate for query and the
-    # excluded predicates for EDGAR.
-    # nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
+    # We don't want to do the exlusion here because we want to do it after we've found the enrichments
+    # But we can narrow down by the inclusion constraints
+    if predicate_constraint_style == "include":
+        nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
     # Find the unique link nodes and get their types
     unique_link_nodes, unique_links = uniquify_links(nodes_to_links, input_node_type)
     nodetypedict = get_node_types(unique_link_nodes)

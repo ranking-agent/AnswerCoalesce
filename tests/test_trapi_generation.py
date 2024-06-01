@@ -3,6 +3,7 @@ from src import single_node_coalescer as snc
 from src.components import  MCQDefinition
 from src.components import Enrichment
 from src.single_node_coalescer import create_mcq_trapi_response
+from src.trapi import create_knowledge_graph_edge, add_member_of_klat
 
 import pytest
 
@@ -157,3 +158,21 @@ async def test_full_trapi_generation():
     enrichment.add_provenance(prov)
     new_trapi = await create_mcq_trapi_response(message, [enrichment], mcqdef)
     check = Response(**new_trapi)
+
+def test_create_kge():
+    """This wasn't working originally because in a rookie mistake create_knowledge_graph_edge was
+    using [] as a default value for atttributes, which is mutable.  As a reminder: mutable default values
+    "remember" their state between calls!!!!"""
+    new_edge = create_knowledge_graph_edge("curie:source", "curie:target", "biolink:related_to")
+    assert len(new_edge["attributes"]) == 0
+    new_edge = create_knowledge_graph_edge("curie:source2", "curie:target2", "biolink:related_to")
+    assert len(new_edge["attributes"]) == 0
+
+    new_edge = create_knowledge_graph_edge("curie:source", "curie:target", "biolink:related_to")
+    assert len(new_edge["attributes"]) == 0
+    add_member_of_klat(new_edge)
+    assert len(new_edge["attributes"]) == 2
+    new_edge = create_knowledge_graph_edge("curie:source2", "curie:target2", "biolink:related_to")
+    assert len(new_edge["attributes"]) == 0
+    add_member_of_klat(new_edge)
+    assert len(new_edge["attributes"]) == 2

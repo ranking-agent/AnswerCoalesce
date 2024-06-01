@@ -33,10 +33,14 @@ def create_knowledge_graph_edge_from_component(input_edge: NewEdge):
                                        qualifiers=qualifiers, sources=input_edge.prov)
 
 
-def create_knowledge_graph_edge(subject, object, predicate, qualifiers=None, sources=[], attributes=[]):
+def create_knowledge_graph_edge(subject, object, predicate, qualifiers=None, sources=None, attributes=None):
     """
     Create a TRAPI knowledge graph edge.
     """
+    if attributes is None:
+        attributes = []
+    if sources is None:
+        sources = []
     edge = {
         "subject": subject,
         "object": object,
@@ -152,13 +156,13 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, a
     """
     Add an enrichment edge to the TRAPI response.
     The enrichment edge is an inferred edge connecting the enriched node to the input node.
-    It should match the predicate and query direction of the input query graph
+    It doesn't need to match the predicate / qualifiers of the input edge, b/c it can be a subclass.
     """
-    edges = in_message["message"]["knowledge_graph"]["edges"]
     #Create the edge, orienting it correctly
+    epred = orjson.loads(enrichment.predicate)
     new_edge = {
-        "predicate": mcq_definition.edge.predicate_only,
-        "attributes": []
+        "predicate": epred["predicate"],
+        "attributes": [ { "attribute_type_id": "biolink:p_value", "value": enrichment.p_value  }]
     }
     if mcq_definition.edge.group_is_subject:
         new_edge["subject"] = mcq_definition.group_node.uuid
@@ -167,7 +171,11 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, a
         new_edge["object"] = mcq_definition.group_node.uuid
         new_edge["subject"] = enrichment.enriched_node.new_curie
     # Add any qualifiers
-    new_edge["qualifiers"] = mcq_definition.edge.qualifiers
+    qualifiers = []
+    for key,value in epred.items():
+        if key != "predicate":
+            qualifiers.append({"qualifier_type_id":f"biolink:{key}","qualifier_value":value})
+    new_edge["qualifiers"] = qualifiers
     # Add provenance
     add_local_prov(new_edge)
     # Add KL/AT
@@ -176,6 +184,7 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, a
     add_aux_graphs(new_edge,aux_graph_ids)
     # Add the edge to the KG
     new_edge_id = str(uuid.uuid4())
+    edges = in_message["message"]["knowledge_graph"]["edges"]
     edges[new_edge_id] = new_edge
     return new_edge_id
 

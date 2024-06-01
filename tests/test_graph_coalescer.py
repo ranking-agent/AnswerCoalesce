@@ -259,8 +259,63 @@ def test_graph_coalescer_perf_test():
     # it should be less than this
     assert(diff.seconds < 60)
 
-def test_graph_coalesce_with_params_1e7():
+def test_graph_coalesce_basic():
     """Make sure that results are well formed."""
+    input_message = get_input_message()
+    coalesced = asyncio.run( snc.multi_curie_query(input_message, input_message.get("parameters")) )
+    #Assert that the output is well-formed
+    assert PDResponse.parse_obj(coalesced)
+    # We should have lots of results.  The exact number will not change as long as the test data does not
+    assert len(coalesced['message']['results']) == 15082
+    # Let's make sure that the KL/AT are only mentioned once (this was a problem at one point)
+    ps_and_preds = []
+    for kedge_id, kedge in coalesced['message']['knowledge_graph']['edges'].items():
+        atts = kedge.get('attributes')
+        assert len(atts) == len(set([x['attribute_type_id'] for x in atts]))
+
+def test_graph_coalesce_pvalue_threshold():
+    input_message = get_input_message()
+    threshold = 1e-7
+    input_message["parameters"]["pvalue_threshold"] = threshold
+    coalesced = asyncio.run( snc.multi_curie_query(input_message, input_message.get("parameters")) )
+    #Make sure we got some results
+    assert len(coalesced['message']['results']) > 0
+    # All of the p-values should be less than the threshold
+    # First, find all the enrichment edges.  They are the ones in the result.analysis.edge_bindings
+    for r in coalesced['message']['results']:
+        analysis = r["analyses"][0]
+        for qg,kgs in analysis["edge_bindings"].items():
+            kedge_id = kgs[0]["id"]
+            kedge = coalesced['message']['knowledge_graph']['edges'][kedge_id]
+            attributes = kedge.get("attributes")
+            # Find the p_value attribute
+            found = False
+            for a in attributes:
+                if a["attribute_type_id"] == "biolink:p_value":
+                    found = True
+                    assert a["value"] < threshold
+            assert found
+
+def test_graph_coalesce_predicate():
+    input_message = get_input_message()
+    threshold = 1e-7
+    input_message["parameters"]["pvalue_threshold"] = threshold
+    # Change the input qedge
+    input_message["message"]["query_graph"]["edges"]["e1"]["predicates"] = ["biolink:has_phenotype"]
+    coalesced = asyncio.run( snc.multi_curie_query(input_message, input_message.get("parameters")) )
+    #Make sure we got some results
+    assert len(coalesced['message']['results']) > 0
+    # All of the enrichment edges should have the predicate we asked for
+    # First, find all the enrichment edges.  They are the ones in the result.analysis.edge_bindings
+    for r in coalesced['message']['results']:
+        analysis = r["analyses"][0]
+        for qg,kgs in analysis["edge_bindings"].items():
+            kedge_id = kgs[0]["id"]
+            kedge = coalesced['message']['knowledge_graph']['edges'][kedge_id]
+            assert kedge["predicate"] == "biolink:has_phenotype"
+
+
+def get_input_message():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_params_and_pcut1e7_MCQ.json')
     with open(testfilename, 'r') as tf:
@@ -268,16 +323,10 @@ def test_graph_coalesce_with_params_1e7():
     assert PDResponse.parse_obj(input_message)
     assert input_message.get("parameters").get('pvalue_threshold')
     assert input_message.get("parameters").get('predicates_to_exclude')
-    #pvalue_threshold = input_message.get("parameters").get('pvalue_threshold')
-    #predicates_to_exclude = input_message.get("parameters").get('predicates_to_exclude')
-    # now generate new answers
-    input_message["parameters"]["pvalue_threshold"] = 1
+    input_message["parameters"]["pvalue_threshold"] = None
     input_message["parameters"]["result_length"] = None
-    coalesced = asyncio.run( snc.multi_curie_query(input_message, input_message.get("parameters")) )
-    #Assert that the output is well-formed
-    assert PDResponse.parse_obj(coalesced)
-    # We should have some new results
-    assert len(coalesced['message']['results']) > 0
+    return input_message
+
 
 def test_graph_coalesce_qualified():
     """Make sure that results are well formed."""
