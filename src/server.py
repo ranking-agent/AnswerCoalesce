@@ -59,7 +59,7 @@ async def query_handler(request: PDResponse):
 
     try:
         # convert the incoming message into a dict
-        in_message = request.dict()
+        in_message = request.dict(exclude_none = True)
 
         # save the logs for the response (if any)
         if 'logs' not in in_message or in_message['logs'] is None:
@@ -253,7 +253,7 @@ def construct_open_api_schema():
     if servers_conf:
         for s in servers_conf:
             if s['description'].startswith('Default'):
-                s['url'] = server_root + '1.4' if server_root != '/' else s['url']
+                s['url'] = server_root if server_root != '/' else s['url']
                 s['x-maturity'] = os.environ.get("MATURITY_VALUE", "maturity")
                 s['x-location'] = os.environ.get("LOCATION_VALUE", "location")
 
