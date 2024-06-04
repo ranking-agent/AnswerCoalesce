@@ -1,7 +1,6 @@
 bmt==1.2.1
-Jinja2~=2.11.2
-jsonschema~=3.2.0
-neo4j~=4.1.1
+Jinja2~=3.1.4
+jsonschema>=4.18.0
 pyyaml~=6.0
 argparse~=1.4.0
 setuptools~=50.3.2
@@ -12,7 +11,7 @@ sparqlwrapper~=1.8.5
 redis~=5.0.3
 fastapi==0.103.1
 sanic~=23.6.0
-httpx~=0.24.1
+httpx>=0.25.0
 gunicorn==21.2.0
 numpy
 pydantic==1.10.10
@@ -20,3 +19,4 @@ uvicorn==0.23.2
 reasoner-pydantic==5.0.2
 jsonlines
 orjson
+pytest-asyncio

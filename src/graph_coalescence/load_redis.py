@@ -25,6 +25,7 @@ def write_to(fname,db):
                 pipe.execute()
                 n = 0
     pipe.execute()
+    print(n)
 
 def go():
     import os
