@@ -23,7 +23,7 @@ x-translator:
   - Ranking Agent
   infores: "infores:answer-coalesce"
 x-trapi:
-  version: 1.4.0
+  version: 1.5.0
   operations:
   - coalesce answers
   - coalesce by ontology

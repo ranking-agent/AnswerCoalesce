@@ -1,7 +1,8 @@
 from collections import defaultdict
 from scipy.stats import hypergeom, poisson, binom, norm
-from src.components import PropertyPatch, PropertyPatch_query
+from src.components import Enrichment
 from src.util import LoggingUtil
+from itertools import zip_longest
 import logging
 import os
 import redis
@@ -9,16 +10,12 @@ import json
 import ast
 import itertools
 import orjson
+import bmt
 
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, format='long', logFilePath=this_dir + '/')
-
-
-# These are predicates that we have decided are too messy for graph coalescer to use
-#
-# bad_predicates = ['biolink:causes_adverse_event']
-
+tk = bmt.Toolkit()
 
 def grouper(n, iterable):
     it = iter(iterable)
@@ -44,89 +41,206 @@ def get_redis_pipeline(dbnum):
     p = typeredis.pipeline(transaction=False)
     return p
 
-
-def coalesce_by_graph(opportunities, mode="coalesce", predicates_to_exclude=[], pvalue_threshold=None, result_length = None):
+def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style):
+    """Filter out links that don't meet the predicate constraints
+    predicate constraints are just in the form that qualified predicates are described in the links e.g.
+    {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity"}
+    Note tht the links are constructed by taking that dictionary and running json.dumps(sort_keys=True) on it.
+    So we will need to do the same for our constraints
+    Matching the constraint means that all keys and values match between the link and the constraint
+    If predicate_constraint style is "include" then only links that match one constraint will be kept
+    If predicate_constraint style is "exclude" then only links that match no constraints will be kept
     """
-    Given opportunities for coalescence, potentially turn each into patches that can be applied to an answer
-    patch = [qg_id of the node that is being replaced, curies (kg_ids) in the new combined set, props for the new curies,
-    qg_id of the edges being removed/combined, answers being collapsed]
+    if len(predicate_constraints) == 0:
+        return nodes_to_links
+    string_constraints = [json.dumps(constraint, sort_keys=True) for constraint in predicate_constraints]
+    new_nodes_to_links = {}
+    for node, links in nodes_to_links.items():
+        new_links = []
+        for link in links:
+            # link_dict = json.loads(link[1])
+            if predicate_constraint_style == "include":
+                if any(constraint in link[1] for constraint in string_constraints):
+                    new_links.append(link)
+            elif predicate_constraint_style == "exclude":
+                if not any(constraint in link[1] for constraint in string_constraints):
+                    new_links.append(link)
+        new_nodes_to_links[node] = new_links
+    return new_nodes_to_links
 
+def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types):
+    """Filter out links that don't meet the node constraints
+    node constraints is a list of acceptable node types for the returned nodes.  The node type of the other node
+    in the links is used to determine if the link is kept.  Fortunately, link_node_types holds all of the superclasses
+    of the node type, so we can just check if the link node type is in the set of acceptable types.
+
+    Also, we want to filter out links that end up with block-list nodes
+    """
+    # These are trash curies that we never want to see
+    blocklist = set(["HP:0000118", "MONDO:0000001", "MONDO:0700096", "UMLS:C1333305", "CHEBI:24431",
+                 "CHEBI:23367", "CHEBI:33579", "CHEBI:36357", "CHEBI:33675", "CHEBI:33302", "CHEBI:33304",
+                 "CHEBI:33582", "CHEBI:25806", "CHEBI:50860", "CHEBI:51143", "CHEBI:32988", "CHEBI:33285",
+                 "CHEBI:33256", "CHEBI:36962", "CHEBI:35352", "CHEBI:36963", "CHEBI:25367", "CHEBI:72695",
+                 "CHEBI:33595", "CHEBI:33832", "CHEBI:37577", "CHEBI:24532", "CHEBI:5686", "NCBITaxon:9606"])
+
+    #Collect the accepted types, which are any subclass of what gets passed into node constraints.
+    # We're going to special case named thing - if that's in there, we just bypass all the type checks.
+    accept_all_types = ( "biolink:NamedThing" in node_constraints )
+
+    new_nodes_to_links = {}
+    for node, links in nodes_to_links.items():
+        new_links = []
+        for link in links:
+            if (isinstance(link,list) or isinstance(link,tuple)):
+                othernode = link[0]
+            else:
+                othernode = link
+            if othernode in blocklist:
+                continue
+            if accept_all_types:
+                new_links.append(link)
+            else:
+                # we have 2 lists: node constraints and link_node_types_othernode.  We want to see if there is any overlap
+                # between the two lists.  If there is, then we want to keep the link.
+                accepted_types = set(node_constraints) & set(link_node_types[othernode])
+                if len(accepted_types) > 0:
+                    new_links.append(link)
+        new_nodes_to_links[node] = new_links
+
+    return new_nodes_to_links
+
+
+async def coalesce_by_graph(input_ids, input_node_type,
+                      node_constraints = None, predicate_constraints=None, predicate_constraint_style = "exclude",
+                      pvalue_threshold=None, result_length = None, filter_predicate_hierarchies = False):
+    """
+    Given a list of input_ids, find nodes that are enriched.
+    Return a list of Enrichment objects describing each enrichment.
+    We don't want to muck this up with a bunch of TRAPI handling, this is purely about finding the
+    enriched nodes.
+    node_contraints and predicate_constraints can be used to limit the search.   Node constraints can be used
+    to only allow the new node to be of a certain type.  Predicate constraints can be used to only allow certain
+    predicates to be used in the enrichment or to exclude certain predicates. predicate_constraint_style can set to
+    either "include" or "exclude". If "include" then only links that exactly match one constraint pattern are included.
+    If "exclude" then any link matching an "exclude" constraint is excluded.
+    Predicates should be of the form:
+    {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity", "constraint": "include|exclude"}
+    By including or not including these constraints, coalesce_by_graph can be used by either an MCQ query or EDGAR.
     result_length determines if we want more answers than we started with, so we need to parameterize.
+    filter_predicate_hierarchies mainly in edgar to exclude/add symmetric edges inline
+    (in create_node_to_link) and filter predicate hierarchies in get_enriched_link enrichment_results
     """
-    patches = []
-
-    logger.info(f'Start of processing. {len(opportunities)} opportunities discovered.')
-
-    # Multiple opportunities are going to use the same nodes.  In one random (large) example where there are about
-    # 2k opportunities, there are a total of 577 unique nodes, but with repeats, we'd end up calling messenger 3650
-    # times.  So instead, we will unique the nodes here, call messenger once each, and then pull from that
-    # collected set of info.
-    allnodes = opportunities.get('qg_curies') if mode =="query" else create_node_to_type(opportunities)
-
-    nodes_to_links = create_nodes_to_links(allnodes)
-
-    # #There will be nodes we can't enrich b/c they're not in our db.  Remove those from our opps, and remove redundant/empty opps
-    if mode == 'query':
-        _, nodes_indices, unique_link_nodes, unique_links = filter_opportunities_and_unify(opportunities, nodes_to_links)
-    else:
-        opportunities = filter_opportunities(opportunities, nodes_to_links)
-        unique_link_nodes, unique_links = uniquify_links(nodes_to_links, opportunities)
-        # unique_link_nodes: bringing all the nodes that lookup results in allnodes maps through nodes_to_links as a set
-
-    #We need to handle symmetric links
-    #NB This is already handled in the create_nodes_to_link()
-    # new_unique_links = set()
-    # for ul in unique_links:
-    #     if "biolink:related_to" in ul[1]:
-    #         new_unique_links.add( (ul[0], ul[1], not ul[2], ul[3]) )
-    # unique_links.update(new_unique_links)
-    lcounts = get_link_counts(unique_links)
+    logger.info(f'Start of processing.')
+    if node_constraints is None:
+        node_constraints = ["biolink:NamedThing"]
+    if predicate_constraints is None:
+        predicate_constraints = []
+    # Get the links for all the input nodes
+    nodes_to_links = create_nodes_to_links(input_ids)
+    # We don't want to do the exlusion here because we want to do it after we've found the enrichments
+    # But we can narrow down by the inclusion constraints
+    if predicate_constraint_style == "include":
+        nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
+    # Find the unique link nodes and get their types
+    unique_link_nodes, unique_links = uniquify_links(nodes_to_links, input_node_type)
     nodetypedict = get_node_types(unique_link_nodes)
-    nodenamedict = get_node_names(unique_link_nodes)
+    # Now that we know the types, get rid of any links that don't meet the node constraints.
+    # For EDGAR, the default node constraint of NamedThing will let everything be used.
+    nodes_to_links = filter_links_by_node_type(nodes_to_links, node_constraints, nodetypedict)
+    # Having filtered some links out, we need to recompute the unique links
+    unique_link_nodes, unique_links = uniquify_links(nodes_to_links, input_node_type)
+    lcounts = get_link_counts(unique_links)
 
-    provs = get_provs(nodes_to_links)
 
-    total_node_counts = get_total_node_counts(set([k for k in allnodes.values()])) if mode =='query' else get_total_node_counts(set([o.get_qg_semantic_type() for o in opportunities]))
+    total_node_counts = get_total_node_counts(input_node_type)
 
-    onum = 0
-    # sffile=open('sfcalls.txt','w')
     # In a test from test_bigs, we can see that we call sf 1.46M times.  But, we only call with 250k unique parametersets
     # so we're gonna cache those
     sf_cache = {}
 
-    direction = {True: 'biolink:object', False: 'biolink:subject'}
-    if not isinstance(opportunities, list):
-        otype = opportunities.get('answer_type', None)
-        q_predicates = list(opportunities.get('answer_edge', {}).values())[0]
-        opportunities = [opportunities]
 
-    for opportunity in opportunities:
-        logger.debug('Starting new opportunity')
-        onum += 1
-        nodes = list(allnodes.keys()) if mode =='query' else opportunity.get_kg_ids()  # this is the list of curies that can be in the given spot
-        qg_id = opportunity.get('question_id', '') if mode =='query' else opportunity.get_qg_id()
-        stype = opportunity.get('question_type', '') if mode =='query' else opportunity.get_qg_semantic_type()
+    enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
+                                        total_node_counts, filter_predicate_hierarchies)
 
-        if mode =='query':
-            enriched_links = get_enriched_links_4_query(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                                 total_node_counts, q_predicates, otype)
-            curies_types = get_node_types(nodes)
-            curies_names = get_node_names(nodes)
-            max_ret = 1000
+    if pvalue_threshold:
+        enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
+    if result_length:
+        enriched_links = enriched_links[:result_length]
+
+    augment_enrichments(enriched_links, nodetypedict)
+
+    return enriched_links
+
+def augment_enrichments(enriched_links, nodetypes):
+    """Having found the set of enrichments we want to return, make sure that each enrichment has the node name and the node type."""
+    enriched_curies = set([link.enriched_node.new_curie for link in enriched_links])
+    nodenamedict = get_node_names(enriched_curies)
+    for enrichment in enriched_links:
+        enrichment.add_extra_node_name_and_label(nodenamedict, nodetypes)
+    add_provs(enriched_links)
+
+def exclude_predicate_by_hierarchy(enriched_links, predicate_constraints):
+    # To exclude the constraint predicates and their super/sub classes
+    return [enriched_link for enriched_link in enriched_links if len(set(predicate_constraints) & set(
+        tk.get_descendants(enriched_link.predicate["predicate"], formatted=True))) < 1]
 
 
-        else:
-            enriched_links = get_enriched_links(nodes, stype, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                            total_node_counts, predicates_to_exclude=predicates_to_exclude,
-                                            pvalue_threshold=pvalue_threshold)
-            max_ret = len(nodes) if mode=='coalesce' else 100
+def add_provs(enrichments):
+    # Now we are going to hit redis to get the provenances for all of the links.
+    # our unique_links are the keys
+    # Convert n2l to edges
+    def process_prov(prov_data):
+        if isinstance(prov_data, (str, bytes)):
+            prov_data = orjson.loads(prov_data)
+        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
+                prov_data.items()]
 
-        logger.info(f'{len(enriched_links)} enriched links discovered.')
+    edges = []
+    for enrichment in enrichments:
+        new_edges = enrichment.get_prov_links()
+        edges += new_edges
 
-        # For the moment, we're only going to return an arbitrarily small number of enrichments
-        # It's POC, really you'd like to include many of these.  But we don't want
-        # to end up with more answers than we started with, so we need to parameterize, and
-        # that's more work that we can do later.
+    prov = {}
+
+    # now get the prov for those edges
+    with get_redis_pipeline(4) as p:
+        for edgegroup in grouper(1000, edges):
+            for edge in edgegroup:
+                p.get(edge)
+            ns = p.execute()
+            symmetric_edges = []
+            inverted_to_original = {}
+            for edge, n in zip(edgegroup, ns):
+                # Convert the svelte key-value attribute into a fat trapi-style attribute
+                if not n:
+                    inverted = get_edge_symmetric(edge)
+                    symmetric_edges.append(inverted)
+                    inverted_to_original[inverted] = edge
+                else:
+                    prov[edge] = process_prov(n)
+                # This is cheating.  It's to make up for the fact that we added in inverted edges for
+                # related to, but the prov doesn't know about it. This is not a long term fix, it's a hack
+                # for the prototype and must be fixed. FIXED!!!
+            if symmetric_edges:
+                for sym_edge in symmetric_edges:
+                    p.get(sym_edge)
+                sym_ns = p.execute()
+                for sym_edge, sn in zip(symmetric_edges, sym_ns):
+                    if sn:
+                        #This has to be for the original edge, otherwise we don't find it later
+                        prov[inverted_to_original[sym_edge]] = process_prov(sn)
+                    else:
+                        prov[sym_edge] = [{}]
+                        logger.info(f'{sym_edge} not exist!')
+    for enrichment in enrichments:
+        enrichment.add_provenance(prov)
+
+
+def leftovers():
+    ### All of this stuff was in the original coalesce_by_graph, but I'm not sure if it's needed
+    # some of it seems to be used by EDGAR, but most of it seems pretty crufty. We're going to move the provenance
+    # stuff out of here, because it's not really about the enrichment, it's about the TRAPI response.
+    for q in range(0):
         processed_links = 0
         for i in range(len(enriched_links)):
             link = enriched_links[i]
@@ -240,7 +354,8 @@ def get_link_counts(unique_links):
     with get_redis_pipeline(2) as p:
         for ulg in grouper(1000, unique_links):
             for ul in ulg:
-                p.get(str(ul))
+                s = str(ul)
+                p.get(s)
             ns = p.execute()
             for ul, n in zip(ulg, ns):
                 try:
@@ -264,49 +379,6 @@ def get_edge_symmetric(edge):
     edge_predicate, obj = b.split('}')
     edge_predicate = '{' + edge_predicate + '}'
     return f'{obj.lstrip()} {edge_predicate} {subject.rstrip()}'
-def get_provs(n2l):
-    # Now we are going to hit redis to get the provenances for all of the links.
-    # our unique_links are the keys
-    # Convert n2l to edges
-    def process_prov(prov_data):
-        if isinstance(prov_data, (str, bytes)):
-            prov_data = orjson.loads(prov_data)
-        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
-                prov_data.items()]
-
-    edges = [f'{n1} {link[1]} {link[0]}' if link[2] else f'{link[0]} {link[1]} {n1}' for n1, ll in n2l.items() for link
-             in ll]
-
-
-    prov = {}
-
-    # now get the prov for those edges
-    with get_redis_pipeline(4) as p:
-        for edgegroup in grouper(1000, edges):
-            for edge in edgegroup:
-                p.get(edge)
-            ns = p.execute()
-            symmetric_edges = []
-            for edge, n in zip(edgegroup, ns):
-                # Convert the svelte key-value attribute into a fat trapi-style attribute
-                if not n:
-                    symmetric_edges.append(get_edge_symmetric(edge))
-                else:
-                    prov[edge] = process_prov(n)
-                #This is cheating.  It's to make up for the fact that we added in inverted edges for
-                # related to, but the prov doesn't know about it. This is not a long term fix, it's a hack
-                # for the prototype and must be fixed. FIXED!!!
-            if symmetric_edges:
-                for sym_edge in symmetric_edges:
-                    p.get(sym_edge)
-                sym_ns = p.execute()
-                for sym_edge, sn in zip(symmetric_edges, sym_ns):
-                    if sn:
-                        prov[sym_edge] = process_prov(sn)
-                    else:
-                        prov[sym_edge] = [{}]
-                        logger.info(f'{sym_edge} not exist!')
-    return prov
 
 def filter_opportunities(opportunities, nodes_to_links):
     new_opportunities = []
@@ -319,42 +391,50 @@ def filter_opportunities(opportunities, nodes_to_links):
             new_opportunities.append(opportunity)
     return new_opportunities
 
-def uniquify_links(nodes_to_links, opportunities):
+def uniquify_links(nodes_to_links, input_type):
     # A link might occur for multiple nodes and across different opportunities
     # Create the total unique set of links
     unique_links = set()
     unique_link_nodes = set()
-    io = 0
-    for opportunity in opportunities:
-        io += 1
-        kn = opportunity.get_kg_ids()
-        seen = set()
-        for n in kn:
-            for l in nodes_to_links[n]:
-                # The link as defined uses the input node as is_source, but the lookup into redis uses the
-                # linked node as the is_source, so gotta flip it
-                lplus = l + [opportunity.get_qg_semantic_type()]
+    #This is for caching the edge types as symmetric or not because we are parsing json every time.
+    predicate_is_symmetric = {}
+    for n in nodes_to_links:
+        for l in nodes_to_links[n]:
+            # The link as defined uses the input node as is_source, but the lookup into redis uses the
+            # linked node as the is_source, so gotta flip it.   But there is a gross wrinkle here - if the
+            # link is symmetric, then we want the link to always be "True" (Don't flip if it already says True)
+            lplus = l + [input_type]
+            if (l[1] not in predicate_is_symmetric):
+                predicate_is_symmetric[l[1]] = predicate_string_is_symmetric(l[1])
+            if predicate_is_symmetric[l[1]]:
+                lplus[2] = True
+            else:
                 lplus[2] = not lplus[2]
-                tl = tuple(lplus)
-                if tl in seen:
-                    unique_links.add(tl)
-                    unique_link_nodes.add(tl[0])
-                else:
-                    seen.add(tl)
+            tl = tuple(lplus)
+            unique_links.add(tl)
+            unique_link_nodes.add(tl[0])
     return unique_link_nodes, unique_links
 
-def create_nodes_to_links(allnodes):
-    # p = get_redis_pipeline(0)
-    # Create a dict from node->links by looking up in redis.  Each link is a potential node to add.
-    # This is across all opportunities as well
-    # Could pipeline
+def predicate_string_is_symmetric(predicate: str) -> bool:
+    """Check if a predicate string is symmetric. The predicate here is the whole qualified mess as a string"""
+    bare_predicate = orjson.loads(predicate)["predicate"]
+    return tk.get_element(bare_predicate)["symmetric"]
+
+def create_nodes_to_links(allnodes,  param_predicates = []):
+    """Given a list of nodes identifiers, pull all their links
+    If param_predicates is not empty, it should be a list of the same length as allnodes.
+    It's use is in EDGAR where create_nodes_to_links is used in the final lookup step. In that case,
+    we might be trying to run a bunch of rules at the same time and so the predicates will differ node to node."""
+    # Create a dict from node->links by looking up in redis.
     #Noticed some qualifiers are have either but not both
     # eg ['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}', True]
     #  VS['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', True]
-    standard_qualifiers = {"object_aspect_qualifier", "object_direction_qualifier"}
     nodes_to_links = {}
+
     with get_redis_pipeline(0) as p:
-        for group in grouper(1000, allnodes.keys()):
+        for group, param_predicate in zip_longest(grouper(1000, allnodes), param_predicates):
+            if not group:
+                continue
             for node in group:
                 p.get(node)
             linkstrings = p.execute()
@@ -370,17 +450,31 @@ def create_nodes_to_links(allnodes):
                     # have been assigned one direction only. We're going to invert them as well to allow matching
                 newlinks = []
                 for link in links:
-                    # Note that this should really be done for any symmetric predicate.
-                    # or fixed at the graph level.
-                    # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
-                    if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
-                        newlinks.append([link[0], link[1], not link[2]])
+                    if param_predicate:
+                        # For lookup operation
+                        if link[1] == param_predicate:
+                            newlinks.append(link[0])
+                    #else:
+                    #    if not filter_predicate_hierarchies:
+                    #        link_predicate = orjson.loads(link[1])["predicate"]
+                    #        # Note that this should really be done for any symmetric predicate.
+                    #        # or fixed at the graph level.
+                    #        # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
+                    #        # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
+                    #        element = tk.get_element(link_predicate)
+                    #        if element is None:
+                    #            print("???")
+                    #        if element["symmetric"]:
+                    #            newlinks.append([link[0], link[1], not link[2]])
+
                 # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
                 # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
-                links += newlinks
-                nodes_to_links[node] = links
+                if param_predicate:
+                    nodes_to_links[node] = list(set(newlinks))
+                else:
+                    links += newlinks
+                    nodes_to_links[node] = links
     return nodes_to_links
-
 def create_node_to_type(opportunities):
     # Create a dict from node->type(node) for all nodes in every opportunity
     allnodes = {}
@@ -421,175 +515,18 @@ def enrich_equal_qnode(qnode_hash, best_enrich_node):
             return True
     return False
 
-# def get_shared_links(nodes, stype, nodes_type_list: dict):
-#    """Return the intersection of the superclasses of every node in nodes"""
-#    rm = RobokopMessenger()
-#    links_to_nodes = defaultdict(set)
-#    for node in nodes:
-#        logger.debug(f'start get_links_for({node}, {stype})')
-#        links = rm.get_links_for(node, stype, nodes_type_list)
-#        logger.debug('end get_links_for()')
-#
-#        for link in links:
-#            links_to_nodes[link].add(node)
-#    nodes_to_links = defaultdict(list)
-#    for link,nodes in links_to_nodes.items():
-#        if len(nodes) > 1:
-#            nodes_to_links[frozenset(nodes)].append(link)
-#
-#    return nodes_to_links
-
-def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
-                       predicates_to_exclude=[],
-                       pvalue_threshold=None):
-    logger.info(f'{len(nodes)} enriched node links to process.')
-
-    predicates_to_exclude = ["biolink:related_to_at_instance_level", "biolink:related_to_at_concept_level"] + predicates_to_exclude
-
-    #These are trash curies that we never want to see
-    blocklist = ["HP:0000118", "MONDO:0000001", "MONDO:0700096", "UMLS:C1333305", "CHEBI:24431",
-                 "CHEBI:23367", "CHEBI:33579", "CHEBI:36357", "CHEBI:33675", "CHEBI:33302", "CHEBI:33304",
-                 "CHEBI:33582", "CHEBI:25806", "CHEBI:50860", "CHEBI:51143", "CHEBI:32988", "CHEBI:33285",
-                 "CHEBI:33256", "CHEBI:36962", "CHEBI:35352", "CHEBI:36963", "CHEBI:25367", "CHEBI:72695",
-                 "CHEBI:33595", "CHEBI:33832", "CHEBI:37577", "CHEBI:24532", "CHEBI:5686", "NCBITaxon:9606"]
-
-
-    # Use the default pcut as the enrichment p-value threshold if no threshold is given
-    pcut = 1e-6 if not pvalue_threshold else pvalue_threshold
-
-    # Get the most enriched connected node for a group of nodes.
-    logger.debug('start get_shared_links()')
-
-    links_to_nodes = defaultdict(list)
-    for node in nodes:
-        for link in nodes_to_links[node]:
-            links_to_nodes[tuple(link)].append(node)
-    nodeset_to_links = defaultdict(list)
-    for link, snodes in links_to_nodes.items():
-
-        # if the enriched node connects to more than one lookup chemical
-        if len(snodes) > 1:
-            nodeset_to_links[frozenset(snodes)].append(link)
-
-    logger.debug('end get_shared_links()')
-    logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
-
-    results = []
-
-    logger.info(f'{len(nodeset_to_links.items())} possible shared links discovered.')
-
-    for nodeset, possible_links in nodeset_to_links.items():
-        enriched = []
-        for ix, (newcurie, predicate, is_source) in enumerate(possible_links):
-            # For each tuple: ('HP:0001907', 'biolink:treats', True)
-            # The hypergeometric distribution models drawing objects from a bin.
-            # M is the total number of objects (nodes) ,
-            # n is total number of Type I objects (nodes with that property).
-            # The random variate represents the number of Type I objects in N drawn
-            #  without replacement from the total population (len curies).
-            # Fail fast on these. Don't do a bunch of calculations that we're just going to throw away.
-            if json.loads(predicate)["predicate"] in predicates_to_exclude:
-                continue
-            if newcurie in blocklist:
-                continue
-
-            # length of the set of chemicals that mapped to the tuple
-            x = len(nodeset)  # draws with the property
-
-            # TODO Not sure why this is arbitrary number
-            total_node_count = total_node_counts[semantic_type]
-            # total_node_count = 1000000
-
-            # total_node_count = 6000000 #not sure this is the right number. Scales overall p-values.
-            # Note that is_source is from the point of view of the input nodes, not newcurie
-            newcurie_is_source = not is_source
-
-            # logger.debug (f'start get_hit_node_count({newcurie}, {predicate}, {newcurie_is_source}, {semantic_type})')
-            # n = rm.get_hit_node_count(newcurie, predicate, newcurie_is_source, semantic_type)
-            n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
-            if "biolink:related_to" in predicate:
-                try:
-                    n += lcounts[(newcurie, predicate, not newcurie_is_source, semantic_type)]
-                except:
-                    # no reverse edges
-                    pass
-
-            if x > 0  and n == 0:
-                logger.info(f"x == {x}; n == 0??? : {newcurie} {predicate} {newcurie_is_source} {semantic_type} ")
-
-                # print(f"x == {x}; n == 0???")
-                # print(newcurie, predicate, newcurie_is_source, semantic_type)
-                continue
-
-            ndraws = len(nodes)
-
-            # I only care about things that occur more than by chance, not less than by chance
-            if x < n * ndraws / total_node_count:
-                logger.info(f"x == {x} < {n * ndraws / total_node_count} : {newcurie} {predicate} {newcurie_is_source} {semantic_type} occur less than by chance")
-
-                # print(f"x == {x} < {n * ndraws / total_node_count}")
-                # print(newcurie, predicate, newcurie_is_source, semantic_type)
-                # print("occur less than by chance")
-                # print()
-                continue
-
-            # The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
-            # For most cases, it is ok to approximate it.  There are multiple levels of approximation as described
-            # here: https://riskwiki.vosesoftware.com/ApproximationstotheHypergeometricdistribution.php
-            # Ive tested and each approximation is faster, while the quality decreases.
-            # Norm is a bad approximation for this data
-            # the other three are fine.  Poisson very occassionaly is off by a factor of two or so, but that's not
-            # terribly important here.  It's also almost 2x faster than the hypergeometric.
-            # So we're going to use poisson, but if we have problems with it we should drop back to binom rather than hypergeom
-
-            # tuple -> (enrichnode,edge, typemapped)
-
-            args = (x - 1, total_node_count, n, ndraws)
-            if args not in sfcache:
-                # sfcache[args] = hypersf(x - 1, total_node_count, n, ndraws)
-                # p_binom = binomsf(x-1,ndraws,n/total_node_count)
-                # p_pois = poissonsf(x-1,n * ndraws / total_node_count)
-                # p_norm = normsf(x-1,n*ndraws/total_node_count, math.sqrt((ndraws*n)*(total_node_count-n))/total_node_count)
-                sfcache[args] = poisson.sf(x - 1, n * ndraws / total_node_count)
-                # sf_out.write(f'{x-1}\t{total_node_count}\t{n}\t{ndraws}\t{sfcache[args]}\t{p_binom}\t{p_pois}\t{p_norm}\n')
-
-            # Enrichment pvalue
-            enrichp = sfcache[args]
-
-            if enrichp < pcut:
-                # get the real labels/types of the enriched node
-                node_types = typecache[newcurie]
-
-                # if predicates_to_exclude:
-                #     if json.loads(predicate)['predicate'] not in predicates_to_exclude:
-                #         enriched.append(
-                #             (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
-                #         # if pred_exclude is used to filter, the results looks cleaner like 1000+ else 2000+ results
-                # else:
-                enriched.append((enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
-
-        if len(enriched) > 0:
-            results += enriched
-
-    results.sort()
-
-    logger.debug('end get_enriched_links()')
-    return results
-
-def get_enriched_links_4_query(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts, q_predicates, answer_type = None):
+def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts, filter_predicate_hierarchies = False):
+    """Given a set of nodes and the links that they share, as well as some counts, return the enrichments based
+    on the links.
+    If you want to restrict the answers, then you filter nodes_to_links ahead of time.'
+    The enrichments are of the form
+    (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types)
+    and are sorted so that the lowest p-values (best enrichment) are first.  The enrichp is the pvalue of the enrichment.
+    """
     logger.info(f'{len(nodes)} enriched node links to process.')
 
     # Get the most enriched connected node for a group of nodes.
     logger.debug('start get_shared_links()')
-    predicates_to_exclude = ["biolink:related_to_at_instance_level",
-                             "biolink:related_to_at_concept_level"]
-
-    # These are trash curies that we never want to see
-    blocklist = ["HP:0000118", "MONDO:0000001", "MONDO:0700096", "UMLS:C1333305", "CHEBI:24431",
-                 "CHEBI:23367", "CHEBI:33579", "CHEBI:36357", "CHEBI:33675", "CHEBI:33302", "CHEBI:33304",
-                 "CHEBI:33582", "CHEBI:25806", "CHEBI:50860", "CHEBI:51143", "CHEBI:32988", "CHEBI:33285",
-                 "CHEBI:33256", "CHEBI:36962", "CHEBI:35352", "CHEBI:36963", "CHEBI:25367", "CHEBI:72695",
-                 "CHEBI:33595", "CHEBI:33832", "CHEBI:37577", "CHEBI:24532", "CHEBI:5686", "NCBITaxon:9606"]
 
     links_to_nodes = defaultdict(list)
     for node in nodes:
@@ -616,51 +553,30 @@ def get_enriched_links_4_query(nodes, semantic_type, nodes_to_links, lcounts, sf
             # n is total number of Type I objects (nodes with that property).
             # The random variate represents the number of Type I objects in N drawn
             #  without replacement from the total population (len curies).
-            pred=json.loads(predicate)
-            # if not any(set(p.items()).issubset(set(json.loads(predicate).items())) for p in q_predicates):
-            if pred['predicate'] not in q_predicates['predicate']:
-                continue
-            if q_predicates.get('object_aspect_qualifier', ''):
-                if q_predicates.get('object_aspect_qualifier') != pred.get('object_aspect_qualifier', ''):
-                    continue
-            if q_predicates.get('object_direction_qualifier', ''):
-                if q_predicates.get('object_direction_qualifier') != pred.get('object_direction_qualifier', ''):
-                    continue
-
-            if pred["predicate"] in predicates_to_exclude:
-                continue
-            if newcurie in blocklist:
-                continue
             # length of the set of chemicals that mapped to the tuple
             x = len(nodeset)  # draws with the property
 
             total_node_count = total_node_counts[semantic_type]
 
-            newcurie_is_source = not is_source
+            # We only want to do this if the predicate is symmetric
+            #if tk.get_element(orjson.loads(predicate)["predicate"])["symmetric"]:
+            if predicate_string_is_symmetric(predicate):
+                    newcurie_is_source = True
+            else:
+                newcurie_is_source = not is_source
 
             n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
 
-            if "biolink:related_to" in predicate:
-                try:
-                    n += lcounts[(newcurie, predicate, not newcurie_is_source, semantic_type)]
-                except:
-                    # no reverse edges
-                    pass
 
             if x > 0  and n == 0:
                 logger.info(f"x == {x}; n == 0??? : {newcurie} {predicate} {newcurie_is_source} {semantic_type} ")
-                # print(newcurie, predicate, newcurie_is_source, semantic_type)
                 continue
-                # return []
 
             ndraws = len(nodes)
 
             # I only care about things that occur more than by chance, not less than by chance
             if x < n * ndraws / total_node_count:
                 logger.info(f"x == {x} < {n * ndraws / total_node_count} : {newcurie} {predicate} {newcurie_is_source} {semantic_type} occur less than by chance")
-                # print(newcurie, predicate, newcurie_is_source, semantic_type)
-                # print("occur less than by chance")
-                # print()
                 continue
 
             # The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
@@ -676,37 +592,224 @@ def get_enriched_links_4_query(nodes, semantic_type, nodes_to_links, lcounts, sf
 
             args = (x - 1, total_node_count, n, ndraws)
             if args not in sfcache:
-                # sfcache[args] = hypersf(x - 1, total_node_count, n, ndraws)
-                # p_binom = binomsf(x-1,ndraws,n/total_node_count)
-                # p_pois = poissonsf(x-1,n * ndraws / total_node_count)
-                # p_norm = normsf(x-1,n*ndraws/total_node_count, math.sqrt((ndraws*n)*(total_node_count-n))/total_node_count)
                 sfcache[args] = poisson.sf(x - 1, n * ndraws / total_node_count)
-                # sf_out.write(f'{x-1}\t{total_node_count}\t{n}\t{ndraws}\t{sfcache[args]}\t{p_binom}\t{p_pois}\t{p_norm}\n')
 
             # Enrichment pvalue
             enrichp = sfcache[args]
 
-            # if enrichp < pcut:
             # get the real labels/types of the enriched node
             node_types = typecache[newcurie]
 
-            if not answer_type or (answer_type and answer_type in set(node_types)):
-                enriched.append(
-                    (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types))
+            #enrichment = Enrichment(enrichp, newcurie, orjson.loads(predicate), newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
+            enrichment = Enrichment(enrichp, newcurie, predicate, newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
+            enriched.append( enrichment )
 
         if len(enriched) > 0:
             results += enriched
 
-    results.sort()
+    if filter_predicate_hierarchies:
+        results = filter_result_hierarchies(results)
+
+    results.sort(key=lambda x: x.p_value)
 
     logger.debug('end get_enriched_links()')
+
     return results
 
-def get_total_node_counts(semantic_types):
-    # p = get_redis_pipeline(5)
+def filter_result_hierarchies(results):
+    enrichment_group_dict = {}
+    for i, result in enumerate(results):
+        # Group results by enriched_node
+        enrichment_group_dict.setdefault(result.enriched_node.new_curie, []).append(result)
+
+    # Now filter by predicate hierarchies
+    new_results = process_enrichment_group(enrichment_group_dict)
+
+
+    return new_results
+
+def process_enrichment_group(enrichment_group_dict):
+    new_results = []
+    for enriched_node, enriched_results in enrichment_group_dict.items():
+        if len(enriched_results) == 1:
+            new_results.extend(enriched_results)
+        else:
+            # Re_group by p_value:
+            p_value_group_dict = {}
+            for enriched_result in enriched_results:
+                p_value_group_dict.setdefault(enriched_result.p_value, []).append(enriched_result)
+
+            # For each group, find the most specific predicates in each p_value group and put in specific results
+            specific_results = get_specific_results(p_value_group_dict)
+
+            # Pick the most specific in the specific results
+            if specific_results:
+                if len(specific_results) == 1:
+                    best_result = specific_results[0]
+
+                # Now we pick the best representative of an enrichment node from the combined group result by min pvalue
+                # best_result = sorted(specific_results, key=lambda x: x.p_value, reverse=False)[0]
+                # OR Hierarchy again, Most especially if we can get further specificity
+                else:
+                    # Filtering by predicate hierarchy and p_value scoring
+                    best_result = None
+
+                    # NB: Scoring is performed since specific results came from different p_value grouping
+                    best_score = float('inf')#min([result.p_value for result in specific_results]) # Initialize the best score to -ve infinity
+                    i = 0
+
+                    while i < len(specific_results) - 1:
+                        current_predicate = specific_results[i].predicate.get("predicate")
+                        next_predicate = specific_results[i + 1].predicate.get("predicate")
+
+                        if is_child_of(current_predicate, next_predicate):
+                            if specific_results[i].p_value < best_score:
+                                best_score = specific_results[i].p_value
+                                best_result = specific_results[i]
+                        elif is_child_of(next_predicate, current_predicate):
+                            if specific_results[i+1].p_value < best_score:
+                                best_score = specific_results[i+1].p_value
+                                best_result = specific_results[i+1]
+                        elif current_predicate != next_predicate:
+                            # If one is not a child of the other
+                            # We want to append both the most specific in the different branches
+                            current_predicate_ancestors = get_ancestors(current_predicate)
+                            next_predicate_ancestors = get_ancestors(next_predicate)
+
+                            step_backward = None
+                            # The most specific has more ancestors thsn the general predicates, hence save the most
+                            # specific (that completes a branch) and continue the iteration with the least specific
+                            if len(current_predicate_ancestors) > len(next_predicate_ancestors):
+                                new_results.append(specific_results[i])
+                                specific_results.pop(i)
+                                best_score = specific_results[i + 1].p_value
+                                best_result = specific_results[i + 1]
+                                step_backward = 1
+                            elif len(current_predicate_ancestors) < len(next_predicate_ancestors):
+                                new_results.append(specific_results[i+1])
+                                specific_results.pop(i + 1)
+                                best_score = specific_results[i].p_value
+                                best_result = specific_results[i]
+                                step_backward = 2
+                            else:
+                                # This means both of them are the most specific in their respective trees
+                                new_results.append(specific_results[i])
+                                new_results.append(specific_results[i + 1])
+                                specific_results.pop(i)
+                                specific_results.pop(i + 1)
+                                i -= 1   # Adjust i to compensate for the removed element
+                                continue  # Skip the increment step
+
+                            if step_backward:# Decrement i to recheck the previous item
+                                i -= step_backward
+                        else:
+                            # Equal predicates? the lets dig down to the qualifier
+                            if has_qualifier(specific_results[i].predicate) and not has_qualifier(specific_results[i + 1].predicate):
+                                if specific_results[i].p_value < best_score:
+                                    best_score = specific_results[i].p_value
+                                    best_result = specific_results[i]
+                            elif has_qualifier(specific_results[i + 1].predicate) and not has_qualifier(specific_results[i].predicate):
+                                if specific_results[i + 1].p_value < best_score:
+                                    best_score = specific_results[i + 1].p_value
+                                    best_result = specific_results[i + 1]
+                            else:
+                                # if there is qualifier in both, we need to get which one is parent/child
+                                current_qualifier = specific_results[i].predicate.get("object_aspect_qualifier") or \
+                                                    specific_results[i].predicate.get("object_direction_qualifier")
+                                next_qualifier = specific_results[i + 1].predicate.get("object_aspect_qualifier") or \
+                                                 specific_results[i + 1].predicate.get("object_direction_qualifier")
+                                if is_qualifier(current_qualifier, next_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                                    if specific_results[i].p_value < best_score:
+                                        best_score = specific_results[i].p_value
+                                        best_result = specific_results[i]
+                                elif is_qualifier(next_qualifier, current_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                                    if specific_results[i + 1].p_value < best_score:
+                                        best_score = specific_results[i + 1].p_value
+                                        best_result = specific_results[i + 1]
+                                    i += 1  # Skip the next element as it's a child of the current one
+
+                        i += 1  # Increment i for the next iteration
+
+                new_results.append(best_result)
+
+            if not specific_results:
+                print("?????????")
+    return new_results
+
+def is_child_of(child, parent):
+    return child in tk.get_children(parent, formatted=True)
+
+def is_qualifier(child, parent, qualifier_Enum):
+    children = tk.get_permissible_value_children(parent, qualifier_Enum) or []
+    return child in children
+
+def has_qualifier(predicate):
+    qualifiers = {"object_aspect_qualifier", "object_direction_qualifier"}
+    return any(q in predicate for q in qualifiers)
+
+def get_ancestors(predicate):
+    return tk.get_ancestors(predicate, formatted=True)
+
+def get_specific_results(pvalue_group_dict):
+    """
+    This function accepts:
+        enrichment result grouped by pvalue, and most-likely, different predicates
+        for instance:
+                0.0001: [(enriched_node1, causes), (enriched_node1, contributes_to)]
+                0.0002: [(enriched_node1, has_advert_event), (enriched_node1, affects)]
+                0.0003: [(enriched_node1, treats_or_applied_or_studied_to_treat), (enriched_node1, treats)]
+    to return specific list representative of enriched_node1:
+                [(enriched_node1, causes),(enriched_node1, has_advert_event), (enriched_node1, treats)]
+
+    NB: No scoring is performed since each group compared shares the same p_value
+    """
+    specific_results = []
+
+
+    for results in pvalue_group_dict.values():
+        if len(results) == 1:
+            specific_results.extend(results)
+        else:
+            best_to_append = None
+
+            for i in range(len(results) - 1):
+                curr_pred = results[i].predicate.get("predicate")
+                next_pred = results[i + 1].predicate.get("predicate")
+
+                if is_child_of(curr_pred, next_pred):
+                    best_to_append = results[i]
+                elif is_child_of(next_pred, curr_pred):
+                    best_to_append = results[i + 1]
+                elif curr_pred == next_pred:
+                    # Equal predicates? then lets dig down to the qualifier
+                    # if one is affects and the other one is affect activity, pick the later
+                    curr_qualifier = results[i].predicate.get("object_aspect_qualifier") or \
+                                     results[i].predicate.get("object_direction_qualifier")
+                    next_qualifier = results[i + 1].predicate.get("object_aspect_qualifier") or \
+                                     results[i + 1].predicate.get("object_direction_qualifier")
+
+                    if has_qualifier(results[i].predicate) and not has_qualifier(results[i + 1].predicate):
+                        best_to_append = results[i]
+                    elif has_qualifier(results[i + 1].predicate) and not has_qualifier(results[i].predicate):
+                        best_to_append = results[i + 1]
+                    elif curr_qualifier and next_qualifier:
+                        if is_qualifier(curr_qualifier, next_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                            best_to_append = results[i]
+                        elif is_qualifier(next_qualifier, curr_qualifier, 'GeneOrGeneProductOrChemicalEntityAspectEnum'):
+                            best_to_append = results[i + 1]
+
+            if best_to_append is None and len(results) == 2 and results[0].predicate.get("predicate") == results[1].predicate.get("predicate"):
+                best_to_append = results[0]
+
+            if best_to_append:
+                specific_results.append(best_to_append)
+
+    return specific_results
+
+def get_total_node_counts(semantic_type):
     counts = {}
     # needs to be first so that counts will fill it first
-    semantic_list = ['biolink:NamedThing'] + list(semantic_types)
+    semantic_list = ['biolink:NamedThing',semantic_type]
     with get_redis_pipeline(5) as p:
         for st in semantic_list:
             p.get(st)
