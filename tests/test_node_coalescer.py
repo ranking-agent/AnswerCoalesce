@@ -3,7 +3,7 @@ from copy import deepcopy
 import json, os, asyncio
 import src.single_node_coalescer as snc
 from collections import defaultdict
-from src.components import PropertyPatch,Answer
+#from src.components import PropertyPatch,Answer
 from reasoner_pydantic import Response as PDResponse
 
 def test_bindings():
