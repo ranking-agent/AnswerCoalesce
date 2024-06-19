@@ -424,7 +424,9 @@ def create_nodes_to_links(allnodes,  param_predicates = []):
     """Given a list of nodes identifiers, pull all their links
     If param_predicates is not empty, it should be a list of the same length as allnodes.
     It's use is in EDGAR where create_nodes_to_links is used in the final lookup step. In that case,
-    we might be trying to run a bunch of rules at the same time and so the predicates will differ node to node."""
+    we might be trying to run a bunch of rules at the same time and so the predicates will differ node to node.
+
+    Note that we used to add inverted symmetric links to the results, but we no longer do that."""
     # Create a dict from node->links by looking up in redis.
     #Noticed some qualifiers are have either but not both
     # eg ['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}', True]
@@ -443,32 +445,12 @@ def create_nodes_to_links(allnodes,  param_predicates = []):
                     links = []
                 else:
                     links = orjson.loads(linkstring)
-                        ## Redundant edges with only object_aspect_qualifier but no object_direction
-                        # [lstring for lstring in orjson.loads(linkstring) if standard_qualifiers.issubset(set(orjson.loads(lstring[1]).keys())) or
-                        # not any(element in set(orjson.loads(lstring[1]).keys()) for element in standard_qualifiers)]
-                    # this is a bit hacky.  If we're pulling in redundant, then high level symmetric predicates
-                    # have been assigned one direction only. We're going to invert them as well to allow matching
                 newlinks = []
                 for link in links:
                     if param_predicate:
                         # For lookup operation
                         if link[1] == param_predicate:
                             newlinks.append(link[0])
-                    #else:
-                    #    if not filter_predicate_hierarchies:
-                    #        link_predicate = orjson.loads(link[1])["predicate"]
-                    #        # Note that this should really be done for any symmetric predicate.
-                    #        # or fixed at the graph level.
-                    #        # related_to_at is getting dropped at the point of calculating pvaue so why not drop it now?
-                    #        # if "biolink:related_to" in link[1] and "biolink:related_to_at" not in link[1]:
-                    #        element = tk.get_element(link_predicate)
-                    #        if element is None:
-                    #            print("???")
-                    #        if element["symmetric"]:
-                    #            newlinks.append([link[0], link[1], not link[2]])
-
-                # links  # = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
-                # links = list( filter (lambda l: ast.literal_eval(l[1])["predicate"] not in bad_predicates, links))
                 if param_predicate:
                     nodes_to_links[node] = list(set(newlinks))
                 else:
