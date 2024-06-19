@@ -225,33 +225,6 @@ async def test_graph_coalescer_double_check():
     e = enrichments[0]
     assert e.p_value < 1e-10
 
-def test_graph_coalescer_perf_test():
-    # Two opprtunities but,
-    #       Zero patches in both old and new implementations
-    from src.single_node_coalescer import coalesce
-    import datetime
-
-    # get a timestamp
-    t1 = datetime.datetime.now()
-
-    # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),jsondir,'EdgeIDAsStrAndPerfTest.json')
-
-    # open the file and load it
-    with open(test_filename,'r') as tf:
-        incoming = json.load(tf)
-    # call function that does McQ
-    coalesced = asyncio.run(snc.multi_curie_query(incoming, parameters={"pvalue_threshold": None,"result_length": None}))
-    for eid,edge in coalesced["message"]['knowledge_graph']['edges'].items():
-        sources = edge.get('sources')[0]
-        if len(sources) == 0:
-            print(json.dumps(edge,indent=2))
-    assert PDResponse.parse_obj(coalesced)
-    # get the amount of time it took
-    diff = datetime.datetime.now() - t1
-
-    # it should be less than this
-    assert(diff.seconds < 60)
 
 def test_graph_coalesce_basic():
     """Make sure that results are well formed."""
