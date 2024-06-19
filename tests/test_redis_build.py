@@ -25,7 +25,7 @@ def test_redis_build():
         linkfile_content = [line for line in inf]
     tk = bmt.Toolkit()
     assertion = []
-    print(linkfile_content)
+
     with jsonlines.open(edgefile, 'r') as inf:
         for line in inf:
             predicate_parts = {'predicate': line['predicate']}
