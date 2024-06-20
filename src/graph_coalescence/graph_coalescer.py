@@ -167,6 +167,9 @@ async def coalesce_by_graph(input_ids, input_node_type,
     if result_length:
         enriched_links = enriched_links[:result_length]
 
+    if predicate_constraints:
+        enriched_links = [link for link in enriched_links if orjson.loads(link.predicate).get("predicate") not in predicate_constraints]
+
     augment_enrichments(enriched_links, nodetypedict)
 
     return enriched_links
@@ -541,6 +544,13 @@ def process_enrichment_group(enrichment_group_dict):
     new_results = set()
 
     for enriched_node, enriched_results in enrichment_group_dict.items():
+
+        # if enriched_node == "HP:0001337":
+        #     #Copy the details to test_graph_coalesce
+        #     details = [(enriched_result.p_value, enriched_result.enriched_node.new_curie, enriched_result.predicate, enriched_result.is_source, enriched_result.counts[0], enriched_result.counts[1], enriched_result.counts[2], enriched_result.linked_curies, enriched_result.enriched_node.newnode_type[0]) for enriched_result in enriched_results]
+        #     A = 'Stop Over Here!!'
+        #     print("WAIT!!!!! I wanna see the result")
+
         if len(enriched_results) == 1:
             new_results.update(enriched_results)
         else:

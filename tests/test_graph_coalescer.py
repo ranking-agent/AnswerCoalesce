@@ -348,6 +348,64 @@ def test_filter_enrichment_results_s6():
 
     print("All test cases passed!")
 
+def test_filter_enrichment_results_HP0100749():
+    """
+    # #asthma top2
+    """
+    HP0100749 = [(4.691743342840533e-72, 'HP:0100749', '{"predicate": "biolink:has_adverse_event"}', False, 61, 396, 388215.0, frozenset({'CHEBI:9449', 'UNII:90Z2UF0E52', 'CHEBI:4463', 'CHEBI:9667', 'CHEBI:51209', 'UNII:2P471X1Z11', 'CHEBI:3207', 'CHEBI:5134', 'CHEBI:50730', 'CHEMBL.COMPOUND:CHEMBL4650755', 'CHEBI:64064', 'CHEBI:28177', 'CHEBI:5783', 'CHEBI:3001', 'CHEBI:8378', 'CHEBI:6888', 'CHEBI:6538', 'CHEBI:91495', 'CHEBI:10100', 'PUBCHEM.COMPOUND:11519069', 'CHEBI:8382', 'CHEBI:5147', 'CHEBI:28918', 'CHEBI:3897', 'CHEBI:3077', 'CHEBI:31397', 'UNII:420K487FSG', 'CHEBI:6970', 'CHEBI:18357', 'CHEBI:5551', 'CHEBI:2549'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (4.691743342840533e-72, 'HP:0100749', '{"predicate": "biolink:affects"}', False, 61, 396, 388215.0, frozenset({'CHEBI:9449', 'UNII:90Z2UF0E52', 'CHEBI:4463', 'CHEBI:9667', 'CHEBI:51209', 'UNII:2P471X1Z11', 'CHEBI:3207', 'CHEBI:5134', 'CHEBI:50730', 'CHEMBL.COMPOUND:CHEMBL4650755', 'CHEBI:64064', 'CHEBI:28177', 'CHEBI:5783', 'CHEBI:3001', 'CHEBI:8378', 'CHEBI:6888', 'CHEBI:6538', 'CHEBI:91495', 'CHEBI:10100', 'PUBCHEM.COMPOUND:11519069', 'CHEBI:8382', 'CHEBI:5147', 'CHEBI:28918', 'CHEBI:3897', 'CHEBI:3077', 'CHEBI:31397', 'UNII:420K487FSG', 'CHEBI:6970', 'CHEBI:18357', 'CHEBI:5551', 'CHEBI:2549'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (7.560280843122676e-84, 'HP:0100749', '{"predicate": "biolink:related_to"}', True, 61, 968, 388215.0, frozenset({'CHEBI:9449', 'CHEBI:10112', 'UNII:90Z2UF0E52', 'CHEBI:4463', 'CHEBI:9667', 'CHEBI:408174', 'CHEBI:51209', 'CHEBI:8245', 'CHEBI:6792', 'UNII:2P471X1Z11', 'CHEBI:3207', 'CHEBI:5134', 'CHEBI:50730', 'CHEMBL.COMPOUND:CHEMBL4650755', 'CHEBI:64064', 'CHEBI:28177', 'CHEBI:5783', 'CHEBI:68575', 'CHEBI:59773', 'CHEBI:3001', 'CHEBI:8378', 'CHEBI:6888', 'CHEBI:6538', 'CHEBI:5106', 'CHEBI:91495', 'CHEBI:10100', 'PUBCHEM.COMPOUND:5487426', 'PUBCHEM.COMPOUND:11519069', 'CHEBI:8382', 'CHEBI:5147', 'CHEBI:28918', 'CHEBI:3897', 'CHEBI:3077', 'CHEBI:31397', 'UNII:420K487FSG', 'CHEBI:6970', 'CHEBI:18357', 'CHEBI:15407', 'CHEBI:5551', 'CHEBI:2549', 'CHEBI:7492'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (2.702729399538061e-47, 'HP:0100749', '{"predicate": "biolink:contributes_to"}', False, 61, 569, 388215.0, frozenset({'CHEBI:9449', 'CHEBI:10112', 'CHEBI:408174', 'CHEBI:51209', 'CHEBI:8245', 'CHEBI:6792', 'CHEBI:3207', 'CHEBI:5134', 'CHEBI:64064', 'CHEBI:68575', 'CHEBI:59773', 'CHEBI:6538', 'CHEBI:5106', 'CHEBI:91495', 'PUBCHEM.COMPOUND:5487426', 'CHEBI:5147', 'CHEBI:28918', 'CHEBI:31397', 'CHEBI:6970', 'CHEBI:18357', 'CHEBI:15407', 'CHEBI:2549', 'CHEBI:7492'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (3.549027318159381e-49, 'HP:0100749', '{"predicate": "biolink:causes"}', False, 61, 471, 388215.0, frozenset({'CHEBI:9449', 'CHEBI:10112', 'CHEBI:408174', 'CHEBI:51209', 'CHEBI:8245', 'CHEBI:6792', 'CHEBI:3207', 'CHEBI:5134', 'CHEBI:64064', 'CHEBI:68575', 'CHEBI:59773', 'CHEBI:6538', 'CHEBI:5106', 'CHEBI:91495', 'PUBCHEM.COMPOUND:5487426', 'CHEBI:5147', 'CHEBI:28918', 'CHEBI:31397', 'CHEBI:6970', 'CHEBI:18357', 'CHEBI:15407', 'CHEBI:2549', 'CHEBI:7492'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (8.97396700184713e-06, 'HP:0100749', '{"predicate": "biolink:treats_or_applied_or_studied_to_treat"}', False, 61, 27, 388215.0, frozenset({'PUBCHEM.COMPOUND:9433', 'CHEBI:28177'}), 'biolink:DiseaseOrPhenotypicFeature')
+                 ]
+    HP0100749_instances = [Enrichment(*r) for r in HP0100749]
+
+
+def test_filter_enrichment_results_HP0002018():
+    """
+    # # Asthma top2
+    """
+    HP0002018 = [(3.1074771743920694e-51, 'HP:0002018', '{"predicate": "biolink:has_adverse_event"}', False, 61, 492, 388215.0, frozenset({'CHEBI:5551', 'CHEBI:6538', 'CHEBI:5783', 'CHEBI:4463', 'CHEBI:8382', 'CHEBI:6888', 'CHEBI:28177', 'UNII:420K487FSG', 'CHEBI:31397', 'CHEBI:5147', 'CHEBI:91495', 'CHEMBL.COMPOUND:CHEMBL4650755', 'CHEBI:2549', 'UNII:2P471X1Z11', 'CHEBI:18357', 'CHEBI:8378', 'CHEBI:3897', 'CHEBI:6970', 'CHEBI:3207', 'UNII:90Z2UF0E52', 'CHEBI:204734', 'CHEBI:50730', 'CHEBI:51209', 'CHEBI:9667'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (3.1074771743920694e-51, 'HP:0002018', '{"predicate": "biolink:affects"}', False, 61, 492, 388215.0, frozenset({'CHEBI:5551', 'CHEBI:6538', 'CHEBI:5783', 'CHEBI:4463', 'CHEBI:8382', 'CHEBI:6888', 'CHEBI:28177', 'UNII:420K487FSG', 'CHEBI:31397', 'CHEBI:5147', 'CHEBI:91495', 'CHEMBL.COMPOUND:CHEMBL4650755', 'CHEBI:2549', 'UNII:2P471X1Z11', 'CHEBI:18357', 'CHEBI:8378', 'CHEBI:3897', 'CHEBI:6970', 'CHEBI:3207', 'UNII:90Z2UF0E52', 'CHEBI:204734', 'CHEBI:50730', 'CHEBI:51209', 'CHEBI:9667'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (1.0903112392058105e-80, 'HP:0002018', '{"predicate": "biolink:related_to"}', True, 61, 1887, 388215.0, frozenset({'CHEBI:5551', 'CHEBI:28918', 'CHEBI:7492', 'CHEBI:6538', 'CHEBI:5783', 'CHEBI:68575', 'PUBCHEM.COMPOUND:9433', 'CHEBI:4463', 'CHEBI:8382', 'CHEBI:6888', 'CHEBI:10100', 'CHEBI:28177', 'UNII:420K487FSG', 'CHEBI:408174', 'CHEBI:31397', 'CHEBI:5147', 'CHEBI:5134', 'CHEBI:92511', 'CHEBI:8245', 'PUBCHEM.COMPOUND:5487426', 'CHEBI:91495', 'CHEBI:5106', 'CHEBI:4728', 'CHEMBL.COMPOUND:CHEMBL4650755', 'CHEBI:15407', 'CHEBI:59773', 'CHEBI:2549', 'UNII:2P471X1Z11', 'CHEBI:64317', 'CHEBI:18357', 'CHEBI:64064', 'CHEBI:8378', 'CHEBI:3897', 'CHEBI:6970', 'CHEBI:3207', 'UNII:90Z2UF0E52', 'CHEBI:9449', 'CHEBI:6792', 'CHEBI:10112', 'CHEBI:204734', 'CHEBI:3077', 'CHEBI:3001', 'CHEBI:50730', 'CHEBI:51209', 'CHEBI:9667'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (2.2675768011441567e-77, 'HP:0002018', '{"predicate": "biolink:causes"}', False, 61, 923, 388215.0, frozenset({'CHEBI:5551', 'CHEBI:28918', 'CHEBI:7492', 'CHEBI:6538', 'CHEBI:5783', 'CHEBI:68575', 'PUBCHEM.COMPOUND:9433', 'CHEBI:4463', 'CHEBI:8382', 'CHEBI:6888', 'CHEBI:10100', 'CHEBI:28177', 'CHEBI:408174', 'CHEBI:31397', 'CHEBI:5147', 'CHEBI:5134', 'CHEBI:92511', 'CHEBI:8245', 'PUBCHEM.COMPOUND:5487426', 'CHEBI:91495', 'CHEBI:5106', 'CHEBI:4728', 'CHEBI:15407', 'CHEBI:59773', 'CHEBI:2549', 'CHEBI:64317', 'CHEBI:64064', 'CHEBI:8378', 'CHEBI:6970', 'CHEBI:3207', 'CHEBI:9449', 'CHEBI:6792', 'CHEBI:10112', 'CHEBI:3077', 'CHEBI:3001', 'CHEBI:50730', 'CHEBI:51209', 'CHEBI:9667'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (1.0242834612338697e-70, 'HP:0002018', '{"predicate": "biolink:contributes_to"}', False, 61, 1384, 388215.0, frozenset({'CHEBI:5551', 'CHEBI:28918', 'CHEBI:7492', 'CHEBI:6538', 'CHEBI:5783', 'CHEBI:68575', 'PUBCHEM.COMPOUND:9433', 'CHEBI:4463', 'CHEBI:8382', 'CHEBI:6888', 'CHEBI:10100', 'CHEBI:28177', 'CHEBI:408174', 'CHEBI:31397', 'CHEBI:5147', 'CHEBI:5134', 'CHEBI:92511', 'CHEBI:8245', 'PUBCHEM.COMPOUND:5487426', 'CHEBI:91495', 'CHEBI:5106', 'CHEBI:4728', 'CHEBI:15407', 'CHEBI:59773', 'CHEBI:2549', 'CHEBI:64317', 'CHEBI:64064', 'CHEBI:8378', 'CHEBI:6970', 'CHEBI:3207', 'CHEBI:9449', 'CHEBI:6792', 'CHEBI:10112', 'CHEBI:3077', 'CHEBI:3001', 'CHEBI:50730', 'CHEBI:51209', 'CHEBI:9667'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (3.532055725519189e-08, 'HP:0002018', '{"predicate": "biolink:treats_or_applied_or_studied_to_treat"}', False, 61, 38, 388215.0, frozenset({'CHEBI:134936', 'CHEBI:8378', 'CHEBI:6888'}), 'biolink:DiseaseOrPhenotypicFeature')
+                 ]
+    HP0002018_instances = [Enrichment(*r) for r in HP0002018]
+
+
+def test_filter_enrichment_results_HP0002307():
+    """
+    # # Alzhheimer's top2
+    """
+    HP0002307 = [(5.63750099257416e-20, 'HP:0002307', '{"predicate": "biolink:causes"}', False, 16, 146, 388215.0, frozenset({'CHEBI:42944', 'CHEBI:8874', 'CHEBI:9086', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:8707', 'CHEBI:5613'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (2.597186143668128e-26, 'HP:0002307', '{"predicate": "biolink:related_to"}', True, 16, 304, 388215.0, frozenset({'CHEBI:42944', 'CHEBI:45980', 'CHEBI:9086', 'CHEBI:8874', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:3048', 'CHEBI:125612', 'CHEBI:8707', 'CHEBI:5613'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (6.547336089426794e-25, 'HP:0002307', '{"predicate": "biolink:contributes_to"}', False, 16, 207, 388215.0, frozenset({'CHEBI:42944', 'CHEBI:45980', 'CHEBI:9086', 'CHEBI:8874', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:125612', 'CHEBI:8707', 'CHEBI:5613'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (8.481428433139503e-15, 'HP:0002307', '{"predicate": "biolink:has_adverse_event"}', False, 16, 97, 388215.0, frozenset({'CHEBI:5613', 'CHEBI:53289', 'CHEBI:3048', 'CHEBI:8707', 'CHEBI:8874'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (8.481428433139503e-15, 'HP:0002307', '{"predicate": "biolink:affects"}', False, 16, 97, 388215.0, frozenset({'CHEBI:5613', 'CHEBI:53289', 'CHEBI:3048', 'CHEBI:8707', 'CHEBI:8874'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (0.0005356420752667748, 'HP:0002307', '{"predicate": "biolink:treats_or_applied_or_studied_to_treat"}', False, 16, 13, 388215.0, frozenset({'CHEBI:3048'}), 'biolink:DiseaseOrPhenotypicFeature')]
+    HP0002307_instances = [Enrichment(*r) for r in HP0002307]
+
+
+
+def test_filter_enrichment_results_HP0001337():
+    """
+    # # Alzhheimer's top2
+    """
+    HP0001337 = [(7.683965842346254e-23, 'HP:0001337', '{"predicate": "biolink:contributes_to"}', False, 16, 677, 388215.0, frozenset({'CHEBI:125612', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:42944', 'CHEBI:45980', 'CHEBI:8707', 'CHEBI:8874', 'CHEBI:9086', 'CHEBI:5613', 'CHEBI:64312'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (3.6100144581781615e-26, 'HP:0001337', '{"predicate": "biolink:related_to"}', True, 16, 976, 388215.0, frozenset({'CHEBI:125612', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:42944', 'CHEBI:45980', 'CHEBI:8707', 'CHEBI:8874', 'CHEBI:9086', 'CHEBI:3048', 'CHEBI:5613', 'CHEBI:64312', 'CHEBI:15355'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (1.5017931353820876e-19, 'HP:0001337', '{"predicate": "biolink:causes"}', False, 16, 406, 388215.0, frozenset({'CHEBI:53289', 'CHEBI:8888', 'CHEBI:42944', 'CHEBI:8707', 'CHEBI:8874', 'CHEBI:9086', 'CHEBI:5613', 'CHEBI:64312'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (1.1095334235757668e-20, 'HP:0001337', '{"predicate": "biolink:has_adverse_event"}', False, 16, 293, 388215.0, frozenset({'CHEBI:53289', 'CHEBI:8888', 'CHEBI:8707', 'CHEBI:8874', 'CHEBI:9086', 'CHEBI:3048', 'CHEBI:5613', 'CHEBI:64312'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (1.1095334235757668e-20, 'HP:0001337', '{"predicate": "biolink:affects"}', False, 16, 293, 388215.0, frozenset({'CHEBI:53289', 'CHEBI:8888', 'CHEBI:8707', 'CHEBI:8874', 'CHEBI:9086', 'CHEBI:3048', 'CHEBI:5613', 'CHEBI:64312'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (0.0037434747417814593, 'HP:0001337', '{"predicate": "biolink:treats_or_applied_or_studied_to_treat"}', False, 16, 91, 388215.0, frozenset({'CHEBI:3048'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (0.00024725508099112975, 'HP:0001337', '{"predicate": "biolink:positively_correlated_with"}', True, 16, 6, 388215.0, frozenset({'CHEBI:15355'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (0.00024725508099112975, 'HP:0001337', '{"predicate": "biolink:correlated_with"}', True, 16, 6, 388215.0, frozenset({'CHEBI:15355'}), 'biolink:DiseaseOrPhenotypicFeature'),
+                 (0.00024725508099112975, 'HP:0001337', '{"predicate": "biolink:associated_with"}', True, 16, 6, 388215.0, frozenset({'CHEBI:15355'}), 'biolink:DiseaseOrPhenotypicFeature')
+                 ]
+    HP0001337_instances = [Enrichment(*r) for r in HP0001337]
+
 
 def test_streamline_children_to_parent():
     """

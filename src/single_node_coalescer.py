@@ -285,8 +285,17 @@ def filter_graph_enrichment_results( enrichment_results, input_ids, pvalue_thres
     if pvalue_threshold:
         results = [enrichment_result for enrichment_result in results if enrichment_result.p_value < pvalue_threshold]
 
+    # chkbest = {}
+    # for i, result in enumerate(results):
+    #     # Group results by enriched_node
+    #     chkbest.setdefault(result.enriched_node.new_curie, []).append((result.predicate, result.p_value))
+    # with open('checkbestruleMONDO0004979.json', 'w') as json_file:
+    #     json.dump(chkbest, json_file, indent=4)
+
     if result_length:
         results = results[:result_length]
+
+
 
     return results
 
