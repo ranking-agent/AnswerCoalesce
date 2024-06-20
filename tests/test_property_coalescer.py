@@ -33,7 +33,7 @@ def test_get_properties():
     #This one was failing because multiple old nodes in robokopdb2 were merging to chebi:16856.  And
     # one without properties was tromping the one with properties, so we were getting an empty property list
     # for something that should have lots of properties!
-    qprops = pl.lookup_property_by_node('PUBCHEM.COMPOUND:124886','biolink:ChemicalEntity')
+    qprops = pl.lookup_property_by_node('CHEBI:16856','biolink:ChemicalEntity')
     assert len(qprops) > 5
 
 def test_collect_properties():
@@ -101,7 +101,7 @@ def xtest_disease_property_enrichment():
 def test_property_coalsecer():
     enr_props = asyncio.run(pc.coalesce_by_property(['CHEBI:955', 'CHEBI:100'], 'biolink:ChemicalEntity'))
     assert len(enr_props) == 3
-    assert 'CHEBI_ROLE_biochemical_role' not in [enr_prop.enriched_node.new_curie for enr_prop in enr_props]
+    assert 'CHEBI_ROLE_biochemical_role' not in [enr_prop["enriched_property"] for enr_prop in enr_props]
 
 
 def xtest_property_coalescer_perf_test():

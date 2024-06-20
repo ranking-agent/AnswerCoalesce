@@ -99,7 +99,9 @@ def test_query():
     # with open("jret", "w+") as f:
     #     json.dump(ret, f, indent=4)
     assert(len(ret) == 3)
-@pytest.mark.nongithub
+
+
+# @pytest.mark.nongithub
 def test_infer():
     # Sample lookup query with inferred knowledge_type
     answerset = {
@@ -155,9 +157,6 @@ def test_infer():
     # convert the response to a json object
     jret = json.loads(response.content)
 
-    # with open("EDGAR-UI/jretfinalnew11", "w+") as f:
-    #     json.dump(jret, f, indent=4)
-    # check the data
     ret = jret['message']
 
     assert(len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
