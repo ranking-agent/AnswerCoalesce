@@ -123,7 +123,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'help',
             formatter_class = argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-t','--type',help='semantic type to collect properties of')
-    #parser.add_argument('-d','--database',help='URL of neo4j')
-    #parser.add_argument('-p','--password',help='password for neo4j')
+    # For chemicalEntity: python generate_property_counts.py -t biolink:ChemicalEntity
     args = parser.parse_args()
     create_from_file(args.type)

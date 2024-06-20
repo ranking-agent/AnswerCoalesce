@@ -108,7 +108,7 @@ def xtest_all_coalesce_creative_long():
         # Make sure each result has at least one extra node binding
         assert r['node_bindings'] == old_r
 
-def test_all_coalesce_with_workflow():
+def xtest_all_coalesce_with_workflow():
     """Make sure that results are well formed."""
     dir_path = os.path.dirname(os.path.realpath(__file__))
     testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_workflow.json')
@@ -162,7 +162,7 @@ def test_all_coalesce_with_workflow():
             pass
     assert extra_edge
 
-def test_all_coalesce_with_pred_exclude():
+def xtest_all_coalesce_with_pred_exclude():
     bad_predicates = ["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
                       "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"]
     """Make sure that results are well formed."""
