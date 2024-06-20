@@ -6,7 +6,7 @@ from src.server import APP
 
 client = TestClient(APP)
 
-jsondir = 'InputJson_1.5'
+jsondir= 'InputJson_1.5'
 
 
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
@@ -23,7 +23,7 @@ def test_coalesce_basic():
     #there are dups in this result set gross: dedup
     unique_results = {}
     for result in answerset['message']['results']:
-        key = json.dumps(result, sort_keys=True)
+        key = json.dumps(result,sort_keys=True)
         unique_results[key] = result
 
     answerset['message']['results'] = list(unique_results.values())
@@ -33,7 +33,7 @@ def test_coalesce_basic():
     response = client.post('/coalesce/graph', json=answerset)
 
     # was the request successful
-    assert (response.status_code == 200)
+    assert(response.status_code == 200)
 
     # convert the response to a json object
     jret = json.loads(response.content)
@@ -43,12 +43,10 @@ def test_coalesce_basic():
     # with open("jret", "w+") as f:
     #     json.dump(ret, f, indent=4)
 
-    assert (len(ret) == 3 or len(ret) == 4)  # 4 because of the additional parameter: auxilliary_Graph
-    assert (len(ret['results']) == len(answerset['message']['results']))
-
-
+    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
+    assert( len(ret['results'])==len(answerset['message']['results']))
 @pytest.mark.nongithub
-def xtest_query():
+def test_query():
     # Sample MultiCurie query
     answerset = {
         "message": {
@@ -62,8 +60,7 @@ def xtest_query():
                         "constraints": []
                     },
                     "gene": {
-                        "ids": ["NCBIGene:5111", "NCBIGene:8856", "UniProtKB:P24462", "NCBIGene:3356", "NCBIGene:152",
-                                "NCBIGene:1571"],
+                        "ids": ["NCBIGene:5111", "NCBIGene:8856", "UniProtKB:P24462", "NCBIGene:3356", "NCBIGene:152", "NCBIGene:1571"],
                         "categories": [
                             "biolink:Gene"
                         ],
@@ -84,7 +81,7 @@ def xtest_query():
                     }
                 }
             }
-        }
+      }
     }
 
     assert PDResponse.parse_obj(answerset)
@@ -92,7 +89,7 @@ def xtest_query():
     response = client.post('/query', json=answerset)
 
     # was the request successful
-    assert (response.status_code == 200)
+    assert(response.status_code == 200)
 
     # convert the response to a json object
     jret = json.loads(response.content)
@@ -101,12 +98,10 @@ def xtest_query():
     ret = jret['message']
     # with open("jret", "w+") as f:
     #     json.dump(ret, f, indent=4)
-    assert (len(ret) == 3)
-
-
+    assert(len(ret) == 3)
 @pytest.mark.nongithub
 def test_infer():
-    # Sample lookup query with inferred knowledge_type MONDO:0004975-Alz
+    # Sample lookup query with inferred knowledge_type
     answerset = {
         "parameters": {
             "pvalue_threshold": 1e-5,
@@ -128,7 +123,7 @@ def test_infer():
                     },
                     "disease": {
                         "ids": [
-                            "MONDO:0004979"
+                            "MONDO:0004975"
                         ],
                         "is_set": False,
                         "constraints": []
@@ -155,7 +150,7 @@ def test_infer():
     response = client.post('/query', json=answerset)
     # profiler.print()
     # was the request successful
-    assert (response.status_code == 200)
+    assert(response.status_code == 200)
 
     # convert the response to a json object
     jret = json.loads(response.content)
@@ -165,8 +160,7 @@ def test_infer():
     # check the data
     ret = jret['message']
 
-    assert (len(ret) == 4)  # 4 because of the additional parameter: auxilliary_Graph
-
+    assert(len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
 
 @pytest.mark.nongithub
 def test_property():
@@ -174,7 +168,7 @@ def test_property():
     # get the location of the Translator specification file
     dir_path: str = os.path.dirname(os.path.realpath(__file__))
 
-    testfilename = os.path.join(dir_path, jsondir, 'property_ac_input.json')
+    testfilename = os.path.join(dir_path,jsondir,'property_ac_input.json')
 
     with open(testfilename, 'r') as tf:
         answerset = json.load(tf)
@@ -183,212 +177,13 @@ def test_property():
     response = client.post('/coalesce/property', json=answerset)
 
     # was the request successful
-    assert (response.status_code == 200)
+    assert(response.status_code == 200)
 
     # convert the response to a json object
     jret = json.loads(response.content)
 
     # check the data
     ret = jret['message']
-    assert (len(ret) == 3 or len(ret) == 4)  # 4 because of the additional parameter: auxilliary_Graph
-    assert (len(ret['results']) == len(answerset['message']['results']))
+    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
+    assert( len(ret['results'])==len(answerset['message']['results']))
 
-
-def xtest_wfa3():
-    """Bring back when properties are working again"""
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
-    testfilename = os.path.join(dir_path, jsondir, 'a3.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/all', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # check the data
-    ret = jret['message']
-    assert (len(ret) == 3 or len(ret) == 4)
-    assert (len(ret['results']) - len(answerset['message']['results']) > 0)
-
-
-def test_set_coalesce():
-    """This is a 2 hop query with three answers
-    A B C
-    A B D
-    A E D
-    So it should produce 2 set coalesces: A B (CD), A (BE) D
-    """
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
-    testfilename = os.path.join(dir_path, jsondir, 'twohop.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/set', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # check the data
-    ret = jret['message']
-    assert (len(ret) == 3 or len(ret) == 4)  # 4 because of the additional param: auxilliary_Graph
-    assert (len(ret['results']) == len(answerset['message']['results']))
-
-
-def xtest_coalesce():
-    """Bring back when properties are working again"""
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
-    testfilename = os.path.join(dir_path, jsondir, 'asthma_one_hop.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/property', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # check the data
-    ret = jret['message']
-    assert (len(ret) == 3 or len(ret) == 4)  # 4 because of the additional param: auxilliary_Graph
-    assert (len(ret['results']) - len(answerset['message']['results']) == 118)
-
-
-def xfailed_relation_attrib_error_test_schizo_coalesce():
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'famcov_new.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/graph', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    jr = response.json()
-    assert 'message' in jr
-
-
-def xtest_lookup_graph_coalesce():
-    """This test is fine when running against prod, but it's not a travis test case b/c we don't
-    put this json into our test redis"""
-    #This file is producing 500's
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'strider_out_issue_60.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/graph', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    original_answers = len(answerset['message']['results'])
-    final_answers = len(response.json()['message']['results'])
-    rj = response.json()
-    assert final_answers > original_answers
-
-
-def xtest_diabetes_drugs_prop():
-    #turn this back on when props are working again.
-    #This file is producing 500's
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'diabetes_drugs.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/property', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    original_answers = len(answerset['message']['results'])
-    final_answers = len(response.json()['message']['results'])
-    rj = response.json()
-    for result in rj['message']['results']:
-        assert len(result['node_bindings']['drug']) == len(result['edge_bindings']['treats'])
-    assert final_answers > original_answers
-
-
-def xtest_ms_drugs_500():
-    """A fine test against prod but not agains the test redis unless we want to put wfc1 in the test redis."""
-    #This file is producing 500's
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'wfc1_strider.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/graph', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    original_answers = len(answerset['message']['results'])
-    final_answers = len(response.json()['message']['results'])
-    rj = response.json()
-    assert final_answers > original_answers
-
-
-def xtest_500():
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'bad_coalesce.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/graph', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)
-
-    original_answers = len(answerset['message']['results'])
-    final_answers = len(response.json()['message']['results'])
-    rj = response.json()
-    assert final_answers > original_answers
-
-
-def test_no_results():
-    #Don'tfreak out if strider doesn't find anything
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'no_results.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/all', json=answerset)
-
-    # was the request successful
-    assert (response.status_code == 200)

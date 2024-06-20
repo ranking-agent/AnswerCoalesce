@@ -108,92 +108,94 @@ def xtest_all_coalesce_creative_long():
         # Make sure each result has at least one extra node binding
         assert r['node_bindings'] == old_r
 
-def xtest_all_coalesce_with_workflow():
-    """Make sure that results are well formed."""
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_workflow.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        assert PDResponse.parse_obj(answerset)
-        answerset = answerset['message']
-    # Some of these edges are old, we need to know which ones...
-    original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
-    original_node_ids = set([node for node in answerset['knowledge_graph']['nodes']])
-    # now generate new answers
-    newset = asyncio.run(snc.coalesce(answerset, method='all'))
-    assert PDResponse.parse_obj({'message': newset})
-    # Must be at least the length of the initial answers
-    assert len(newset['results']) == len(answerset['results'])
-    kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
-    kgedges = newset['knowledge_graph']['edges']
-    # Make sure that the edges are properly formed
-    for eid, kg_edge in kgedges.items():
-        assert isinstance(kg_edge["predicate"], str)
-        assert kg_edge["predicate"].startswith("biolink:")
-    for r in newset['results']:
-        # Make sure each result has at least one extra node binding
-        nbs = r['node_bindings']
-        for qg_id, nbk in nbs.items():
-            # Every node binding should be found somewhere in the kg nodes
-            for nb in nbk:
-                assert nb['id'] in kgnodes
-                # And each of these nodes should have a name
-                assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
-
-    # make sure enriched result has an extra edge and extra node
-    extra_node = False
-    for node in kgnodes:
-        if node in original_node_ids:
-            continue
-        extra_node = True
-    assert extra_node
-
-    extra_edge = False
-    for eid, eedge in kgedges.items():
-        if eid in original_edge_ids:
-             continue
-        extra_edge = True
-        eedge = kgedges[eid]
-        try:
-            sources = set(flatten([a['resource_id'] for a in eedge['sources']]))
-            ac_sour = set(['infores:automat-robokop'])
-            assert len(ac_sour.intersection(sources)) == 1
-        except:
-            pass
-    assert extra_edge
-
-def xtest_all_coalesce_with_pred_exclude():
-    bad_predicates = ["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
-                      "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"]
-    """Make sure that results are well formed."""
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'famcov_new_pred_exclude.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        assert PDResponse.parse_obj(answerset)
-        assert answerset['workflow'][0].get("parameters").get('predicates_to_exclude')
-        predicates_to_exclude = answerset['workflow'][0].get("parameters").get('predicates_to_exclude', None)
-        answerset = answerset['message']
-
-    # now generate new answers
-    newset = asyncio.run(snc.coalesce(answerset, method='all', predicates_to_exclude=predicates_to_exclude))
-    assert PDResponse.parse_obj({'message': newset})
-    # Must be at least the length of the initial answers
-    assert len(newset['results']) == len(answerset['results'])
-    aux_graphs  = newset.get('auxiliary_graphs', {})
-    if aux_graphs:
-        for aux_g_id, aux_g_data in aux_graphs.items():
-            if 'n_ac' in aux_g_id:
-                continue
-            for attr in aux_g_data['attributes']:
-                if attr['attribute_type_id'] == 'biolink:predicate':
-                    assert attr['value'] not in bad_predicates
-    for r in newset['results']:
-        enr = r['enrichments']
-        if enr:
-            # make sure enriched id exists in the aux_graphs
-            assert set(aux_graphs.keys()).intersection(enr) != 0
-
+# Should either of these tests persist in some form?
+#
+#def test_all_coalesce_with_workflow():
+#    """Make sure that results are well formed."""
+#    dir_path = os.path.dirname(os.path.realpath(__file__))
+#    testfilename = os.path.join(dir_path, jsondir, 'famcov_new_with_workflow.json')
+#    with open(testfilename, 'r') as tf:
+#        answerset = json.load(tf)
+#        assert PDResponse.parse_obj(answerset)
+#        answerset = answerset['message']
+#    # Some of these edges are old, we need to know which ones...
+#    original_edge_ids = set([eid for eid, _ in answerset['knowledge_graph']['edges'].items()])
+#    original_node_ids = set([node for node in answerset['knowledge_graph']['nodes']])
+#    # now generate new answers
+#    newset = asyncio.run(snc.coalesce(answerset, method='all'))
+#    assert PDResponse.parse_obj({'message': newset})
+#    # Must be at least the length of the initial answers
+#    assert len(newset['results']) == len(answerset['results'])
+#    kgnodes = set([nid for nid, n in newset['knowledge_graph']['nodes'].items()])
+#    kgedges = newset['knowledge_graph']['edges']
+#    # Make sure that the edges are properly formed
+#    for eid, kg_edge in kgedges.items():
+#        assert isinstance(kg_edge["predicate"], str)
+#        assert kg_edge["predicate"].startswith("biolink:")
+#    for r in newset['results']:
+#        # Make sure each result has at least one extra node binding
+#        nbs = r['node_bindings']
+#        for qg_id, nbk in nbs.items():
+#            # Every node binding should be found somewhere in the kg nodes
+#            for nb in nbk:
+#                assert nb['id'] in kgnodes
+#                # And each of these nodes should have a name
+#                assert 'name' in newset['knowledge_graph']['nodes'][nb['id']]
+#
+#    # make sure enriched result has an extra edge and extra node
+#    extra_node = False
+#    for node in kgnodes:
+#        if node in original_node_ids:
+#            continue
+#        extra_node = True
+#    assert extra_node
+#
+#    extra_edge = False
+#    for eid, eedge in kgedges.items():
+#        if eid in original_edge_ids:
+#             continue
+#        extra_edge = True
+#        eedge = kgedges[eid]
+#        try:
+#            sources = set(flatten([a['resource_id'] for a in eedge['sources']]))
+#            ac_sour = set(['infores:automat-robokop'])
+#            assert len(ac_sour.intersection(sources)) == 1
+#        except:
+#            pass
+#    assert extra_edge
+#
+#def test_all_coalesce_with_pred_exclude():
+#    bad_predicates = ["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+#                      "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"]
+#    """Make sure that results are well formed."""
+#    dir_path = os.path.dirname(os.path.realpath(__file__))
+#    testfilename = os.path.join(dir_path, jsondir, 'famcov_new_pred_exclude.json')
+#    with open(testfilename, 'r') as tf:
+#        answerset = json.load(tf)
+#        assert PDResponse.parse_obj(answerset)
+#        assert answerset['workflow'][0].get("parameters").get('predicates_to_exclude')
+#        predicates_to_exclude = answerset['workflow'][0].get("parameters").get('predicates_to_exclude', None)
+#        answerset = answerset['message']
+#
+#    # now generate new answers
+#    newset = asyncio.run(snc.coalesce(answerset, method='all', predicates_to_exclude=predicates_to_exclude))
+#    assert PDResponse.parse_obj({'message': newset})
+#    # Must be at least the length of the initial answers
+#    assert len(newset['results']) == len(answerset['results'])
+#    aux_graphs  = newset.get('auxiliary_graphs', {})
+#    if aux_graphs:
+#        for aux_g_id, aux_g_data in aux_graphs.items():
+#            if 'n_ac' in aux_g_id:
+#                continue
+#            for attr in aux_g_data['attributes']:
+#                if attr['attribute_type_id'] == 'biolink:predicate':
+#                    assert attr['value'] not in bad_predicates
+#    for r in newset['results']:
+#        enr = r['enrichments']
+#        if enr:
+#            # make sure enriched id exists in the aux_graphs
+#            assert set(aux_graphs.keys()).intersection(enr) != 0
+#
 def test_gouper():
     x = 'abcdefghi'
     n = 0

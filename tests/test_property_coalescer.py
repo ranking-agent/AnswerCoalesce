@@ -1,24 +1,8 @@
-import os, asyncio
+import os
 import src.property_coalescence.property_coalescer as pc
 from src.components import Enrichment
+import asyncio
 
-
-def Xtest_disease_props():
-    #this won't work in travis unless we put the db files there for diseases
-    pl = pc.PropertyLookup()
-    dprops = pl.lookup_property_by_node('MONDO:0019438','biolink:Disease')
-
-    assert len(dprops) == 0
-    assert 'nutritional_or_metabolic_disease' in dprops
-    assert 'systemic_or_rheumatic_disease' in dprops
-    # check counts
-    num = pl.total_nodes_with_property('nutritional_or_metabolic_disease','biolink:Disease')
-    assert num > 100
-    zero = pl.total_nodes_with_property('blarney','biolink:Disease')
-    assert zero == 0
-    #How many diseases?
-    dcount = pl.get_nodecount('biolink:Disease')
-    assert dcount > 20000
 
 def test_get_properties():
 
@@ -42,24 +26,37 @@ def test_get_properties():
     assert len(enr_props) == 3
     assert not any('CHEBI_ROLE_biochemical_role' in enr_prop.get("enriched_property") for enr_prop in enr_props)
 
-    # Check an empty
-    eprops = pl.lookup_property_by_node('CHEBI:NOTREAL', 'biolink:ChemicalEntity')
+    #Check an empty
+    eprops = pl.lookup_property_by_node('CHEBI:NOTREAL','biolink:ChemicalEntity')
     assert len(eprops) == 0
 
+    #This one was failing because multiple old nodes in robokopdb2 were merging to chebi:16856.  And
+    # one without properties was tromping the one with properties, so we were getting an empty property list
+    # for something that should have lots of properties!
+    qprops = pl.lookup_property_by_node('PUBCHEM.COMPOUND:124886','biolink:ChemicalEntity')
+    assert len(qprops) > 5
 
 def test_collect_properties():
     """
     Given three nodes, find properties that two or more of them share
-    'CHEBI:68299':{'biochemical_role', 'metabolite', 'antibacterial_agent', 'eukaryotic_metabolite', 'antimicrobial_agent', 'fungal_metabolite'}
-    'CHEBI:68075':{'biochemical_role', 'metabolite', 'eukaryotic_metabolite', 'Penicillium_metabolite', 'fungal_metabolite'}
-    'CHEBI:65728':{'biochemical_role', 'metabolite', 'antibacterial_agent', 'antimicrobial_agent'}
+    'CHEBI:68299':{ 'antibacterial_agent',  'fungal_metabolite'}
+    'CHEBI:68075':{'biochemical_role', 'metabolite', 'molecule_type:Small molecule', 'eukaryotic_metabolite',
+    'biological_role', 'Penicillium_metabolite', 'fungal_metabolite'}
+    'CHEBI:65728':{'biochemical_role', 'metabolite', 'chemical_role', 'donor', 'antibacterial_agent',
+    'antimicrobial_agent', 'biological_role', 'acid',  'Bronsted_acid'}
     So 'biochemical_role':all 3
-       'metabolite': all 3
-       'antibacterial_agent': 1&3
-       'eukaryotic_metabolite: 1&2
-       'antimicrobial_agent': 1 & 3
-       'fungal_metabolite': 1&2
-       'Penicilluim_metabolite': only in 2, so should not show up
+    'metabolite': all 3
+    'molecule_type:Small molecule': 1&2
+    'antibacterial_agent': 1&3
+    'eukaryotic_metabolite: 1&2
+    'antimicrobial_agent': 1 & 3
+    'biological_role': all 3
+    'fungal_metabolite': 1&2
+    'Penicilluim_metabolite': only in 2, so should not show up
+    'chemical_role': only in 3, so should not show up
+    'donor': only in 3, so should not show up
+    'acid': only in 3, so should not show up
+    'Bronsted_acid': only in 3, so should not show up
     """
     pl = pc.PropertyLookup()
     properties = pl.collect_properties(['CHEBI:68299', 'CHEBI:68075', 'CHEBI:65728'],'biolink:ChemicalEntity')

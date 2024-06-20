@@ -1,47 +1,41 @@
 from collections import defaultdict
 from itertools import chain
-import os, logging, requests, asyncio, json, uuid
-from copy import deepcopy
-
-import orjson
-from reasoner_pydantic import Response as PDResponse, KnowledgeGraph
+import os, logging, json, orjson, uuid
 
 from src.property_coalescence.property_coalescer import coalesce_by_property, lookup_nodes_by_properties
-from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links, get_node_types, \
-    filter_links_by_node_type, get_node_names, add_provs
+from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links, get_node_types, filter_links_by_node_type, get_node_names, add_provs
 
 from src.set_coalescence.set_coalescer import coalesce_by_set
 from src.components import MCQDefinition, Lookup_params, Lookup
-from src.trapi import (create_knowledge_graph_edge, create_knowledge_graph_edge_from_component, \
-                       create_knowledge_graph_node, add_node_to_knowledge_graph, add_edge_to_knowledge_graph,
-                       add_auxgraph_for_enrichment, add_enrichment_edge, add_enrichment_result, add_member_of_klat, \
-                       add_auxgraph_for_lookup, create_edgar_enrichment_edge, add_edgar_enrichment_to_group_edge,
-                       create_edgar_inferred_edge, add_auxgraph_for_inference, add_node_property, add_edgar_final_result, fetch_inferred_edge_id,
-                       make_edgar_final_result)
+from src.trapi import create_knowledge_graph_edge, create_knowledge_graph_edge_from_component, \
+    create_knowledge_graph_node, add_node_to_knowledge_graph, add_edge_to_knowledge_graph, add_auxgraph_for_enrichment, \
+    add_enrichment_edge, add_enrichment_result, add_member_of_klat, add_auxgraph_for_lookup, create_edgar_enrichment_edge, add_edgar_enrichment_to_group_edge,create_edgar_inferred_edge, add_auxgraph_for_inference, add_node_property, add_edgar_final_result, fetch_inferred_edge_id, make_edgar_final_result
 
 logger = logging.getLogger(__name__)
 role_predicate = "biolink:has_chemical_role"
 
 
-async def multi_curie_query( in_message, parameters ):
+async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
     mcq_definition = MCQDefinition(in_message)
     enrichment_results = await coalesce_by_graph(mcq_definition.group_node.curies,
                                                  mcq_definition.group_node.semantic_type,
-                                                 node_constraints=mcq_definition.enriched_node.semantic_types,
+                                                 node_constraints= mcq_definition.enriched_node.semantic_types,
                                                  predicate_constraints=[mcq_definition.edge.predicate],
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters["pvalue_threshold"],
                                                  result_length=parameters["result_length"])
     return await create_mcq_trapi_response(in_message, enrichment_results, mcq_definition)
 
-
-async def infer( in_message, parameters ):
+async def infer(in_message, parameters):
     """Takes a TRAPI infer query and returns a TRAPI infer answer."""
-    params = Lookup_params(in_message)
+    params = Lookup_params( in_message )
     # We are dealing with a single curie so just the top result works
-    lookup_results = lookup([params.curie], [params.predicate_parts], params.is_source, params.output_semantic_type)[0]
+    lookup_results = lookup( [params.curie],
+                             [params.predicate_parts],
+                             params.is_source,
+                             params.output_semantic_type )[0]
 
     graph_enrichment_results = await coalesce_by_graph(lookup_results.link_ids,
                                                        params.output_semantic_type,
@@ -114,7 +108,7 @@ async def property_enrich( input_ids, params, parameters ):
     return enrichment_results
 
 
-async def create_mcq_trapi_response( in_message, enrichment_results, mcq_definition ):
+async def create_mcq_trapi_response(in_message, enrichment_results, mcq_definition):
     """Create a TRAPI multi-curie answer. Go out and get the provenance or other features as needed.
     in_message: the original TRAPI message in dict form
     enrichment_results: the enriched nodes and edges
@@ -127,8 +121,7 @@ async def create_mcq_trapi_response( in_message, enrichment_results, mcq_definit
         await create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition)
     return in_message
 
-
-async def create_result_from_enrichment( in_message, enrichment, member_of_edges, mcq_definition ):
+async def create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition):
     """
      Each enrichment is a result.  For each enrichment we need to
      1. (possibly) add the new node to the knowledge graph
@@ -142,17 +135,15 @@ async def create_result_from_enrichment( in_message, enrichment, member_of_edges
      8. In the result, create the analysis and add edge_bindings to it.
      """
     # 1.(possibly) add the new node to the knowledge graph
-    node = create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type,
-                                       enrichment.enriched_node.newnode_name)
-    add_node_to_knowledge_graph(in_message, enrichment.enriched_node.new_curie, node)
+    node = create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type, enrichment.enriched_node.newnode_name)
+    add_node_to_knowledge_graph(in_message, enrichment.enriched_node.new_curie, node )
     aux_graph_ids = []
     for edge in enrichment.links:
         # 2. Add the edges between the new node and the member nodes to the knowledge graph
         trapi_edge = create_knowledge_graph_edge_from_component(edge)
         direct_edge_id = add_edge_to_knowledge_graph(in_message, edge=trapi_edge)
         # 3. Create an auxiliary graph for each element of the member_id consisting of the edge from the member_id to the new node
-        aux_graph_id = add_auxgraph_for_enrichment(in_message, direct_edge_id, member_of_edges,
-                                                   enrichment.enriched_node.new_curie)
+        aux_graph_id = add_auxgraph_for_enrichment(in_message, direct_edge_id, member_of_edges, enrichment.enriched_node.new_curie)
         aux_graph_ids.append(aux_graph_id)
     # 4. Add the inferred edge from the new node to the input uuid to the knowledge graph and
     # 5. Add the auxiliary graphs created above to the inferred edge
@@ -162,8 +153,7 @@ async def create_result_from_enrichment( in_message, enrichment, member_of_edges
     # 8. In the result, create the analysis and add edge_bindings to it.
     add_enrichment_result(in_message, enrichment.enriched_node, enrichment_kg_edge_id, mcq_definition)
 
-
-async def create_or_find_member_of_edges_and_nodes( in_message, mcq_definition ):
+async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
     """Create or find the member_of edges for the input nodes from the member_ids element of input_qnode_id.
     Return a dictionary of the form
     { input_curie: edge_id }"""
@@ -176,7 +166,7 @@ async def create_or_find_member_of_edges_and_nodes( in_message, mcq_definition )
     # Loop over the knowledge graph edges and find the member_of edges that have the input_qnode_uuid
     # as the object. Add them to a member_of_edges dictionary with the subject of the edge as the key.
     member_of_edges = {}
-    for edge_id, edge in in_message['message'].get('knowledge_graph', {}).get('edges', {}).items():
+    for edge_id, edge in in_message['message'].get('knowledge_graph',{}).get('edges',{}).items():
         if edge['object'] == input_qnode_uuid:
             member_of_edges[edge['subject']] = edge_id
     # Now loop over the member_ids and add any that are not in the member_of_edges to the knowledge graph
@@ -190,7 +180,7 @@ async def create_or_find_member_of_edges_and_nodes( in_message, mcq_definition )
             member_of_edges[member_id] = edge_id
     # We also want to make sure that all the member_ids are in the knowledge graph as nodes.
     for member_id in member_ids:
-        if member_id not in in_message['message'].get('knowledge_graph', {}).get('nodes', {}):
+        if member_id not in in_message['message'].get('knowledge_graph',{}).get('nodes',{}):
             new_node = create_knowledge_graph_node(member_id, mcq_definition.group_node.semantic_type)
             add_node_to_knowledge_graph(in_message, member_id, new_node)
     return member_of_edges
@@ -215,7 +205,7 @@ async def make_inference( in_message, params, lookup_results, graph_enrichment_r
     create_infer_trapi_response(in_message, params, lookup_results, graph_enrichment_results, graph_inferred_results,
                                 property_inferred_results)
 
-    with open("Asthma_inferred_res.json", "w") as json_file:
+    with open("Alz_res.json", "w") as json_file:
         json.dump(in_message, json_file, indent=4)
     return in_message
 
@@ -236,7 +226,6 @@ def create_infer_trapi_response( in_message, params, lookup_results, graph_enric
         3. the graph and property inferred results
     3. populate "message" - "results"
     """
-
     # In a single curie trapi, lookup_results is meant to be of length 1
     # 1. add the curie node to the knowledge graph
     add_edgar_input_curie(in_message, lookup_results)
@@ -281,7 +270,7 @@ def unify_link_ids( results ):
             filtered_predicates.append(json.dumps(pred))
             seen_nodes.add((node, pred.get("predicate")))
         return filtered_nodes, filtered_predicates
-    # return results
+
 
 
 def get_node_name_and_type( input_ids ):
