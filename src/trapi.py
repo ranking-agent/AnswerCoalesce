@@ -151,7 +151,7 @@ def add_auxgraph_for_enrichment( in_message, direct_edge_id, member_of_ids, new_
         ],
         "attributes": []
     }
-    aux_graph_id = str(uuid.uuid4())
+    aux_graph_id = f"SG:_{direct_edge_id}"
     if "auxiliary_graphs" not in in_message["message"]:
         in_message["message"]["auxiliary_graphs"] = {}
     in_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
@@ -305,7 +305,7 @@ def create_edgar_enrichment_edge( enrichment_pvalue, input_edge=None, source=Non
     return new_edge_id, enrichment_edge
 
 
-def add_edgar_enrichment_to_group_edge( in_message, group_uuid, aux_graph_ids, predicate_only, enrichment ):
+def add_edgar_enrichment_to_uuid_edge( in_message, uuid, aux_graph_ids, predicate_only, enrichment ):
     """
     Add an enrichment edge to the TRAPI response.
     The enrichment edge is an inferred edge connecting the enriched node to the input node.
@@ -320,15 +320,15 @@ def add_edgar_enrichment_to_group_edge( in_message, group_uuid, aux_graph_ids, p
 
     if isinstance(enrichment, str):
         # if it is a property node
-        new_edge["object"] = group_uuid
+        new_edge["object"] = uuid
         new_edge["subject"] = enrichment
 
     else:
         if enrichment.is_source:
-            new_edge["object"] = group_uuid
+            new_edge["object"] = uuid
             new_edge["subject"] = enrichment.enriched_node.new_curie
         else:
-            new_edge["subject"] = group_uuid
+            new_edge["subject"] = uuid
             new_edge["object"] = enrichment.enriched_node.new_curie
 
     # Add provenance
@@ -373,7 +373,7 @@ def create_edgar_inferred_edge( new_node, qg_curie, qg_predicate, is_source=Fals
 
 
 def add_auxgraph_for_inference( in_message, enriched_node, direct_inferred_edge_id, enriched_to_infer_edge_id,
-                                enrichment_edges, group_to_curie_edge_id ):
+                                enrichment_edges, uuid_to_curie_edge_id ):
     """
     Add an auxilary graph to the TRAPI response for edgar.
     In this case, we have a direct edge from an input_id to the inferred node.  That edge is in the KG, and its
@@ -394,10 +394,10 @@ def add_auxgraph_for_inference( in_message, enriched_node, direct_inferred_edge_
 
     # create the aux graph
     aux_graph = {
-        "edges": [enriched_to_infer_edge_id, enriched_edge_id, group_to_curie_edge_id],
+        "edges": [enriched_to_infer_edge_id, enriched_edge_id, uuid_to_curie_edge_id],
         "attributes": []
     }
-    aux_graph_id = f"{prefix}_inferred_sg_{str(uuid.uuid4())}"
+    aux_graph_id = f"{prefix}_Inferred_SG:_{direct_inferred_edge_id}"
     if "auxiliary_graphs" not in in_message["message"]:
         in_message["message"]["auxiliary_graphs"] = {}
     in_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
@@ -407,12 +407,12 @@ def add_auxgraph_for_inference( in_message, enriched_node, direct_inferred_edge_
     add_aux_graphs(in_message["message"]["knowledge_graph"]["edges"][direct_inferred_edge_id], aux_graph_id)
 
 
-def add_auxgraph_for_lookup( in_message, group_to_curie_edge, member_of_edges, lookup_member_edges ):
+def add_auxgraph_for_lookup( in_message, uuid_to_curie_edge_id, member_of_edges, lookup_member_edges ):
     """
     Add an auxilary graph to the TRAPI response for edgar.
-    In this case, we have a direct edge from an input_curie to the group_node.  That edge is in the KG, and its
-    id is group_to_curie_edge.  The member_of_edges holds edge_ids of the edges connecting the set groupnode node to the
-    lookup id, indexed by the lookup id. So we need to look at the group_to_curie_edge, create the auxiliary graph which will consist of
+    In this case, we have a direct edge from an input_curie to the uuid_node.  That edge is in the KG, and its
+    id is uuid_to_curie_edge.  The member_of_edges holds edge_ids of the edges connecting the set uuidnode node to the
+    lookup id, indexed by the lookup id. So we need to look at the uuid_to_curie_edge, create the auxiliary graph which will consist of
     (input curie)-(lookup_node)-[member_of]-(set uuid
     """
 
@@ -422,12 +422,12 @@ def add_auxgraph_for_lookup( in_message, group_to_curie_edge, member_of_edges, l
         "edges": edges,
         "attributes": []
     }
-    aux_graph_id = f"lookup_{str(uuid.uuid4())}"
+    aux_graph_id = f"SG:_{uuid_to_curie_edge_id}"
     if "auxiliary_graphs" not in in_message["message"]:
         in_message["message"]["auxiliary_graphs"] = {}
     in_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
 
-    add_aux_graphs(in_message["message"]["knowledge_graph"]["edges"][group_to_curie_edge], aux_graph_id)
+    add_aux_graphs(in_message["message"]["knowledge_graph"]["edges"][uuid_to_curie_edge_id], aux_graph_id)
 
 
 def make_edgar_final_result( result_dictionary, inferred_node, edge_id, params: Lookup_params ):

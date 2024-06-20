@@ -9,7 +9,7 @@ from src.set_coalescence.set_coalescer import coalesce_by_set
 from src.components import MCQDefinition, Lookup_params, Lookup
 from src.trapi import create_knowledge_graph_edge, create_knowledge_graph_edge_from_component, \
     create_knowledge_graph_node, add_node_to_knowledge_graph, add_edge_to_knowledge_graph, add_auxgraph_for_enrichment, \
-    add_enrichment_edge, add_enrichment_result, add_member_of_klat, add_auxgraph_for_lookup, create_edgar_enrichment_edge, add_edgar_enrichment_to_group_edge,create_edgar_inferred_edge, add_auxgraph_for_inference, add_node_property, add_edgar_final_result, fetch_inferred_edge_id, make_edgar_final_result
+    add_enrichment_edge, add_enrichment_result, add_member_of_klat, add_auxgraph_for_lookup, create_edgar_enrichment_edge, add_edgar_enrichment_to_uuid_edge,create_edgar_inferred_edge, add_auxgraph_for_inference, add_node_property, add_edgar_final_result, fetch_inferred_edge_id, make_edgar_final_result
 
 logger = logging.getLogger(__name__)
 role_predicate = "biolink:has_chemical_role"
@@ -205,8 +205,6 @@ async def make_inference( in_message, params, lookup_results, graph_enrichment_r
     create_infer_trapi_response(in_message, params, lookup_results, graph_enrichment_results, graph_inferred_results,
                                 property_inferred_results)
 
-    with open("Alz_res.json", "w") as json_file:
-        json.dump(in_message, json_file, indent=4)
     return in_message
 
 
@@ -230,20 +228,20 @@ def create_infer_trapi_response( in_message, params, lookup_results, graph_enric
     # 1. add the curie node to the knowledge graph
     add_edgar_input_curie(in_message, lookup_results)
 
-    # 2. Add  input_curie -> individual lookup_nodes; individual lookup_nodes -> group_set to the kg
-    group_to_curie_edge_id, group_uuid, member_of_set_edges, member_set, lookup_edges = add_edgar_curie_to_set_edge(
+    # 2. Add  input_curie -> individual lookup_nodes; individual lookup_nodes -> uuid_group to the kg
+    uuid_to_curie_edge_id, uuid, uuid_group_edges, uuid_group, lookup_edges = add_edgar_curie_to_uuid_edge(
         in_message, lookup_results,
         params)
 
     # 3.Add enrichment results
-    enrichment_edges = add_edgar_set_to_enrichment(in_message, group_uuid, member_of_set_edges,
+    enrichment_edges = add_edgar_uuid_to_enrichment(in_message, uuid, uuid_group_edges,
                                                    graph_enrichment_results, property_inferred_results)
 
     # 4. Add the inferred nodes and edges and create result_bindings
     results_cache = {}
     # add_enrichment inference
     add_edgar_enrichment_inference(results_cache, in_message, graph_inferred_results, property_inferred_results,
-                                   member_set, group_to_curie_edge_id, enrichment_edges, params)
+                                   uuid_group, uuid_to_curie_edge_id, enrichment_edges, params)
 
     # 5. Add the results to the trapi message
     add_edgar_final_result(in_message, results_cache)
@@ -298,7 +296,7 @@ def add_edgar_input_curie( in_message, lookup_results ):
     add_node_to_knowledge_graph(in_message, lookup_results.input_qnode_curie.new_curie, node)
 
 
-def add_edgar_curie_to_set_edge( in_message, lookup_results, params ):
+def add_edgar_curie_to_uuid_edge( in_message, lookup_results, params ):
     """
     Each result maps the input curie to its lookup result.  For each result we need to
          1.  Add the curie node to the knowledge graph
@@ -306,17 +304,17 @@ def add_edgar_curie_to_set_edge( in_message, lookup_results, params ):
          3. Add the lookup nodes to the knowledge graph
 
     """
-    member_set = lookup_results.link_ids
+    uuid_group = lookup_results.link_ids
     lookup_predicate_only = orjson.loads(lookup_results.predicate).get("predicate")
 
     # 1. Make the set node
-    group_uuid = f"set_{str(uuid.uuid4())}"
-    set_node = create_knowledge_graph_node(group_uuid, [params.output_semantic_type], 'InputSet')
-    add_member_attributes(set_node, member_set)
-    add_node_to_knowledge_graph(in_message, group_uuid, set_node)
+    uuid = "uuid:1"
+    set_node = create_knowledge_graph_node(uuid, [params.output_semantic_type], uuid)
+    add_member_attributes(set_node, uuid_group)
+    add_node_to_knowledge_graph(in_message, uuid, set_node)
 
     # 2. Add the edges between the input curie node and lookup nodes to the knowledge graph
-    member_of_set_edges = {};
+    uuid_group_edges = {};
     lookup_edges = {}
     for lookup_link in lookup_results.lookup_links:
         # 1. Let's add the individual lookup nodes to the kg
@@ -331,29 +329,29 @@ def add_edgar_curie_to_set_edge( in_message, lookup_results, params ):
         lookup_edges[lookup_link.link_id] = trapi_edge_id
 
         # 3. Add C2(in lookup nodes) - member_of -> Group edges to the kg
-        group_member_edge_id = f"{lookup_link.link_id}_member_of_{group_uuid}"
-        group_member_new_edge = create_knowledge_graph_edge(lookup_link.link_id, group_uuid, "biolink:member_of")
+        group_member_edge_id = f"{lookup_link.link_id}_member_of_{uuid}"
+        group_member_new_edge = create_knowledge_graph_edge(lookup_link.link_id, uuid, "biolink:member_of")
 
         add_edge_to_knowledge_graph(in_message, group_member_new_edge, group_member_edge_id)
-        member_of_set_edges[lookup_link.link_id] = group_member_edge_id
+        uuid_group_edges[lookup_link.link_id] = group_member_edge_id
 
     # 3. Create the group_node to qg input curie
     if params.is_source:
-        group_to_curie_edge_id = f"{params.curie}_{lookup_predicate_only}_{group_uuid}"
-        group_to_curie_edge = create_knowledge_graph_edge(params.curie, group_uuid,
+        uuid_to_curie_edge_id = f"{params.curie}_{lookup_predicate_only}_{uuid}"
+        group_to_curie_edge = create_knowledge_graph_edge(params.curie, uuid,
                                                           orjson.loads(params.predicate_parts).get("predicate"))
     else:
-        group_to_curie_edge_id = f"{group_uuid}_{lookup_predicate_only}_{params.curie}"
-        group_to_curie_edge = create_knowledge_graph_edge(group_uuid, params.curie,
+        uuid_to_curie_edge_id = f"{uuid}_{lookup_predicate_only}_{params.curie}"
+        group_to_curie_edge = create_knowledge_graph_edge(uuid, params.curie,
                                                           orjson.loads(params.predicate_parts).get("predicate"))
     # 4, Add the group_node to qg input curie to the kg
-    add_edge_to_knowledge_graph(in_message, edge=group_to_curie_edge, edge_id=group_to_curie_edge_id)
-    add_auxgraph_for_lookup(in_message, group_to_curie_edge_id, member_of_set_edges, lookup_edges)
+    add_edge_to_knowledge_graph(in_message, edge=group_to_curie_edge, edge_id=uuid_to_curie_edge_id)
+    add_auxgraph_for_lookup(in_message, uuid_to_curie_edge_id, uuid_group_edges, lookup_edges)
 
-    return group_to_curie_edge_id, group_uuid, member_of_set_edges, member_set, lookup_edges
+    return uuid_to_curie_edge_id, uuid, uuid_group_edges, uuid_group, lookup_edges
 
 
-def add_edgar_set_to_enrichment( in_message, group_uuid, member_of_set_edges, graph_enrichment_results=[],
+def add_edgar_uuid_to_enrichment( in_message, uuid, uuid_group_edges, graph_enrichment_results=[],
                                  property_enrichment_results={} ):
     """
      Each INFERRED is a result.  For each INFERRED we need to
@@ -383,13 +381,13 @@ def add_edgar_set_to_enrichment( in_message, group_uuid, member_of_set_edges, gr
             add_edge_to_knowledge_graph(in_message, enrichment_edge, enrichment_edge_id)
             # 3. Create an auxiliary graph for each element of the member_id consisting of the edge from the
             # member_id to the enriched node
-            aux_graph_id = add_auxgraph_for_enrichment(in_message, enrichment_edge_id, member_of_set_edges,
+            aux_graph_id = add_auxgraph_for_enrichment(in_message, enrichment_edge_id, uuid_group_edges,
                                                        enrichment.enriched_node.new_curie)
             aux_graph_ids.append(aux_graph_id)
 
         # 4. Add the inferred edge from the new node to the input uuid to the knowledge graph and
         # 5. Add the auxiliary graphs created above to the inferred edge
-        enrichment_kg_edge_id = add_edgar_enrichment_to_group_edge(in_message, group_uuid, aux_graph_ids,
+        enrichment_kg_edge_id = add_edgar_enrichment_to_uuid_edge(in_message, uuid, aux_graph_ids,
                                                                    "biolink:enrichment", enrichment)
         enriched_member_edges[enrichment.enriched_node.new_curie] = enrichment_kg_edge_id
 
@@ -411,12 +409,12 @@ def add_edgar_set_to_enrichment( in_message, group_uuid, member_of_set_edges, gr
             add_edge_to_knowledge_graph(in_message, enrichment_edge, enrichment_edge_id)
             # 3. Create an auxiliary graph for each element of the member_id consisting of the edge from the
             # member_id to the enriched node
-            aux_graph_id = add_auxgraph_for_enrichment(in_message, enrichment_edge_id, member_of_set_edges, property)
+            aux_graph_id = add_auxgraph_for_enrichment(in_message, enrichment_edge_id, uuid_group_edges, property)
             aux_graph_ids.append(aux_graph_id)
 
             # 4. Add the inferred edge from the new node to the input uuid to the knowledge graph and
             # 5. Add the auxiliary graphs created above to the inferred edge
-        enrichment_kg_edge_id = add_edgar_enrichment_to_group_edge(in_message, group_uuid, aux_graph_ids,
+        enrichment_kg_edge_id = add_edgar_enrichment_to_uuid_edge(in_message, uuid, aux_graph_ids,
                                                                    "biolink:similar_to", property)
         enriched_member_edges[property] = enrichment_kg_edge_id
 
@@ -424,7 +422,7 @@ def add_edgar_set_to_enrichment( in_message, group_uuid, member_of_set_edges, gr
 
 
 def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_results, property_inferred_results,
-                                    member_set, group_to_curie_edge_id, enrichment_edges, params ):
+                                    uuid_group, uuid_to_curie_edge_id, enrichment_edges, params ):
     if graph_inferred_results:
         for inferred_result in graph_inferred_results:
 
@@ -433,7 +431,7 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
             for inferred_link in inferred_result.lookup_links:
 
                 # Do Not re-store the lookup results
-                if inferred_link.link_id in member_set:
+                if inferred_link.link_id in uuid_group:
                     continue
                 # 1. Add the inferred nodes to the KG44
                 node = create_knowledge_graph_node(inferred_link.link_id, inferred_link.link_type,
@@ -454,7 +452,7 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
                 add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
 
                 add_auxgraph_for_inference(in_message, enriched_node, direct_inferred_edge_id,
-                                           enriched_to_infer_edge_id, enrichment_edges, group_to_curie_edge_id)
+                                           enriched_to_infer_edge_id, enrichment_edges, uuid_to_curie_edge_id)
 
                 # 4. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
                 make_edgar_final_result(results_cache, inferred_link.link_id, direct_inferred_edge_id, params)
@@ -468,7 +466,7 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
             # For a property with n inferred results:
             for link_id, link_name in zip(inferred_result["lookup_links"], inferred_result["lookup_names"]):
                 # Do Not re-store the lookup results
-                if link_id in member_set:
+                if link_id in uuid_group:
                     continue
 
                 # Make and add edge from the enriched nodes(properties) to the inferred result
@@ -492,7 +490,7 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
                     add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
 
                     add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
-                                               enrichment_edges, group_to_curie_edge_id)
+                                               enrichment_edges, uuid_to_curie_edge_id)
 
                     # 3. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
                     make_edgar_final_result(results_cache, link_id, direct_inferred_edge_id, params)
@@ -504,13 +502,13 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
                 add_node_property(link_id, property, in_message=in_message, p_value=p_value)
                 direct_inferred_edge_id = fetch_inferred_edge_id(link_id, params)
                 add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
-                                           enrichment_edges, group_to_curie_edge_id)
+                                           enrichment_edges, uuid_to_curie_edge_id)
 
 
-def add_member_attributes( set_node, member_set ):
-    set_node.setdefault("is_set", True)
-    set_node.setdefault("attributes", []).append(
-        {"attribute_type_id": "biolink:member_ids", "value": {"sources": member_set}})
+def add_member_attributes( group_node, uuid_group ):
+    group_node.setdefault("is_set", True)
+    group_node.setdefault("attributes", []).append(
+        {"attribute_type_id": "biolink:member_ids", "value": {"sources": uuid_group}})
 
     ######################################
 #
