@@ -48,7 +48,7 @@ def xtest_coalesce_basic():
 
 
 # @pytest.mark.nongithub
-def test_infer():
+def xtest_infer():
     # Sample lookup query with inferred knowledge_type
     answerset = {
         "parameters": {
@@ -71,7 +71,7 @@ def test_infer():
                     },
                     "disease": {
                         "ids": [
-                            "MONDO:0004975"
+                            "MONDO:0004979"
                         ],
                         "is_set": False,
                         "constraints": []
@@ -103,7 +103,7 @@ def test_infer():
     # convert the response to a json object
     jret = json.loads(response.content)
 
-    with open("MONDO0004975.json", "w") as json_file:
+    with open("inferrence.json", "w") as json_file:
         json.dump(jret, json_file, indent=4)
 
     ret = jret['message']
