@@ -14,11 +14,11 @@ termsOfService: http://robokop.renci.org:7055/tos?service_long=Answer coalesce&p
 title: Answer coalesce
 tags:
 - name: translator
-- name: ARA
-- name: ARAGORN
+- name: KP
+- name: Answer coalesce
 - name: trapi
 x-translator:
-  component: ARA
+  component: KP
   team:
   - Ranking Agent
   infores: "infores:answer-coalesce"
