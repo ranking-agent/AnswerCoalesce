@@ -1,5 +1,4 @@
-contact:
-  title: Answer Coalesce
+contact:  
   email: bizon@renci.org
   name: Chris Bizon
   x-id: https://github.com/cbizon
@@ -10,7 +9,7 @@ servers:
   url: https://answercoalesce.renci.org
 #- description: localhost
 #  url: http://127.0.0.1:5000
-termsOfService: http://robokop.renci.org:7055/tos?service_long=Answer coalesce&provider_long=RENCI
+termsOfService: "https://toss.apps.renci.org/tos?service_long=Answer%20coalesce&provider_long=RENCI"
 title: Answer coalesce
 tags:
 - name: translator
