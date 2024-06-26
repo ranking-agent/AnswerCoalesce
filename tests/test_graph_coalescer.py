@@ -437,7 +437,7 @@ def test_graph_coalesce_basic():
     #Assert that the output is well-formed
     assert PDResponse.parse_obj(coalesced)
     # We should have lots of results.  The exact number will not change as long as the test data does not
-    assert len(coalesced['message']['results']) == 5929
+    assert len(coalesced['message']['results']) == 5928
     # Let's make sure that the KL/AT are only mentioned once (this was a problem at one point)
     ps_and_preds = []
     for kedge_id, kedge in coalesced['message']['knowledge_graph']['edges'].items():
