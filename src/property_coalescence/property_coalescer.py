@@ -40,6 +40,7 @@ def get_enriched_properties( nodes, semantic_type, property_constraints=None, pv
     properties = property_lookup.collect_properties(nodes, semantic_type)  # properties = {property: (curies with it)}
     enriched = []
 
+    total_node_count = property_lookup.get_nodecount(semantic_type)
     for property, curies in properties.items():
         # The hypergeometric distribution models drawing objects from a bin.
         # M is the total number of objects (nodes) ,
@@ -47,7 +48,7 @@ def get_enriched_properties( nodes, semantic_type, property_constraints=None, pv
         # The random variate represents the number of Type I objects in N drawn
         #  without replacement from the total population (len curies).
         x = len(curies)  # draws with the property
-        total_node_count = property_lookup.get_nodecount(semantic_type)
+
         n = property_lookup.total_nodes_with_property(property, semantic_type)
 
         if x > 0 and n == 0:
@@ -148,6 +149,9 @@ def enrichment( enrichp: float, property: str, ndraws: int, n: int, total_node_c
 
 def lookup_nodes_by_properties( results, stype, return_nodeset=False ):
     properties = [result.get("enriched_property") for result in results]
+
+    if stype in ['biolink:SmallMolecule', 'biolink:MolecularMixture', 'biolink:Drug']:
+        stype = 'biolink:ChemicalEntity'
 
     thisdir = os.path.dirname(os.path.realpath(__file__))
     pf = f'{thisdir}/{stype.replace(":", ".")}.db'

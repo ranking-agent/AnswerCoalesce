@@ -282,20 +282,15 @@ def filter_graph_enrichment_results( enrichment_results, input_ids, pvalue_thres
     results = [enrichment_result for enrichment_result in enrichment_results if
                enrichment_result.enriched_node.new_curie not in input_ids]
 
-    if pvalue_threshold:
-        results = [enrichment_result for enrichment_result in results if enrichment_result.p_value < pvalue_threshold]
-
-    # chkbest = {}
-    # for i, result in enumerate(results):
-    #     # Group results by enriched_node
-    #     chkbest.setdefault(result.enriched_node.new_curie, []).append((result.predicate, result.p_value))
-    # with open('checkbestruleMONDO0004979.json', 'w') as json_file:
-    #     json.dump(chkbest, json_file, indent=4)
+    chk_best_rule = {}
+    for i, result in enumerate(results):
+        # Group results by enriched_node
+        chk_best_rule.setdefault(result.enriched_node.new_curie, []).append((result.predicate, result.p_value))
+    with open('MONDO0004975DrugfilteredSuper_bestrule.json', 'w') as json_file:
+        json.dump(chk_best_rule, json_file, indent=4)
 
     if result_length:
         results = results[:result_length]
-
-
 
     return results
 
@@ -378,7 +373,7 @@ def add_edgar_uuid_to_enrichment( in_message, uuid, uuid_group_edges, graph_enri
          8. In the result, create the analysis and add edge_bindings to it.
 
     """
-    enriched_member_edges = {}
+    enriched_to_uuid_edges = {}
     for enrichment in graph_enrichment_results:
         # 1. add the new node to the knowledge graph
         node = create_knowledge_graph_node(enrichment.enriched_node.new_curie, enrichment.enriched_node.newnode_type,
@@ -398,9 +393,8 @@ def add_edgar_uuid_to_enrichment( in_message, uuid, uuid_group_edges, graph_enri
 
         # 4. Add the inferred edge from the new node to the input uuid to the knowledge graph and
         # 5. Add the auxiliary graphs created above to the inferred edge
-        enrichment_kg_edge_id = add_edgar_enrichment_to_uuid_edge(in_message, uuid, aux_graph_ids,
-                                                                   "biolink:enrichment", enrichment)
-        enriched_member_edges[enrichment.enriched_node.new_curie] = enrichment_kg_edge_id
+        enrichment_kg_edge_id = add_edgar_enrichment_to_uuid_edge(in_message, uuid, aux_graph_ids, enrichment.predicate, enrichment)
+        enriched_to_uuid_edges[enrichment.enriched_node.new_curie] = enrichment_kg_edge_id
 
     for property, properties in property_enrichment_results.items():
         p_value = properties["p_value"]
@@ -427,9 +421,9 @@ def add_edgar_uuid_to_enrichment( in_message, uuid, uuid_group_edges, graph_enri
             # 5. Add the auxiliary graphs created above to the inferred edge
         enrichment_kg_edge_id = add_edgar_enrichment_to_uuid_edge(in_message, uuid, aux_graph_ids,
                                                                    "biolink:similar_to", property)
-        enriched_member_edges[property] = enrichment_kg_edge_id
+        enriched_to_uuid_edges[property] = enrichment_kg_edge_id
 
-    return enriched_member_edges
+    return enriched_to_uuid_edges
 
 
 def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_results, property_inferred_results,

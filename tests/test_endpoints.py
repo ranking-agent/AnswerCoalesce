@@ -12,50 +12,15 @@ jsondir= 'InputJson_1.5'
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub
-def xtest_coalesce_basic():
-    """Bring back when properties are working again"""
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflowparams.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    #there are dups in this result set gross: dedup
-    unique_results = {}
-    for result in answerset['message']['results']:
-        key = json.dumps(result,sort_keys=True)
-        unique_results[key] = result
-
-    answerset['message']['results'] = list(unique_results.values())
-
-    assert PDResponse.parse_obj(answerset)
-    # make a good request
-    response = client.post('/coalesce/graph', json=answerset)
-
-    # was the request successful
-    assert(response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # check the data
-    ret = jret['message']
-    # with open("jret", "w+") as f:
-    #     json.dump(ret, f, indent=4)
-
-    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
-    assert( len(ret['results'])==len(answerset['message']['results']))
-
-
-@pytest.mark.nongithub
 def test_infer():
     # Sample lookup query with inferred knowledge_type
-    answerset = {
+    # It does both property and graph enrichment
+    in_message = {
         "parameters": {
             "pvalue_threshold": 1e-5,
             "result_length": 100,
             "predicates_to_exclude": [
-                "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
+                "biolink:causes", "biolink:biomarker_for", "biolink:contraindicated_for", "biolink:contraindicated_in",
                 "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
             ]
         },
@@ -64,7 +29,7 @@ def test_infer():
                 "nodes": {
                     "chemical": {
                         "categories": [
-                            "biolink:ChemicalEntity"
+                            "biolink:Drug"
                         ],
                         "is_set": False,
                         "constraints": []
@@ -93,9 +58,9 @@ def test_infer():
         }
     }
 
-    assert PDResponse.parse_obj(answerset)
+    assert PDResponse.parse_obj(in_message)
 
-    response = client.post('/query', json=answerset)
+    response = client.post('/query', json=in_message)
 
     # was the request successful
     assert(response.status_code == 200)
@@ -103,35 +68,18 @@ def test_infer():
     # convert the response to a json object
     jret = json.loads(response.content)
 
-    with open("inferrence4979.json", "w") as json_file:
+    with open("MONDO0004975Drugfilterred.json", "w") as json_file:
         json.dump(jret, json_file, indent=4)
 
-    ret = jret['message']
+    message = jret['message']
 
-    assert(len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
-
-@pytest.mark.nongithub
-def xtest_property():
-    """Bring back when properties are working again"""
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
-    testfilename = os.path.join(dir_path,jsondir,'property_ac_input.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/property', json=answerset)
-
-    # was the request successful
-    assert(response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # check the data
-    ret = jret['message']
-    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
-    assert( len(ret['results'])==len(answerset['message']['results']))
-
+    assert(len(message) == 4) # 4 because of the additional parameter: auxilliary_Graph
+    kgnodes = message["knowledge_graph"]["nodes"]
+    kgedges = message["knowledge_graph"]["edges"]
+    result0 = message['results'][0]
+    assert len(result0['node_bindings']) == 2
+    for qgedge_id, qgedge in in_message['message']['query_graph']['edges'].items():
+        inferred_edges = result0["analyses"][0]["edge_bindings"][qgedge_id][0]["id"]
+        the_edge = kgedges[inferred_edges]
+        assert in_message['message']['query_graph']['nodes'][qgedge["object"]]['ids'][0] == the_edge["object"]
+        assert in_message['message']['query_graph']['nodes'][qgedge["subject"]]['categories'][0] in kgnodes[the_edge["subject"]]['categories']

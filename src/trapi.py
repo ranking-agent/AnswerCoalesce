@@ -312,6 +312,8 @@ def add_edgar_enrichment_to_uuid_edge( in_message, uuid, aux_graph_ids, predicat
     It doesn't need to match the predicate / qualifiers of the input edge, b/c it can be a subclass.
     """
 
+    predicate_only = predicate_only if "predicate" not in predicate_only else orjson.loads(predicate_only).get("predicate")
+
     new_edge = {
         "predicate": predicate_only,
         "attributes": [],
@@ -390,11 +392,11 @@ def add_auxgraph_for_inference( in_message, enriched_node, direct_inferred_edge_
     prefix = "n" if "ROLE" in enriched_node else "e"
 
     # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
-    enriched_edge_id = enrichment_edges[enriched_node]
+    enriched_to_uuid_edge_id = enrichment_edges[enriched_node]
 
     # create the aux graph
     aux_graph = {
-        "edges": [enriched_to_infer_edge_id, enriched_edge_id, uuid_to_curie_edge_id],
+        "edges": [enriched_to_infer_edge_id, enriched_to_uuid_edge_id, uuid_to_curie_edge_id],
         "attributes": []
     }
     aux_graph_id = f"{prefix}_Inferred_SG:_{direct_inferred_edge_id}"
