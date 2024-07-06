@@ -212,10 +212,8 @@ def construct_open_api_schema():
     x_translator_id_val = os.environ.get("INFORES_VALUE", "infores:answer-coalesce")
 
     # Add the x-maturity data
-    open_api_schema["info"][x_maturity] = x_maturity_val
-
-    # Add the translator id (infores) data
-    open_api_schema["info"][x_translator_id] = x_translator_id_val
+    open_api_schema["info"][x_maturity] = x_maturity_val    
+    
 
     x_translator_extension = open_api_extended_spec.get("x-translator")
     x_trapi_extension = open_api_extended_spec.get("x-trapi")
