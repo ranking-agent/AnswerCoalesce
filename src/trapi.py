@@ -312,7 +312,8 @@ def add_edgar_enrichment_to_uuid_edge( in_message, uuid, aux_graph_ids, predicat
     It doesn't need to match the predicate / qualifiers of the input edge, b/c it can be a subclass.
     """
 
-    predicate_only = predicate_only if "predicate" not in predicate_only else orjson.loads(predicate_only).get("predicate")
+    predicate_only = predicate_only if "predicate" not in predicate_only else orjson.loads(predicate_only).get(
+        "predicate")
 
     new_edge = {
         "predicate": predicate_only,
@@ -375,7 +376,7 @@ def create_edgar_inferred_edge( new_node, qg_curie, qg_predicate, is_source=Fals
 
 
 def add_auxgraph_for_inference( in_message, enriched_node, direct_inferred_edge_id, enriched_to_infer_edge_id,
-                                enrichment_edges, uuid_to_curie_edge_id ):
+                                enriched_to_uuid_edge_id, uuid_to_curie_edge_id ):
     """
     Add an auxilary graph to the TRAPI response for edgar.
     In this case, we have a direct edge from an input_id to the inferred node.  That edge is in the KG, and its
@@ -391,17 +392,15 @@ def add_auxgraph_for_inference( in_message, enriched_node, direct_inferred_edge_
     """
     prefix = "n" if "ROLE" in enriched_node else "e"
 
-    # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
-    enriched_to_uuid_edge_id = enrichment_edges[enriched_node]
-
     # create the aux graph
     aux_graph = {
         "edges": [enriched_to_infer_edge_id, enriched_to_uuid_edge_id, uuid_to_curie_edge_id],
         "attributes": []
     }
-    aux_graph_id = f"{prefix}_Inferred_SG:_{direct_inferred_edge_id}"
+    aux_graph_id = f"{prefix}_Inferred_SG:_{direct_inferred_edge_id}_via_{enriched_to_infer_edge_id}"
     if "auxiliary_graphs" not in in_message["message"]:
         in_message["message"]["auxiliary_graphs"] = {}
+
     in_message["message"]["auxiliary_graphs"][aux_graph_id] = aux_graph
 
     # to check
@@ -444,8 +443,9 @@ def make_edgar_final_result( result_dictionary, inferred_node, edge_id, params: 
         result_dictionary[inferred_node] = result
 
 
-def fetch_inferred_edge_id( link_id, params ):
-    # 1. We'd fetch the existing inferred edge
+def stitch_inferred_edge_id( link_id, params ):
+    # 1. We'd fetch/stitch the existing inferred edge
+    # So that we can recall the edge and add the new support graph to it
     pred = orjson.loads(params.predicate_parts)
     predicate_only = pred.get("predicate")
     if params.is_source:
@@ -481,7 +481,8 @@ def add_node_property( node, property, in_message=None, p_value=None ):
             "attributes": [
                 {"attribute_type_id": "biolink:scoring_method", "value": "property_enrichment"},
                 {"attribute_type_id": "biolink:p-value", "value": p_value},
-                {"attribute_type_id": "biolink:agent_type", "value": "computational_model", "attribute_source": infores},
+                {"attribute_type_id": "biolink:agent_type", "value": "computational_model",
+                 "attribute_source": infores},
                 {"attribute_type_id": "biolink:knowledge_level", "value": "predication", "attribute_source": infores}
             ]
         }

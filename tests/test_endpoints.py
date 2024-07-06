@@ -36,7 +36,7 @@ def test_infer():
                     },
                     "disease": {
                         "ids": [
-                            "MONDO:0004975"
+                            "MONDO:0004979"
                         ],
                         "is_set": False,
                         "constraints": []
@@ -68,8 +68,8 @@ def test_infer():
     # convert the response to a json object
     jret = json.loads(response.content)
 
-    with open("MONDO0004975Drugfilterred.json", "w") as json_file:
-        json.dump(jret, json_file, indent=4)
+    # with open("MONDO0004979Drugfilterred.json", "w") as json_file:
+    #     json.dump(jret, json_file, indent=4)
 
     message = jret['message']
 

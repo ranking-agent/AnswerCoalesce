@@ -84,7 +84,7 @@ class Lookup_params:
             else:
                 is_source = False
             if is_source:
-                curies = subject["ids"][0]
+                curie = subject["ids"][0]
                 input_qnode = qedges["subject"]
                 output_qnode = qedges["object"]
                 semantic_type = object.get("categories", [])[0]

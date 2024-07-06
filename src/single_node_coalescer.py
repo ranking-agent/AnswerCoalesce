@@ -9,7 +9,7 @@ from src.set_coalescence.set_coalescer import coalesce_by_set
 from src.components import MCQDefinition, Lookup_params, Lookup
 from src.trapi import create_knowledge_graph_edge, create_knowledge_graph_edge_from_component, \
     create_knowledge_graph_node, add_node_to_knowledge_graph, add_edge_to_knowledge_graph, add_auxgraph_for_enrichment, \
-    add_enrichment_edge, add_enrichment_result, add_member_of_klat, add_auxgraph_for_lookup, create_edgar_enrichment_edge, add_edgar_enrichment_to_uuid_edge,create_edgar_inferred_edge, add_auxgraph_for_inference, add_node_property, add_edgar_final_result, fetch_inferred_edge_id, make_edgar_final_result
+    add_enrichment_edge, add_enrichment_result, add_member_of_klat, add_auxgraph_for_lookup, create_edgar_enrichment_edge, add_edgar_enrichment_to_uuid_edge,create_edgar_inferred_edge, add_auxgraph_for_inference, add_node_property, add_edgar_final_result, stitch_inferred_edge_id, make_edgar_final_result
 
 logger = logging.getLogger(__name__)
 role_predicate = "biolink:has_chemical_role"
@@ -230,8 +230,7 @@ def create_infer_trapi_response( in_message, params, lookup_results, graph_enric
 
     # 2. Add  input_curie -> individual lookup_nodes; individual lookup_nodes -> uuid_group to the kg
     uuid_to_curie_edge_id, uuid, uuid_group_edges, uuid_group, lookup_edges = add_edgar_curie_to_uuid_edge(
-        in_message, lookup_results,
-        params)
+        in_message, lookup_results, params)
 
     # 3.Add enrichment results
     enrichment_edges = add_edgar_uuid_to_enrichment(in_message, uuid, uuid_group_edges,
@@ -240,7 +239,7 @@ def create_infer_trapi_response( in_message, params, lookup_results, graph_enric
     # 4. Add the inferred nodes and edges and create result_bindings
     results_cache = {}
     # add_enrichment inference
-    add_edgar_enrichment_inference(results_cache, in_message, graph_inferred_results, property_inferred_results,
+    add_edgar_inference(results_cache, in_message, graph_inferred_results, property_inferred_results,
                                    uuid_group, uuid_to_curie_edge_id, enrichment_edges, params)
 
     # 5. Add the results to the trapi message
@@ -282,12 +281,12 @@ def filter_graph_enrichment_results( enrichment_results, input_ids, pvalue_thres
     results = [enrichment_result for enrichment_result in enrichment_results if
                enrichment_result.enriched_node.new_curie not in input_ids]
 
-    chk_best_rule = {}
-    for i, result in enumerate(results):
-        # Group results by enriched_node
-        chk_best_rule.setdefault(result.enriched_node.new_curie, []).append((result.predicate, result.p_value))
-    with open('MONDO0004975DrugfilteredSuper_bestrule.json', 'w') as json_file:
-        json.dump(chk_best_rule, json_file, indent=4)
+    # chk_best_rule = {}
+    # for i, result in enumerate(results):
+    #     # Group results by enriched_node
+    #     chk_best_rule.setdefault(result.enriched_node.new_curie, []).append((result.predicate, result.p_value))
+    # with open('MONDO0004979DrugfilteredSuper_bestrule.json', 'w') as json_file:
+    #     json.dump(chk_best_rule, json_file, indent=4)
 
     if result_length:
         results = results[:result_length]
@@ -426,27 +425,37 @@ def add_edgar_uuid_to_enrichment( in_message, uuid, uuid_group_edges, graph_enri
     return enriched_to_uuid_edges
 
 
-def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_results, property_inferred_results,
+def add_edgar_inference( results_cache, in_message, graph_inferred_results, property_inferred_results,
                                     uuid_group, uuid_to_curie_edge_id, enrichment_edges, params ):
     if graph_inferred_results:
         for inferred_result in graph_inferred_results:
 
             enriched_node = inferred_result.input_qnode_curie.new_curie
+            # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
+            enriched_to_uuid_edge_id = enrichment_edges[enriched_node]
 
             for inferred_link in inferred_result.lookup_links:
 
                 # Do Not re-store the lookup results
                 if inferred_link.link_id in uuid_group:
                     continue
-                # 1. Add the inferred nodes to the KG44
-                node = create_knowledge_graph_node(inferred_link.link_id, inferred_link.link_type,
-                                                   inferred_link.link_name)
-                add_node_to_knowledge_graph(in_message, inferred_link.link_id, node)
 
-                # 2. Make and add edge from the enriched nodes to the inferred result
+                # 1. Make and add edge from the enriched nodes to the inferred result
                 enriched_to_infer_edge = create_knowledge_graph_edge_from_component(inferred_link.link_edge)
                 enriched_to_infer_edge_id = f"{enriched_to_infer_edge.get('subject')}_{enriched_to_infer_edge.get('predicate')}_{enriched_to_infer_edge.get('object')}"
                 add_edge_to_knowledge_graph(in_message, enriched_to_infer_edge, enriched_to_infer_edge_id)
+
+                # 2. Add the inferred nodes to the KG44
+                if inferred_link.link_id in results_cache:
+                    # Meaning that the inference was gotten from 2 different enrichment nodes or same enrichment nodes but different enrichment edges
+                    direct_inferred_edge_id = stitch_inferred_edge_id(inferred_link.link_id, params)
+                    add_auxgraph_for_inference(in_message, enriched_node, direct_inferred_edge_id,
+                                               enriched_to_infer_edge_id, enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
+                    continue
+
+                node = create_knowledge_graph_node(inferred_link.link_id, inferred_link.link_type,
+                                                   inferred_link.link_name)
+                add_node_to_knowledge_graph(in_message, inferred_link.link_id, node)
 
                 # 3. make and add the final_inferred edge to the KG
                 direct_inferred_edge_id, direct_inferred_edge = create_edgar_inferred_edge(inferred_link.link_id,
@@ -455,9 +464,8 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
                                                                                            params.is_source)
 
                 add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
-
                 add_auxgraph_for_inference(in_message, enriched_node, direct_inferred_edge_id,
-                                           enriched_to_infer_edge_id, enrichment_edges, uuid_to_curie_edge_id)
+                                           enriched_to_infer_edge_id, enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
 
                 # 4. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
                 make_edgar_final_result(results_cache, inferred_link.link_id, direct_inferred_edge_id, params)
@@ -467,6 +475,8 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
         for property, inferred_result in property_inferred_results.items():
 
             p_value = inferred_result["p_value"]
+            # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
+            enriched_to_uuid_edge_id = enrichment_edges[property]
 
             # For a property with n inferred results:
             for link_id, link_name in zip(inferred_result["lookup_links"], inferred_result["lookup_names"]):
@@ -479,35 +489,37 @@ def add_edgar_enrichment_inference( results_cache, in_message, graph_inferred_re
                 enriched_to_infer_edge_id = f"{link_id}_{role_predicate}_{property}"
                 add_edge_to_knowledge_graph(in_message, enriched_to_infer_edge, enriched_to_infer_edge_id)
 
-                if link_id not in results_cache:
-                    # 1. Add the inferred nodes to the KG44
-                    node = create_knowledge_graph_node(link_id, params.output_semantic_type, link_name)
-                    add_node_property(node, property, p_value=p_value)
-
-                    add_node_to_knowledge_graph(in_message, link_id, node)
-
-                    # 2. make and add the final_inferred edge to the KG PHYS-ALZ
-                    direct_inferred_edge_id, direct_inferred_edge = create_edgar_inferred_edge(link_id,
-                                                                                               params.curie,
-                                                                                               params.predicate_parts,
-                                                                                               params.is_source)
-
-                    add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
-
-                    add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
-                                               enrichment_edges, uuid_to_curie_edge_id)
-
-                    # 3. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
-                    make_edgar_final_result(results_cache, link_id, direct_inferred_edge_id, params)
-                    # stored.add(link_id)
-                    continue
-                # Existing results ? the node is already created, Just:
+                if link_id in results_cache:
+                    # Existing results ? the node is already created, Just:
                     # 1. Add the property on the node
                     # 2. Grab the inferred edge from the KG and add support graph to it
-                add_node_property(link_id, property, in_message=in_message, p_value=p_value)
-                direct_inferred_edge_id = fetch_inferred_edge_id(link_id, params)
+                    add_node_property(link_id, property, in_message=in_message, p_value=p_value)
+                    direct_inferred_edge_id = stitch_inferred_edge_id(link_id, params)
+                    add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
+                                               enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
+
+                    continue
+                # 1. Add the inferred nodes to the KG44
+                node = create_knowledge_graph_node(link_id, params.output_semantic_type, link_name)
+                add_node_property(node, property, p_value=p_value)
+
+                add_node_to_knowledge_graph(in_message, link_id, node)
+
+                # 2. make and add the final_inferred edge to the KG PHYS-ALZ
+                direct_inferred_edge_id, direct_inferred_edge = create_edgar_inferred_edge(link_id,
+                                                                                           params.curie,
+                                                                                           params.predicate_parts,
+                                                                                           params.is_source)
+
+                add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
+
                 add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
-                                           enrichment_edges, uuid_to_curie_edge_id)
+                                           enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
+
+                # 3. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
+                make_edgar_final_result(results_cache, link_id, direct_inferred_edge_id, params)
+                # stored.add(link_id)
+
 
 
 def add_member_attributes( group_node, uuid_group ):
