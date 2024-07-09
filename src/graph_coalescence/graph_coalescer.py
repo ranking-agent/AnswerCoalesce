@@ -242,8 +242,9 @@ def get_node_types( unique_link_nodes ):
                 p.get(newcurie)
             all_typestrings = p.execute()
             for newcurie, nodetypestring in zip(ncg, all_typestrings):
-                node_types = ast.literal_eval(nodetypestring.decode())
-                nodetypedict[newcurie] = node_types
+                if nodetypestring:
+                    node_types = ast.literal_eval(nodetypestring.decode())
+                    nodetypedict[newcurie] = node_types
     return nodetypedict
 
 
