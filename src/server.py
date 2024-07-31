@@ -216,7 +216,7 @@ def construct_open_api_schema():
     terms_of_service = open_api_extended_spec.get("termsOfService")
     servers_conf = open_api_extended_spec.get("servers")
     tags = open_api_extended_spec.get("tags")
-    title_override = open_api_extended_spec.get("title") or 'ARAGORN Ranker'
+    title_override = open_api_extended_spec.get("title") or 'Answer Coalesce'
     description = open_api_extended_spec.get("description")
 
     if tags:
