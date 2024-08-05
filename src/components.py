@@ -11,7 +11,7 @@ from string import Template
 class MCQGroupNode:
     def __init__(self, query_graph):
         for qnode_id, qnode in query_graph["nodes"].items():
-            if qnode.get("set_interpretation", "") == "MANY":
+            if (qnode.get("set_interpretation", "") == "MANY") and (len(qnode.get("member_ids", [])) > 1):
                 self.curies = qnode["member_ids"]
                 self.qnode_id = qnode_id
                 self.uuid = qnode["ids"][0]
@@ -20,7 +20,7 @@ class MCQGroupNode:
 class MCQEnrichedNode:
     def __init__(self, query_graph):
         for qnode_id, qnode in query_graph["nodes"].items():
-            if qnode.get("set_interpretation", "") != "MANY":
+            if qnode.get("set_interpretation", "") != "MANY" or len(qnode.get("member_ids", [])) == 0:
                 self.qnode_id = qnode_id
                 self.semantic_types = qnode["categories"]
 
