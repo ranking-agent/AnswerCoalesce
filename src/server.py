@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-AC_VERSION = '3.0.0'
+AC_VERSION = '3.0.1'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -221,7 +221,7 @@ def construct_open_api_schema():
     terms_of_service = open_api_extended_spec.get("termsOfService")
     servers_conf = open_api_extended_spec.get("servers")
     tags = open_api_extended_spec.get("tags")
-    title_override = open_api_extended_spec.get("title") or 'ARAGORN Ranker'
+    title_override = open_api_extended_spec.get("title") or 'Answer Coalesce'
     description = open_api_extended_spec.get("description")
 
     if tags:
