@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-AC_VERSION = '3.0.0'
+AC_VERSION = '3.0.1'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -207,10 +207,8 @@ def construct_open_api_schema():
     x_translator_id_val = os.environ.get("INFORES_VALUE", "infores:answer-coalesce")
 
     # Add the x-maturity data
-    open_api_schema["info"][x_maturity] = x_maturity_val
-
-    # Add the translator id (infores) data
-    open_api_schema["info"][x_translator_id] = x_translator_id_val
+    open_api_schema["info"][x_maturity] = x_maturity_val    
+    
 
     x_translator_extension = open_api_extended_spec.get("x-translator")
     x_trapi_extension = open_api_extended_spec.get("x-trapi")
@@ -218,7 +216,7 @@ def construct_open_api_schema():
     terms_of_service = open_api_extended_spec.get("termsOfService")
     servers_conf = open_api_extended_spec.get("servers")
     tags = open_api_extended_spec.get("tags")
-    title_override = open_api_extended_spec.get("title") or 'ARAGORN Ranker'
+    title_override = open_api_extended_spec.get("title") or 'Answer Coalesce'
     description = open_api_extended_spec.get("description")
 
     if tags:
