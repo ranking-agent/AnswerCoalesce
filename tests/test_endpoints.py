@@ -8,94 +8,46 @@ client = TestClient(APP)
 
 jsondir= 'InputJson_1.5'
 
-def set_workflowparams(lookup_results):
-    # Dummy parameters to check igf reasoner pydantic accepts the new parameters
-    return lookup_results.update({"workflow": [
-        {
-            "id": "enrich_results",
-            "parameters":
-            {
-                "predicates_to_exclude": ["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
-                    "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"],
-                "properties_to_exclude": ["CHEBI_ROLE_drug", 'CHEBI_ROLE_pharmaceutical', 'CHEBI_ROLE_pharmacological_role']
-            }
-        }
-    ]})
 
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub
-def test_coalesce_basic():
-    """Bring back when properties are working again"""
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
-    # testfilename = os.path.join(dir_path,jsondir,'D.1_strider.json')
-    # #
-    # with open(testfilename, 'r') as tf:
-    #     answerset = json.load(tf)
-    #     set_workflowparams(answerset)
-
-    testfilename = os.path.join(dir_path, jsondir, 'alzheimer_with_workflowparams.json')
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-        set_workflowparams(answerset)
-        # assert PDResponse.parse_obj(answerset)
-
-    #there are dups in this result set gross: dedup
-    unique_results = {}
-    for result in answerset['message']['results']:
-        key = json.dumps(result,sort_keys=True)
-        unique_results[key] = result
-
-    answerset['message']['results'] = list(unique_results.values())
-
-    assert PDResponse.parse_obj(answerset)
-    # make a good request
-    response = client.post('/coalesce/graph', json=answerset)
-
-    # was the request successful
-    assert(response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # check the data
-    ret = jret['message']
-    # with open("jret", "w+") as f:
-    #     json.dump(ret, f, indent=4)
-
-    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
-    assert( len(ret['results'])==len(answerset['message']['results']))
-@pytest.mark.nongithub
-def test_query():
-    # Sample MultiCurie query
-    answerset = {
+def test_infer():
+    # Sample lookup query with inferred knowledge_type
+    # It does both property and graph enrichment
+    in_message = {
+        "parameters": {
+            "pvalue_threshold": 1e-5,
+            "result_length": 100,
+            "predicates_to_exclude": [
+                "biolink:causes", "biolink:biomarker_for", "biolink:contraindicated_for", "biolink:contraindicated_in",
+                "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
+            ]
+        },
         "message": {
             "query_graph": {
                 "nodes": {
                     "chemical": {
                         "categories": [
-                            "biolink:ChemicalEntity"
+                            "biolink:Drug"
                         ],
                         "is_set": False,
                         "constraints": []
                     },
-                    "gene": {
-                        "ids": ["NCBIGene:5111", "NCBIGene:8856", "UniProtKB:P24462", "NCBIGene:3356", "NCBIGene:152", "NCBIGene:1571"],
-                        "categories": [
-                            "biolink:Gene"
+                    "disease": {
+                        "ids": [
+                            "MONDO:0004979"
                         ],
-                        "is_set": True,
+                        "is_set": False,
                         "constraints": []
                     }
                 },
                 "edges": {
                     "e00": {
                         "subject": "chemical",
-                        "object": "gene",
+                        "object": "disease",
                         "predicates": [
-                            "biolink:affects"
+                            "biolink:treats"
                         ],
                         "knowledge_type": "inferred",
                         "attribute_constraints": [],
@@ -103,100 +55,12 @@ def test_query():
                     }
                 }
             }
-      }
-    }
-
-    assert PDResponse.parse_obj(answerset)
-    # make a good request
-    response = client.post('/query', json=answerset)
-
-    # was the request successful
-    assert(response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # check the data
-    ret = jret['message']
-    # with open("jret", "w+") as f:
-    #     json.dump(ret, f, indent=4)
-    assert(len(ret) == 3)
-@pytest.mark.nongithub
-def test_infer():
-    # Sample lookup query with infered knowledge_type
-    answerset = {
-      "parameters": {
-                    "pvalue_threshold": 1e-10,
-                    "result_length": 100,
-                    "predicates_to_exclude": [
-                        "biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
-                        "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
-                      ]
-                },
-        "message": {
-        "query_graph": {
-          "nodes": {
-            "chemical": {
-              "categories": [
-                "biolink:ChemicalEntity"
-              ],
-              "is_set": False,
-              "constraints": []
-            },
-            "disease": {
-              "ids": [
-                "MONDO:0004975"
-              ],
-              "is_set": False,
-              "constraints": []
-            }
-          },
-          "edges": {
-            "e00": {
-              "subject": "chemical",
-              "object": "disease",
-              "predicates": [
-                "biolink:treats"
-              ],
-              "knowledge_type": "inferred",
-              "attribute_constraints": [],
-              "qualifier_constraints": []
-            }
-          }
         }
-      }
     }
 
-    assert PDResponse.parse_obj(answerset)
+    assert PDResponse.parse_obj(in_message)
 
-    response = client.post('/query', json=answerset)
-    # profiler.print()
-    # was the request successful
-    assert(response.status_code == 200)
-
-    # convert the response to a json object
-    jret = json.loads(response.content)
-
-    # with open("EDGAR-UI/jretfinalnew11", "w+") as f:
-    #     json.dump(jret, f, indent=4)
-    # check the data
-    ret = jret['message']
-
-    assert(len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
-
-@pytest.mark.nongithub
-def test_property():
-    """Bring back when properties are working again"""
-    # get the location of the Translator specification file
-    dir_path: str = os.path.dirname(os.path.realpath(__file__))
-
-    testfilename = os.path.join(dir_path,jsondir,'property_ac_input.json')
-
-    with open(testfilename, 'r') as tf:
-        answerset = json.load(tf)
-
-    # make a good request
-    response = client.post('/coalesce/property', json=answerset)
+    response = client.post('/query', json=in_message)
 
     # was the request successful
     assert(response.status_code == 200)
@@ -204,8 +68,18 @@ def test_property():
     # convert the response to a json object
     jret = json.loads(response.content)
 
-    # check the data
-    ret = jret['message']
-    assert(len(ret) == 3 or len(ret) == 4) # 4 because of the additional parameter: auxilliary_Graph
-    assert( len(ret['results'])==len(answerset['message']['results']))
+    # with open("MONDO0004979Drugfilterred.json", "w") as json_file:
+    #     json.dump(jret, json_file, indent=4)
 
+    message = jret['message']
+
+    assert(len(message) == 4) # 4 because of the additional parameter: auxilliary_Graph
+    kgnodes = message["knowledge_graph"]["nodes"]
+    kgedges = message["knowledge_graph"]["edges"]
+    result0 = message['results'][0]
+    assert len(result0['node_bindings']) == 2
+    for qgedge_id, qgedge in in_message['message']['query_graph']['edges'].items():
+        inferred_edges = result0["analyses"][0]["edge_bindings"][qgedge_id][0]["id"]
+        the_edge = kgedges[inferred_edges]
+        assert in_message['message']['query_graph']['nodes'][qgedge["object"]]['ids'][0] == the_edge["object"]
+        assert in_message['message']['query_graph']['nodes'][qgedge["subject"]]['categories'][0] in kgnodes[the_edge["subject"]]['categories']

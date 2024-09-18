@@ -7,17 +7,18 @@ import json
 
 from enum import Enum
 from functools import wraps
-from reasoner_pydantic import Response as PDResponse
+from reasoner_pydantic import Response as PDResponse, Query as PDQuery
 
 from src.util import LoggingUtil
+from src.default_query import default_input_sync
 from src.single_node_coalescer import infer, multi_curie_query
 
-from fastapi import FastAPI
+from fastapi import Body, FastAPI
 from fastapi.responses import JSONResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-AC_VERSION = '3.0.1'
+AC_VERSION = '3.1.0'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
@@ -31,7 +32,7 @@ APP = FastAPI(
     version=AC_VERSION
 )
 
-# declare the cross origin params
+# declare the crossorigin params
 APP.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
@@ -53,8 +54,12 @@ conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'conf
 with open(conf_path, 'r') as inf:
     conf = json.load(inf)
 
+
+# define the default request bodies
+default_request_sync: Body = Body(default=default_input_sync)
+
 @APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
-async def query_handler(request: PDResponse):
+async def query_handler(request: PDResponse = default_request_sync):
     # """ Answer coalesce operations. You may choose all, property, graph. """
 
     try:

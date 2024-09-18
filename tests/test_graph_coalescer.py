@@ -5,13 +5,14 @@ import src.single_node_coalescer as snc
 from src.components import Enrichment
 from reasoner_pydantic import Response as PDResponse
 import pytest
-from src.graph_coalescence.graph_coalescer import filter_links_by_node_type
+from src.graph_coalescence.graph_coalescer import filter_links_by_node_type, streamline_children_to_parent
 from src.components import Enrichment
 
 
 jsondir='InputJson_1.5'
 predicates_to_exclude =["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for", "biolink:contraindicated_for",
                         "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"]
+
 
 def test_get_links_and_predicate_filter():
     """We expect that this Gene has 2701  links.
@@ -124,29 +125,46 @@ def test_filter_links_by_node_type():
     expected_output = { "node1": [ ("node4", "predicate2", False)],
                         "node2": [("node5", "predicate3", True)] }
 
-def test_filter_enrichment_results():
+
+def test_filter_enrichment_results_s1():
     """
     Scenario 1***************:
-      result 1 and 2 is a tree in which 1 is the ancestor of 2, however, they have different pvalues
-             3 and 4 is a tree in which 4 is the ancestor of 3, however, they have the same pvalue
+        Results 1 and 2 is a tree in which 2 is the ancestor of 1; however, they have different p-values.
+        Results 3 and 4 is a tree in which 4 is the ancestor of 3; however, they have the same p-value.
 
-      Task: Consolidate the result into two using the most specific predicate in each tree
+        Task: Consolidate the results into two using the most specific predicate in each tree.
 
-      Steps:
-        1. Groups the 4 results by pvalues then pick the most specific in ech case/group
-            step_outcome: Results 1, 2, and 3
-        2. if step (1)) outcomes has parent/child relationship and the child has a better p_value, return the most specific(child)
-           if step (1)) outcomes has parent/child relationship and the parent has a better p_value, return the least specific(parent)
-             step_outcomes:
-                Results 1, 2 has a parent/child relationship and the child(result1) has a better pvalue
-                Result 3 is another branch separate from 1, 2
-             hence, we return Results 1, and 3
+        Steps:
+        * Group the 4 results by p-values, then pick the most specific in each group.
+            Step outcome:
+            Three result groups: 1, 2, and 3 & 4
+        * Now pick the most specific overall by p-value and parent/child relationship:
+            If the step (1) outcomes have a parent/child relationship and the child has a better p-value, return the most specific (child).
+            If the step (1) outcomes have a parent/child relationship and the parent has a better p-value, return the least specific (parent).
+            Step outcome:
+                The first group result (1) has a parent/child relationship with the second (2), and the child (result 1) has a better p-value.
+                The third group result (3 & 4) is another branch in which 4 is the parent. They have the exact same p-value, so we pick the child (most specific).
+            Hence, we return Results 1 and 3.
 
-      input = [result1, result2, result3, result4]
-      output: [result1, result4]
+        Input: [result1, result2, result3, result4]
+        Output: [result2, result3]
+    """
+
+    result1 = Enrichment(8.033689062162034e-11, 'HP:0020110', '{"predicate": "biolink:causes"}', True, 2, 4, 2,['CHEBI:8874', 'CHEBI:53289', 'CHEBI:42944'], 'biolink:DiseaseOrPhenotypicFeature')
+    result2 = Enrichment(9.161641498909993e-11, 'HP:0020110', '{"predicate": "biolink:contributes_to"}', True, 2, 4, 2,['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    result3 = Enrichment(1.3168191577498547e-10, 'HP:0020110', '{"predicate": "biolink:has_adverse_event"}', True, 2, 4,2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+    result4 = Enrichment(1.3168191577498547e-10, 'HP:0020110', '{"predicate": "biolink:affects"}', True, 2, 4, 2,['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
+
+    result = gc.filter_result_hierarchies([result1, result2, result3, result4])
+    assert len(result) == 2
+    assert result1 in result
+    assert result3 in result
 
 
-    Scenario 2***************:
+
+def test_filter_enrichment_results_S2():
+    """
+    Scenario 2*************** REAL EXAMPLE FROM AC:
       result 1, 2 and 4 is a tree in which 2 is the ancestor of 1, and 1 is the ancestor of 4; however, all have different pvalues
              3 and 5 is a tree in which 3 is the ancestor of 5, however, they have the different p_value
 
@@ -164,29 +182,214 @@ def test_filter_enrichment_results():
         hence, we return Results 1, and 3
 
       input = [result1, result2, result3, result4, result5]
-      output: [result3, result1]
+      output: [result1, result3]
 
-      """
-    result1 = Enrichment(8.033689062162034e-11,'HP:0020110', {'predicate': 'biolink:causes'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:42944'], 'biolink:DiseaseOrPhenotypicFeature')
-    result2 = Enrichment(9.161641498909993e-11, 'HP:0020110', {'predicate': 'biolink:contributes_to'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    result3 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:has_adverse_event'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    result4 = Enrichment(1.3168191577498547e-10, 'HP:0020110', {'predicate': 'biolink:affects'}, True, 2, 4, 2, ['CHEBI:8874', 'CHEBI:53289', 'CHEBI:64312'], 'biolink:DiseaseOrPhenotypicFeature')
-    # Scenario 1 ***************
-    result = gc.filter_result_hierarchies([result1, result2, result3, result4])
-    assert [result3, result1] == result #unsorted because we wait to sort finally in the get_enriched_links
+    # #   """
 
-    # # Using a real enrichment result:
-    # result1 = Enrichment(1.7108004493514417e-72, 'MONDO:0004975', {'predicate': 'biolink:treats'}, False, 16, 19, 1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
-    # result2 = Enrichment(3.0839908185924632e-61, 'MONDO:0004975', {'predicate': 'biolink:biolink:treats_or_applied_or_studied_to_treat'}, False, 16, 96, 1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
-    # result3 = Enrichment(3.7469289680403445e-31, 'MONDO:0004975', {'predicate': 'biolink:affects'}, False, 16, 13, 1366955.0, ['CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
-    # result4 = Enrichment(1.6662626195823426e-28, 'MONDO:0004975', {'predicate': 'biolink:ameliorates_condition'}, False, 16, 6, 1366955.0, ['CHEBI:15355', 'CHEBI:3048', 'CHEBI:8888', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
-    # result5 = Enrichment(7.022661981030352e-05, 'MONDO:0004975', {'predicate': 'biolink:has_adverse_event'}, False, 16, 6, 1366955.0, ['CHEBI:53289'], 'biolink:Disease')
-    # # Scenario 2 ***************
-    # result = gc.filter_result_hierarchies([result1, result2, result3, result4, result5])
-    # assert [result3, result1] == result  # unsorted because we wait to sort finally in the get_enriched_links
+    result1 = Enrichment(1.7108004493514417e-72, 'MONDO:0004975', '{"predicate": "biolink:treats"}', False, 16, 19,1366955.0, ['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    result2 = Enrichment(3.0839908185924632e-61, 'MONDO:0004975','{"predicate": "biolink:treats_or_applied_or_studied_to_treat"}', False, 16, 96, 1366955.0,['UNII:12PYH0FTU9', 'CHEBI:45980', 'CHEBI:125612', 'CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:135927', 'CHEBI:64312', 'UNII:105J35OE21', 'CHEBI:42944', 'CHEBI:8874', 'CHEBI:8888', 'CHEBI:57589', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    result3 = Enrichment(3.7469289680403445e-31, 'MONDO:0004975', '{"predicate": "biolink:affects"}', False, 16, 13,1366955.0, ['CHEBI:15355', 'CHEBI:3048', 'CHEBI:53289', 'CHEBI:8888', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    result4 = Enrichment(1.6662626195823426e-28, 'MONDO:0004975', '{"predicate": "biolink:ameliorates_condition"}',False, 16, 6, 1366955.0, ['CHEBI:15355', 'CHEBI:3048', 'CHEBI:8888', 'CHEBI:9086', 'CHEBI:8707', 'CHEBI:5613'], 'biolink:Disease')
+    result5 = Enrichment(7.022661981030352e-05, 'MONDO:0004975', '{"predicate": "biolink:has_adverse_event"}', False,16, 6, 1366955.0, ['CHEBI:53289'], 'biolink:Disease')
+
+    result = gc.filter_result_hierarchies([result1, result2, result3, result4, result5])
+    assert len(result) == 2
+    assert result1 in result
+    assert result3 in result
+
+
+def test_filter_enrichment_results_s3():
+    """
+    Scenario 3***************: REAL EXAMPLE FROM AC
+        Results 1 and 2 and 3 all has the same p_value, however, result3 is the parent of result3 which is the parent if result1
+
+        Task: Return the most specific (child) results in the tree
+
+        Steps:
+        * Find the ancestors of each of the results then return the last child.
+
+        Input: [result1, result2, result3]
+        Output: [result1]
+    """
+    result1 = Enrichment(1.2043826479125558e-07, 'HP:0032141', '{"predicate": "biolink:causes"}', False, 61, 11, 1366955.0, ['CHEBI:15407', 'CHEBI:51209'], 'biolink:Disease')
+    result2 = Enrichment(1.2043826479125558e-07, 'HP:0032141', '{"predicate": "biolink:related_to"}', True, 61, 11,1366955.0, ['CHEBI:15407', 'CHEBI:51209'], 'biolink:Disease')
+    result3 = Enrichment(1.2043826479125558e-07, 'HP:0032141', '{"predicate": "biolink:contributes_to"}', False, 61, 11,1366955.0, ['CHEBI:15407', 'CHEBI:51209'], 'biolink:Disease')
+
+    result = gc.filter_result_hierarchies([result1, result2, result3])
+    assert result == [result1]
+
+
+def test_filter_enrichment_results_s4():
+    """
+    Scenario 4***************: REAL EXAMPLE FROM AC
+        Results 2 is the overall parent in tree, it also has the least p_value
+
+        Task: Return the results with the least p_value.
+
+        Steps:
+        * Group the 4 results the most specific p-value and parent/child relationship:
+            If the child has a better p-value, return the most specific (child).
+            If the parent has a better p-value, return the least specific (parent).
+
+        Input: [result1, result2, result3, result4]
+        Output: [result2]
+    # #   """
+
+    result1 = Enrichment(5.62677119993497e-16, 'MONDO:0006032', '{"predicate": "biolink:contributes_to"}', False, 61, 193,1366955.0,['CHEBI:408174', 'CHEBI:5147', 'CHEBI:6888', 'CHEBI:8378', 'CHEBI:8382', 'CHEBI:92511'], 'biolink:Disease')
+    result2 = Enrichment(6.984714344422767e-26, 'MONDO:0006032', '{"predicate": "biolink:related_to"}', True, 61,310, 1366955.0,['CHEBI:28918', 'CHEBI:408174', 'CHEBI:5134', 'CHEBI:5147', 'CHEBI:5551', 'CHEBI:6888', 'CHEBI:8378', 'CHEBI:8382', 'CHEBI:92511', 'UNII:420K487FSG'],'biolink:Disease')
+    result3 = Enrichment(2.688166355839941e-06, 'MONDO:0006032', '{"predicate": "biolink:treats_or_applied_or_studied_to_treat"}', False, 61, 52,1366955.0,['CHEBI:28918', 'CHEBI:4463'], 'biolink:Disease')
+    result4 = Enrichment(2.8008696832786763e-17, 'MONDO:0006032', '{"predicate": "biolink:has_adverse_event"}', False, 61, 117,1366955.0,['CHEBI:28918', 'CHEBI:5134', 'CHEBI:5551', 'CHEBI:6888', 'CHEBI:8378', 'UNII:420K487FSG'], 'biolink:Disease')
+    result5 = Enrichment(3.9591314521010225e-08, 'MONDO:0006032', '{"predicate": "biolink:causes"}', False, 61, 139,1366955.0,['CHEBI:408174', 'CHEBI:5147', 'CHEBI:92511'], 'biolink:Disease')
+
+    result = gc.filter_result_hierarchies([result1, result2, result3, result4, result5])
+    assert result == [result2]
+    #
+
+
+
+def test_filter_enrichment_results_s5():
+    """
+    Scenario 5*************** REAL EXAMPLE FROM AC:
+      result6 has "related_to" predicate which is the parent of "affects" common to the other results
+      result1, result2, result3, result4, result5, result7, result8, result9, result10, result11, result12 has the same "affects" predicates
+            However,
+                    result5 has no Qualifier
+                    other results have Qualifiers which are dependent on each other
+
+      Task: Return the result the most specific/best p_value predicate in the tree
+
+      Steps:
+        1. Groups the results by p_values then pick the most specific in ech case/group
+            step_outcome: 7 Results from the 7 distinct p_values
+        2. The step (1) outcomes has parent/child relationships:
+                result6 is the parent of [result1, result3, result5, result8, result10, result12]
+            *
+             step_outcomes:
+               if any of the children has a better p_value, and it is the more specific, hence, return the child
+               if the parent-result6 has a better p_value, though it is the least specific, return the parent
+        hence, we return result5
+
+      input = [result1, result2, result3, result4, result5, result7, result8, result9, result10, result11, result12]
+      output: [result5]
+
+    # #   """
+
+    result1 = Enrichment(0.0005353534265271418, 'NCBIGene:632', '{"object_aspect_qualifier": "secretion", "predicate": "biolink:affects"}', False, 61, 12,1366955.0, ['CHEBI:6888'], 'biolink:Gene')
+    result2 = Enrichment(0.0005353534265271418, 'NCBIGene:632', '{"object_aspect_qualifier": "transport", "predicate": "biolink:affects"}', False, 61, 12,1366955.0, ['CHEBI:6888'], 'biolink:Gene')
+    result3 = Enrichment(0.00022309876782534895, 'NCBIGene:632', '{"object_aspect_qualifier": "secretion", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', False, 61, 5, 1366955.0, ['CHEBI:6888'], 'biolink:Gene')
+    result4 = Enrichment(0.00022309876782534895, 'NCBIGene:632', '{"object_aspect_qualifier": "transport", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', False, 61, 5, 1366955.0, ['CHEBI:6888'], 'biolink:Gene')
+    result5 = Enrichment(3.980364423629894e-07, 'NCBIGene:632', '{"predicate": "biolink:affects"}', False, 61, 20,  1366955.0, ['CHEBI:4463', 'CHEBI:6888'], 'biolink:Gene')
+    result6 = Enrichment(6.725615356368366e-07, 'NCBIGene:632', '{"predicate": "biolink:related_to"}', False, 61, 26,  1366955.0, ['CHEBI:4463', 'CHEBI:6888'], 'biolink:Gene')
+    result7 = Enrichment(0.00017848299646047716, 'NCBIGene:632', '{"object_aspect_qualifier": "expression", "predicate": "biolink:affects"}', False, 61, 4, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+    result8 = Enrichment(0.00017848299646047716, 'NCBIGene:632', '{"object_aspect_qualifier": "expression", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}', False, 61, 4, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+    result9 = Enrichment(0.00017848299646047716, 'NCBIGene:632',  '{"object_aspect_qualifier": "abundance", "predicate": "biolink:affects"}', False, 61, 4, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+    result10 = Enrichment(0.00017848299646047716, 'NCBIGene:632', '{"object_aspect_qualifier": "abundance", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}', False, 61, 4, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+    result11 = Enrichment(0.0003123243378767348, 'NCBIGene:632', '{"object_aspect_qualifier": "activity_or_abundance", "predicate": "biolink:affects"}', False, 61, 7, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+    result12 = Enrichment(0.00026771254826782066, 'NCBIGene:632', '{"object_aspect_qualifier": "activity_or_abundance", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}', False, 61, 6, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+
+    result = gc.filter_result_hierarchies([result1, result2, result3, result4, result5, result6, result7, result8, result9, result10, result11, result12])
+    assert result == [result5]
 
     print("All test cases passed!")
 
+
+def test_filter_enrichment_results_s6():
+    """
+    Scenario 5*************** REAL EXAMPLE FROM AC:
+
+    # #   """
+
+    result1 = Enrichment(6.440871527077959e-35, 'NCBIGene:154', '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}', False, 61, 2837,1366955.0, ['19'], 'biolink:Gene')
+    result2 = Enrichment(8.841059601006888e-35, 'NCBIGene:154', '{"object_aspect_qualifier": "activity_or_abundance", "predicate": "biolink:affects"}', False, 61, 2885,1366955.0, ['19'], 'biolink:Gene')
+    result3 = Enrichment(1.2708916953779429e-34, 'NCBIGene:154', '{"predicate": "biolink:affects"}', False, 61, 5, 1366955.0, ['CHEBI:6888'], 'biolink:Gene')
+    result4 = Enrichment(1.451342937454794e-32, 'NCBIGene:154', '{"predicate": "biolink:related_to"}', False, 61, 5, 1366955.0, ['CHEBI:6888'], 'biolink:Gene')
+    result5 = Enrichment(2.512830362134677e-36, 'NCBIGene:154', '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}', False, 61, 1789,  1366955.0, ['18'], 'biolink:Gene')
+    result6 = Enrichment(2.615464485693035e-36, 'NCBIGene:154',  '{"object_aspect_qualifier": "activity_or_abundance", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}', False, 61, 1793,  1366955.0, ['18'], 'biolink:Gene')
+    result7 = Enrichment(3.750524768721316e-27, 'NCBIGene:154', '{"predicate": "biolink:binds"}', True, 61, 746, 1366955.0, ['12'], 'biolink:Gene')
+    result8 = Enrichment(1.3889291678789253e-34, 'NCBIGene:154', '{"predicate": "biolink:directly_physically_interacts_with"}', True, 61, 4, 1366955.0, ['15'], 'biolink:Gene')
+    result9 = Enrichment(6.37300413954452e-37, 'NCBIGene:154',  '{"predicate": "biolink:interacts_with"}', False, 61, 4, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+    result10 = Enrichment(2.50950277122731e-31, 'NCBIGene:154', '{"predicate": "biolink:regulates"}', False, 61, 37, 1366955.0, ['9'], 'biolink:Gene')
+    result11 = Enrichment(4.557847849630573e-36, 'NCBIGene:154', '{"object_direction_qualifier": "upregulates", "predicate": "biolink:regulates"}', False, 61, 7, 1366955.0, ['9'], 'biolink:Gene')
+    result12 = Enrichment(8.924548060814318e-05, 'NCBIGene:154', '{"predicate": "biolink:increases_response_to"}', True, 61, 2, 1366955.0, ['CHEBI:4463'], 'biolink:Gene')
+    result13 = Enrichment(1.0822387821668951e-14, 'NCBIGene:154', '{"object_aspect_qualifier": "molecular_interaction", "predicate": "biolink:affects"}', False, 61, 16, 1366955.0, ['4'], 'biolink:Gene')
+    result14 = Enrichment(1.9435986995566893e-41, 'NCBIGene:154', '{"object_aspect_qualifier": "abundance", "predicate": "biolink:affects"}', False, 61, 48, 1366955.0, ['12'], 'biolink:Gene')
+    result15 = Enrichment(5.402888231040584e-16, 'NCBIGene:154', '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', True, 61, 2, 1366955.0, ['8'], 'biolink:Gene')
+    result16 = Enrichment(0.0004907515897535203, 'NCBIGene:154', '{"predicate": "biolink:affects_response_to"}', False, 61, 37, 1366955.0, ['1'], 'biolink:Gene')
+    result17 = Enrichment(0.0007137408715038871, 'NCBIGene:154', '{"predicate": "biolink:affects"}', False, 61, 7, 1366955.0, ['16'], 'biolink:Gene')
+    result18 = Enrichment(4.062152451583994e-11, 'NCBIGene:154', '{"object_aspect_qualifier": "molecular_interaction", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', True, 61, 2, 1366955.0, ['3'], 'biolink:Gene')
+    result19 = Enrichment(3.9824963795193066e-09, 'NCBIGene:154', '{"predicate": "biolink:positively_correlated_with"}', False, 61, 37, 1366955.0, ['9'], 'biolink:Gene')
+    result20 = Enrichment(4.462373594297634e-05, 'NCBIGene:154', '{"object_aspect_qualifier": "localization", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}', False, 61, 7, 1366955.0, ['1'], 'biolink:Gene')
+
+    result = gc.filter_result_hierarchies([result1, result2, result3, result4, result5, result6, result7, result8, result9, result10, result11, result12, result13, result14, result15, result16, result17, result18, result19, result20])
+    assert result9 in result
+    assert result14 in result
+    assert len(result) == 2
+
+    print("All test cases passed!")
+
+
+def test_streamline_children_to_parent():
+    """
+    There are mix if qualifier predicates and unqualified ones, in which there are dependencies amidst them
+    group into the dependencies and pict the best p_valued predicate in each group until there is no dependencies
+    amidst the final predicate set
+    STEP 1:
+        there are 4 main categories
+            6 affects, 5 of them has aspects_qualifiers like: activity, abundance, activity_or_abundance, degradation
+            binds
+            2 interacts_with: directly_physically_interacts_with, interacts_with
+            related_to
+        All the 4 has top common ancestors which is "related_to"
+
+    Step 2:
+        Category 1: "affect_abundance" (1.5453909029914237e-18) has the best amongst other affects and compared to the overall ancestor
+        Category 2: the overall ancestor - "related_to" is better than "binds"
+        category 3: directly_physically_interacts_with (1.3682869515329492e-11) has better pvalue
+        category 4: the overall ancestor (5.5909317582396114e-09) against itself
+
+        This implies:
+            Category 1: "affect_abundance" (1.5453909029914237e-18)
+            category 3: directly_physically_interacts_with (1.3682869515329492e-11)
+            category 4: the overall ancestor- related_to (5.5909317582396114e-09)
+
+
+
+    Step 3:
+        Now we compare inter categories:
+            The overall ancestor - "related_to" is the least p_valued, hence
+                Category 1: "affect_abundance" (1.5453909029914237e-18)
+                category 3: directly_physically_interacts_with (1.3682869515329492e-11)
+    Step 4:
+        the two categories are not dependent on each other, so they are returned
+    """
+    chilren_to_parent_mapping = {'{"predicate": "biolink:directly_physically_interacts_with"}': {'{"predicate": "biolink:interacts_with"}'},
+                                 '{"predicate": "biolink:binds"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"object_aspect_qualifier": "activity_or_abundance", "predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"object_aspect_qualifier": "activity_or_abundance", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"object_aspect_qualifier": "abundance", "predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"object_aspect_qualifier": "degradation", "predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'},
+                                 '{"object_aspect_qualifier": "degradation", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}': {'{"predicate": "biolink:related_to"}'}
+                                 }
+    pvalue_mapping = {'{"predicate": "biolink:directly_physically_interacts_with"}': 1.3682869515329492e-11,
+                     '{"predicate": "biolink:interacts_with"}': 1.383372195529e-11,
+                     '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}': 3.262843218581081e-07,
+                     '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}': 3.2206484179349686e-07,
+                     '{"object_aspect_qualifier": "activity_or_abundance", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}': 3.226250781949897e-07,
+                     '{"predicate": "biolink:binds"}': 8.330611363906712e-09,
+                     '{"predicate": "biolink:related_to"}': 5.5909317582396114e-09,
+                     '{"object_aspect_qualifier": "activity_or_abundance", "predicate": "biolink:affects"}': 3.7195220929660993e-09,
+                     '{"predicate": "biolink:affects"}': 0.0003159809536664026,
+                     '{"object_aspect_qualifier": "abundance", "predicate": "biolink:affects"}': 1.5453909029914237e-18,
+                     '{"object_aspect_qualifier": "degradation", "predicate": "biolink:affects"}': 3.51139263990654e-05,
+                     '{"object_aspect_qualifier": "degradation", "object_direction_qualifier": "increased", "predicate": "biolink:affects"}': 2.3409421266829084e-05
+                      }
+    streamlined_set = streamline_children_to_parent(chilren_to_parent_mapping, pvalue_mapping)
+    assert len(streamlined_set) == 2
+    assert streamlined_set == {'{"object_aspect_qualifier": "abundance", "predicate": "biolink:affects"}',
+                                '{"predicate": "biolink:directly_physically_interacts_with"}'}
 
 
 @pytest.mark.asyncio
@@ -203,6 +406,7 @@ async def test_graph_coalescer():
     #assert kv['biolink:p_value'] < 1e-10
     assert e.p_value < 1e-10
     assert e.enriched_node.new_curie == "HGNC.FAMILY:1384"
+
 
 @pytest.mark.asyncio
 async def test_graph_coalescer_double_check():
@@ -306,6 +510,7 @@ def flatten(ll):
         return temp
     else:
         return [ll]
+
 def test_gouper():
     x = 'abcdefghi'
     n = 0
