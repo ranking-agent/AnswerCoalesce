@@ -49,7 +49,7 @@ async def infer(in_message, parameters):
     graph_enrichment_results = filter_graph_enrichment_results(graph_enrichment_results,
                                                                lookup_results.link_ids + [params.curie],
                                                                pvalue_threshold=parameters.get("pvalue_threshold", 1e-5),
-                                                               result_length=parameters.get("result_length", 1000))
+                                                               result_length=parameters.get("result_length", 100))
 
     property_enrichment_results = await property_enrich(lookup_results.link_ids, params, parameters)
     return await make_inference(in_message, params, lookup_results=lookup_results,
