@@ -36,11 +36,9 @@ async def infer(in_message, parameters):
                              [params.predicate_parts],
                              params.is_source,
                              params.output_semantic_type )[0]
-
     graph_enrichment_results = await coalesce_by_graph(lookup_results.link_ids,
                                                        params.output_semantic_type,
-                                                       predicate_constraints=parameters.get("predicates_to_exclude",
-                                                                                            []),
+                                                       predicate_constraints=parameters.get("predicates_to_exclude", []),
                                                        pvalue_threshold=parameters.get("pvalue_threshold", 1e-6),
                                                        filter_predicate_hierarchies=True
                                                        )
@@ -50,6 +48,7 @@ async def infer(in_message, parameters):
     # enrichment results length. Isn't it better to filter EDGAR top n in edgar itself?
     graph_enrichment_results = filter_graph_enrichment_results(graph_enrichment_results,
                                                                lookup_results.link_ids + [params.curie],
+                                                               pvalue_threshold=parameters.get("pvalue_threshold", 1e-5),
                                                                result_length=parameters.get("result_length", 100))
 
     property_enrichment_results = await property_enrich(lookup_results.link_ids, params, parameters)
@@ -64,6 +63,8 @@ def lookup( curie, predicate_parts, is_source=False, output_semantic_type=None )
     make sure that each has the node name and the node type and provenance"""
     # TODO: Ola to implement based on current lookup
     link_ids = create_nodes_to_links(curie, param_predicates=predicate_parts)
+    link_ids = {node: links for node, links in link_ids.items() if links}
+
     links = []
     all_ids = unify_link_ids(link_ids) + curie
     all_node_names, all_node_types = get_node_name_and_type(all_ids)
@@ -82,6 +83,9 @@ def properties_lookup( properties, semantic_type ):
     """
     Returns property_inferred_results (dict),
     """
+    if not properties:
+        return {}
+
     property_inferred_results, nodeset = lookup_nodes_by_properties(properties, semantic_type, return_nodeset=True)
     node_names = get_node_names(nodeset)
     for property, properties in property_inferred_results.items():
@@ -252,7 +256,7 @@ def unify_link_ids( results ):
     if results:
         if isinstance(results, dict):
             # Takes care of inputs from create_node_to_links of the format:
-            # {'node1': [links], 'node2': [links]...}; then return all the links in one list
+            # {'node1': [links], 'node2': [links]...}; then return all the links as one list
             return list(frozenset(chain.from_iterable(results.values())))
 
         # Graph_Coalesce result? of the format:
@@ -278,7 +282,13 @@ def get_node_name_and_type( input_ids ):
 
 def filter_graph_enrichment_results( enrichment_results, input_ids, pvalue_threshold=None, result_length=None ):
     """We do not want a circle, so, we filter out lookup and inout curies from the enrichment results."""
-    results = [enrichment_result for enrichment_result in enrichment_results if
+    if pvalue_threshold is None:
+        pvalue_threshold = 1e-5
+
+    if result_length is None:
+        result_length = 100
+
+    enrichment_result = [enrichment_result for enrichment_result in enrichment_results if
                enrichment_result.enriched_node.new_curie not in input_ids]
 
     # chk_best_rule = {}
@@ -288,10 +298,10 @@ def filter_graph_enrichment_results( enrichment_results, input_ids, pvalue_thres
     # with open('MONDO0004979DrugfilteredSuper_bestrule.json', 'w') as json_file:
     #     json.dump(chk_best_rule, json_file, indent=4)
 
-    if result_length:
-        results = results[:result_length]
+    enrichment_result = [result for result in enrichment_result if result.p_value < pvalue_threshold]
+    enrichment_result = enrichment_result[:result_length]
 
-    return results
+    return enrichment_result
 
 
 def add_edgar_input_curie( in_message, lookup_results ):
@@ -427,98 +437,95 @@ def add_edgar_uuid_to_enrichment( in_message, uuid, uuid_group_edges, graph_enri
 
 def add_edgar_inference( results_cache, in_message, graph_inferred_results, property_inferred_results,
                                     uuid_group, uuid_to_curie_edge_id, enrichment_edges, params ):
-    if graph_inferred_results:
-        for inferred_result in graph_inferred_results:
+    for inferred_result in graph_inferred_results:
+        enriched_node = inferred_result.input_qnode_curie.new_curie
+        # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
+        enriched_to_uuid_edge_id = enrichment_edges[enriched_node]
 
-            enriched_node = inferred_result.input_qnode_curie.new_curie
-            # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
-            enriched_to_uuid_edge_id = enrichment_edges[enriched_node]
+        for inferred_link in inferred_result.lookup_links:
 
-            for inferred_link in inferred_result.lookup_links:
+            # Do Not re-store the lookup results
+            if inferred_link.link_id in uuid_group:
+                continue
 
-                # Do Not re-store the lookup results
-                if inferred_link.link_id in uuid_group:
-                    continue
+            # 1. Make and add edge from the enriched nodes to the inferred result
+            enriched_to_infer_edge = create_knowledge_graph_edge_from_component(inferred_link.link_edge)
+            enriched_to_infer_edge_id = f"{enriched_to_infer_edge.get('subject')}_{enriched_to_infer_edge.get('predicate')}_{enriched_to_infer_edge.get('object')}"
+            add_edge_to_knowledge_graph(in_message, enriched_to_infer_edge, enriched_to_infer_edge_id)
 
-                # 1. Make and add edge from the enriched nodes to the inferred result
-                enriched_to_infer_edge = create_knowledge_graph_edge_from_component(inferred_link.link_edge)
-                enriched_to_infer_edge_id = f"{enriched_to_infer_edge.get('subject')}_{enriched_to_infer_edge.get('predicate')}_{enriched_to_infer_edge.get('object')}"
-                add_edge_to_knowledge_graph(in_message, enriched_to_infer_edge, enriched_to_infer_edge_id)
-
-                # 2. Add the inferred nodes to the KG44
-                if inferred_link.link_id in results_cache:
-                    # Meaning that the inference was gotten from 2 different enrichment nodes or same enrichment nodes but different enrichment edges
-                    direct_inferred_edge_id = stitch_inferred_edge_id(inferred_link.link_id, params)
-                    add_auxgraph_for_inference(in_message, enriched_node, direct_inferred_edge_id,
-                                               enriched_to_infer_edge_id, enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
-                    continue
-
-                node = create_knowledge_graph_node(inferred_link.link_id, inferred_link.link_type,
-                                                   inferred_link.link_name)
-                add_node_to_knowledge_graph(in_message, inferred_link.link_id, node)
-
-                # 3. make and add the final_inferred edge to the KG
-                direct_inferred_edge_id, direct_inferred_edge = create_edgar_inferred_edge(inferred_link.link_id,
-                                                                                           params.curie,
-                                                                                           params.predicate_parts,
-                                                                                           params.is_source)
-
-                add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
+            # 2. Add the inferred nodes to the KG44
+            if inferred_link.link_id in results_cache:
+                # Meaning that the inference was gotten from 2 different enrichment nodes or same enrichment nodes but different enrichment edges
+                direct_inferred_edge_id = stitch_inferred_edge_id(inferred_link.link_id, params)
                 add_auxgraph_for_inference(in_message, enriched_node, direct_inferred_edge_id,
                                            enriched_to_infer_edge_id, enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
+                continue
 
-                # 4. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
-                make_edgar_final_result(results_cache, inferred_link.link_id, direct_inferred_edge_id, params)
+            node = create_knowledge_graph_node(inferred_link.link_id, inferred_link.link_type,
+                                               inferred_link.link_name)
+            add_node_to_knowledge_graph(in_message, inferred_link.link_id, node)
+
+            # 3. make and add the final_inferred edge to the KG
+            direct_inferred_edge_id, direct_inferred_edge = create_edgar_inferred_edge(inferred_link.link_id,
+                                                                                       params.curie,
+                                                                                       params.predicate_parts,
+                                                                                       params.is_source)
+
+            add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
+            add_auxgraph_for_inference(in_message, enriched_node, direct_inferred_edge_id,
+                                       enriched_to_infer_edge_id, enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
+
+            # 4. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
+            make_edgar_final_result(results_cache, inferred_link.link_id, direct_inferred_edge_id, params)
 
     # At this point all the graph enrichment inferred results are written in the "message"
-    if property_inferred_results:
-        for property, inferred_result in property_inferred_results.items():
+    for property, inferred_result in property_inferred_results.items():
 
-            p_value = inferred_result["p_value"]
-            # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
-            enriched_to_uuid_edge_id = enrichment_edges[property]
+        p_value = inferred_result["p_value"]
+        # get the direct edge1: [member_of]-(set uuid)-[enriched_edge]-(enriched_node)
+        enriched_to_uuid_edge_id = enrichment_edges[property]
 
-            # For a property with n inferred results:
-            for link_id, link_name in zip(inferred_result["lookup_links"], inferred_result["lookup_names"]):
-                # Do Not re-store the lookup results
-                if link_id in uuid_group:
-                    continue
+        # For a property with n inferred results:
+        for link_id, link_name in zip(inferred_result["lookup_links"], inferred_result["lookup_names"]):
+            # Do Not re-store the lookup results
+            if link_id in uuid_group:
+                continue
 
-                # Make and add edge from the enriched nodes(properties) to the inferred result
-                enriched_to_infer_edge = create_knowledge_graph_edge(link_id, property, role_predicate)
-                enriched_to_infer_edge_id = f"{link_id}_{role_predicate}_{property}"
-                add_edge_to_knowledge_graph(in_message, enriched_to_infer_edge, enriched_to_infer_edge_id)
+            # Make and add edge from the enriched nodes(properties) to the inferred result
+            enriched_to_infer_edge = create_knowledge_graph_edge(link_id, property, role_predicate)
+            enriched_to_infer_edge_id = f"{link_id}_{role_predicate}_{property}"
+            add_edge_to_knowledge_graph(in_message, enriched_to_infer_edge, enriched_to_infer_edge_id)
 
-                if link_id in results_cache:
-                    # Existing results ? the node is already created, Just:
-                    # 1. Add the property on the node
-                    # 2. Grab the inferred edge from the KG and add support graph to it
-                    add_node_property(link_id, property, in_message=in_message, p_value=p_value)
-                    direct_inferred_edge_id = stitch_inferred_edge_id(link_id, params)
-                    add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
-                                               enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
-
-                    continue
-                # 1. Add the inferred nodes to the KG44
-                node = create_knowledge_graph_node(link_id, params.output_semantic_type, link_name)
-                add_node_property(node, property, p_value=p_value)
-
-                add_node_to_knowledge_graph(in_message, link_id, node)
-
-                # 2. make and add the final_inferred edge to the KG PHYS-ALZ
-                direct_inferred_edge_id, direct_inferred_edge = create_edgar_inferred_edge(link_id,
-                                                                                           params.curie,
-                                                                                           params.predicate_parts,
-                                                                                           params.is_source)
-
-                add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
-
+            if link_id in results_cache:
+                # Existing results ? the node is already created, Just:
+                # 1. Add the property on the node
+                # 2. Grab the inferred edge from the KG and add support graph to it
+                add_node_property(link_id, property, in_message=in_message, p_value=p_value)
+                direct_inferred_edge_id = stitch_inferred_edge_id(link_id, params)
                 add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
                                            enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
 
-                # 3. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
-                make_edgar_final_result(results_cache, link_id, direct_inferred_edge_id, params)
-                # stored.add(link_id)
+                continue
+            # 1. Add the inferred nodes to the KG44
+            node = create_knowledge_graph_node(link_id, params.output_semantic_type, link_name)
+            add_node_property(node, property, p_value=p_value)
+
+            add_node_to_knowledge_graph(in_message, link_id, node)
+
+            # 2. make and add the final_inferred edge to the KG PHYS-ALZ
+            direct_inferred_edge_id, direct_inferred_edge = create_edgar_inferred_edge(link_id,
+                                                                                       params.curie,
+                                                                                       params.predicate_parts,
+                                                                                       params.is_source)
+
+            add_edge_to_knowledge_graph(in_message, direct_inferred_edge, direct_inferred_edge_id)
+
+            add_auxgraph_for_inference(in_message, property, direct_inferred_edge_id, enriched_to_infer_edge_id,
+                                       enriched_to_uuid_edge_id, uuid_to_curie_edge_id)
+
+            # 3. Create a new result; In the result, create the node_bindings, analysis and edge_bindings
+            make_edgar_final_result(results_cache, link_id, direct_inferred_edge_id, params)
+            # stored.add(link_id)
 
 
 
