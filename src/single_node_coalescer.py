@@ -253,26 +253,31 @@ def create_infer_trapi_response( in_message, params, lookup_results, graph_enric
 
 
 def unify_link_ids( results ):
-    if results:
-        if isinstance(results, dict):
-            # Takes care of inputs from create_node_to_links of the format:
-            # {'node1': [links], 'node2': [links]...}; then return all the links as one list
-            return list(frozenset(chain.from_iterable(results.values())))
+    if results == {}:
+        return []
 
-        # Graph_Coalesce result? of the format:
-        # [AnswerObject1, AnswerObject2, ....]; then return all the links in one list and their respective edges to the enrichment nodes in a separate list
-        seen_nodes = set()
-        filtered_nodes = []
-        filtered_predicates = []
+    if results == []:
+        return [], []
 
-        for result in results:
-            node, pred = result.enriched_node.new_curie, orjson.loads(result.predicate)
-            if (node, pred.get("predicate")) in seen_nodes:
-                continue
-            filtered_nodes.append(node)
-            filtered_predicates.append(json.dumps(pred))
-            seen_nodes.add((node, pred.get("predicate")))
-        return filtered_nodes, filtered_predicates
+    if isinstance(results, dict):
+        # Takes care of inputs from create_node_to_links of the format:
+        # {'node1': [links], 'node2': [links]...}; then return all the links as one list
+        return list(frozenset(chain.from_iterable(results.values())))
+
+    # Graph_Coalesce result? of the format:
+    # [AnswerObject1, AnswerObject2, ....]; then return all the links in one list and their respective edges to the enrichment nodes in a separate list
+    seen_nodes = set()
+    filtered_nodes = []
+    filtered_predicates = []
+
+    for result in results:
+        node, pred = result.enriched_node.new_curie, orjson.loads(result.predicate or '{}')
+        if (node, pred.get("predicate")) in seen_nodes:
+            continue
+        filtered_nodes.append(node)
+        filtered_predicates.append(json.dumps(pred))
+        seen_nodes.add((node, pred.get("predicate")))
+    return filtered_nodes, filtered_predicates
 
 
 
