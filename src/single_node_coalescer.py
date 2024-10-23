@@ -6,6 +6,7 @@ from src.property_coalescence.property_coalescer import coalesce_by_property, lo
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links, get_node_types, filter_links_by_node_type, get_node_names, add_provs
 
 from src.set_coalescence.set_coalescer import coalesce_by_set
+from src.scoring import pvalue_to_sigmoid
 from src.components import MCQDefinition, Lookup_params, Lookup
 from src.trapi import create_knowledge_graph_edge, create_knowledge_graph_edge_from_component, \
     create_knowledge_graph_node, add_node_to_knowledge_graph, add_edge_to_knowledge_graph, add_auxgraph_for_enrichment, \
@@ -125,6 +126,7 @@ async def create_mcq_trapi_response(in_message, enrichment_results, mcq_definiti
         await create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition)
     return in_message
 
+
 async def create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition):
     """
      Each enrichment is a result.  For each enrichment we need to
@@ -155,7 +157,9 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
     # 6. Create a new result
     # 7. In the result, create the node_bindings
     # 8. In the result, create the analysis and add edge_bindings to it.
-    add_enrichment_result(in_message, enrichment.enriched_node, enrichment_kg_edge_id, mcq_definition)
+    # 9. Make a score out of the enrichment pvalue
+    enrichment_pval = pvalue_to_sigmoid(enrichment.p_value)
+    add_enrichment_result(in_message, enrichment.enriched_node, enrichment_pval, enrichment_kg_edge_id, mcq_definition)
 
 async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
     """Create or find the member_of edges for the input nodes from the member_ids element of input_qnode_id.

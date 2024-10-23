@@ -259,7 +259,7 @@ def add_aux_graphs( new_edge, aux_graph_ids ):
     )
 
 
-def add_enrichment_result( in_message, enriched_node, enrichment_edge_id, mcq_definition: MCQDefinition ):
+def add_enrichment_result( in_message, enriched_node, enrichment_pval, enrichment_edge_id, mcq_definition: MCQDefinition ):
     if "results" not in in_message["message"]:
         in_message["message"]["results"] = []
     result = {"node_bindings": {}, "analyses": [{"edge_bindings": {}, "resource_id": infores, "attributes": []}]}
@@ -272,6 +272,7 @@ def add_enrichment_result( in_message, enriched_node, enrichment_edge_id, mcq_de
     # There should be an edge binding from the enrichment edge qedge_id to the enrichment edge uuid
     result["analyses"][0]["edge_bindings"][mcq_definition.edge.qedge_id] = [
         {"id": enrichment_edge_id, "attributes": []}]
+    result["analyses"][0]["score"] = enrichment_pval
 
 
 def create_edgar_enrichment_edge( enrichment_pvalue, input_edge=None, source=None, target=None, predicate_only=None ):
