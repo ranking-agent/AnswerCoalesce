@@ -12,7 +12,7 @@ jsondir= 'InputJson_1.5'
 #This test requires too large of a test redis (the load files get bigger than github likes) so we keep it around
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub
-def test_disease_to_drugs_inference():
+def test_drugs_to_disease_inference():
     # Sample lookup query with inferred knowledge_type
     # It does both property and graph enrichment
     in_message = {
@@ -85,7 +85,7 @@ def test_disease_to_drugs_inference():
         assert in_message['message']['query_graph']['nodes'][qgedge["subject"]]['categories'][0] in kgnodes[the_edge["subject"]]['categories']
 
 @pytest.mark.nongithub
-def test_gene_to_diseases_inference():
+def test_genes_to_disease_inference():
     # Sample lookup query with inferred knowledge_type
     # It does both property and graph enrichment
     in_message = {
@@ -328,44 +328,49 @@ def test_genes_to_chemical_mcq():
 
 
 @pytest.mark.nongithub
-def test_phenotype_to_gene_mcq():
+def test_phenotype_to_gene_mcq_no_enrichment():
     in_message = {
-          "message": {
-            "query_graph": {
-              "nodes": {
-                "input": {
-                  "categories": [
-                    "biolink:PhenotypicFeature"
-                  ],
-                  "ids": [
-                    "uuid:1"
-                  ],
-                  "member_ids": [
-                    "HP:0001263",
-                    "HP:0001250",
-                    "HP:0012758",
-                    "HP:0012434"
-                  ],
-                  "set_interpretation": "MANY"
-                },
-                "output": {
-                  "categories": [
-                    "biolink:Gene"
-                  ]
-                }
-              },
-              "edges": {
-                "edge_0": {
-                  "subject": "input",
-                  "object": "output",
-                  "predicates": [
-                    "biolink:genetically_associated_with"
-                  ]
-                }
-              }
-            }
-          }
+  "message": {
+    "query_graph": {
+      "nodes": {
+        "input": {
+          "categories": [
+            "biolink:PhenotypicFeature"
+          ],
+          "ids": [
+            "uuid:1"
+          ],
+          "member_ids": [
+            "HP:0000729",
+            "HP:0012758",
+            "HP:0001249",
+            "HP:0001629",
+            "HP:0001999",
+            "HP:0002705",
+            "HP:0000426",
+            "HP:0000586",
+            "HP:0010490"
+          ],
+          "set_interpretation": "MANY"
+        },
+        "output": {
+          "categories": [
+            "biolink:Gene"
+          ]
         }
+      },
+      "edges": {
+        "edge_0": {
+          "subject": "input",
+          "object": "output",
+          "predicates": [
+            "biolink:genetically_associated_with"
+          ]
+        }
+      }
+    }
+  }
+}
     assert PDResponse.parse_obj(in_message)
 
     response = client.post('/query', json=in_message)
@@ -377,14 +382,44 @@ def test_phenotype_to_gene_mcq():
     jret = json.loads(response.content)
     message = jret['message']
 
-    assert (len(message) == 4)  # 4 because of the additional parameter: auxilliary_Graph
-    kgnodes = message["knowledge_graph"]["nodes"]
-    kgedges = message["knowledge_graph"]["edges"]
-    result0 = message['results'][0]
-    assert len(result0['node_bindings']) == 2
-    for qgedge_id, qgedge in in_message['message']['query_graph']['edges'].items():
-        result_edges = result0["analyses"][0]["edge_bindings"][qgedge_id][0]["id"]
-        the_edge = kgedges[result_edges]
-        assert in_message['message']['query_graph']['nodes'][qgedge["subject"]]['ids'][0] == the_edge["subject"]
-        assert in_message['message']['query_graph']['nodes'][qgedge["object"]]['categories'][0] in \
-               kgnodes[the_edge["object"]]['categories']
+    assert (len(message) == 2)  # 2 because only Query Graph and Knowledge graph exist with no enrichment
+
+@pytest.mark.nongithub
+def test_phenotype_to_gene_gene():
+    in_message = {
+  "message": {
+    "query_graph": {
+      "nodes": {
+        "input": {
+          "categories": [
+            "biolink:PhenotypicFeature"
+          ],
+          "ids": [
+            "uuid:1"
+          ],
+          "member_ids": [
+            "HP:0001263",
+            "HP:0001250",
+            "HP:0012758",
+            "HP:0012434"
+          ],
+          "set_interpretation": "MANY"
+        },
+        "output": {
+          "categories": [
+            "biolink:Gene"
+          ]
+        }
+      },
+      "edges": {
+        "edge_0": {
+          "subject": "input",
+          "object": "output",
+          "predicates": [
+            "biolink:genetically_associated_with"
+          ]
+        }
+      }
+    }
+  }
+}

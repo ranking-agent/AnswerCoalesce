@@ -6,6 +6,7 @@ from src.property_coalescence.property_coalescer import coalesce_by_property, lo
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links, get_node_types, filter_links_by_node_type, get_node_names, add_provs
 
 from src.set_coalescence.set_coalescer import coalesce_by_set
+from src.scoring import pvalue_to_sigmoid
 from src.components import MCQDefinition, Lookup_params, Lookup
 from src.trapi import create_knowledge_graph_edge, create_knowledge_graph_edge_from_component, \
     create_knowledge_graph_node, add_node_to_knowledge_graph, add_edge_to_knowledge_graph, add_auxgraph_for_enrichment, \
@@ -125,6 +126,7 @@ async def create_mcq_trapi_response(in_message, enrichment_results, mcq_definiti
         await create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition)
     return in_message
 
+
 async def create_result_from_enrichment(in_message, enrichment, member_of_edges, mcq_definition):
     """
      Each enrichment is a result.  For each enrichment we need to
@@ -155,7 +157,9 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
     # 6. Create a new result
     # 7. In the result, create the node_bindings
     # 8. In the result, create the analysis and add edge_bindings to it.
-    add_enrichment_result(in_message, enrichment.enriched_node, enrichment_kg_edge_id, mcq_definition)
+    # 9. Make a score out of the enrichment pvalue
+    enrichment_pval = pvalue_to_sigmoid(enrichment.p_value, scale=0.5, shift=5)
+    add_enrichment_result(in_message, enrichment.enriched_node, enrichment_pval, enrichment_kg_edge_id, mcq_definition)
 
 async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
     """Create or find the member_of edges for the input nodes from the member_ids element of input_qnode_id.
@@ -253,26 +257,31 @@ def create_infer_trapi_response( in_message, params, lookup_results, graph_enric
 
 
 def unify_link_ids( results ):
-    if results:
-        if isinstance(results, dict):
-            # Takes care of inputs from create_node_to_links of the format:
-            # {'node1': [links], 'node2': [links]...}; then return all the links as one list
-            return list(frozenset(chain.from_iterable(results.values())))
+    if results == {}:
+        return []
 
-        # Graph_Coalesce result? of the format:
-        # [AnswerObject1, AnswerObject2, ....]; then return all the links in one list and their respective edges to the enrichment nodes in a separate list
-        seen_nodes = set()
-        filtered_nodes = []
-        filtered_predicates = []
+    if results == []:
+        return [], []
 
-        for result in results:
-            node, pred = result.enriched_node.new_curie, orjson.loads(result.predicate)
-            if (node, pred.get("predicate")) in seen_nodes:
-                continue
-            filtered_nodes.append(node)
-            filtered_predicates.append(json.dumps(pred))
-            seen_nodes.add((node, pred.get("predicate")))
-        return filtered_nodes, filtered_predicates
+    if isinstance(results, dict):
+        # Takes care of inputs from create_node_to_links of the format:
+        # {'node1': [links], 'node2': [links]...}; then return all the links as one list
+        return list(frozenset(chain.from_iterable(results.values())))
+
+    # Graph_Coalesce result? of the format:
+    # [AnswerObject1, AnswerObject2, ....]; then return all the links in one list and their respective edges to the enrichment nodes in a separate list
+    seen_nodes = set()
+    filtered_nodes = []
+    filtered_predicates = []
+
+    for result in results:
+        node, pred = result.enriched_node.new_curie, orjson.loads(result.predicate or '{}')
+        if (node, pred.get("predicate")) in seen_nodes:
+            continue
+        filtered_nodes.append(node)
+        filtered_predicates.append(json.dumps(pred))
+        seen_nodes.add((node, pred.get("predicate")))
+    return filtered_nodes, filtered_predicates
 
 
 
