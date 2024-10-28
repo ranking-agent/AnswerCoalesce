@@ -158,7 +158,7 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
     # 7. In the result, create the node_bindings
     # 8. In the result, create the analysis and add edge_bindings to it.
     # 9. Make a score out of the enrichment pvalue
-    enrichment_pval = pvalue_to_sigmoid(enrichment.p_value)
+    enrichment_pval = pvalue_to_sigmoid(enrichment.p_value, scale=0.5, shift=5)
     add_enrichment_result(in_message, enrichment.enriched_node, enrichment_pval, enrichment_kg_edge_id, mcq_definition)
 
 async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):

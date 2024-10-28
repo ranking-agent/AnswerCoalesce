@@ -9,12 +9,15 @@ def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
 
-def pvalue_to_sigmoid(p_values):
-    if not (0 < p_values <= 1):
-        raise ValueError("p must be in the range (0, 1]")
+def modified_sigmoid(x, scale=1, shift=0):
+    return sigmoid(scale * (x - shift))
 
+def pvalue_to_sigmoid(p_values, scale=1, shift=0):
+    if np.any((p_values <= 0) | (p_values > 1)):
+        raise ValueError("hold on!]")
     log_value = -np.log10(p_values)
-    return sigmoid(log_value)
+    return np.round(modified_sigmoid(log_value, scale=scale, shift=shift), 6)
+
 
 def sum_log_p_values(p_values):
     """Sum the negative logarithms of the p-values."""
