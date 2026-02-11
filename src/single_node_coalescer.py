@@ -81,14 +81,11 @@ async def infer(in_message: dict) -> dict:
             return in_message
 
         # LOG LOOKUP SUCCESS
-        builder.log(
-            "Lookup stage complete",
-            level="INFO",
-            metadata={
-                "total_lookups": len(lookup_results.link_ids),
-                "timing_seconds": round(time.time() - lookup_start, 3)
-            }
-        )
+        builder.log("Lookup stage complete", level="INFO",
+                    metadata={"total_lookups": len(lookup_results.link_ids),
+                              "timing_seconds": round(time.time() - lookup_start, 3)
+                              }
+                    )
         logger.info(f"Found {len(lookup_results.link_ids)} lookup results for {params.curie}")
 
         # 3 & 4. ENRICHMENT
@@ -146,10 +143,8 @@ async def infer(in_message: dict) -> dict:
         )
 
         if not filtered_enrichments:
-            builder.log_error(
-                "No enrichment results after filtering",
-                metadata={"timing_seconds": round(time.time() - enrichment_start, 3)}
-            )
+            builder.log_error("No enrichment results after filtering",
+                              metadata={"timing_seconds": round(time.time() - enrichment_start, 3)})
             ensure_empty_results(in_message)
             return in_message
 

@@ -24,7 +24,7 @@ def test_drugs_to_disease_inference():
             },
             "n1": {
               "ids": [
-                "MONDO:0004979"
+                "MONDO:0004975"
               ],
               "categories": [
                 "biolink:Disease"

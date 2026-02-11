@@ -1,0 +1,40 @@
+# OS / editor junk
+.DS_Store
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated data / logs
+*.json
+*.jsonl
+*.txt
+*.db
+
+# Redis / graph build outputs
+src/graph_coalescence/*.txt
+src/graph_coalescence/*.jsonl
+src/graph_coalescence/*.log
+src/property_coalescence/*.log
+src/set_coalescence/*.log
+src/cypher.py
+src/graph_coalescence/build_redis_files_extra.py
+
+# Test artifacts
+tests/data/
+tests/process.db
+tests/prototyping_results/
+tests/*.ipynb
+tests/process_db.py
+tests/*json
+
+# Scripts not meant for version control
+.github/pybatch.sh
+
+# others
+list

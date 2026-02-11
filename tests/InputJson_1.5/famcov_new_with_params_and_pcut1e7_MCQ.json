@@ -319,7 +319,7 @@
   },
   "parameters": {
     "pvalue_threshold": 1e-07,
-    "predicates_to_exclude": [
+    "predicate_constraints": [
       "biolink:causes",
       "biolink:biomarker_for",
       "biolink:biomarker_For",

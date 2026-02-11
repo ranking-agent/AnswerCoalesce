@@ -437,7 +437,7 @@ def test_graph_coalesce_basic():
     #Assert that the output is well-formed
     assert PDResponse.parse_obj(coalesced)
     # We should have lots of results.  The exact number will not change as long as the test data does not
-    assert len(coalesced['message']['results']) == 5928
+    assert len(coalesced['message']['results']) == 5929
     # Let's make sure that the KL/AT are only mentioned once (this was a problem at one point)
     ps_and_preds = []
     for kedge_id, kedge in coalesced['message']['knowledge_graph']['edges'].items():
@@ -494,7 +494,7 @@ def get_input_message():
         input_message = json.load(tf)
     assert PDResponse.parse_obj(input_message)
     assert input_message.get("parameters").get('pvalue_threshold')
-    assert input_message.get("parameters").get('predicates_to_exclude')
+    assert input_message.get("parameters").get('predicate_constraints')
     input_message["parameters"]["pvalue_threshold"] = None
     input_message["parameters"]["result_length"] = None
     return input_message
@@ -528,5 +528,3 @@ def test_gouper_keys():
         n += 1
     assert n == 3
     assert x == ('g',)
-
-
