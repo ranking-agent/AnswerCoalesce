@@ -13,7 +13,6 @@ __pycache__/
 # Generated data / logs
 *.json
 *.jsonl
-*.txt
 *.db
 
 # Redis / graph build outputs
@@ -22,6 +21,7 @@ src/graph_coalescence/*.jsonl
 src/graph_coalescence/*.log
 src/property_coalescence/*.log
 src/set_coalescence/*.log
+tests/RedisParseTestData/
 src/cypher.py
 src/graph_coalescence/build_redis_files_extra.py
 
