@@ -75,12 +75,12 @@ async def query_handler(request: PDResponse = default_request_sync):
         for log in in_message['logs']:
             log['timestamp'] = str(log['timestamp'])
 
-        parameters = await get_parameters( in_message )
+        parameters = await get_parameters(in_message)
 
-        if await is_infer_query( in_message ):
-            return await infer( in_message, parameters )
-        elif await is_multi_curie_query( in_message ):
-            return await multi_curie_query( in_message, parameters )
+        if await is_infer_query(in_message):
+            return await infer(in_message)
+        elif await is_multi_curie_query(in_message):
+            return await multi_curie_query(in_message, parameters)
 
         # This isn't a valid query
         status_code = 422
@@ -103,7 +103,7 @@ async def get_parameters(in_message):
     parameters["result_length"] = in_message.get('parameters', {}).get('result_length', None)
     return parameters
 
-async def is_infer_query( in_message ):
+async def is_infer_query(in_message):
     """Check if the query is an infer query.  An infer query is a 1-hop with a single bound node.
     The one edge has "knowledge_type: inferred" """
     # Check the basic structure
@@ -212,8 +212,8 @@ def construct_open_api_schema():
     x_translator_id_val = os.environ.get("INFORES_VALUE", "infores:answer-coalesce")
 
     # Add the x-maturity data
-    open_api_schema["info"][x_maturity] = x_maturity_val    
-    
+    open_api_schema["info"][x_maturity] = x_maturity_val
+
 
     x_translator_extension = open_api_extended_spec.get("x-translator")
     x_trapi_extension = open_api_extended_spec.get("x-trapi")

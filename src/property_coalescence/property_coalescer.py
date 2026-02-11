@@ -11,8 +11,8 @@ logger = LoggingUtil.init_logging('property_coalescer', level=logging.WARNING, f
                                   logFilePath=this_dir + '/')
 
 
-async def coalesce_by_property( input_ids: list, input_node_type: str, property_constraints: list = None,
-                                pvalue_threshold: float = None ) -> list:
+async def coalesce_by_property(input_ids: list, input_node_type: str, property_constraints: list = None,
+                               pvalue_threshold: float = None) -> list:
     """
     Given a list of input_ids for coalescence, find subset of the list with common CHEBI_ROLES then perform enrichment analysis
     input_node_type is the semantic_type for the input set
@@ -24,7 +24,7 @@ async def coalesce_by_property( input_ids: list, input_node_type: str, property_
     return enriched_properties
 
 
-def get_enriched_properties( nodes, semantic_type, property_constraints=None, pvalue_threshold=None ):
+def get_enriched_properties(nodes, semantic_type, property_constraints=None, pvalue_threshold=None):
     if semantic_type in ['biolink:SmallMolecule', 'biolink:MolecularMixture', 'biolink:Drug']:
         semantic_type = 'biolink:ChemicalEntity'
     if semantic_type not in ['biolink:ChemicalEntity']:
@@ -67,11 +67,13 @@ def get_enriched_properties( nodes, semantic_type, property_constraints=None, pv
 
         enriched.append(enrichment(enrichp, property, ndraws, n, total_node_count, curies, semantic_type))
 
-    if pvalue_threshold:
-        enriched = [enrich for enrich in enriched if enrich.get("p_value") < pvalue_threshold]
-
     # sifter enrichment results
     enriched = [enrich for enrich in enriched if enrich.get("enriched_property") not in BAD_PROPERTIES]
+
+    # print(" P Before: ", len(enriched))
+
+    if pvalue_threshold:
+        enriched = [enrich for enrich in enriched if enrich.get("p_value") < pvalue_threshold]
 
     enriched.sort(key=lambda x: x.get("p_value"))
 
@@ -79,11 +81,11 @@ def get_enriched_properties( nodes, semantic_type, property_constraints=None, pv
 
 
 class PropertyLookup():
-    def __init__( self ):
+    def __init__(self):
         # Right now, we're going to load the property file, but we should replace with a redis or sqlite
         self.thisdir = os.path.dirname(os.path.realpath(__file__))
 
-    def lookup_property_by_node( self, node, stype ):
+    def lookup_property_by_node(self, node, stype):
         pf = f'{self.thisdir}/{stype.replace(":", ".")}.db'
         if not os.path.exists(pf):
             return {}
@@ -98,7 +100,7 @@ class PropertyLookup():
             return literal_eval(r)
         return {}
 
-    def total_nodes_with_property( self, property, stype ):
+    def total_nodes_with_property(self, property, stype):
         pf = f'{self.thisdir}/{stype.replace(":", ".")}.db'
         if not os.path.exists(pf):
             return 0
@@ -110,7 +112,7 @@ class PropertyLookup():
             return results[0]['count']
         return 0
 
-    def get_nodecount( self, stype ):
+    def get_nodecount(self, stype):
         pf = f'{self.thisdir}/{stype.replace(":", ".")}.db'
         if not os.path.exists(pf):
             return 0
@@ -119,7 +121,7 @@ class PropertyLookup():
         results = cur.fetchall()
         return results[0][0]
 
-    def collect_properties( self, nodes, stype ):
+    def collect_properties(self, nodes, stype):
         """
         given a list of curies, go somewhere and find out all of the properties that two or more
         of the nodes share.  Return a dict from the shared property to the nodes.
@@ -136,8 +138,8 @@ class PropertyLookup():
         return returnmap
 
 
-def enrichment( enrichp: float, property: str, ndraws: int, n: int, total_node_count: int, curies: frozenset,
-                semantic_type: str ):
+def enrichment(enrichp: float, property: str, ndraws: int, n: int, total_node_count: int, curies: frozenset,
+               semantic_type: str):
     return {
         "p_value": enrichp,
         "enriched_property": property,
@@ -147,7 +149,7 @@ def enrichment( enrichp: float, property: str, ndraws: int, n: int, total_node_c
     }
 
 
-def lookup_nodes_by_properties( results, stype, return_nodeset=False ):
+def lookup_nodes_by_properties(results, stype, return_nodeset=False):
     properties = [result.get("enriched_property") for result in results]
 
     if stype in ['biolink:SmallMolecule', 'biolink:MolecularMixture', 'biolink:Drug']:

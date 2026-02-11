@@ -13,49 +13,55 @@ jsondir= 'InputJson_1.5'
 # to run locally against prod redises, but we use the mark to not run it on github actions
 @pytest.mark.nongithub
 def test_drugs_to_disease_inference():
-    # Sample lookup query with inferred knowledge_type
-    # It does both property and graph enrichment
     in_message = {
-        "parameters": {
-            "pvalue_threshold": 1e-5,
-            "result_length": 100,
-            "predicates_to_exclude": [
-                "biolink:causes", "biolink:biomarker_for", "biolink:contraindicated_for", "biolink:contraindicated_in",
-                "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"
-            ]
-        },
-        "message": {
-            "query_graph": {
-                "nodes": {
-                    "chemical": {
-                        "categories": [
-                            "biolink:Drug"
-                        ],
-                        "is_set": False,
-                        "constraints": []
-                    },
-                    "disease": {
-                        "ids": [
-                            "MONDO:0004979"
-                        ],
-                        "is_set": False,
-                        "constraints": []
-                    }
-                },
-                "edges": {
-                    "e00": {
-                        "subject": "chemical",
-                        "object": "disease",
-                        "predicates": [
-                            "biolink:treats"
-                        ],
-                        "knowledge_type": "inferred",
-                        "attribute_constraints": [],
-                        "qualifier_constraints": []
-                    }
-                }
+      "message": {
+        "query_graph": {
+          "nodes": {
+            "n0": {
+              "categories": [
+                "biolink:Drug"
+              ]
+            },
+            "n1": {
+              "ids": [
+                "MONDO:0004979"
+              ],
+              "categories": [
+                "biolink:Disease"
+              ]
             }
+          },
+          "edges": {
+            "e0": {
+              "subject": "n0",
+              "object": "n1",
+              "predicates": [
+                "biolink:treats"
+              ],
+              "knowledge_type": "inferred",
+              "attribute_constraints": [],
+              "qualifier_constraints": []
+            }
+          }
         }
+      },
+      "parameters": {
+        "pvalue_threshold": 0.00001,
+        "rule_length": 1000,
+        "predicate_constraint_style": "exclude",
+        "predicate_constraints": [
+          "biolink:causes",
+          "biolink:biomarker_for",
+          "biolink:contraindicated_for",
+          "biolink:contraindicated_in",
+          "biolink:contributes_to",
+          "biolink:has_adverse_event",
+          "biolink:causes_adverse_event",
+          "biolink:similar_to",
+          "biolink:treats_or_applied_or_studied_to_treat",
+          "biolink:subclass_of"
+        ]
+      }
     }
 
     assert PDResponse.parse_obj(in_message)
@@ -67,9 +73,6 @@ def test_drugs_to_disease_inference():
 
     # convert the response to a json object
     jret = json.loads(response.content)
-
-    # with open("MONDO0004979Drugfilterred.json", "w") as json_file:
-    #     json.dump(jret, json_file, indent=4)
 
     message = jret['message']
 
@@ -174,11 +177,11 @@ def test_phenotype_to_genes_inference():
           }
         }
       },
-          "parameters": {
-            "pvalue_threshold": 1e-03,
-            "result_length": 1000,
-            "predicates_to_exclude": []
-          }
+      "parameters": {
+        "pvalue_threshold": 1e-03,
+        "result_length": 1000,
+        "predicate_constraints": []
+      }
     }
     assert PDResponse.parse_obj(in_message)
 
@@ -238,7 +241,7 @@ def test_disease_to_phenotypes_inference():
       "parameters": {
         "pvalue_threshold": 1e-05,
         "result_length": 100,
-        "predicates_to_exclude": []
+        "predicate_constraints": []
       }
     }
     assert PDResponse.parse_obj(in_message)

@@ -18,7 +18,7 @@ logger = LoggingUtil.init_logging('graph_coalescer', level=logging.WARNING, form
 tk = bmt.Toolkit()
 
 
-def grouper( n, iterable ):
+def grouper(n, iterable):
     it = iter(iterable)
     while True:
         chunk = tuple(itertools.islice(it, n))
@@ -27,7 +27,7 @@ def grouper( n, iterable ):
         yield chunk
 
 
-def get_redis_pipeline( dbnum ):
+def get_redis_pipeline(dbnum):
     # "redis_host": "localhost",
     # "redis_port": 6379,
     # "redis_password": "",
@@ -43,7 +43,7 @@ def get_redis_pipeline( dbnum ):
     return p
 
 
-def filter_links_by_predicate( nodes_to_links, predicate_constraints, predicate_constraint_style ):
+def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style):
     """Filter out links that don't meet the predicate constraints
     predicate constraints are just in the form that qualified predicates are described in the links e.g.
     {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity"}
@@ -71,7 +71,7 @@ def filter_links_by_predicate( nodes_to_links, predicate_constraints, predicate_
     return new_nodes_to_links
 
 
-def filter_links_by_node_type( nodes_to_links, node_constraints, link_node_types ):
+def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types):
     """Filter out links that don't meet the node constraints
     node constraints is a list of acceptable node types for the returned nodes.  The node type of the other node
     in the links is used to determine if the link is kept.  Fortunately, link_node_types holds all of the superclasses
@@ -113,9 +113,9 @@ def filter_links_by_node_type( nodes_to_links, node_constraints, link_node_types
     return new_nodes_to_links
 
 
-async def coalesce_by_graph( input_ids, input_node_type,
-                             node_constraints=None, predicate_constraints=None, predicate_constraint_style="exclude",
-                             pvalue_threshold=None, result_length=None, filter_predicate_hierarchies=False ):
+async def coalesce_by_graph(input_ids, input_node_type,
+                            node_constraints=None, predicate_constraints=None, predicate_constraint_style="exclude",
+                            pvalue_threshold=None, result_length=None, filter_predicate_hierarchies=False):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -161,7 +161,8 @@ async def coalesce_by_graph( input_ids, input_node_type,
     sf_cache = {}
 
     enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                        total_node_counts, predicate_constraints, filter_predicate_hierarchies)
+                                        total_node_counts, predicate_constraints, predicate_constraint_style,
+                                        filter_predicate_hierarchies)
 
     if pvalue_threshold:
         enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
@@ -173,7 +174,7 @@ async def coalesce_by_graph( input_ids, input_node_type,
     return enriched_links
 
 
-def augment_enrichments( enriched_links, nodetypes ):
+def augment_enrichments(enriched_links, nodetypes):
     """Having found the set of enrichments we want to return, make sure that each enrichment has the node name and the node type."""
     enriched_curies = set([link.enriched_node.new_curie for link in enriched_links])
     nodenamedict = get_node_names(enriched_curies)
@@ -182,11 +183,11 @@ def augment_enrichments( enriched_links, nodetypes ):
     add_provs(enriched_links)
 
 
-def add_provs( enrichments ):
+def add_provs(enrichments):
     # Now we are going to hit redis to get the provenances for all of the links.
     # our unique_links are the keys
     # Convert n2l to edges
-    def process_prov( prov_data ):
+    def process_prov(prov_data):
         if isinstance(prov_data, (str, bytes)):
             prov_data = orjson.loads(prov_data)
         return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
@@ -233,7 +234,7 @@ def add_provs( enrichments ):
         enrichment.add_provenance(prov)
 
 
-def get_node_types( unique_link_nodes ):
+def get_node_types(unique_link_nodes):
     # p = get_redis_pipeline(1)
     nodetypedict = {}
     with get_redis_pipeline(1) as p:
@@ -248,7 +249,7 @@ def get_node_types( unique_link_nodes ):
     return nodetypedict
 
 
-def get_node_names( unique_link_nodes ):
+def get_node_names(unique_link_nodes):
     # p = get_redis_pipeline(3)
     nodenames = {}
     with get_redis_pipeline(3) as p:
@@ -264,7 +265,7 @@ def get_node_names( unique_link_nodes ):
     return nodenames
 
 
-def get_link_counts( unique_links ):
+def get_link_counts(unique_links):
     # Now we are going to hit redis to get the counts for all of the links.
     # our unique_links are the keys
     # p = get_redis_pipeline(2)
@@ -284,7 +285,7 @@ def get_link_counts( unique_links ):
     return lcounts
 
 
-def check_prov_value_type( value ):
+def check_prov_value_type(value):
     if isinstance(value, list):
         val = ','.join(value)
     else:
@@ -295,14 +296,14 @@ def check_prov_value_type( value ):
     return val.replace('biolink:', '')
 
 
-def get_edge_symmetric( edge ):
+def get_edge_symmetric(edge):
     subject, b = edge.split('{')
     edge_predicate, obj = b.split('}')
     edge_predicate = '{' + edge_predicate + '}'
     return f'{obj.lstrip()} {edge_predicate} {subject.rstrip()}'
 
 
-def filter_opportunities( opportunities, nodes_to_links ):
+def filter_opportunities(opportunities, nodes_to_links):
     new_opportunities = []
     for opportunity in opportunities:
         kn = opportunity.get_kg_ids()
@@ -314,7 +315,7 @@ def filter_opportunities( opportunities, nodes_to_links ):
     return new_opportunities
 
 
-def uniquify_links( nodes_to_links, input_type ):
+def uniquify_links(nodes_to_links, input_type):
     # A link might occur for multiple nodes and across different opportunities
     # Create the total unique set of links
     unique_links = set()
@@ -339,13 +340,13 @@ def uniquify_links( nodes_to_links, input_type ):
     return unique_link_nodes, unique_links
 
 
-def predicate_string_is_symmetric( predicate: str ) -> bool:
+def predicate_string_is_symmetric(predicate: str) -> bool:
     """Check if a predicate string is symmetric. The predicate here is the whole qualified mess as a string"""
     bare_predicate = orjson.loads(predicate)["predicate"]
     return tk.get_element(bare_predicate)["symmetric"]
 
 
-def create_nodes_to_links( allnodes, param_predicates=[] ):
+def create_nodes_to_links(allnodes, param_predicates=[]):
     """Given a list of nodes identifiers, pull all their links
     If param_predicates is not empty, it should be a list of the same length as allnodes.
     It's use is in EDGAR where create_nodes_to_links is used in the final lookup step. In that case,
@@ -384,7 +385,7 @@ def create_nodes_to_links( allnodes, param_predicates=[] ):
     return nodes_to_links
 
 
-def create_node_to_type( opportunities ):
+def create_node_to_type(opportunities):
     # Create a dict from node->type(node) for all nodes in every opportunity
     allnodes = {}
     for opportunity in opportunities:
@@ -395,7 +396,7 @@ def create_node_to_type( opportunities ):
     return allnodes
 
 
-def filter_opportunities_and_unify( opportunities, nodes_to_links ):
+def filter_opportunities_and_unify(opportunities, nodes_to_links):
     unique_links = set()
     unique_link_nodes = set()
     kn = set(opportunities['qg_curies'].keys())
@@ -420,15 +421,16 @@ def filter_opportunities_and_unify( opportunities, nodes_to_links ):
     return new_nodes_to_links, nodes_indices, unique_link_nodes, unique_links
 
 
-def enrich_equal_qnode( qnode_hash, best_enrich_node ):
+def enrich_equal_qnode(qnode_hash, best_enrich_node):
     for _, val in qnode_hash:
         if best_enrich_node in val:
             return True
     return False
 
 
-def get_enriched_links( nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
-                        predicate_constraints=None, filter_predicate_hierarchies=False ):
+def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
+                       predicate_constraints=None, predicate_constraint_style='exclude',
+                       filter_predicate_hierarchies=False):
     """Given a set of nodes and the links that they share, as well as some counts, return the enrichments based
     on the links.
     If you want to restrict the answers, then you filter nodes_to_links ahead of time.'
@@ -441,23 +443,24 @@ def get_enriched_links( nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
     # Get the most enriched connected node for a group of nodes.
     logger.debug('start get_shared_links()')
 
-    constraint_triples_to_filter = {}
+    constraint_triples = {}
     links_to_nodes = defaultdict(list)
     for node in nodes:
         for link in nodes_to_links[node]:
             links_to_nodes[tuple(link)].append(node)
 
             # Let's just using this block to save what we might need in edgar
+
             if orjson.loads(link[1]).get("predicate") in predicate_constraints:
                 if link[2]:
-                    constraint_triples_to_filter.setdefault((link[0], node), set()).add(link[1])
+                    constraint_triples.setdefault((link[0], node), set()).add(link[1])
                 else:
-                    constraint_triples_to_filter.setdefault((node, link[0]), set()).add(link[1])
+                    constraint_triples.setdefault((node, link[0]), set()).add(link[1])
 
     # For edgar use
-    if filter_predicate_hierarchies:
-        # Use the constraint_triples_to_filter to sifter the links
-        links_to_nodes = filter_links_to_nodes(links_to_nodes, constraint_triples_to_filter, predicate_constraints)
+    if filter_predicate_hierarchies and predicate_constraint_style == 'exclude':
+        # Use the constraint_triples to sifter the links
+        links_to_nodes = filter_links_to_nodes(links_to_nodes, constraint_triples, predicate_constraints)
 
     nodeset_to_links = defaultdict(list)
     for link, snodes in links_to_nodes.items():
@@ -528,7 +531,8 @@ def get_enriched_links( nodes, semantic_type, nodes_to_links, lcounts, sfcache, 
             # get the real labels/types of the enriched node
             node_types = typecache[newcurie]
 
-            enrichment = Enrichment(enrichp, newcurie, predicate, newcurie_is_source, ndraws, n, total_node_count, nodeset, node_types)
+            enrichment = Enrichment(enrichp, newcurie, predicate, newcurie_is_source, ndraws, n, total_node_count,
+                                    nodeset, node_types)
             enriched.append(enrichment)
 
         if len(enriched) > 0:
@@ -577,7 +581,8 @@ def filter_links_to_nodes(links_to_nodes, constraint_triples_to_filter, predicat
         new_links_to_nodes[link] = snodes
     return new_links_to_nodes
 
-def filter_result_hierarchies( results ):
+
+def filter_result_hierarchies(results):
     enrichment_group_dict = {};
 
     for result in results:
@@ -590,7 +595,7 @@ def filter_result_hierarchies( results ):
     return new_results
 
 
-def process_enrichment_group( enrichment_group_dict ):
+def process_enrichment_group(enrichment_group_dict):
     new_results = set()
 
     for enriched_node, enriched_results in enrichment_group_dict.items():
@@ -744,7 +749,7 @@ def streamline_children_to_parent(children_to_parent, pvalues):
         return streamline_children_to_parent(new_children_to_parent, pvalues)
 
 
-def group_by_predicate( items ):
+def group_by_predicate(items):
     """
     groups a list of predicate strings by the predicate only
     """
@@ -761,8 +766,8 @@ def group_by_predicate( items ):
     return grouped_items
 
 
-def children_parent_mapping( specific_results ):
-    def merge_dict( d ):
+def children_parent_mapping(specific_results):
+    def merge_dict(d):
         """
         For each key-value pair, check if any of the values are keys in the dictionary.
         If they are, merge their value sets and mark the key for removal.
@@ -846,7 +851,7 @@ def children_parent_mapping( specific_results ):
     return merge_dict(children_to_parent)
 
 
-def is_child_in( child, parent, qualifier_enum ):
+def is_child_in(child, parent, qualifier_enum):
     """Eg: activity_or_abundance is used in cases where the specificity of the relationship can not be determined to be either activity or abundance.
     In general, a more specific value from this enumeration should be used, if it is present in the result being filtered.
     """
@@ -854,25 +859,25 @@ def is_child_in( child, parent, qualifier_enum ):
     return child in children
 
 
-def has_qualifier( predicate ):
+def has_qualifier(predicate):
     # https://biolink.github.io/biolink-model/qualifiers.html
     qualifiers = {"object_aspect_qualifier", "object_direction_qualifier"}
     return any(q in predicate for q in qualifiers)
 
 
-def get_ancestors( predicate ):
+def get_ancestors(predicate):
     # https://biolink.github.io/biolink-model/#predicates-visualization
     # https://biolink.github.io/biolink-model/predicates.html
     return tk.get_ancestors(predicate, formatted=True, reflexive=False)
 
 
-def get_children( predicate ):
+def get_children(predicate):
     # https://biolink.github.io/biolink-model/#predicates-visualization
     # https://biolink.github.io/biolink-model/predicates.html
     return tk.get_children(predicate, formatted=True)
 
 
-def get_specific_results( pvalue_group_dict ):
+def get_specific_results(pvalue_group_dict):
     """
     This function accepts:
         enrichment result grouped by pvalue, and most-likely, different predicates
@@ -943,7 +948,7 @@ def get_specific_results( pvalue_group_dict ):
     return specific_results
 
 
-def get_total_node_counts( semantic_type ):
+def get_total_node_counts(semantic_type):
     counts = {}
     # needs to be first so that counts will fill it first
     semantic_list = ['biolink:NamedThing', semantic_type]
@@ -961,7 +966,7 @@ def get_total_node_counts( semantic_type ):
     return counts
 
 
-def get_total_node_count( semantic_type ):
+def get_total_node_count(semantic_type):
     """In the hypergeometric calculation, you're drawing balls from a bag, and you have
     to know the total number of possible draws.  What should that be?   It could be the number
     of nodes in the graph, but is that fair?  If I'm expanding from say, a chemical, there are
