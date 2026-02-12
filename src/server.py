@@ -24,7 +24,7 @@ AC_VERSION = '3.1.0'
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 # init a logger
-logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir+'/')
+logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir + '/')
 
 # declare the application and populate some details
 APP = FastAPI(
@@ -41,6 +41,7 @@ APP.add_middleware(
     allow_headers=["*"],
 )
 
+
 # declare the types of answer coalesce methods
 class MethodName(str, Enum):
     all = "all"
@@ -54,54 +55,56 @@ conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'conf
 with open(conf_path, 'r') as inf:
     conf = json.load(inf)
 
-
 # define the default request bodies
 default_request_sync: Body = Body(default=default_input_sync)
 
-@APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True, status_code=200)
+
+@APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,
+          status_code=200)
 async def query_handler(request: PDResponse = default_request_sync):
     # """ Answer coalesce operations. You may choose all, property, graph. """
 
     try:
         # convert the incoming message into a dict
-        in_message = request.dict(exclude_none = True)
+        in_message = request.dict(exclude_none=True)
 
         # save the logs for the response (if any)
         if 'logs' not in in_message or in_message['logs'] is None:
             in_message['logs'] = []
 
-        # these timestamps are causing json serialization issues in call to the normalizer
-        # so here we convert them to strings.
-        for log in in_message['logs']:
-            log['timestamp'] = str(log['timestamp'])
-
         parameters = await get_parameters(in_message)
 
         if await is_infer_query(in_message):
-            return await infer(in_message)
+            result = await infer(in_message)
         elif await is_multi_curie_query(in_message):
-            return await multi_curie_query(in_message, parameters)
+            result = await multi_curie_query(in_message, parameters)
+        else:
+            # This isn't a valid query
+            status_code = 422
+            logger.error(f"Invalid query.  Must be either a multi-curie query or an infer query.")
+            return JSONResponse(content=in_message, status_code=status_code)
 
-        # This isn't a valid query
-        status_code = 422
-        logger.error(f"Invalid query.  Must be either a multi-curie query or an infer query.")
-        return JSONResponse(content=in_message, status_code=status_code)
+        # Convert ALL timestamps to strings (both old and new logs)
+        convert_log_timestamps(result)
+        return result
 
     except Exception as e:
         # put the error in the response
         status_code = 500
         logger.exception(f"Exception encountered {str(e)}")
+        convert_log_timestamps(in_message)
         return JSONResponse(content=in_message, status_code=status_code)
 
 
 async def get_parameters(in_message):
     """Get the parameters from the incoming message.  If they are not present, return the defaults."""
     parameters = {}
-    parameters["predicates_to_exclude"] = in_message.get('parameters',{}).get('predicates_to_exclude', [])
+    parameters["predicates_to_exclude"] = in_message.get('parameters', {}).get('predicates_to_exclude', [])
     parameters["properties_to_exclude"] = in_message.get('parameters', {}).get('properties_to_exclude', [])
     parameters["pvalue_threshold"] = in_message.get('parameters', {}).get('pvalue_threshold', None)
     parameters["result_length"] = in_message.get('parameters', {}).get('result_length', None)
     return parameters
+
 
 async def is_infer_query(in_message):
     """Check if the query is an infer query.  An infer query is a 1-hop with a single bound node.
@@ -119,6 +122,7 @@ async def is_infer_query(in_message):
 
     return False
 
+
 async def is_multi_curie_query(in_message):
     """Check if the query is a MCQ.  An MCQ has set_interpretation: MANY, and member_ids."""
     # Check the basic structure
@@ -134,16 +138,27 @@ async def is_multi_curie_query(in_message):
                     return True
     return False
 
+
 def count_query_nodes(in_message):
     """Count the number of nodes in the query."""
     return len(in_message['message']['query_graph']['nodes'])
+
 
 def count_query_edges(in_message):
     """Count the number of edges in the query."""
     return len(in_message['message']['query_graph']['edges'])
 
+
+def convert_log_timestamps(message):
+    """Convert all log timestamps to strings for JSON serialization"""
+    for log in message.get('logs', []):
+        if 'timestamp' in log and not isinstance(log['timestamp'], str):
+            log['timestamp'] = str(log['timestamp'])
+
+
 def log_exception(method):
     """Wrap method."""
+
     @wraps(method)
     async def wrapper(*args, **kwargs):
         """Log exception encountered in method, then pass."""
@@ -152,7 +167,9 @@ def log_exception(method):
         except Exception as err:  # pylint: disable=broad-except
             logger.exception(err)
             raise
+
     return wrapper
+
 
 def post(name, url, message, params=None):
     """
@@ -177,6 +194,7 @@ def post(name, url, message, params=None):
 
     return response.json()
 
+
 def normalize(message):
     """
     Calls node normalizer
@@ -189,8 +207,8 @@ def normalize(message):
 
     return normalized_message
 
-def construct_open_api_schema():
 
+def construct_open_api_schema():
     if APP.openapi_schema:
         return APP.openapi_schema
 
@@ -213,7 +231,6 @@ def construct_open_api_schema():
 
     # Add the x-maturity data
     open_api_schema["info"][x_maturity] = x_maturity_val
-
 
     x_translator_extension = open_api_extended_spec.get("x-translator")
     x_trapi_extension = open_api_extended_spec.get("x-trapi")
