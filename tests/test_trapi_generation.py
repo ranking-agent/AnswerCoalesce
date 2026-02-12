@@ -295,9 +295,7 @@ def create_edgar_message():
                         "sources": [
                             {"resource_id": "infores:answercoalesce", "resource_role": "primary_knowledge_source"}],
                         "attributes": [
-                            {"attribute_type_id": "biolink:support_graphs",
-                             "value": ["n_Inferred_SG:_CHEBI:9999_to_MONDO:0004975"]},
-                            {"attribute_type_id": "biolink:combined_score", "value": 0.450}
+                            {"attribute_type_id": "biolink:support_graphs", "value": "n_Inferred_SG:_CHEBI:9999_to_MONDO:0004975"}
                         ]
                     },
                     "CHEBI:9999_biolink:participates_in_PATHWAY:123": {
