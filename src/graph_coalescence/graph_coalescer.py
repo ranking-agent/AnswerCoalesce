@@ -115,7 +115,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 
 async def coalesce_by_graph(input_ids, input_node_type,
                             node_constraints=None, predicate_constraints=None, predicate_constraint_style="exclude",
-                            pvalue_threshold=None, result_length=None, filter_predicate_hierarchies=False):
+                            pvalue_threshold=None, max_results=None, filter_predicate_hierarchies=False):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -129,7 +129,7 @@ async def coalesce_by_graph(input_ids, input_node_type,
     Predicates should be of the form:
     {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity", "constraint": "include|exclude"}
     By including or not including these constraints, coalesce_by_graph can be used by either an MCQ query or EDGAR.
-    result_length determines if we want more answers than we started with, so we need to parameterize.
+    max_results determines if we want more answers than we started with, so we need to parameterize.
     filter_predicate_hierarchies mainly in edgar to exclude/add symmetric edges inline
     (in create_node_to_link) and filter predicate hierarchies in get_enriched_link enrichment_results
     """
@@ -166,8 +166,8 @@ async def coalesce_by_graph(input_ids, input_node_type,
 
     if pvalue_threshold:
         enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
-    if result_length:
-        enriched_links = enriched_links[:result_length]
+    if max_results:
+        enriched_links = enriched_links[:max_results]
 
     augment_enrichments(enriched_links, nodetypedict)
 

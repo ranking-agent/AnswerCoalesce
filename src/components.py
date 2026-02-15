@@ -458,8 +458,8 @@ class InferenceParams:
     node_constraints: list[str] | None = field(default_factory=list)
     predicate_constraint_style: str = "exclude"
     pvalue_threshold: float = 1e-5
-    rule_length: int = 100
-    result_length: int | None = 2000
+    max_rules: int = 100
+    max_results: int | None = 2000
 
     @classmethod
     def from_message(cls, in_message: dict) -> 'InferenceParams':
@@ -471,6 +471,6 @@ class InferenceParams:
             property_constraints=params.get('properties_constraints', None),
             node_constraints=params.get('node_constraints', None),
             pvalue_threshold=params.get('pvalue_threshold', 1e-5),
-            rule_length=params.get('rule_length', 100),
-            result_length=params.get('result_length', None)
+            max_rules=params.get('max_rules', 100),
+            max_results=params.get('max_results', None)
         )

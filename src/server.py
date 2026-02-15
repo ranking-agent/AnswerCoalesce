@@ -68,10 +68,6 @@ async def query_handler(request: PDResponse = default_request_sync):
         # convert the incoming message into a dict
         in_message = request.dict(exclude_none=True)
 
-        # save the logs for the response (if any)
-        if 'logs' not in in_message or in_message['logs'] is None:
-            in_message['logs'] = []
-
         parameters = await get_parameters(in_message)
 
         if await is_infer_query(in_message):
@@ -98,11 +94,10 @@ async def query_handler(request: PDResponse = default_request_sync):
 
 async def get_parameters(in_message):
     """Get the parameters from the incoming message.  If they are not present, return the defaults."""
-    parameters = {}
-    parameters["predicates_to_exclude"] = in_message.get('parameters', {}).get('predicates_to_exclude', [])
-    parameters["properties_to_exclude"] = in_message.get('parameters', {}).get('properties_to_exclude', [])
-    parameters["pvalue_threshold"] = in_message.get('parameters', {}).get('pvalue_threshold', None)
-    parameters["result_length"] = in_message.get('parameters', {}).get('result_length', None)
+    parameters = {"predicate_constraints": in_message.get('parameters', {}).get('predicate_constraints', []),
+                  "propert_constraints": in_message.get('parameters', {}).get('property_constraints', []),
+                  "pvalue_threshold": in_message.get('parameters', {}).get('pvalue_threshold', None),
+                  "max_results": in_message.get('parameters', {}).get('max_results', None)}
     return parameters
 
 

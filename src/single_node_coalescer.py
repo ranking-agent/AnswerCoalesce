@@ -8,7 +8,7 @@ from src.property_coalescence.property_coalescer import coalesce_by_property, lo
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links, get_node_types, \
     filter_links_by_node_type, get_node_names, add_provs
 
-from src.scoring import pvalue_to_sigmoid, combine_rule_pvalues_to_score
+from src.scoring import pvalue_to_sigmoid, score_inference
 from src.components import MCQDefinition, Lookup, NewEdge, QueryParams, InferenceParams, EnrichmentResult, \
     EnrichmentType
 
@@ -34,8 +34,8 @@ async def multi_curie_query(in_message, parameters):
                                                  node_constraints=mcq_definition.enriched_node.semantic_types,
                                                  predicate_constraints=[mcq_definition.edge.predicate],
                                                  predicate_constraint_style="include",
-                                                 pvalue_threshold=parameters["pvalue_threshold"],
-                                                 result_length=parameters["result_length"])
+                                                 pvalue_threshold=parameters.get("pvalue_threshold"),
+                                                 max_results=parameters.get("max_results"))
     return await create_mcq_trapi_response(in_message, enrichment_results, mcq_definition)
 
 
@@ -58,34 +58,19 @@ async def infer(in_message: dict) -> dict:
         # 2. Initial lookup
         lookup_start = time.time()
         try:
-            lookup_results = lookup_single(
-                params.curie,
-                params.predicate_parts,
-                params.is_source,
-                params.output_semantic_type
-            )
+            lookup_results = lookup_single(params.curie, params.predicate_parts, params.is_source, params.output_semantic_type)
         except Exception as e:
-            builder.log_error(
-                f"Lookup failed: {str(e)}",
-                metadata={"timing_seconds": round(time.time() - lookup_start, 3)}
-            )
+            builder.log_error(f"Lookup failed: {str(e)}", metadata={"timing_seconds": round(time.time() - lookup_start, 3)})
             logger.exception(f"Lookup failed for {params.curie}")
             return in_message
 
         if not lookup_results or not lookup_results.link_ids:
-            builder.log_error(
-                f"No lookup results found for {params.curie}",
-                metadata={"timing_seconds": round(time.time() - lookup_start, 3)}
-            )
+            builder.log_error(f"No lookup results found for {params.curie}", metadata={"timing_seconds": round(time.time() - lookup_start, 3)})
             ensure_empty_results(in_message)
             return in_message
 
         # LOG LOOKUP SUCCESS
-        builder.log("Lookup stage complete", level="INFO",
-                    metadata={"total_lookups": len(lookup_results.link_ids),
-                              "timing_seconds": round(time.time() - lookup_start, 3)
-                              }
-                    )
+        builder.log("Lookup stage complete", level="INFO", metadata={"total_lookups": len(lookup_results.link_ids), "timing_seconds": round(time.time() - lookup_start, 3)})
         logger.info(f"Found {len(lookup_results.link_ids)} lookup results for {params.curie}")
 
         # 3 & 4. ENRICHMENT
@@ -130,8 +115,8 @@ async def infer(in_message: dict) -> dict:
 
         if not all_enrichments:
             builder.log_error("No enrichment results from graph or property analysis",
-                               metadata={"timing_seconds": round(time.time() - enrichment_start, 3)}
-                               )
+                              metadata={"timing_seconds": round(time.time() - enrichment_start, 3)}
+                              )
             ensure_empty_results(in_message)
             return in_message
 
@@ -139,7 +124,7 @@ async def infer(in_message: dict) -> dict:
         filtered_enrichments = filter_enrichments(
             all_enrichments,
             exclude_ids=exclude_ids,
-            max_rules=inf_params.rule_length
+            max_rules=inf_params.max_rules
         )
 
         if not filtered_enrichments:
@@ -151,11 +136,14 @@ async def infer(in_message: dict) -> dict:
         # LOG ENRICHMENT SUCCESS
         enrichment_pvalues = [e.p_value for e in filtered_enrichments]
         builder.log("Enrichment stage complete", level="INFO",
-                    metadata={"total_enrichments": len(filtered_enrichments),
+                    metadata={"total_enrichments": len(all_enrichments),
+                              "total_enrichments_after_filtering": len(filtered_enrichments),
                               "graph_enrichments": len([e for e in filtered_enrichments if e.enrichment_type == EnrichmentType.GRAPH]),
                               "property_enrichments": len([e for e in filtered_enrichments if e.enrichment_type == EnrichmentType.PROPERTY]),
-                              "pvalue_stats": {"min": float(min(enrichment_pvalues)), "max": float(max(enrichment_pvalues))},
-                              "unique_enriched_nodes": len(set(e.enriched_id for e in filtered_enrichments)), "timing_seconds": round(time.time() - enrichment_start, 3)
+                              "pvalue_stats": {"min": float(min(enrichment_pvalues)),
+                                               "max": float(max(enrichment_pvalues))},
+                              "unique_enriched_nodes": len(set(e.enriched_id for e in filtered_enrichments)),
+                              "timing_seconds": round(time.time() - enrichment_start, 3)
                               }
                     )
         logger.info(f"Found {len(filtered_enrichments)} enrichments after filtering")
@@ -165,13 +153,15 @@ async def infer(in_message: dict) -> dict:
         try:
             graph_inferred_results, property_inferred_results = await run_inference_lookup(filtered_enrichments, params)
         except Exception as e:
-            builder.log_error(f"Inference lookup failed: {str(e)}", metadata={"timing_seconds": round(time.time() - inference_start, 3)})
+            builder.log_error(f"Inference lookup failed: {str(e)}",
+                              metadata={"timing_seconds": round(time.time() - inference_start, 3)})
             logger.exception("Inference lookup failed")
             ensure_empty_results(in_message)
             return in_message
 
         if not graph_inferred_results and not property_inferred_results:
-            builder.log_error("No inferred results found", metadata={"timing_seconds": round(time.time() - inference_start, 3)})
+            builder.log_error("No inferred results found",
+                              metadata={"timing_seconds": round(time.time() - inference_start, 3)})
             ensure_empty_results(in_message)
             return in_message
 
@@ -191,13 +181,18 @@ async def infer(in_message: dict) -> dict:
             )
 
         total_graph_inferences = sum(len(inferred_result.lookup_links) for _, inferred_result in graph_inferred_results)
-        total_property_inferences = sum(len(inferred_data.get("lookup_links", [])) for inferred_data in property_inferred_results.values())
+        total_property_inferences = sum(
+            len(inferred_data.get("lookup_links", [])) for inferred_data in property_inferred_results.values())
 
         builder.log("Inference lookup complete", level="INFO",
                     metadata={"total_inferences": total_graph_inferences + total_property_inferences,
                               "unique_inferred_nodes": len(unique_graph_inferred | unique_property_inferred),
-                              "graph_inferences": {"total": total_graph_inferences, "unique": len(unique_graph_inferred), "enrichments_used": len(graph_inferred_results)},
-                              "property_inferences": {"total": total_property_inferences, "unique": len(unique_property_inferred), "enrichments_used": len(property_inferred_results)},
+                              "graph_inferences": {"total": total_graph_inferences,
+                                                   "unique": len(unique_graph_inferred),
+                                                   "enrichments_used": len(graph_inferred_results)},
+                              "property_inferences": {"total": total_property_inferences,
+                                                      "unique": len(unique_property_inferred),
+                                                      "enrichments_used": len(property_inferred_results)},
                               "timing_seconds": round(time.time() - inference_start, 3)
                               }
                     )
@@ -207,11 +202,12 @@ async def infer(in_message: dict) -> dict:
         build_edgar_response(
             builder, params, lookup_results, filtered_enrichments,
             graph_inferred_results, property_inferred_results,
-            result_length=inf_params.result_length
+            max_results=inf_params.max_results
         )
 
         # LOG BUILD SUCCESS
-        builder.log("Response build complete", level="INFO", metadata={"timing_seconds": round(time.time() - build_start, 3)})
+        builder.log("Response build complete", level="INFO",
+                    metadata={"timing_seconds": round(time.time() - build_start, 3)})
 
         logger.info(f"Built response with {len(builder.results)} results")
 
@@ -489,7 +485,8 @@ def unify_enrichments(graph_results: list, property_results: list[dict]) -> list
     return unified
 
 
-def filter_enrichments(enrichments: list[EnrichmentResult], exclude_ids: set[str], max_rules=None) -> list[EnrichmentResult]:
+def filter_enrichments(enrichments: list[EnrichmentResult], exclude_ids: set[str], max_rules=None) -> list[
+    EnrichmentResult]:
     """
     Filter enrichments by p-value threshold and excluded IDs.
     Returns:
@@ -522,7 +519,7 @@ def group_enrichments_by_type(enrichments: list[EnrichmentResult]) -> dict[Enric
 
 def build_edgar_response(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup,
                          enrichments: list[EnrichmentResult], graph_inferred: list[tuple],
-                         property_inferred: dict, result_length: int | None):
+                         property_inferred: dict, max_results: int | None):
     """
     Build the complete TRAPI response using TRAPIBuilder.
 
@@ -551,8 +548,8 @@ def build_edgar_response(builder: EGARTRAPIBuilder, params: QueryParams, lookup_
     build_inference_results(builder, params, graph_inferred, property_inferred, lookup_results.link_ids,
                             uuid_to_curie_edge_id, enrichment_edges, results_cache)
 
-    # 5. Finalize results (apply result_length limit here!)
-    finalize_results(builder, results_cache, enrichments, result_length)
+    # 5. Finalize results (apply max_results limit here!)
+    finalize_results(builder, results_cache, enrichments, max_results)
 
 
 def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup,
@@ -786,7 +783,7 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
 
         # Combine ALL p-values from both graph and property rules
         all_pvalues = [r['p_value'] for r in graph_rules] + [r['p_value'] for r in property_rules]
-        score_info = combine_rule_pvalues_to_score(all_pvalues, method="geometric")
+        score = score_inference(all_pvalues, method="elrond")
 
         # Add inferred node
         builder.add_node(inferred_id, node_info['types'], node_info['name'])
@@ -833,7 +830,7 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
 
         # Create result binding with COMBINED score
         results_cache[inferred_id] = create_result_binding(
-            params, inferred_id, inferred_edge_id, score_info['combined_score']
+            params, inferred_id, inferred_edge_id, score
         )
 
 
@@ -855,7 +852,8 @@ def create_result_binding(params: QueryParams, inferred_id: str, edge_id: str, s
     }
 
 
-def finalize_results(builder: EGARTRAPIBuilder, results_cache: dict, enrichments: list[EnrichmentResult], result_length: int = None):
+def finalize_results(builder: EGARTRAPIBuilder, results_cache: dict, enrichments: list[EnrichmentResult],
+                     max_results: int = None):
     """
     Sort results by score, limit to top N, prune unreferenced graph elements, and log metadata.
     """
@@ -877,7 +875,7 @@ def finalize_results(builder: EGARTRAPIBuilder, results_cache: dict, enrichments
         reverse=True
     )
 
-    kept_results = sorted_results[:result_length] if result_length else sorted_results
+    kept_results = sorted_results[:max_results] if max_results else sorted_results
 
     builder.results.clear()
     builder.results.extend(kept_results)
@@ -899,14 +897,19 @@ def finalize_results(builder: EGARTRAPIBuilder, results_cache: dict, enrichments
 
     # LOG COMPREHENSIVE METADATA
     builder.log("EDGAR finalization complete", level="INFO",
-                metadata={"timing": {"total_seconds": round(time.time() - start_time, 3), "pruning_seconds": round(prune_time, 3)},
-                          "results": {"total_before_filtering": len(results_cache), "total_after_filtering": len(kept_results), "limit_applied": result_length},
-                          "scores": {"min": float(min(scores)) if scores else 0, "max": float(max(scores)) if scores else 0},
+                metadata={"timing": {"total_seconds": round(time.time() - start_time, 3),
+                                     "pruning_seconds": round(prune_time, 3)},
+                          "results": {"total_before_filtering": len(results_cache),
+                                      "total_after_filtering": len(kept_results), "limit_applied": max_results},
+                          "scores": {"min": float(min(scores)) if scores else 0,
+                                     "max": float(max(scores)) if scores else 0},
                           "enrichments": {"before_pruning": enrichments_before, "after_pruning": enrichments_after},
-                          "knowledge_graph": {"before filtering": {"nodes": pre_nodes, "edges": pre_edges, "aux_graphs": pre_aux},
-                                              "after filtering": {"nodes": post_nodes, "edges": post_edges, "aux_graphs": post_aux},
-                                              "after pruning": {"nodes": pre_nodes - post_nodes, "edges": pre_edges - post_edges, "aux_graphs": pre_aux - post_aux}
-                                              }
+                          "knowledge_graph": {
+                              "before filtering": {"nodes": pre_nodes, "edges": pre_edges, "aux_graphs": pre_aux},
+                              "after filtering": {"nodes": post_nodes, "edges": post_edges, "aux_graphs": post_aux},
+                              "after pruning": {"nodes": pre_nodes - post_nodes, "edges": pre_edges - post_edges,
+                                                "aux_graphs": pre_aux - post_aux}
+                              }
                           }
                 )
 
