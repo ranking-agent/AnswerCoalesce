@@ -80,13 +80,13 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
     Also, we want to filter out links that end up with block-list nodes
     """
     # These are trash curies that we never want to see
-    blocklist = set(["HP:0000118", "MONDO:0000001", "MONDO:0700096", "UMLS:C1333305", "CHEBI:24431",
-                     "CHEBI:23367", "CHEBI:33579", "CHEBI:36357", "CHEBI:33675", "CHEBI:33302", "CHEBI:33304",
-                     "CHEBI:33582", "CHEBI:25806", "CHEBI:50860", "CHEBI:51143", "CHEBI:32988", "CHEBI:33285",
-                     "CHEBI:33256", "CHEBI:36962", "CHEBI:35352", "CHEBI:36963", "CHEBI:25367", "CHEBI:72695",
-                     "CHEBI:33595", "CHEBI:33832", "CHEBI:37577", "CHEBI:24532", "CHEBI:5686", "NCBITaxon:9606"])
+    blocklist = {"HP:0000118", "MONDO:0000001", "MONDO:0700096", "UMLS:C1333305", "CHEBI:24431", "CHEBI:23367",
+                 "CHEBI:33579", "CHEBI:36357", "CHEBI:33675", "CHEBI:33302", "CHEBI:33304", "CHEBI:33582",
+                 "CHEBI:25806", "CHEBI:50860", "CHEBI:51143", "CHEBI:32988", "CHEBI:33285", "CHEBI:33256",
+                 "CHEBI:36962", "CHEBI:35352", "CHEBI:36963", "CHEBI:25367", "CHEBI:72695", "CHEBI:33595",
+                 "CHEBI:33832", "CHEBI:37577", "CHEBI:24532", "CHEBI:5686", "NCBITaxon:9606"}
 
-    #Collect the accepted types, which are any subclass of what gets passed into node constraints.
+    # Collect the accepted types, which are any subclass of what gets passed into node constraints.
     # We're going to special case named thing - if that's in there, we just bypass all the type checks.
     accept_all_types = ("biolink:NamedThing" in node_constraints)
 
@@ -94,7 +94,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
     for node, links in nodes_to_links.items():
         new_links = []
         for link in links:
-            if (isinstance(link, list) or isinstance(link, tuple)):
+            if isinstance(link, list) or isinstance(link, tuple):
                 othernode = link[0]
             else:
                 othernode = link
@@ -450,7 +450,6 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
             links_to_nodes[tuple(link)].append(node)
 
             # Let's just using this block to save what we might need in edgar
-
             if orjson.loads(link[1]).get("predicate") in predicate_constraints:
                 if link[2]:
                     constraint_triples.setdefault((link[0], node), set()).add(link[1])

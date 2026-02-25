@@ -73,39 +73,40 @@ def test_genes_to_disease_inference():
     # It does both property and graph enrichment
     in_message = {
         "parameters": {
-            "pvalue_threshold": 1e-5,
-            "result_length": 100,
-            "predicates_to_exclude": [
-                "biolink:causes", "biolink:biomarker_for", "biolink:contraindicated_for", "biolink:contraindicated_in",
-                "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event",
-                "biolink:similar_to",
-                "treats_or_applied_or_studied_to_treat", "biolink:subclass_of"
+            "pvalue_threshold": 0.00001,
+            "predicate_constraint_style": "exclude",
+            "predicate_constraints": [
+                "biolink:causes",
+                "biolink:biomarker_for",
+                "biolink:contraindicated_for",
+                "biolink:contributes_to",
+                "biolink:has_adverse_event",
+                "biolink:causes_adverse_event"
             ]
         },
         "message": {
             "query_graph": {
                 "nodes": {
-                    "chemical": {
+                    "n0": {
                         "categories": [
-                            "biolink:Drug"
-                        ],
-                        "is_set": False,
-                        "constraints": []
+                            "biolink:Gene"
+                        ]
                     },
-                    "disease": {
+                    "n1": {
                         "ids": [
-                            "MONDO:0004975"
-                        ],
-                        "is_set": False,
-                        "constraints": []
+                            "DOID:0050430"
+                          ],
+                        "categories": [
+                            "biolink:Disease"
+                          ]
                     }
                 },
                 "edges": {
-                    "e00": {
-                        "subject": "chemical",
-                        "object": "disease",
+                    "e0": {
+                        "subject": "n0",
+                        "object": "n1",
                         "predicates": [
-                            "biolink:treats"
+                            "biolink:genetically_associated_with"
                         ],
                         "knowledge_type": "inferred",
                         "attribute_constraints": [],

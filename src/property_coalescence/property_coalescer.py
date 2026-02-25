@@ -38,6 +38,7 @@ def get_enriched_properties(nodes, semantic_type, property_constraints=None, pva
 
     property_lookup = PropertyLookup()
     properties = property_lookup.collect_properties(nodes, semantic_type)  # properties = {property: (curies with it)}
+
     enriched = []
 
     total_node_count = property_lookup.get_nodecount(semantic_type)
@@ -70,8 +71,6 @@ def get_enriched_properties(nodes, semantic_type, property_constraints=None, pva
     # sifter enrichment results
     enriched = [enrich for enrich in enriched if enrich.get("enriched_property") not in BAD_PROPERTIES]
 
-    # print(" P Before: ", len(enriched))
-
     if pvalue_threshold:
         enriched = [enrich for enrich in enriched if enrich.get("p_value") < pvalue_threshold]
 
@@ -80,7 +79,7 @@ def get_enriched_properties(nodes, semantic_type, property_constraints=None, pva
     return enriched
 
 
-class PropertyLookup():
+class PropertyLookup:
     def __init__(self):
         # Right now, we're going to load the property file, but we should replace with a redis or sqlite
         self.thisdir = os.path.dirname(os.path.realpath(__file__))

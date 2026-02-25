@@ -164,7 +164,7 @@ class QueryParams:
     @staticmethod
     def _build_predicate_parts(qedge: dict) -> str:
         """Build predicate JSON string including qualifiers"""
-        parts = {"predicate": qedge.get("predicates", [None])[0]}
+        parts = {"predicate": qedge.get("predicates", ["biolink:related_to"])[0]}
 
         for qc in qedge.get("qualifier_constraints", []):
             for q in qc.get("qualifier_set", []):
@@ -368,8 +368,8 @@ class EnrichmentResult:
     predicate: str  # JSON string for graph, simple string for property
     p_value: float
     linked_curies: frozenset[str]
-    counts: tuple[int, int, int]  # (ndraws, n, total_node_count)
-
+    counts: tuple[int, ...]  # (ndraws, n, total_node_count)
+    is_source: bool
     # For graph enrichment - the NewEdge objects connecting to linked curies
     # Stored as tuple of dicts for immutability
     support_edges: tuple[dict, ...] = field(default_factory=tuple)
@@ -388,7 +388,7 @@ class EnrichmentResult:
             return self.predicate
 
     @classmethod
-    def from_graph_enrichment(cls, enrichment: Any) -> 'EnrichmentResult':
+    def from_graph_enrichment(cls, enrichment: Enrichment) -> 'EnrichmentResult':
         """
         Convert legacy Enrichment object to unified format.
 
@@ -423,7 +423,8 @@ class EnrichmentResult:
             p_value=enrichment.p_value,
             linked_curies=frozenset(enrichment.linked_curies),
             counts=tuple(enrichment.counts),
-            support_edges=tuple(support_edges)
+            is_source=enrichment.is_source,
+            support_edges=tuple(support_edges),
         )
 
     @classmethod
@@ -444,6 +445,7 @@ class EnrichmentResult:
             p_value=prop_dict["p_value"],
             linked_curies=frozenset(prop_dict["linked_curies"]),
             counts=tuple(prop_dict["counts"]),
+            is_source=False,
             support_edges=()  # Property enrichment doesn't have support edges
         )
 

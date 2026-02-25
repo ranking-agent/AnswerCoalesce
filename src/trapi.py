@@ -261,7 +261,7 @@ def add_aux_graphs(new_edge, aux_graph_ids):
     )
 
 
-def add_enrichment_result(in_message, enriched_node, enrichment_pval, enrichment_edge_id,
+def add_enrichment_result(in_message, enriched_node, enrichment_score, enrichment_edge_id,
                           mcq_definition: MCQDefinition):
     if "results" not in in_message["message"]:
         in_message["message"]["results"] = []
@@ -275,7 +275,7 @@ def add_enrichment_result(in_message, enriched_node, enrichment_pval, enrichment
     # There should be an edge binding from the enrichment edge qedge_id to the enrichment edge uuid
     result["analyses"][0]["edge_bindings"][mcq_definition.edge.qedge_id] = [
         {"id": enrichment_edge_id, "attributes": []}]
-    result["analyses"][0]["score"] = enrichment_pval
+    result["analyses"][0]["score"] = enrichment_score
 
 
 class EGARTRAPIBuilder:

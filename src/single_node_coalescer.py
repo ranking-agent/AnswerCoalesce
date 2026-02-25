@@ -44,7 +44,6 @@ async def infer(in_message: dict) -> dict:
     Takes a TRAPI infer query and returns a TRAPI infer answer.
     """
     builder = EGARTRAPIBuilder(in_message)
-    import time
 
     try:
         # 1. Parse query parameters
@@ -58,19 +57,24 @@ async def infer(in_message: dict) -> dict:
         # 2. Initial lookup
         lookup_start = time.time()
         try:
-            lookup_results = lookup_single(params.curie, params.predicate_parts, params.is_source, params.output_semantic_type)
+            lookup_results = lookup_single(params.curie, params.predicate_parts, params.is_source,
+                                           params.output_semantic_type)
         except Exception as e:
-            builder.log_error(f"Lookup failed: {str(e)}", metadata={"timing_seconds": round(time.time() - lookup_start, 3)})
+            builder.log_error(f"Lookup failed: {str(e)}",
+                              metadata={"timing_seconds": round(time.time() - lookup_start, 3)})
             logger.exception(f"Lookup failed for {params.curie}")
             return in_message
 
         if not lookup_results or not lookup_results.link_ids:
-            builder.log_error(f"No lookup results found for {params.curie}", metadata={"timing_seconds": round(time.time() - lookup_start, 3)})
+            builder.log_error(f"No lookup results found for {params.curie}",
+                              metadata={"timing_seconds": round(time.time() - lookup_start, 3)})
             ensure_empty_results(in_message)
             return in_message
 
         # LOG LOOKUP SUCCESS
-        builder.log("Lookup stage complete", level="INFO", metadata={"total_lookups": len(lookup_results.link_ids), "timing_seconds": round(time.time() - lookup_start, 3)})
+        builder.log("Lookup stage complete", level="INFO", metadata={"total_lookups": len(lookup_results.link_ids),
+                                                                     "timing_seconds": round(time.time() - lookup_start,
+                                                                                             3)})
         logger.info(f"Found {len(lookup_results.link_ids)} lookup results for {params.curie}")
 
         # 3 & 4. ENRICHMENT
@@ -78,7 +82,8 @@ async def infer(in_message: dict) -> dict:
 
         async def safe_graph_enrichment():
             try:
-                return await coalesce_by_graph(
+                # coalesce_by_graph now returns (results, timings)
+                results = await coalesce_by_graph(
                     lookup_results.link_ids,
                     params.output_semantic_type,
                     node_constraints=inf_params.node_constraints,
@@ -87,26 +92,30 @@ async def infer(in_message: dict) -> dict:
                     pvalue_threshold=inf_params.pvalue_threshold,
                     filter_predicate_hierarchies=True
                 )
+                return results
             except Exception as e:
                 builder.log_error(f"Graph enrichment failed: {str(e)}")
                 logger.exception("Graph enrichment failed")
-                return []
+                return [], {}
 
         async def safe_property_enrichment():
             try:
-                return await coalesce_by_property(
+                # If you also profile property enrichment, return timings here too
+                results = await coalesce_by_property(
                     lookup_results.link_ids,
                     params.output_semantic_type,
                     property_constraints=inf_params.property_constraints,
                     pvalue_threshold=inf_params.pvalue_threshold
                 )
+                return results
             except Exception as e:
                 builder.log_error(f"Property enrichment failed: {str(e)}")
                 logger.exception("Property enrichment failed")
-                return []
+                return [], {}
 
+        # Then update the gather call:
         import asyncio
-        graph_enrichment_results, property_enrichment_results = await asyncio.gather(
+        (graph_enrichment_results, property_enrichment_results) = await asyncio.gather(
             safe_graph_enrichment(),
             safe_property_enrichment()
         )
@@ -138,8 +147,10 @@ async def infer(in_message: dict) -> dict:
         builder.log("Enrichment stage complete", level="INFO",
                     metadata={"total_enrichments": len(all_enrichments),
                               "total_enrichments_after_filtering": len(filtered_enrichments),
-                              "graph_enrichments": len([e for e in filtered_enrichments if e.enrichment_type == EnrichmentType.GRAPH]),
-                              "property_enrichments": len([e for e in filtered_enrichments if e.enrichment_type == EnrichmentType.PROPERTY]),
+                              "graph_enrichments": len(
+                                  [e for e in filtered_enrichments if e.enrichment_type == EnrichmentType.GRAPH]),
+                              "property_enrichments": len(
+                                  [e for e in filtered_enrichments if e.enrichment_type == EnrichmentType.PROPERTY]),
                               "pvalue_stats": {"min": float(min(enrichment_pvalues)),
                                                "max": float(max(enrichment_pvalues))},
                               "unique_enriched_nodes": len(set(e.enriched_id for e in filtered_enrichments)),
@@ -220,8 +231,7 @@ async def infer(in_message: dict) -> dict:
         return in_message
 
 
-def lookup_single(curie: str, predicate_parts: str, is_source: bool,
-                  output_semantic_type: str) -> Lookup | None:
+def lookup_single(curie: str, predicate_parts: str, is_source: bool, output_semantic_type: str) -> Lookup | None:
     """
     Look up direct connections for a single curie.
 
@@ -258,15 +268,73 @@ def lookup_single(curie: str, predicate_parts: str, is_source: bool,
     return None
 
 
+def lookup_batch(curies: list[str], predicates: list[str], is_sources: list[bool], output_semantic_type: str) -> dict[str, Lookup]:
+    """
+    Batch version of lookup_single - looks up multiple curies in batched Redis calls.
+    Returns:
+        Dict of {curie: Lookup} for curies that had results
+    """
+    if not curies:
+        return {}
+
+    all_nodes_to_links = create_nodes_to_links(curies, param_predicates=predicates)
+    all_nodes_to_links = {node: links for node, links in all_nodes_to_links.items() if links}
+
+    if not all_nodes_to_links:
+        return {}
+
+    all_node_ids = set()
+    for curie, links in all_nodes_to_links.items():
+        all_node_ids.update(links)
+        all_node_ids.add(curie)
+
+    all_node_ids = list(all_node_ids)
+
+    all_node_names = get_node_names(all_node_ids)
+    all_node_types = get_node_types(all_node_ids)
+
+    results = {}
+
+    # Build lookup maps for each curie
+    curie_to_predicate = dict(zip(curies, predicates))
+    curie_to_is_source = dict(zip(curies, is_sources))
+
+    for curie, links in all_nodes_to_links.items():
+        predicate = curie_to_predicate.get(curie)
+        is_source = curie_to_is_source.get(curie, False)
+
+        # Filter by output semantic type
+        filtered = filter_links_by_node_type(
+            {curie: links},
+            [output_semantic_type],
+            all_node_types
+        )
+
+        for node, filtered_links in filtered.items():
+            if filtered_links:
+                lookup = Lookup(
+                    node, predicate, is_source,
+                    all_node_names, all_node_types, filtered_links,
+                    output_semantic_type
+                )
+                results[curie] = lookup
+
+    if results:
+        add_provs(list(results.values()))
+
+    return results
+
+
 async def run_inference_lookup(enrichments: list[EnrichmentResult], params: QueryParams) -> tuple[list, dict]:
     """
     Run second lookup from enriched nodes to find inferred results.
 
-    Graph and property inference run IN PARALLEL for better performance.
+    OPTIMIZED: Uses lookup_batch for batched Redis calls.
 
-    Returns:
-        graph_inferred: List of tuples (EnrichmentResult, Lookup) to preserve context
-        property_inferred: Dict from property_coalescer
+    Before: 100 enrichments x 3 Redis calls = 300+ round trips
+    After:  3 batched Redis calls total
+
+    Expected speedup: 138s -> ~15-30s
     """
     import asyncio
 
@@ -275,34 +343,27 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
     property_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.PROPERTY]
 
     async def process_graph_inference():
-        """Process graph enrichments to find inferred nodes"""
+        """Process graph enrichments with BATCHED lookup"""
+        if not graph_enrichments:
+            return []
+
+        # Extract curies, predicates, and is_source flags
+        curies = [e.enriched_id for e in graph_enrichments]
+        predicates = [e.predicate for e in graph_enrichments]
+
+        # Get is_source for each enrichment
+        # If EnrichmentResult doesn't have is_source, default to False
+        is_sources = [getattr(e, 'is_source', False) for e in graph_enrichments]
+
+        # Single batched lookup instead of 100 separate calls
+        lookups = lookup_batch(curies, predicates, is_sources, params.output_semantic_type)
+
+        # Build result tuples (enrichment, lookup)
         graph_inferred = []
-
         for enrichment in graph_enrichments:
-            link_ids = create_nodes_to_links([enrichment.enriched_id], param_predicates=[enrichment.predicate])
-            link_ids = {node: links for node, links in link_ids.items() if links}
-
-            if not link_ids:
-                continue
-
-            all_ids = list(chain.from_iterable(link_ids.values())) + [enrichment.enriched_id]
-            all_node_names = get_node_names(all_ids)
-            all_node_types = get_node_types(all_ids)
-
-            for curie_node, id_links in link_ids.items():
-                filtered = filter_links_by_node_type(
-                    {curie_node: id_links},
-                    [params.output_semantic_type],
-                    all_node_types
-                )
-                for node, links in filtered.items():
-                    lookup = Lookup(
-                        node, enrichment.predicate, False,
-                        all_node_names, all_node_types, links,
-                        params.output_semantic_type
-                    )
-                    add_provs([lookup])
-                    graph_inferred.append((enrichment, lookup))
+            lookup = lookups.get(enrichment.enriched_id)
+            if lookup:
+                graph_inferred.append((enrichment, lookup))
 
         return graph_inferred
 
@@ -331,7 +392,7 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
 
         return property_inferred
 
-    # Run both inference lookups in parallel
+    # Run both in parallel
     graph_inferred, property_inferred = await asyncio.gather(
         process_graph_inference(),
         process_property_inference()
@@ -354,11 +415,8 @@ async def property_enrich(input_ids, params, parameters):
      }
      """
     # TODO: Ola to implement based on coalesce
-    enrichment_results = await coalesce_by_property(input_ids,
-                                                    params.output_semantic_type,
-                                                    property_constraints=[],
-                                                    pvalue_threshold=parameters.get("pvalue_threshold", 1e-6),
-                                                    )
+    enrichment_results = await coalesce_by_property(input_ids, params.output_semantic_type, property_constraints=[],
+                                                    pvalue_threshold=parameters.get("pvalue_threshold", 1e-6))
     # chk_best_rule = {}
     # for i, result in enumerate(enrichment_results):
     #     # Group results by enriched_node
@@ -418,8 +476,8 @@ async def create_result_from_enrichment(in_message, enrichment, member_of_edges,
     # 7. In the result, create the node_bindings
     # 8. In the result, create the analysis and add edge_bindings to it.
     # 9. Make a score out of the enrichment pvalue
-    enrichment_pval = pvalue_to_sigmoid(enrichment.p_value, scale=0.5, shift=5)
-    add_enrichment_result(in_message, enrichment.enriched_node, enrichment_pval, enrichment_kg_edge_id, mcq_definition)
+    enrichment_score = pvalue_to_sigmoid(enrichment.p_value, scale=0.5, shift=5)
+    add_enrichment_result(in_message, enrichment.enriched_node, enrichment_score, enrichment_kg_edge_id, mcq_definition)
 
 
 async def create_or_find_member_of_edges_and_nodes(in_message, mcq_definition):
@@ -485,8 +543,7 @@ def unify_enrichments(graph_results: list, property_results: list[dict]) -> list
     return unified
 
 
-def filter_enrichments(enrichments: list[EnrichmentResult], exclude_ids: set[str], max_rules=None) -> list[
-    EnrichmentResult]:
+def filter_enrichments(enrichments: list[EnrichmentResult], exclude_ids: set[str], max_rules=None) -> list[EnrichmentResult]:
     """
     Filter enrichments by p-value threshold and excluded IDs.
     Returns:
@@ -552,8 +609,7 @@ def build_edgar_response(builder: EGARTRAPIBuilder, params: QueryParams, lookup_
     finalize_results(builder, results_cache, enrichments, max_results)
 
 
-def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup,
-                           uuid_node: str) -> tuple[dict, dict, str]:
+def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup, uuid_node: str) -> tuple[dict, dict, str]:
     """Build the lookup layer: input -> lookup_nodes -> UUID set"""
 
     uuid_group = lookup_results.link_ids
@@ -611,8 +667,8 @@ def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, looku
     return uuid_group_edges, lookup_edges, uuid_to_curie_edge_id
 
 
-def build_enrichment_structure(builder: EGARTRAPIBuilder, enrichments: list[EnrichmentResult],
-                               uuid_node: str, uuid_group_edges: dict) -> dict:
+def build_enrichment_structure(builder: EGARTRAPIBuilder, enrichments: list[EnrichmentResult], uuid_node: str,
+                               uuid_group_edges: dict) -> dict:
     """Build the enrichment layer: lookup_nodes -> enriched_nodes -> UUID"""
 
     enrichment_edges = {}
@@ -909,7 +965,7 @@ def finalize_results(builder: EGARTRAPIBuilder, results_cache: dict, enrichments
                               "after filtering": {"nodes": post_nodes, "edges": post_edges, "aux_graphs": post_aux},
                               "after pruning": {"nodes": pre_nodes - post_nodes, "edges": pre_edges - post_edges,
                                                 "aux_graphs": pre_aux - post_aux}
-                              }
+                          }
                           }
                 )
 
