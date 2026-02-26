@@ -876,6 +876,77 @@ def get_children(predicate):
     return tk.get_children(predicate, formatted=True)
 
 
+# def get_specific_results(pvalue_group_dict):
+#     """
+#     This function accepts:
+#         enrichment result grouped by pvalue, and most-likely, different predicates
+#         for instance:
+#                 0.0001: [(enriched_node1, causes), (enriched_node1, contributes_to)]
+#                 0.0002: [(enriched_node1, has_advert_event), (enriched_node1, affects)]
+#                 0.0003: [(enriched_node1, treats_or_applied_or_studied_to_treat), (enriched_node1, treats)]
+#     to return specific list representative of enriched_node1:
+#                 [(enriched_node1, causes),(enriched_node1, has_advert_event), (enriched_node1, treats)]
+#
+#     NB: No scoring is performed since each group compared shares the same p_value
+#     """
+#     # https://biolink.github.io/biolink-model/#enumerations
+#     biolink_aspect_qualifier_enumeration = "GeneOrGeneProductOrChemicalEntityAspectEnum"
+#
+#     specific_results = []
+#
+#     for results in pvalue_group_dict.values():
+#         if len(results) == 1:
+#             specific_results.extend(results)
+#             continue
+#
+#         most_specific_result = results[0]
+#
+#         for j in range(1, len(results)):
+#             result_i = most_specific_result
+#             result_j = results[j]
+#
+#             pred_i = orjson.loads(result_i.predicate)
+#             pred_j = orjson.loads(result_j.predicate)
+#
+#             if pred_i.get("predicate") == pred_j.get("predicate"):
+#                 # Equal predicates? then lets dig further down to the qualifier
+#                 if any("qualifier" in key for key in pred_i) or any("qualifier" in key for key in pred_j):
+#                     c_pred = pred_i
+#                     n_pred = pred_j
+#
+#                     curr_qualifier = c_pred.get("object_aspect_qualifier") or c_pred.get("object_direction_qualifier")
+#                     next_qualifier = n_pred.get("object_aspect_qualifier") or n_pred.get("object_direction_qualifier")
+#
+#                     if curr_qualifier and next_qualifier:
+#                         if curr_qualifier == next_qualifier:
+#                             if ("object_direction_qualifier" in c_pred) != ("object_direction_qualifier" in n_pred):
+#                                 most_specific_result = result_i if "object_direction_qualifier" in c_pred else result_j
+#
+#                         elif is_child_in(curr_qualifier, next_qualifier, biolink_aspect_qualifier_enumeration):
+#                             most_specific_result = result_i
+#
+#                         elif is_child_in(next_qualifier, curr_qualifier, biolink_aspect_qualifier_enumeration):
+#                             most_specific_result = result_j
+#
+#                     elif has_qualifier(c_pred) and not has_qualifier(n_pred):
+#                         most_specific_result = result_i
+#
+#                     elif has_qualifier(n_pred) and not has_qualifier(c_pred):
+#                         most_specific_result = result_j
+#
+#                 else:
+#                     most_specific_result = results[0]
+#
+#             else:
+#                 top_ancestral_result = max([result_i, result_j], key=lambda result: len(
+#                     get_ancestors(orjson.loads(result.predicate).get("predicate"))))
+#                 most_specific_result = top_ancestral_result
+#
+#         specific_results.append(most_specific_result)
+#
+#     return specific_results
+
+
 def get_specific_results(pvalue_group_dict):
     """
     This function accepts:
@@ -891,6 +962,7 @@ def get_specific_results(pvalue_group_dict):
     """
     # https://biolink.github.io/biolink-model/#enumerations
     biolink_aspect_qualifier_enumeration = "GeneOrGeneProductOrChemicalEntityAspectEnum"
+    biolink_direction_qualifier_enumeration = "DirectionQualifierEnum"
 
     specific_results = []
 
@@ -914,24 +986,48 @@ def get_specific_results(pvalue_group_dict):
                     c_pred = pred_i
                     n_pred = pred_j
 
-                    curr_qualifier = c_pred.get("object_aspect_qualifier") or c_pred.get("object_direction_qualifier")
-                    next_qualifier = n_pred.get("object_aspect_qualifier") or n_pred.get("object_direction_qualifier")
+                    # Handle ASPECT qualifiers separately from DIRECTION qualifiers
+                    curr_aspect = c_pred.get("object_aspect_qualifier")
+                    next_aspect = n_pred.get("object_aspect_qualifier")
+                    curr_direction = c_pred.get("object_direction_qualifier")
+                    next_direction = n_pred.get("object_direction_qualifier")
 
-                    if curr_qualifier and next_qualifier:
-                        if curr_qualifier == next_qualifier:
-                            if ("object_direction_qualifier" in c_pred) != ("object_direction_qualifier" in n_pred):
-                                most_specific_result = result_i if "object_direction_qualifier" in c_pred else result_j
+                    # Compare aspect qualifiers (if both have them)
+                    if curr_aspect and next_aspect:
+                        if curr_aspect == next_aspect:
+                            # Same aspect, prefer the one with direction qualifier
+                            if curr_direction and not next_direction:
+                                most_specific_result = result_i
+                            elif next_direction and not curr_direction:
+                                most_specific_result = result_j
+                            # Both have or both lack direction - keep current
+                        else:
+                            # Different aspects - check hierarchy
+                            try:
+                                if is_child_in(curr_aspect, next_aspect, biolink_aspect_qualifier_enumeration):
+                                    most_specific_result = result_i
+                                elif is_child_in(next_aspect, curr_aspect, biolink_aspect_qualifier_enumeration):
+                                    most_specific_result = result_j
+                            except ValueError:
+                                # If enum lookup fails, keep current
+                                pass
 
-                        elif is_child_in(curr_qualifier, next_qualifier, biolink_aspect_qualifier_enumeration):
-                            most_specific_result = result_i
+                    # Compare direction qualifiers (if both have them and no aspect difference)
+                    elif curr_direction and next_direction:
+                        if curr_direction != next_direction:
+                            try:
+                                if is_child_in(curr_direction, next_direction, biolink_direction_qualifier_enumeration):
+                                    most_specific_result = result_i
+                                elif is_child_in(next_direction, curr_direction, biolink_direction_qualifier_enumeration):
+                                    most_specific_result = result_j
+                            except ValueError:
+                                # If enum lookup fails, keep current
+                                pass
 
-                        elif is_child_in(next_qualifier, curr_qualifier, biolink_aspect_qualifier_enumeration):
-                            most_specific_result = result_j
-
-                    elif has_qualifier(c_pred) and not has_qualifier(n_pred):
+                    # One has qualifier, one doesn't - prefer the one with qualifier
+                    elif (curr_aspect or curr_direction) and not (next_aspect or next_direction):
                         most_specific_result = result_i
-
-                    elif has_qualifier(n_pred) and not has_qualifier(c_pred):
+                    elif (next_aspect or next_direction) and not (curr_aspect or curr_direction):
                         most_specific_result = result_j
 
                 else:

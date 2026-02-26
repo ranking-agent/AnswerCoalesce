@@ -24,6 +24,10 @@ src/set_coalescence/*.log
 tests/RedisParseTestData/
 src/cypher.py
 src/graph_coalescence/build_redis_files_extra.py
+src/graph_coalescence/graph_coalescer_timed.py
+src/property_coalescence/property_coalescer_timed.py
+src/single_node_coalescer_timed.py
+
 
 # Test artifacts
 tests/data/
@@ -32,6 +36,8 @@ tests/prototyping_results/
 tests/*.ipynb
 tests/process_db.py
 tests/*json
+tests/plot_timimg.py
+
 
 # Scripts not meant for version control
 .github/pybatch.sh

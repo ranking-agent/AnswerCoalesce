@@ -1,5 +1,6 @@
 from collections import defaultdict
 from itertools import chain
+import asyncio
 import logging
 import orjson
 import time
@@ -113,8 +114,6 @@ async def infer(in_message: dict) -> dict:
                 logger.exception("Property enrichment failed")
                 return [], {}
 
-        # Then update the gather call:
-        import asyncio
         (graph_enrichment_results, property_enrichment_results) = await asyncio.gather(
             safe_graph_enrichment(),
             safe_property_enrichment()
@@ -336,7 +335,6 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
 
     Expected speedup: 138s -> ~15-30s
     """
-    import asyncio
 
     # Separate by type
     graph_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.GRAPH]

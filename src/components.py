@@ -307,6 +307,7 @@ class Enrichment:
     def __init__(self, p_value, newnode: str, predicate: str, is_source, ndraws, n, total_node_count, curies,
                  node_type: list[str]):
         """Here the curies are the curies that actually link to newnode, not just the input curies."""
+        self.links = []
         self.p_value = p_value
         self.linked_curies = curies
         self.enriched_node = None
