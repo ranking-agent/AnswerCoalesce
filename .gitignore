@@ -27,6 +27,8 @@ src/graph_coalescence/build_redis_files_extra.py
 src/graph_coalescence/graph_coalescer_timed.py
 src/property_coalescence/property_coalescer_timed.py
 src/single_node_coalescer_timed.py
+src/edgar_metapath.py
+src/agora_validation.py
 
 
 # Test artifacts

@@ -93,6 +93,7 @@ class QueryParams:
     input_qnode: str
     output_qnode: str
     output_semantic_type: str
+    input_semantic_type: str
     qedge_id: str
 
     @property
@@ -133,13 +134,15 @@ class QueryParams:
                 curie = subject_node["ids"][0]
                 input_qnode = qedge["subject"]
                 output_qnode = qedge["object"]
-                semantic_type = object_node.get("categories", ["biolink:NamedThing"])[0]
+                input_semantic_type = subject_node.get("categories", ["biolink:NamedThing"])[0]
+                output_semantic_type = object_node.get("categories", ["biolink:NamedThing"])[0]
             elif object_has_ids:
                 is_source = False
                 curie = object_node["ids"][0]
                 input_qnode = qedge["object"]
                 output_qnode = qedge["subject"]
-                semantic_type = subject_node.get("categories", ["biolink:NamedThing"])[0]
+                input_semantic_type = object_node.get("categories", ["biolink:NamedThing"])[0]
+                output_semantic_type = subject_node.get("categories", ["biolink:NamedThing"])[0]
             else:
                 # Neither node has IDs - invalid for infer query
                 return None
@@ -155,7 +158,8 @@ class QueryParams:
                 is_source=is_source,
                 input_qnode=input_qnode,
                 output_qnode=output_qnode,
-                output_semantic_type=semantic_type,
+                output_semantic_type=output_semantic_type,
+                input_semantic_type=input_semantic_type,
                 qedge_id=qedge_id
             )
 
@@ -460,8 +464,8 @@ class InferenceParams:
     property_constraints: list[str] | None = field(default_factory=list)
     node_constraints: list[str] | None = field(default_factory=list)
     predicate_constraint_style: str = "exclude"
-    pvalue_threshold: float = 1e-5
-    max_rules: int = 100
+    pvalue_threshold: float | None = 1e-5
+    max_rules: int | None = 100
     max_results: int | None = 2000
 
     @classmethod
@@ -474,6 +478,6 @@ class InferenceParams:
             property_constraints=params.get('properties_constraints', None),
             node_constraints=params.get('node_constraints', None),
             pvalue_threshold=params.get('pvalue_threshold', 1e-5),
-            max_rules=params.get('max_rules', 100),
+            max_rules=params.get('max_rules', None),
             max_results=params.get('max_results', None)
         )

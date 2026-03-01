@@ -194,15 +194,12 @@ async def infer(in_message: dict) -> dict:
         total_property_inferences = sum(
             len(inferred_data.get("lookup_links", [])) for inferred_data in property_inferred_results.values())
 
-        builder.log("Inference lookup complete", level="INFO",
+        builder.log("Inference lookup returned", level="INFO",
                     metadata={"total_inferences": total_graph_inferences + total_property_inferences,
-                              "unique_inferred_nodes": len(unique_graph_inferred | unique_property_inferred),
                               "graph_inferences": {"total": total_graph_inferences,
-                                                   "unique": len(unique_graph_inferred),
-                                                   "enrichments_used": len(graph_inferred_results)},
+                                                   "unique": len(unique_graph_inferred)},
                               "property_inferences": {"total": total_property_inferences,
-                                                      "unique": len(unique_property_inferred),
-                                                      "enrichments_used": len(property_inferred_results)},
+                                                      "unique": len(unique_property_inferred)},
                               "timing_seconds": round(time.time() - inference_start, 3)
                               }
                     )
@@ -775,15 +772,17 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
     all_evidence = defaultdict(lambda: {'graph_rules': [], 'property_rules': [], 'node_info': None})
 
     # Collect graph inference evidence
+    used_g = 0
     for enrichment, inferred_result in graph_inferred:
         enrichment_info = enrichment_edges.get(enrichment.key)
         if not enrichment_info:
             continue
 
+        has_valid_link = False
         for link in inferred_result.lookup_links:
             if link.link_id in uuid_group:
                 continue
-
+            has_valid_link = True
             all_evidence[link.link_id]['graph_rules'].append({
                 'enriched_node': enrichment.enriched_id,
                 'enriched_predicate': enrichment.predicate,
@@ -796,23 +795,27 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
             if all_evidence[link.link_id]['node_info'] is None:
                 all_evidence[link.link_id]['node_info'] = {'name': link.link_name, 'types': link.link_type or []}
 
+        if has_valid_link:
+            used_g += 1
+
     # Collect property inference evidence
     property_to_enrichment = {}
     for key, info in enrichment_edges.items():
         if info.get('enrichment_type') == EnrichmentType.PROPERTY:
             property_to_enrichment[info['enriched_id']] = key
 
+    used_p = 0
     for prop, inferred_data in property_inferred.items():
         enrichment_key = property_to_enrichment.get(prop)
         enrichment_info = enrichment_edges.get(enrichment_key) if enrichment_key else None
 
         if not enrichment_info:
             continue
-
+        has_valid_link = False
         for link_id, link_name in zip(inferred_data.get("lookup_links", []), inferred_data.get("lookup_names", [])):
             if link_id in uuid_group:
                 continue
-
+            has_valid_link = True
             all_evidence[link_id]['property_rules'].append({
                 'property': prop,
                 'p_value': inferred_data['p_value'],
@@ -823,6 +826,11 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
             if all_evidence[link_id]['node_info'] is None:
                 all_evidence[link_id]['node_info'] = {'name': link_name, 'types': [params.output_semantic_type]}
 
+        if has_valid_link:
+            used_p += 1
+
+    builder.log("Inference filtering complete", level="INFO",
+                metadata={"graph_enrichments_used": used_g, "property_enrichments_used": used_p, "unique_inferred_nodes": len(all_evidence)})
     # =========================================================================
     # STEP 2: Build results for each inferred node with combined scores
     # =========================================================================
