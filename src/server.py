@@ -7,16 +7,23 @@ import json
 
 from enum import Enum
 from functools import wraps
-from reasoner_pydantic import Response as PDResponse, Query as PDQuery
+from reasoner_pydantic import Response as PDResponse
+
+import uuid
+from typing import Dict, Any
+from datetime import datetime, timedelta
 
 from src.util import LoggingUtil
 from src.default_query import default_input_sync
 from src.single_node_coalescer import infer, multi_curie_query
 
-from fastapi import Body, FastAPI
-from fastapi.responses import JSONResponse, Response
+from fastapi import Body, FastAPI, BackgroundTasks
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+
+# In-memory job store with auto-cleanup
+jobs: Dict[str, Dict[str, Any]] = {}
 
 AC_VERSION = '3.1.0'
 
@@ -59,6 +66,7 @@ with open(conf_path, 'r') as inf:
 default_request_sync: Body = Body(default=default_input_sync)
 
 
+
 @APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,
           status_code=200)
 async def query_handler(request: PDResponse = default_request_sync):
@@ -90,6 +98,85 @@ async def query_handler(request: PDResponse = default_request_sync):
         logger.exception(f"Exception encountered {str(e)}")
         convert_log_timestamps(in_message)
         return JSONResponse(content=in_message, status_code=status_code)
+
+
+def cleanup_old_jobs():
+    """Remove jobs older than 1 hour."""
+    cutoff = datetime.utcnow() - timedelta(hours=1)
+    old_jobs = [jid for jid, job in jobs.items() if job.get("created_at", datetime.utcnow()) < cutoff]
+    for jid in old_jobs:
+        del jobs[jid]
+
+
+@APP.post('/query/async', tags=["Answer coalesce"])
+async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
+    """Submit query for async processing, returns job_id immediately."""
+    cleanup_old_jobs()  # Cleanup on each new request
+
+    job_id = str(uuid.uuid4())
+    in_message = request.dict(exclude_none=True)
+
+    jobs[job_id] = {
+        "status": "running",
+        "progress": 0,
+        "result": None,
+        "error": None,
+        "created_at": datetime.utcnow()
+    }
+
+    background_tasks.add_task(process_query, job_id, in_message)
+
+    return {"job_id": job_id, "status": "running"}
+
+
+async def process_query(job_id: str, in_message: dict):
+    """Background task to process the query."""
+    try:
+        parameters = await get_parameters(in_message)
+
+        if await is_infer_query(in_message):
+            result = await infer(in_message)
+        elif await is_multi_curie_query(in_message):
+            result = await multi_curie_query(in_message, parameters)
+        else:
+            jobs[job_id] = {"status": "failed", "error": "Invalid query type"}
+            return
+
+        convert_log_timestamps(result)
+        jobs[job_id]["status"] = "completed"
+        jobs[job_id]["result"] = result
+
+    except Exception as e:
+        logger.exception(f"Job {job_id} failed: {e}")
+        jobs[job_id]["status"] = "failed"
+        jobs[job_id]["error"] = str(e)
+
+
+@APP.get('/query/status/{job_id}')
+async def get_job_status(job_id: str):
+    """Check job status."""
+    if job_id not in jobs:
+        return JSONResponse({"error": "Job not found"}, status_code=404)
+
+    job = jobs[job_id]
+    return {
+        "job_id": job_id,
+        "status": job["status"],
+        "error": job.get("error")
+    }
+
+
+@APP.get('/query/result/{job_id}')
+async def get_job_result(job_id: str):
+    """Get job result when complete."""
+    if job_id not in jobs:
+        return JSONResponse({"error": "Job not found"}, status_code=404)
+
+    job = jobs[job_id]
+    if job["status"] != "completed":
+        return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
+
+    return job["result"]
 
 
 async def get_parameters(in_message):
