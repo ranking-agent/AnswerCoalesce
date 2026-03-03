@@ -31,6 +31,19 @@ AC_VERSION = '3.1.0'
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
+# Use environment variable with fallback
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+
+redis_client = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    decode_responses=True
+)
+
+JOB_PREFIX = "ac:job:"
+JOB_EXPIRY = 3600  # Jobs expire after 1 hour
+
 # init a logger
 logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir + '/')
 
@@ -100,18 +113,26 @@ async def query_handler(request: PDResponse = default_request_sync):
         convert_log_timestamps(in_message)
         return JSONResponse(content=in_message, status_code=status_code)
 
-# Use environment variable with fallback
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 
-redis_client = redis.Redis(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    decode_responses=True
-)
+@APP.post('/query/async', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,
+          status_code=200)
+async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
+    """Submit query for async processing, returns job_id immediately."""
+    job_id = str(uuid.uuid4())
+    in_message = request.dict(exclude_none=True)
 
-JOB_PREFIX = "ac:job:"
-JOB_EXPIRY = 3600  # Jobs expire after 1 hour
+    # Save to Redis (shared across all workers)
+    save_job(job_id, {
+        "status": "running",
+        "progress": 0,
+        "result": None,
+        "error": None,
+        "created_at": datetime.utcnow().isoformat()
+    })
+
+    background_tasks.add_task(process_query, job_id, in_message)
+
+    return {"job_id": job_id, "status": "running"}
 
 
 def save_job(job_id: str, job_data: dict):
@@ -139,24 +160,6 @@ def update_job(job_id: str, **updates):
         save_job(job_id, job)
 
 
-@APP.post('/query/async', tags=["Answer coalesce"])
-async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
-    """Submit query for async processing, returns job_id immediately."""
-    job_id = str(uuid.uuid4())
-    in_message = request.dict(exclude_none=True)
-
-    # Save to Redis (shared across all workers)
-    save_job(job_id, {
-        "status": "running",
-        "progress": 0,
-        "result": None,
-        "error": None,
-        "created_at": datetime.utcnow().isoformat()
-    })
-
-    background_tasks.add_task(process_query, job_id, in_message)
-
-    return {"job_id": job_id, "status": "running"}
 
 
 async def process_query(job_id: str, in_message: dict):
