@@ -10,8 +10,9 @@ from functools import wraps
 from reasoner_pydantic import Response as PDResponse
 
 import uuid
+import redis
 from typing import Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from src.util import LoggingUtil
 from src.default_query import default_input_sync
@@ -99,30 +100,59 @@ async def query_handler(request: PDResponse = default_request_sync):
         convert_log_timestamps(in_message)
         return JSONResponse(content=in_message, status_code=status_code)
 
+# Use environment variable with fallback
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 
-def cleanup_old_jobs():
-    """Remove jobs older than 1 hour."""
-    cutoff = datetime.utcnow() - timedelta(hours=1)
-    old_jobs = [jid for jid, job in jobs.items() if job.get("created_at", datetime.utcnow()) < cutoff]
-    for jid in old_jobs:
-        del jobs[jid]
+redis_client = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    decode_responses=True
+)
+
+JOB_PREFIX = "ac:job:"
+JOB_EXPIRY = 3600  # Jobs expire after 1 hour
+
+
+def save_job(job_id: str, job_data: dict):
+    """Save job to Redis."""
+    redis_client.setex(
+        f"{JOB_PREFIX}{job_id}",
+        JOB_EXPIRY,
+        json.dumps(job_data, default=str)
+    )
+
+
+def get_job(job_id: str) -> dict | None:
+    """Get job from Redis."""
+    data = redis_client.get(f"{JOB_PREFIX}{job_id}")
+    if data:
+        return json.loads(data)
+    return None
+
+
+def update_job(job_id: str, **updates):
+    """Update job fields in Redis."""
+    job = get_job(job_id)
+    if job:
+        job.update(updates)
+        save_job(job_id, job)
 
 
 @APP.post('/query/async', tags=["Answer coalesce"])
 async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
     """Submit query for async processing, returns job_id immediately."""
-    cleanup_old_jobs()  # Cleanup on each new request
-
     job_id = str(uuid.uuid4())
     in_message = request.dict(exclude_none=True)
 
-    jobs[job_id] = {
+    # Save to Redis (shared across all workers)
+    save_job(job_id, {
         "status": "running",
         "progress": 0,
         "result": None,
         "error": None,
-        "created_at": datetime.utcnow()
-    }
+        "created_at": datetime.utcnow().isoformat()
+    })
 
     background_tasks.add_task(process_query, job_id, in_message)
 
@@ -139,26 +169,24 @@ async def process_query(job_id: str, in_message: dict):
         elif await is_multi_curie_query(in_message):
             result = await multi_curie_query(in_message, parameters)
         else:
-            jobs[job_id] = {"status": "failed", "error": "Invalid query type"}
+            update_job(job_id, status="failed", error="Invalid query type")
             return
 
         convert_log_timestamps(result)
-        jobs[job_id]["status"] = "completed"
-        jobs[job_id]["result"] = result
+        update_job(job_id, status="completed", result=result)
 
     except Exception as e:
         logger.exception(f"Job {job_id} failed: {e}")
-        jobs[job_id]["status"] = "failed"
-        jobs[job_id]["error"] = str(e)
+        update_job(job_id, status="failed", error=str(e))
 
 
 @APP.get('/query/status/{job_id}')
 async def get_job_status(job_id: str):
     """Check job status."""
-    if job_id not in jobs:
+    job = get_job(job_id)
+    if not job:
         return JSONResponse({"error": "Job not found"}, status_code=404)
 
-    job = jobs[job_id]
     return {
         "job_id": job_id,
         "status": job["status"],
@@ -169,10 +197,10 @@ async def get_job_status(job_id: str):
 @APP.get('/query/result/{job_id}')
 async def get_job_result(job_id: str):
     """Get job result when complete."""
-    if job_id not in jobs:
+    job = get_job(job_id)
+    if not job:
         return JSONResponse({"error": "Job not found"}, status_code=404)
 
-    job = jobs[job_id]
     if job["status"] != "completed":
         return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
 
