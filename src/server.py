@@ -113,14 +113,12 @@ async def query_handler(request: PDResponse = default_request_sync):
         return JSONResponse(content=in_message, status_code=status_code)
 
 
-@APP.post('/query/async', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,
-          status_code=200)
+@APP.post('/query/async', tags=["Answer coalesce"], response_model=None)
 async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
-    """Submit query for async processing, returns job_id immediately."""
+    """query for async processing, returns job_id immediately."""
     job_id = str(uuid.uuid4())
     in_message = request.dict(exclude_none=True)
 
-    # Save to Redis (shared across all workers)
     save_job(job_id, {
         "status": "running",
         "progress": 0,
@@ -132,6 +130,33 @@ async def query_async_handler(request: PDResponse, background_tasks: BackgroundT
     background_tasks.add_task(process_query, job_id, in_message)
 
     return {"job_id": job_id, "status": "running"}
+
+
+@APP.get('/query/status/{job_id}', response_model=None)
+async def get_job_status(job_id: str):
+    """Check job status."""
+    job = get_job(job_id)
+    if not job:
+        return JSONResponse({"error": "Job not found"}, status_code=404)
+
+    return {
+        "job_id": job_id,
+        "status": job["status"],
+        "error": job.get("error")
+    }
+
+
+@APP.get('/query/result/{job_id}', response_model=PDResponse, response_model_exclude_none=True)
+async def get_job_result(job_id: str):
+    """Get job result when complete."""
+    job = get_job(job_id)
+    if not job:
+        return JSONResponse({"error": "Job not found"}, status_code=404)
+
+    if job["status"] != "completed":
+        return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
+
+    return job["result"]
 
 
 def save_job(job_id: str, job_data: dict):
@@ -178,33 +203,6 @@ async def process_query(job_id: str, in_message: dict):
     except Exception as e:
         logger.exception(f"Job {job_id} failed: {e}")
         update_job(job_id, status="failed", error=str(e))
-
-
-@APP.get('/query/status/{job_id}')
-async def get_job_status(job_id: str):
-    """Check job status."""
-    job = get_job(job_id)
-    if not job:
-        return JSONResponse({"error": "Job not found"}, status_code=404)
-
-    return {
-        "job_id": job_id,
-        "status": job["status"],
-        "error": job.get("error")
-    }
-
-
-@APP.get('/query/result/{job_id}')
-async def get_job_result(job_id: str):
-    """Get job result when complete."""
-    job = get_job(job_id)
-    if not job:
-        return JSONResponse({"error": "Job not found"}, status_code=404)
-
-    if job["status"] != "completed":
-        return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
-
-    return job["result"]
 
 
 async def get_parameters(in_message):
