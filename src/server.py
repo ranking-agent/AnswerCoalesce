@@ -32,7 +32,7 @@ AC_VERSION = '3.1.0'
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
 # Use environment variable with fallback
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_HOST = os.getenv("REDIS_HOST", "answercoalesce-answer-coalesce-redis-service.translator-dev.svc.cluster.local")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 
 redis_client = redis.Redis(
@@ -78,7 +78,6 @@ with open(conf_path, 'r') as inf:
 
 # define the default request bodies
 default_request_sync: Body = Body(default=default_input_sync)
-
 
 
 @APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,
@@ -158,8 +157,6 @@ def update_job(job_id: str, **updates):
     if job:
         job.update(updates)
         save_job(job_id, job)
-
-
 
 
 async def process_query(job_id: str, in_message: dict):
