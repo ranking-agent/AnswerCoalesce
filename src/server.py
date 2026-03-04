@@ -4,15 +4,13 @@ import logging
 import requests
 import yaml
 import json
+import uuid
+from typing import Dict, Any
+from datetime import datetime
 
 from enum import Enum
 from functools import wraps
 from reasoner_pydantic import Response as PDResponse
-
-import uuid
-import redis
-from typing import Dict, Any
-from datetime import datetime
 
 from src.util import LoggingUtil
 from src.default_query import default_input_sync
@@ -31,21 +29,9 @@ AC_VERSION = '3.1.0'
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
 
-# Use environment variable with fallback
-REDIS_HOST = os.getenv("REDIS_HOST", "answercoalesce-answer-coalesce-redis-service.translator-dev.svc.cluster.local")
-REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-
-redis_client = redis.Redis(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    decode_responses=True
-)
-
-JOB_PREFIX = "ac:job:"
-JOB_EXPIRY = 3600  # Jobs expire after 1 hour
-
 # init a logger
 logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir + '/')
+
 
 # declare the application and populate some details
 APP = FastAPI(
@@ -160,28 +146,16 @@ async def get_job_result(job_id: str):
 
 
 def save_job(job_id: str, job_data: dict):
-    """Save job to Redis."""
-    redis_client.setex(
-        f"{JOB_PREFIX}{job_id}",
-        JOB_EXPIRY,
-        json.dumps(job_data, default=str)
-    )
+    jobs[job_id] = job_data
 
 
 def get_job(job_id: str) -> dict | None:
-    """Get job from Redis."""
-    data = redis_client.get(f"{JOB_PREFIX}{job_id}")
-    if data:
-        return json.loads(data)
-    return None
+    return jobs.get(job_id)
 
 
 def update_job(job_id: str, **updates):
-    """Update job fields in Redis."""
-    job = get_job(job_id)
-    if job:
-        job.update(updates)
-        save_job(job_id, job)
+    if job_id in jobs:
+        jobs[job_id].update(updates)
 
 
 async def process_query(job_id: str, in_message: dict):
