@@ -107,6 +107,7 @@ async def query_handler(request: PDResponse = default_request_sync):
         convert_log_timestamps(in_message)
         return JSONResponse(content=in_message, status_code=status_code)
 
+
 @APP.post('/query/async', tags=["Answer coalesce"], response_model=None)
 async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
     """query for async processing, returns job_id immediately."""
@@ -124,6 +125,24 @@ async def query_async_handler(request: PDResponse, background_tasks: BackgroundT
     background_tasks.add_task(process_query, job_id, in_message)
 
     return {"job_id": job_id, "status": "running"}
+
+
+@APP.get('/query/jobs', tags=["Answer coalesce"], response_model=None)
+async def list_jobs():
+    """List all active jobs."""
+    keys = redis_client.keys(f"{JOB_PREFIX}*")
+    jobs_list = []
+    for key in keys[:100]:  # Limit to 100
+        job_id = key.replace(JOB_PREFIX, "")
+        job = get_job(job_id)
+        if job:
+            jobs_list.append({
+                "job_id": job_id,
+                "status": job.get("status"),
+                "created_at": job.get("created_at"),
+                "error": job.get("error")
+            })
+    return {"jobs": jobs_list, "count": len(jobs_list)}
 
 
 @APP.get('/query/status/{job_id}', response_model=None)
@@ -155,24 +174,6 @@ async def get_job_result(job_id: str):
         return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
 
     return job["result"]
-
-
-@APP.get('/query/jobs', tags=["Answer coalesce"], response_model=None)
-async def list_jobs():
-    """List all active jobs."""
-    keys = redis_client.keys(f"{JOB_PREFIX}*")
-    jobs_list = []
-    for key in keys[:100]:  # Limit to 100
-        job_id = key.replace(JOB_PREFIX, "")
-        job = get_job(job_id)
-        if job:
-            jobs_list.append({
-                "job_id": job_id,
-                "status": job.get("status"),
-                "created_at": job.get("created_at"),
-                "error": job.get("error")
-            })
-    return {"jobs": jobs_list, "count": len(jobs_list)}
 
 
 def save_job(job_id: str, job_data: dict):
