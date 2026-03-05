@@ -6,7 +6,6 @@ import yaml
 import json
 import uuid
 import redis
-from typing import Dict, Any
 from datetime import datetime
 
 from enum import Enum
@@ -145,8 +144,6 @@ async def get_job_status(job_id: str):
 async def get_job_result(job_id: str):
     """Get job result when complete."""
     print(f">>> /query/result called for {job_id}")
-    print(f">>> jobs dict has {len(jobs)} jobs: {list(jobs.keys())}")
-
     job = get_job(job_id)
     if not job:
         print(f">>> Job {job_id} NOT FOUND")
@@ -158,6 +155,24 @@ async def get_job_result(job_id: str):
         return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
 
     return job["result"]
+
+
+@APP.get('/query/jobs', tags=["Answer coalesce"], response_model=None)
+async def list_jobs():
+    """List all active jobs."""
+    keys = redis_client.keys(f"{JOB_PREFIX}*")
+    jobs_list = []
+    for key in keys[:100]:  # Limit to 100
+        job_id = key.replace(JOB_PREFIX, "")
+        job = get_job(job_id)
+        if job:
+            jobs_list.append({
+                "job_id": job_id,
+                "status": job.get("status"),
+                "created_at": job.get("created_at"),
+                "error": job.get("error")
+            })
+    return {"jobs": jobs_list, "count": len(jobs_list)}
 
 
 def save_job(job_id: str, job_data: dict):
