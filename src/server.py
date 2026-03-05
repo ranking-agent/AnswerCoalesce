@@ -40,13 +40,12 @@ APP = FastAPI(
 )
 
 # declare the crossorigin params
-APP.add_middleware(
-    CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+APP.add_middleware(CORSMiddleware,
+                   allow_origins=['*'],
+                   allow_credentials=True,
+                   allow_methods=["*"],
+                   allow_headers=["*"],
+                   )
 
 
 # declare the types of answer coalesce methods
@@ -153,10 +152,7 @@ async def get_job_result(job_id: str):
 
 def save_job(job_id: str, job_data: dict):
     jobs[job_id] = job_data
-
-
-def get_job(job_id: str) -> dict | None:
-    return jobs.get(job_id)
+    print(f">>> save_job({job_id}): jobs now has {len(jobs)} entries: {list(jobs.keys())}")
 
 
 def update_job(job_id: str, **updates):
@@ -197,7 +193,7 @@ async def process_query(job_id: str, in_message: dict):
 async def get_parameters(in_message):
     """Get the parameters from the incoming message.  If they are not present, return the defaults."""
     parameters = {"predicate_constraints": in_message.get('parameters', {}).get('predicate_constraints', []),
-                  "propert_constraints": in_message.get('parameters', {}).get('property_constraints', []),
+                  "property_constraints": in_message.get('parameters', {}).get('property_constraints', []),
                   "pvalue_threshold": in_message.get('parameters', {}).get('pvalue_threshold', None),
                   "max_results": in_message.get('parameters', {}).get('max_results', None)}
     return parameters
