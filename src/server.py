@@ -5,6 +5,7 @@ import requests
 import yaml
 import json
 import uuid
+import redis
 from typing import Dict, Any
 from datetime import datetime
 
@@ -21,8 +22,6 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-# In-memory job store with auto-cleanup
-jobs: Dict[str, Dict[str, Any]] = {}
 
 AC_VERSION = '3.1.0'
 
@@ -31,6 +30,18 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 
 # init a logger
 logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir + '/')
+
+# Redis connection for async
+REDIS_HOST = os.getenv("REDIS_HOST", "answercoalesce-answer-coalesce-redis-service.translator-dev.svc.cluster.local")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+JOB_PREFIX = "ac:job:"
+JOB_EXPIRY = 7200  # 2 hours
+
+redis_client = redis.Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    decode_responses=True
+)
 
 
 # declare the application and populate some details
@@ -97,7 +108,6 @@ async def query_handler(request: PDResponse = default_request_sync):
         convert_log_timestamps(in_message)
         return JSONResponse(content=in_message, status_code=status_code)
 
-
 @APP.post('/query/async', tags=["Answer coalesce"], response_model=None)
 async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
     """query for async processing, returns job_id immediately."""
@@ -151,22 +161,23 @@ async def get_job_result(job_id: str):
 
 
 def save_job(job_id: str, job_data: dict):
-    jobs[job_id] = job_data
-    print(f">>> save_job({job_id}): jobs now has {len(jobs)} entries: {list(jobs.keys())}")
-
-
-def update_job(job_id: str, **updates):
-    if job_id in jobs:
-        jobs[job_id].update(updates)
-        print(f">>> Updated job {job_id}: keys={list(updates.keys())}")
-    else:
-        print(f">>> ERROR: Job {job_id} not in jobs dict!")
+    redis_client.setex(
+        f"{JOB_PREFIX}{job_id}",
+        JOB_EXPIRY,
+        json.dumps(job_data, default=str)
+    )
 
 
 def get_job(job_id: str) -> dict | None:
-    job = jobs.get(job_id)
-    print(f">>> get_job({job_id}): found={job is not None}")
-    return job
+    data = redis_client.get(f"{JOB_PREFIX}{job_id}")
+    return json.loads(data) if data else None
+
+
+def update_job(job_id: str, **updates):
+    job = get_job(job_id)
+    if job:
+        job.update(updates)
+        save_job(job_id, job)
 
 
 async def process_query(job_id: str, in_message: dict):
