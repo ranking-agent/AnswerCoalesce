@@ -12,7 +12,7 @@
 set -euo pipefail
 
 # ── Load config
-source "$(dirname "$0")/config.env"
+source "/projects/translator/AnswerCoalesce/src/ac_pipeline/config.env"
 
 TXT_DIR="$OUTDIR/txt_files"
 RDB_DEST="$OUTDIR/answer-coalesce.rdb"
@@ -23,11 +23,11 @@ mkdir -p "$TXT_DIR" "$LOG_DIR"
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
 log "Activating conda: $CONDA_ENV"
-source "$CONDA_BASE/etc/profile.d/conda.sh"
+source "$CONDA_BASE/etc/profile.d/conda.sh" 2>/dev/null
 conda activate "$CONDA_ENV"
 
 log "=== STEP 1: Generating .txt files ==="
-export PYTHONPATH="$AC_REPO/src/ac_pipeline:$PYTHONPATH"
+export PYTHONPATH="$AC_REPO/src/ac_pipeline:${PYTHONPATH:-}"
 python "$AC_REPO/src/ac_pipeline/generate_ac_files.py" \
     --nodes "$NODES" \
     --edges "$EDGES" \

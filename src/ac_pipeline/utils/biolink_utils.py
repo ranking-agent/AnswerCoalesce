@@ -156,8 +156,10 @@ class BiolinkUtils:
 
     @cache
     def is_symmetric(self, property_name):
-        return self.toolkit.is_symmetric(property_name)
-
+        element = self.toolkit.get_element(property_name)
+        if element is None:
+            return False
+        return bool(getattr(element, 'symmetric', False))
     def is_valid_node_type(self, node_type):
         if self.toolkit.is_category(node_type, mixin=True):
             return True
