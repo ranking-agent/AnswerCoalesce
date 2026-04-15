@@ -1,0 +1,9 @@
+# AC pipeline Python deps: JSONL/gzip -> .txt -> Redis -> .rdb
+# Note: `redis-server` and `redis-cli` binaries must also be on PATH.
+# Install with: conda install -c conda-forge redis-server
+bmt>=1.2.1
+PyYAML>=6.0
+requests>=2.31
+redis>=4.5
+orjson>=3.9
+tqdm>=4.65
