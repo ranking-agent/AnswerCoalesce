@@ -30,6 +30,31 @@ def parse_line(line):
     return source_id, target_id, predicate_string, pred
 
 
+def extract_prov(line):
+    # old format: ROBOKOP
+    pks = line.get('primary_knowledge_source')
+    if pks:
+        prov = {'primary_knowledge_source': pks}
+        aks = line.get('aggregator_knowledge_source')
+        if aks:
+            prov['aggregator_knowledge_source'] = aks
+        return prov
+
+    # new format: Translator
+    sources = line.get('sources')
+    if not sources:
+        return {}
+
+    prov = {}
+    for source in sources:
+        role = source.get('resource_role')
+        if role == 'primary_knowledge_source':
+            prov['primary_knowledge_source'] = source['resource_id']
+        elif role == 'aggregator_knowledge_source':
+            prov['aggregator_knowledge_source'] = source['resource_id']
+    return prov
+
+
 def get_filter_nodes():
     """Pull the ARS blocklist of nodes that we don't want to return. This consists of a lot of UMLS terms
     that we don't have anyway, but also a bunch of very generic terms (Disease, Human) that are not useful
@@ -38,11 +63,13 @@ def get_filter_nodes():
     blocklist = json.loads(requests.get(BLOCKLIST_URL).text)
     return set(blocklist)
 
+
 def quick_jsonl_file_iterator(json_file, is_gzip=False):
     with gzip.open(json_file, 'rt') if is_gzip \
             else open(json_file, 'r', encoding='utf-8') as fp:
         for line in fp:
             yield orjson.loads(line)
+
 
 def generate_ac_files(input_node_file, input_edge_file, output_dir):
     """Given a dump of a graph a la robokop, produce 3 files:
@@ -135,8 +162,7 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
             for scategory in set(categories[source_id]):
                 edgecounts[(target_id, pred, target_is_source, scategory)] += 1
             pkey = f'{source_id} {pred} {target_id}'
-            prov = {x: line[x] for x in ['primary_knowledge_source', 'aggregator_knowledge_source'] if
-                    x in line}
+            prov = extract_prov(line)
             if not prov:
                 continue
             provout.write(f'{pkey}\t{json.dumps(prov)}\n')

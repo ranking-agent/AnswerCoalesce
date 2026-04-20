@@ -47,7 +47,6 @@ def test_drugs_to_disease_inference():
         },
         "parameters": {
             "pvalue_threshold": 0.00001,
-            "max_rules": 10,
             "predicate_constraint_style": "exclude",
             "predicate_constraints": [
                 "biolink:causes",
@@ -64,6 +63,8 @@ def test_drugs_to_disease_inference():
         }
     }
     jret = run_test(in_message)
+    with open("saveddisease.json", "w") as f:
+        json.dump(jret, f)
     assert (len(jret["message"]) == 4)  # 4 because of the additional parameter: auxilliary_Graph
 
 
@@ -94,7 +95,7 @@ def test_genes_to_disease_inference():
                     },
                     "n1": {
                         "ids": [
-                            "DOID:0050430"
+                            "MONDO:0004979"
                           ],
                         "categories": [
                             "biolink:Disease"
@@ -118,6 +119,8 @@ def test_genes_to_disease_inference():
     }
 
     jret = run_test(in_message)
+    with open("savedgene2Asthmadisease.json", "w") as f:
+        json.dump(jret, f)
     assert (len(jret["message"]) == 4)  # 4 because of the additional parameter: auxilliary_Graph
     confirm_qg_nodes(in_message, jret, is_source_ids=False)
 
@@ -162,6 +165,8 @@ def test_phenotype_to_genes_inference():
     }
 
     jret = run_test(in_message)
+    with open("savedphen2gene.json", "w") as f:
+        json.dump(jret, f)
     assert (len(jret["message"]) == 4)  # 4 because of the additional parameter: auxilliary_Graph
     confirm_qg_nodes(in_message, jret, is_source_ids=False)
 
@@ -206,6 +211,8 @@ def test_disease_to_phenotypes_inference():
     }
 
     jret = run_test(in_message)
+    with open("saveddisease2pheno.json", "w") as f:
+        json.dump(jret, f)
     assert (len(jret["message"]) == 4)  # 4 because of the additional parameter: auxilliary_Graph
     confirm_qg_nodes(in_message, jret, is_source_ids=True)
 
@@ -248,6 +255,8 @@ def test_genes_to_chemical_mcq():
         }
     }
     jret = run_test(in_message)
+    with open("savedgene2chemmcq.json", "w") as f:
+        json.dump(jret, f)
     assert (len(jret["message"]) == 4)  # 4 because of the additional parameter: auxilliary_Graph
     confirm_qg_nodes(in_message, jret, is_source_ids=True)
 
@@ -296,6 +305,8 @@ def test_phenotype_to_gene_mcq_no_enrichment():
         }
     }
     jret = run_test(in_message)
+    with open("savedpheno2geneNOenr_mcq.json", "w") as f:
+        json.dump(jret, f)
     assert (len(jret["message"]) == 2)  # 2 because only Query Graph and Knowledge graph exist with no enrichment
 
 

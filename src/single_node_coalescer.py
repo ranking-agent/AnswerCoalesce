@@ -40,6 +40,13 @@ async def multi_curie_query(in_message, parameters):
     return await create_mcq_trapi_response(in_message, enrichment_results, mcq_definition)
 
 
+def _run_coro_blocking(coro_func, *args, **kwargs):
+    """Run an async-bodied function in a fresh event loop. Used to offload
+    coroutines whose bodies are entirely sync/CPU-bound to a worker thread
+    via asyncio.to_thread, so they don't block the main event loop."""
+    return asyncio.run(coro_func(*args, **kwargs))
+
+
 async def infer(in_message: dict) -> dict:
     """
     Takes a TRAPI infer query and returns a TRAPI infer answer.
@@ -55,11 +62,13 @@ async def infer(in_message: dict) -> dict:
 
         inf_params = InferenceParams.from_message(in_message)
 
-        # 2. Initial lookup
+        # 2. Initial lookup (sync → thread pool, keeps event loop free)
         lookup_start = time.time()
         try:
-            lookup_results = lookup_single(params.curie, params.predicate_parts, params.is_source,
-                                           params.output_semantic_type)
+            lookup_results = await asyncio.to_thread(
+                lookup_single, params.curie, params.predicate_parts,
+                params.is_source, params.output_semantic_type
+            )
         except Exception as e:
             builder.log_error(f"Lookup failed: {str(e)}",
                               metadata={"timing_seconds": round(time.time() - lookup_start, 3)})
@@ -72,19 +81,19 @@ async def infer(in_message: dict) -> dict:
             ensure_empty_results(in_message)
             return in_message
 
-        # LOG LOOKUP SUCCESS
         builder.log("Lookup stage complete", level="INFO", metadata={"total_lookups": len(lookup_results.link_ids),
                                                                      "timing_seconds": round(time.time() - lookup_start,
                                                                                              3)})
         logger.info(f"Found {len(lookup_results.link_ids)} lookup results for {params.curie}")
 
-        # 3 & 4. ENRICHMENT
+        # 3 & 4. ENRICHMENT (graph + property run truly concurrently in worker threads)
         enrichment_start = time.time()
 
         async def safe_graph_enrichment():
             try:
-                # coalesce_by_graph now returns (results, timings)
-                results = await coalesce_by_graph(
+                return await asyncio.to_thread(
+                    _run_coro_blocking,
+                    coalesce_by_graph,
                     lookup_results.link_ids,
                     params.output_semantic_type,
                     node_constraints=inf_params.node_constraints,
@@ -93,26 +102,25 @@ async def infer(in_message: dict) -> dict:
                     pvalue_threshold=inf_params.pvalue_threshold,
                     filter_predicate_hierarchies=True
                 )
-                return results
             except Exception as e:
                 builder.log_error(f"Graph enrichment failed: {str(e)}")
                 logger.exception("Graph enrichment failed")
-                return [], {}
+                return []
 
         async def safe_property_enrichment():
             try:
-                # If you also profile property enrichment, return timings here too
-                results = await coalesce_by_property(
+                return await asyncio.to_thread(
+                    _run_coro_blocking,
+                    coalesce_by_property,
                     lookup_results.link_ids,
                     params.output_semantic_type,
                     property_constraints=inf_params.property_constraints,
                     pvalue_threshold=inf_params.pvalue_threshold
                 )
-                return results
             except Exception as e:
                 builder.log_error(f"Property enrichment failed: {str(e)}")
                 logger.exception("Property enrichment failed")
-                return [], {}
+                return []
 
         (graph_enrichment_results, property_enrichment_results) = await asyncio.gather(
             safe_graph_enrichment(),
@@ -141,7 +149,6 @@ async def infer(in_message: dict) -> dict:
             ensure_empty_results(in_message)
             return in_message
 
-        # LOG ENRICHMENT SUCCESS
         enrichment_pvalues = [e.p_value for e in filtered_enrichments]
         builder.log("Enrichment stage complete", level="INFO",
                     metadata={"total_enrichments": len(all_enrichments),
@@ -175,19 +182,18 @@ async def infer(in_message: dict) -> dict:
             ensure_empty_results(in_message)
             return in_message
 
-        # LOG INFERENCE SUCCESS
         unique_graph_inferred = set()
         for enrichment, inferred_result in graph_inferred_results:
             unique_graph_inferred.update(
                 link.link_id for link in inferred_result.lookup_links
-                if link.link_id not in lookup_results.link_ids  # Exclude original lookups
+                if link.link_id not in lookup_results.link_ids
             )
 
         unique_property_inferred = set()
         for prop, inferred_data in property_inferred_results.items():
             unique_property_inferred.update(
                 link_id for link_id in inferred_data.get("lookup_links", [])
-                if link_id not in lookup_results.link_ids  # Exclude original lookups
+                if link_id not in lookup_results.link_ids
             )
 
         total_graph_inferences = sum(len(inferred_result.lookup_links) for _, inferred_result in graph_inferred_results)
@@ -204,15 +210,15 @@ async def infer(in_message: dict) -> dict:
                               }
                     )
 
-        # 7. BUILD RESPONSE
+        # 7. BUILD RESPONSE (sync → thread pool, keeps event loop free)
         build_start = time.time()
-        build_edgar_response(
+        await asyncio.to_thread(
+            build_edgar_response,
             builder, params, lookup_results, filtered_enrichments,
             graph_inferred_results, property_inferred_results,
             max_results=inf_params.max_results
         )
 
-        # LOG BUILD SUCCESS
         builder.log("Response build complete", level="INFO",
                     metadata={"timing_seconds": round(time.time() - build_start, 3)})
 
@@ -337,23 +343,16 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
     graph_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.GRAPH]
     property_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.PROPERTY]
 
-    async def process_graph_inference():
-        """Process graph enrichments with BATCHED lookup"""
+    def _graph_inference_sync():
         if not graph_enrichments:
             return []
 
-        # Extract curies, predicates, and is_source flags
         curies = [e.enriched_id for e in graph_enrichments]
         predicates = [e.predicate for e in graph_enrichments]
-
-        # Get is_source for each enrichment
-        # If EnrichmentResult doesn't have is_source, default to False
         is_sources = [getattr(e, 'is_source', False) for e in graph_enrichments]
 
-        # Single batched lookup instead of 100 separate calls
         lookups = lookup_batch(curies, predicates, is_sources, params.output_semantic_type)
 
-        # Build result tuples (enrichment, lookup)
         graph_inferred = []
         for enrichment in graph_enrichments:
             lookup = lookups.get(enrichment.enriched_id)
@@ -362,8 +361,7 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
 
         return graph_inferred
 
-    async def process_property_inference():
-        """Process property enrichments to find inferred nodes"""
+    def _property_inference_sync():
         if not property_enrichments:
             return {}
 
@@ -387,10 +385,9 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
 
         return property_inferred
 
-    # Run both in parallel
     graph_inferred, property_inferred = await asyncio.gather(
-        process_graph_inference(),
-        process_property_inference()
+        asyncio.to_thread(_graph_inference_sync),
+        asyncio.to_thread(_property_inference_sync)
     )
 
     return graph_inferred, property_inferred

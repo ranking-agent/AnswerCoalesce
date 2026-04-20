@@ -22,6 +22,12 @@ fi
 mkdir -p "$OUTDIR"
 
 JOB_ID=$(sbatch \
+    --partition="$SLURM_PARTITION" \
+    --time="$SLURM_TIME" \
+    --nodes="$SLURM_NODES" \
+    --ntasks="$SLURM_NTASKS" \
+    --cpus-per-task="$SLURM_CPUS" \
+    --mem="$SLURM_MEMORY" \
     --output="$OUTDIR/ac_pipeline_%j.log" \
     --error="$OUTDIR/ac_pipeline_%j.err" \
     "$SCRIPT_DIR/ac_pipeline.sbatch" | awk '{print $NF}')

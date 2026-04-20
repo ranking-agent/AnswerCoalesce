@@ -1,11 +1,13 @@
 """ Answer Coalesce server. """
 import os
+import hashlib
 import logging
 import requests
 import yaml
 import json
 import uuid
 import redis
+import orjson
 from datetime import datetime
 
 from enum import Enum
@@ -41,6 +43,44 @@ redis_client = redis.Redis(
     port=REDIS_PORT,
     decode_responses=True
 )
+
+INFER_CACHE_PREFIX = "ac:infer:"
+INFER_CACHE_TTL = int(os.getenv("INFER_CACHE_TTL", "3600"))
+INFER_CACHE_ENABLED = os.getenv("INFER_CACHE_ENABLED", "true").lower() == "true"
+
+
+def _infer_cache_key(in_message: dict) -> str:
+    qg = in_message.get("message", {}).get("query_graph", {})
+    params = in_message.get("parameters", {}) or {}
+    blob = orjson.dumps({"qg": qg, "params": params}, option=orjson.OPT_SORT_KEYS)
+    return INFER_CACHE_PREFIX + hashlib.sha256(blob).hexdigest()
+
+
+async def cached_infer(in_message: dict) -> dict:
+    """Wrap infer() with a Redis result cache keyed by query_graph + parameters."""
+    if not INFER_CACHE_ENABLED:
+        return await infer(in_message)
+
+    key = None
+    try:
+        key = _infer_cache_key(in_message)
+        cached = redis_client.get(key)
+        if cached is not None:
+            logger.info(f"infer cache HIT {key}")
+            return orjson.loads(cached)
+    except Exception as e:
+        logger.warning(f"infer cache read failed: {e}")
+
+    result = await infer(in_message)
+
+    if key is not None and result is not None:
+        try:
+            redis_client.setex(key, INFER_CACHE_TTL, orjson.dumps(result, default=str))
+            logger.info(f"infer cache SET {key} (ttl={INFER_CACHE_TTL}s)")
+        except Exception as e:
+            logger.warning(f"infer cache write failed: {e}")
+
+    return result
 
 
 # declare the application and populate some details
@@ -87,7 +127,7 @@ async def query_handler(request: PDResponse = default_request_sync):
         parameters = await get_parameters(in_message)
 
         if await is_infer_query(in_message):
-            result = await infer(in_message)
+            result = await cached_infer(in_message)
         elif await is_multi_curie_query(in_message):
             result = await multi_curie_query(in_message, parameters)
         else:
@@ -202,7 +242,7 @@ async def process_query(job_id: str, in_message: dict):
         parameters = await get_parameters(in_message)
 
         if await is_infer_query(in_message):
-            result = await infer(in_message)
+            result = await cached_infer(in_message)
         elif await is_multi_curie_query(in_message):
             result = await multi_curie_query(in_message, parameters)
         else:

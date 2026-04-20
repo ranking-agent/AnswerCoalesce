@@ -1,4 +1,7 @@
 #!/bin/bash
+# All #SBATCH directives below are FALLBACKS for direct `sbatch ac_pipeline.sbatch`
+# invocations. When launched via trigger.sh (the normal path), partition/time/mem/
+# cpus/output/error are overridden by CLI flags using config.env values.
 #SBATCH --job-name=ac_pipeline
 #SBATCH --partition=batch
 #SBATCH --time=90-00:00:00
@@ -6,8 +9,6 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=240G
-# NOTE: --output/--error are overridden by trigger.sh to land in $OUTDIR.
-# These fallbacks are only used if you run `sbatch ac_pipeline.sbatch` directly.
 #SBATCH --output=ac_pipeline_%j.log
 #SBATCH --error=ac_pipeline_%j.err
 
