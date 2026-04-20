@@ -6,6 +6,9 @@ from itertools import zip_longest
 import logging
 import os
 import redis
+from redis.backoff import ExponentialBackoff
+from redis.retry import Retry
+import redis.exceptions
 import json
 import ast
 import itertools
@@ -28,17 +31,20 @@ def grouper(n, iterable):
 
 
 def get_redis_pipeline(dbnum):
-    # "redis_host": "localhost",
-    # "redis_port": 6379,
-    # "redis_password": "",
     jpath = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'config.json')
     with open(jpath, 'r') as inf:
         conf = json.load(inf)
+    retry = Retry(ExponentialBackoff(cap=10, base=0.5), retries=5)
+    kwargs = dict(
+        host=conf['redis_host'],
+        port=int(conf['redis_port']),
+        db=dbnum,
+        retry=retry,
+        retry_on_error=[redis.exceptions.BusyLoadingError, redis.exceptions.ConnectionError, redis.exceptions.TimeoutError],
+    )
     if 'redis_password' in conf and len(conf['redis_password']) > 0:
-        typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum,
-                                password=conf['redis_password'])
-    else:
-        typeredis = redis.Redis(host=conf['redis_host'], port=int(conf['redis_port']), db=dbnum)
+        kwargs['password'] = conf['redis_password']
+    typeredis = redis.Redis(**kwargs)
     p = typeredis.pipeline(transaction=False)
     return p
 

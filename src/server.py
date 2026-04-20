@@ -7,6 +7,9 @@ import yaml
 import json
 import uuid
 import redis
+from redis.backoff import ExponentialBackoff
+from redis.retry import Retry
+import redis.exceptions
 import orjson
 from datetime import datetime
 
@@ -41,7 +44,9 @@ JOB_EXPIRY = 7200  # 2 hours
 redis_client = redis.Redis(
     host=REDIS_HOST,
     port=REDIS_PORT,
-    decode_responses=True
+    decode_responses=True,
+    retry=Retry(ExponentialBackoff(cap=10, base=0.5), retries=5),
+    retry_on_error=[redis.exceptions.BusyLoadingError, redis.exceptions.ConnectionError, redis.exceptions.TimeoutError],
 )
 
 INFER_CACHE_PREFIX = "ac:infer:"
