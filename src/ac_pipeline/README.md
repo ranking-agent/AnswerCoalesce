@@ -117,7 +117,7 @@ Everything for a run is self-contained in the date folder:
 |---|---|
 | 0 | `pip install -r requirements.txt` (idempotent; fast when already satisfied) |
 | 1 | Generate `.txt` files via `generate_ac_files.py` (accepts plain JSONL or `.gz`) |
-| 2 | Start local Redis (settings mirrored from `helm/ac-loader/values.yaml`) |
+| 2 | Start local Redis on the compute node |
 | 3 | Run `load_redis.py` against the local Redis |
 | 4 | Trigger `BGSAVE`, wait for `LASTSAVE` to tick |
 | 5 | Shut down Redis — the `.rdb` is already at its final path |
@@ -126,74 +126,15 @@ Redis is configured with `maxmemory 220gb`, `stop-writes-on-bgsave-error no`, `p
 
 ## Verifying an RDB
 
-After the job completes, confirm the RDB contains what you expect. Three checks, progressively more thorough.
+Quick structural check (no server needed, runs on ht1 in seconds):
 
-### 1. Structural check (no server needed, runs on ht1 in seconds)
 ```bash
 redis-check-rdb $OUTDIR/answer-coalesce.rdb
 ```
-Expect:
-- Six `Selecting DB ID` lines (IDs 0–5, one per txt file)
-- `Checksum OK`
-- `\o/ RDB looks OK! \o/`
-- `N keys read` line at the end — note this number; call it `RDB_KEYS`.
 
-Example from a real run:
-```
-[info] 135437983 keys read
-[info] 0 expires
-[info] 0 already expired
-```
+Expect six `Selecting DB ID` lines (IDs 0-5), `Checksum OK`, and `\o/ RDB looks OK! \o/`.
 
-### 2. Key count vs. txt line count
-Count source lines:
-```bash
-wc -l $OUTDIR/txt_files/*.txt
-```
-Sum the six numbers; call it `TXT_LINES`.
-
-Compare:
-- **`RDB_KEYS ≈ TXT_LINES`** → load is complete. Small shortfall (<1%) is expected because `load_redis.py` uses `SET` and any duplicate keys within a single file collapse under last-write-wins. Example: 135,437,983 keys vs. 135,879,746 lines = 0.33% delta — normal.
-- **`RDB_KEYS` much smaller than `TXT_LINES`** → something truncated. Check `$OUTDIR/redis_<job_id>.log` for OOM / eviction / write errors, and the pipeline log for a load_redis traceback.
-- **`RDB_KEYS` larger than `TXT_LINES`** → should never happen; investigate.
-
-### 3. Per-DB key counts (optional, only if step 2 looks off)
-Load the RDB into a throwaway Redis **on an interactive compute node** (not ht1 — Redis at this scale shouldn't run on a shared login node) and run `INFO keyspace`:
-
-```bash
-srun --partition=batch --mem=32G --cpus-per-task=2 --time=1:00:00 --pty bash
-
-# Write a conf (printf avoids heredoc pitfalls)
-printf 'daemonize yes\nport 6401\nbind 127.0.0.1\ndir %s\ndbfilename answer-coalesce.rdb\npidfile %s/verify.pid\nsave ""\nmaxmemory 220gb\nlogfile %s/redis_verify.log\n' \
-    "$OUTDIR" "$OUTDIR" "$OUTDIR" \
-    > "$OUTDIR/verify.conf"
-
-redis-server "$OUTDIR/verify.conf"
-until redis-cli -p 6401 ping 2>/dev/null | grep -q PONG; do sleep 5; done
-redis-cli -p 6401 INFO keyspace
-redis-cli -p 6401 shutdown nosave
-```
-
-DB mapping (from `src/graph_coalescence/load_redis.py`):
-
-| DB | Source file |
-|---|---|
-| 0 | `links.txt` |
-| 1 | `nodelabels.txt` |
-| 2 | `backlinks.txt` |
-| 3 | `nodenames.txt` |
-| 4 | `prov.txt` |
-| 5 | `category_count.txt` |
-
-Each `dbN:keys=NNN` should be ≤ `wc -l` of the corresponding txt file.
-
-## Known Issues and Fixes Applied
-
-### SLURM config.env path
-SLURM copies the sbatch to its spool directory, so `$(dirname "$0")` doesn't resolve. The path to `config.env` is hardcoded at the top of `ac_pipeline.sbatch`.
-
-### PYTHONPATH in SLURM
-`PYTHONPATH` may be unset in the SLURM environment. Uses `${PYTHONPATH:-}` to default to empty.
+For key count validation, per-DB checks, and the full load-and-inspect workflow on a largemem node, see [verifyingDB.md](verifyingDB.md).
 
 ## Contact
 Chris Bizon & Evan Morris — cbizon@renci.org

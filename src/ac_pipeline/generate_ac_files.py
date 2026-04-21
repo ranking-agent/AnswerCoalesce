@@ -1,5 +1,6 @@
 import argparse
-from ac_builder import generate_ac_files
+from src.graph_coalescence.build_redis_files import generate_ac_files
+
 
 def main():
     ap = argparse.ArgumentParser(

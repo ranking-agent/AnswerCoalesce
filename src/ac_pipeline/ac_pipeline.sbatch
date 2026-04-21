@@ -54,7 +54,6 @@ python "$AC_REPO/src/ac_pipeline/generate_ac_files.py" \
 log "Done. Files written to $TXT_DIR"
 
 log "=== STEP 2: Starting local Redis on port $REDIS_PORT ==="
-# Settings mirror helm/ac-loader/values.yaml (redis 6.2.6, 220gb maxmemory).
 # --save "" disables periodic RDB snapshots during the load; we BGSAVE once at the end.
 redis-server \
     --daemonize yes \

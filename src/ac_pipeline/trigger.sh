@@ -10,6 +10,36 @@ set -euo pipefail
 SCRIPT_DIR="$(dirname "$0")"
 source "$SCRIPT_DIR/config.env"
 
+# ── Validate required config ──
+missing=()
+for var in NODES EDGES OUTDIR AC_REPO CONDA_BASE CONDA_ENV \
+           SLURM_PARTITION SLURM_TIME SLURM_NODES SLURM_NTASKS SLURM_CPUS SLURM_MEMORY; do
+    val="${!var:-}"
+    if [[ -z "$val" ]]; then
+        missing+=("$var (not set)")
+    elif [[ "$val" == *"<"*">"* ]]; then
+        missing+=("$var (still has placeholder: $val)")
+    fi
+done
+
+if [[ -n "${NODES:-}" && ! -f "$NODES" ]]; then
+    missing+=("NODES file not found: $NODES")
+fi
+if [[ -n "${EDGES:-}" && ! -f "$EDGES" ]]; then
+    missing+=("EDGES file not found: $EDGES")
+fi
+if [[ -n "${CONDA_BASE:-}" && ! -d "$CONDA_BASE" ]]; then
+    missing+=("CONDA_BASE directory not found: $CONDA_BASE")
+fi
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+    echo "ERROR: config.env has problems — fix these before submitting:"
+    printf '  - %s\n' "${missing[@]}"
+    echo ""
+    echo "Edit: $SCRIPT_DIR/config.env"
+    exit 1
+fi
+
 # Optional date override
 if [[ $# -gt 0 ]]; then
     DATE_OVERRIDE=$1
