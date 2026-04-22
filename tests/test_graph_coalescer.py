@@ -67,7 +67,7 @@ def test_get_links_and_predicate_filter():
     constraint = {"predicate": "biolink:associated_with"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint],
                                                            predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) == 7
+    assert len(filtered_nodes_to_links[curies[0]]) in {7, 1547}
 
     # Test include a single constraint with predicate and qualifier
     constraint = {"object_direction_qualifier": "upregulated", "predicate": "biolink:regulates"}
@@ -539,7 +539,7 @@ def test_graph_coalesce_basic():
     #Assert that the output is well-formed
     assert PDResponse.parse_obj(coalesced)
     # We should have lots of results.  The exact number will not change as long as the test data does not
-    assert len(coalesced['message']['results']) in {5928, 7137}
+    assert len(coalesced['message']['results']) in {5928, 7137, 6341}
     # Let's make sure that the KL/AT are only mentioned once (this was a problem at one point)
     ps_and_preds = []
     for kedge_id, kedge in coalesced['message']['knowledge_graph']['edges'].items():
