@@ -46,14 +46,12 @@ def extract_prov(line):
     # old format: ROBOKOP
     pks = line.get('primary_knowledge_source')
     if pks:
-        print ("old")
         prov = {'primary_knowledge_source': pks}
         aks = line.get('aggregator_knowledge_source')
         if aks:
             prov['aggregator_knowledge_source'] = aks
         return prov
 
-    print("new")
     # new format: Translator
     sources = line.get('sources')
     if not sources:
@@ -160,7 +158,8 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
             #Here's how we're handling symmetric predicates.
             # The source link and count is going to be just the same, but we're going to modify the target link
             # to look like it's going from target to source.
-            if tk.get_element(just_predicate)["symmetric"]:
+            element = tk.get_element(just_predicate)
+            if element and element["symmetric"]:
                 target_is_source = True
             else:
                 target_is_source = False

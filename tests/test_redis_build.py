@@ -1,26 +1,18 @@
 import pytest
-from src.graph_coalescence.build_redis_files import go
+from src.graph_coalescence.build_redis_files import generate_ac_files
 import os, json, jsonlines, bmt
 
 def test_redis_build():
-    jsondir = "RedisParseTestData"
-    edgefile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'edges.jsonl')
-    nodefile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'nodes.jsonl')
-    provfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'prov.txt')
-    linkfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'links.txt')
-    backfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'backlinks.txt')
-    namefile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'names.txt')
-    labelfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'nodelabels.txt')
-    categoryfile = os.path.join(os.path.abspath(os.path.dirname(__file__)), jsondir, 'category_count.txt')
-    go(input_edge_file=edgefile,
-       input_node_file=nodefile,
-       output_prov=provfile,
-       output_links=linkfile,
-       output_backlinks=backfile,
-       output_nodenames=namefile,
-       output_nodelabels=labelfile,
-       output_category_count=categoryfile)
+    testdir = os.path.join(os.path.abspath(os.path.dirname(__file__)), "RedisParseTestData")
+    edgefile = os.path.join(testdir, 'edges.jsonl')
+    nodefile = os.path.join(testdir, 'nodes.jsonl')
+    outdir = os.path.join(testdir, 'output')
+    os.makedirs(outdir, exist_ok=True)
+    generate_ac_files(input_node_file=nodefile,
+       input_edge_file=edgefile,
+       output_dir=outdir)
 
+    linkfile = os.path.join(outdir, 'links.txt')
     with open(linkfile, 'r') as inf:
         linkfile_content = [line for line in inf]
     tk = bmt.Toolkit()
@@ -44,4 +36,3 @@ def test_redis_build():
             if f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, is_target)])}\n' not in assertion:
                 assertion.append(f'{line["object"]}\t{json.dumps([(line["subject"], predicate_string, is_target)])}\n')
         assert assertion == linkfile_content
-

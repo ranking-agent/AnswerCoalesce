@@ -49,32 +49,81 @@ def get_redis_pipeline(dbnum):
     return p
 
 
-def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style):
-    """Filter out links that don't meet the predicate constraints
-    predicate constraints are just in the form that qualified predicates are described in the links e.g.
-    {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity"}
-    Note tht the links are constructed by taking that dictionary and running json.dumps(sort_keys=True) on it.
-    So we will need to do the same for our constraints
-    Matching the constraint means that all keys and values match between the link and the constraint
-    If predicate_constraint style is "include" then only links that match one constraint will be kept
-    If predicate_constraint style is "exclude" then only links that match no constraints will be kept
+def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style, match_type="exact"):
+    """Filter out links that don't meet the predicate constraints.
+
+    predicate_constraints: list of dicts e.g. [{"predicate": "biolink:physically_interacts_with"}]
+    predicate_constraint_style: "include" or "exclude"
+    match_type:
+        "exact"   - all keys and values in constraint must match link exactly
+        "partial" - constraint predicate only needs to match link predicate key,
+                    ignoring any additional qualifiers in the link
+
+    Examples:
+        Exact:   constraint {"predicate": "biolink:directly_physically_interacts_with"}
+                 matches link {"predicate": "biolink:directly_physically_interacts_with"} only
+        Partial: constraint {"predicate": "biolink:physically_interacts_with"}
+                 matches link {"predicate": "biolink:physically_interacts_with",
+                               "species_context_qualifier": "NCBITaxon:9606"}
     """
     if len(predicate_constraints) == 0:
         return nodes_to_links
-    string_constraints = [json.dumps(constraint, sort_keys=True) for constraint in predicate_constraints]
+
+    def matches_constraint(link_str, constraint, match_type):
+        try:
+            link_dict = json.loads(link_str)
+        except (json.JSONDecodeError, TypeError):
+            return False
+        if match_type == "exact":
+            # all keys and values must match exactly
+            return all(link_dict.get(k) == v for k, v in constraint.items())
+        elif match_type == "partial":
+            # only match on predicate key, ignore additional qualifiers in link
+            return link_dict.get("predicate") == constraint.get("predicate")
+        return False
+
     new_nodes_to_links = {}
     for node, links in nodes_to_links.items():
         new_links = []
         for link in links:
-            # link_dict = json.loads(link[1])
-            if predicate_constraint_style == "include":
-                if any(constraint in link[1] for constraint in string_constraints):
-                    new_links.append(link)
-            elif predicate_constraint_style == "exclude":
-                if not any(constraint in link[1] for constraint in string_constraints):
-                    new_links.append(link)
+            matched = any(
+                matches_constraint(link[1], constraint, match_type)
+                for constraint in predicate_constraints
+            )
+            if predicate_constraint_style == "include" and matched:
+                new_links.append(link)
+            elif predicate_constraint_style == "exclude" and not matched:
+                new_links.append(link)
         new_nodes_to_links[node] = new_links
+
     return new_nodes_to_links
+
+# def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style):
+#     """Filter out links that don't meet the predicate constraints
+#     predicate constraints are just in the form that qualified predicates are described in the links e.g.
+#     {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity"}
+#     Note tht the links are constructed by taking that dictionary and running json.dumps(sort_keys=True) on it.
+#     So we will need to do the same for our constraints
+#     Matching the constraint means that all keys and values match between the link and the constraint
+#     If predicate_constraint style is "include" then only links that match one constraint will be kept
+#     If predicate_constraint style is "exclude" then only links that match no constraints will be kept
+#     """
+#     if len(predicate_constraints) == 0:
+#         return nodes_to_links
+#     string_constraints = [json.dumps(constraint, sort_keys=True) for constraint in predicate_constraints]
+#     new_nodes_to_links = {}
+#     for node, links in nodes_to_links.items():
+#         new_links = []
+#         for link in links:
+#             # link_dict = json.loads(link[1])
+#             if predicate_constraint_style == "include":
+#                 if any(constraint in link[1] for constraint in string_constraints):
+#                     new_links.append(link)
+#             elif predicate_constraint_style == "exclude":
+#                 if not any(constraint in link[1] for constraint in string_constraints):
+#                     new_links.append(link)
+#         new_nodes_to_links[node] = new_links
+#     return new_nodes_to_links
 
 
 def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types):
@@ -349,7 +398,10 @@ def uniquify_links(nodes_to_links, input_type):
 def predicate_string_is_symmetric(predicate: str) -> bool:
     """Check if a predicate string is symmetric. The predicate here is the whole qualified mess as a string"""
     bare_predicate = orjson.loads(predicate)["predicate"]
-    return tk.get_element(bare_predicate)["symmetric"]
+    element = tk.get_element(bare_predicate)
+    if element is None:
+        return False
+    return element["symmetric"]
 
 
 def create_nodes_to_links(allnodes, param_predicates=[]):
@@ -753,6 +805,8 @@ def streamline_children_to_parent(children_to_parent, pvalues):
             return streamlined_set
         return streamline_children_to_parent(new_children_to_parent, pvalues)
 
+    return streamlined_set
+
 
 def group_by_predicate(items):
     """
@@ -871,15 +925,11 @@ def has_qualifier(predicate):
 
 
 def get_ancestors(predicate):
-    # https://biolink.github.io/biolink-model/#predicates-visualization
-    # https://biolink.github.io/biolink-model/predicates.html
-    return tk.get_ancestors(predicate, formatted=True, reflexive=False)
+    return tk.get_ancestors(predicate, formatted=True, reflexive=False) or []
 
 
 def get_children(predicate):
-    # https://biolink.github.io/biolink-model/#predicates-visualization
-    # https://biolink.github.io/biolink-model/predicates.html
-    return tk.get_children(predicate, formatted=True)
+    return tk.get_children(predicate, formatted=True) or []
 
 
 # def get_specific_results(pvalue_group_dict):

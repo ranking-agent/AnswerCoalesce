@@ -46,7 +46,7 @@ log "=== STEP 0: Installing Python requirements ==="
 pip install --quiet --disable-pip-version-check -r "$REQUIREMENTS"
 
 log "=== STEP 1: Generating .txt files ==="
-export PYTHONPATH="$AC_REPO/src/ac_pipeline:${PYTHONPATH:-}"
+export PYTHONPATH="$AC_REPO:${PYTHONPATH:-}"
 python "$AC_REPO/src/ac_pipeline/generate_ac_files.py" \
     --nodes "$NODES" \
     --edges "$EDGES" \
