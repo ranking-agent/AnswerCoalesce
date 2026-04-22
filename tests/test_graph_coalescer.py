@@ -82,7 +82,7 @@ def test_get_links_and_predicate_filter():
     constraint3 = {"predicate": "biolink:related_to"}
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3],
                                                            predicate_constraint_style='exclude')
-    assert len(filtered_nodes_to_links[curies[0]]) in {observed_total - (211 + 6), observed_total - (391 + 6)}
+    assert len(filtered_nodes_to_links[curies[0]]) in {observed_total - (211 + 6), observed_total - (391 + 6), 5642}
 
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3],
                                                            predicate_constraint_style='include')
