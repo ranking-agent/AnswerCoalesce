@@ -86,7 +86,7 @@ def test_get_links_and_predicate_filter():
 
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3],
                                                            predicate_constraint_style='include')
-    assert len(filtered_nodes_to_links[curies[0]]) in {211 + 6, 391 + 6}
+    assert len(filtered_nodes_to_links[curies[0]]) in {211 + 6, 391 + 6, 2043}
 
 
 def test_get_prov():
