@@ -1,33 +1,25 @@
+import asyncio
 import cProfile
 import pstats
 import sys
 import json
-from fastapi.testclient import TestClient
 
-from src.server import APP
+from src.single_node_coalescer import infer, multi_curie_query
+from src.server import get_parameters
 from tests.conftest import generate_infer_query, generate_mcq_query
 
-client = TestClient(APP)
 
-
-def profile_request(label, in_message):
+def profile_pipeline(label, coro):
     print(f'\n== Profiling {label} ==')
-    print(f'Query: {json.dumps(in_message["message"]["query_graph"]["edges"], indent=2)}')
 
     with cProfile.Profile() as profile:
-        response = client.post('/query', json=in_message)
+        result = asyncio.run(coro)
 
-    if response.status_code != 200:
-        print(f'ERROR: status {response.status_code}')
-        print(response.text[:500])
-        return
-
-    jret = json.loads(response.content)
-    message = jret.get('message', {})
+    message = result.get('message', {})
 
     stats = pstats.Stats(profile)
     stats.strip_dirs().sort_stats("cumulative")
-    stats.print_stats(30)
+    stats.print_stats(40)
 
     results = message.get('results', [])
     aux = message.get('auxiliary_graphs', {})
@@ -38,15 +30,24 @@ def profile_request(label, in_message):
     print(f'  Results: {len(results)}')
     print(f'  KG nodes: {kg_nodes}, KG edges: {kg_edges}')
     if aux:
-        if label == "infer":
-            count_n_ac = sum(1 for key in aux if '_n_Inferred_SG' in key)
-            count_e_ac = sum(1 for key in aux if 'e_Inferred_SG' in key)
-            print(f'  Property coalesce (_n_ac): {count_n_ac}')
-            print(f'  Graph coalesce (_e_ac): {count_e_ac}')
-        else:
-            count_support = sum(1 for key in aux if 'SG:_' in key)
-            print(f'  Support Graphs (SG:_): {count_support}')
+        count_graph = sum(1 for key in aux if 'e_Inferred_SG' in key)
+        count_prop = sum(1 for key in aux if 'n_Inferred_SG' in key)
+        count_mcq = sum(1 for key in aux if key.startswith('SG:_'))
+        if count_graph or count_prop:
+            print(f'  Graph coalesce Inference (e_Inferred_SG): {count_graph}')
+            print(f'  Property coalesce Inference (n_Inferred_SG): {count_prop}')
+        if count_mcq:
+            print(f'  Enrichment support graphs (SG:_): {count_mcq}')
     print(f'{"=" * 50}')
+
+
+async def run_infer(in_message):
+    return await infer(in_message)
+
+
+async def run_mcq(in_message):
+    parameters = await get_parameters(in_message)
+    return await multi_curie_query(in_message, parameters)
 
 
 def profile_infer(curie, predicate, input_type, output_type, is_subject):
@@ -55,7 +56,8 @@ def profile_infer(curie, predicate, input_type, output_type, is_subject):
         input_is_subject=is_subject,
         params={"pvalue_threshold": 1e-05, "max_rules": 100}
     )
-    profile_request(f'infer: {curie} -> {output_type}', in_message)
+    print(f'Query edge: {json.dumps(in_message["message"]["query_graph"]["edges"], indent=2)}')
+    profile_pipeline(f'infer: {curie} -> {output_type}', run_infer(in_message))
 
 
 def profile_mcq(member_ids, predicate, input_type, output_type, is_subject):
@@ -63,16 +65,17 @@ def profile_mcq(member_ids, predicate, input_type, output_type, is_subject):
         input_type, output_type, member_ids, predicate,
         input_is_subject=is_subject
     )
-    profile_request(f'mcq: {len(member_ids)} {input_type} -> {output_type}', in_message)
+    print(f'Query edge: {json.dumps(in_message["message"]["query_graph"]["edges"], indent=2)}')
+    profile_pipeline(f'mcq: {len(member_ids)} {input_type} -> {output_type}', run_mcq(in_message))
 
 
 USAGE = """Usage:
-  python tests/test_profiling.py infer <curie> <predicate> <input_type> <output_type> [--object]
-  python tests/test_profiling.py mcq <member_ids_csv> <predicate> <input_type> <output_type> [--object]
+  PYTHONPATH=. python tests/test_profiling.py infer <curie> <predicate> <input_type> <output_type> [--object]
+  PYTHONPATH=. python tests/test_profiling.py mcq <member_ids_csv> <predicate> <input_type> <output_type> [--object]
 
 Examples:
-  python tests/test_profiling.py infer MONDO:0004975 biolink:treats biolink:Disease biolink:Drug --object
-  python tests/test_profiling.py mcq NCBIGene:5111,NCBIGene:8856,NCBIGene:5290 biolink:related_to biolink:Gene biolink:ChemicalEntity
+  PYTHONPATH=. python tests/test_profiling.py infer MONDO:0004975 biolink:treats biolink:Disease biolink:Drug --object
+  PYTHONPATH=. python tests/test_profiling.py mcq NCBIGene:5111,NCBIGene:8856,NCBIGene:5290 biolink:related_to biolink:Gene biolink:ChemicalEntity
 
 Flags:
   --object   Input curie/members are the object (default: subject)

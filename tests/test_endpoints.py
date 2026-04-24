@@ -92,7 +92,7 @@ HUMAN_SPECIES_QUALIFIER = [{"qualifier_set": [
 @pytest.mark.nongithub
 def test_drugs_to_disease_inference_human_context():
     in_message = generate_infer_query(
-        "biolink:Disease", "biolink:Drug", "MONDO:0004975", "biolink:treats",
+        "biolink:Gene", "biolink:Gene", "NCBIGene:1050", "biolink:related_to",
         input_is_subject=False,
         params={
             "pvalue_threshold": 1e-05, "max_rules": 100,

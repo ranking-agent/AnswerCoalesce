@@ -866,9 +866,16 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
         predicate_only = params.predicate_only
         inferred_edge_id = f"{source}_Inferred_to_{predicate_only}_{target}"
 
+        query_qualifiers = [
+            {"qualifier_type_id": f"biolink:{k}", "qualifier_value": v}
+            for k, v in params.predicate_dict.items()
+            if k != "predicate"
+        ]
+
         builder.add_edge(
             source, predicate_only, target,
-            edge_id=inferred_edge_id
+            edge_id=inferred_edge_id,
+            qualifiers=query_qualifiers or None
         )
 
         # Add auxiliary graphs for each GRAPH rule

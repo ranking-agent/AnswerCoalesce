@@ -58,6 +58,9 @@ SLURM_NTASKS=1
 SLURM_CPUS=8
 SLURM_MEMORY=240G
 
+# Property coalescence (CHEBI roles)
+CHEBI_PROPS_BASE=/projects/stars/Data_services/biolink3/storage/CHEBIProps
+
 # Python
 CONDA_BASE=/home/<username>/miniconda3
 CONDA_ENV=base
@@ -117,12 +120,29 @@ Everything for a run is self-contained in the date folder:
 |---|---|
 | 0 | `pip install -r requirements.txt` (idempotent; fast when already satisfied) |
 | 1 | Generate `.txt` files via `generate_ac_files.py` (accepts plain JSONL or `.gz`) |
+| 1.5 | Rebuild CHEBI property DB if a newer release exists in `CHEBI_PROPS_BASE` (see below) |
 | 2 | Start local Redis on the compute node |
 | 3 | Run `load_redis.py` against the local Redis |
 | 4 | Trigger `BGSAVE`, wait for `LASTSAVE` to tick |
 | 5 | Shut down Redis — the `.rdb` is already at its final path |
 
 Redis is configured with `maxmemory 220gb`, `stop-writes-on-bgsave-error no`, `proto-max-bulk-len 1000mb`, `timeout 60`, `dbfilename answer-coalesce.rdb`, and `--save ""` (periodic snapshots disabled; we BGSAVE once at the end).
+
+### Step 1.5: Property Coalescence (CHEBI roles)
+
+Step 1.5 automatically rebuilds the CHEBI property SQLite database used by property coalescence. It runs only when a newer CHEBI release folder exists in `CHEBI_PROPS_BASE` compared to the last processed release.
+
+- Source: `CHEBI_PROPS_BASE` in `config.env` (default: `/projects/stars/Data_services/biolink3/storage/CHEBIProps/`)
+- Release folders are named by date (e.g. `11_20_2025/`), each containing a `normalized_nodes.jsonl` at a varying internal path
+- A marker file (`src/property_coalescence/.last_chebi_release`) tracks the last processed release
+- When a new release is detected, the pipeline copies `normalized_nodes.jsonl` to `src/property_coalescence/biolink.ChemicalEntity_properties.jsonl` and runs `generate_property_counts.py -t biolink:ChemicalEntity` to rebuild the SQLite DB
+
+To rebuild manually:
+```bash
+cd /projects/translator/AnswerCoalesce/src/property_coalescence
+cp /projects/stars/Data_services/biolink3/storage/CHEBIProps/<release>/.../.../normalized_nodes.jsonl biolink.ChemicalEntity_properties.jsonl
+PYTHONPATH=/projects/translator/AnswerCoalesce python generate_property_counts.py -t biolink:ChemicalEntity
+```
 
 ## Verifying an RDB
 
