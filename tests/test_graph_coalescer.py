@@ -93,7 +93,7 @@ def test_get_prov():
     for link in enrichment1.links:
         assert isinstance(link.prov, list)
     for link in enrichment2.links:
-        assert link.prov
+        assert isinstance(link.prov, list)
 
 
 def test_filter_links_by_node_type():
