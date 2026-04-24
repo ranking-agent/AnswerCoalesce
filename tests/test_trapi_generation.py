@@ -25,7 +25,7 @@ async def test_get_mcq_components():
                     "e1": {"subject": "n1",
                            "predicates": ["biolink:affects"],
                            "object": "n2",
-                           "qualifiers_constraints": [
+                           "qualifier_constraints": [
                                {"qualifier_set": [
                                    {"qualifier_type_id": "biolink:object_aspect_qualifier",
                                     "qualifier_value": "expression"}

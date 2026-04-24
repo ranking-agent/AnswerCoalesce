@@ -1,7 +1,5 @@
-import os
-import src.property_coalescence.property_coalescer as pc
-from src.components import Enrichment
 import asyncio
+import src.property_coalescence.property_coalescer as pc
 
 
 def test_get_properties():
@@ -87,65 +85,10 @@ def test_property_enrichment():
     assert 'CHEBI_ROLE_mutagen' in result_properties
     assert 'CHEBI_ROLE_genotoxin' in result_properties
 
-def xtest_disease_property_enrichment():
-    """
-    This would not work since we have no disease db right now
-    Check our enrichment calculations.
-    """
-    inputs = ['MONDO:0010563', 'MONDO:0010379', 'MONDO:0021019']
-    results = pc.get_enriched_properties(inputs, 'biolink:Disease')
-    assert len(results) == 2
-    assert results[0][1] == 'X_linked_recessive_disease'
-    assert results[1][1] == 'X_linked_disease'
-
 def test_property_coalsecer():
     enr_props = asyncio.run(pc.coalesce_by_property(['CHEBI:955', 'CHEBI:100'], 'biolink:ChemicalEntity'))
     assert len(enr_props) == 3
     assert 'CHEBI_ROLE_biochemical_role' not in [enr_prop["enriched_property"] for enr_prop in enr_props]
 
 
-def xtest_property_coalescer_perf_test():
-    from src.single_node_coalescer import coalesce
-    import os
-    import json
-    import datetime
-
-    # get a timestamp
-    t1 = datetime.datetime.now()
-
-    # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5','EdgeIDAsStrAndPerfTest.json')
-
-    # open the file and load it
-    with open(test_filename,'r') as tf:
-        incoming = json.load(tf)
-        incoming = incoming['message']
-
-    # call function that does property coalesce
-    coalesced = coalesce(incoming, method='property')
-
-    # get the amount of time it took
-    diff = datetime.datetime.now() - t1
-
-    # it should be less than this
-    assert(diff.seconds < 120)
-
-def xtest_property_coalescer_why_no_coalesce():
-    from src.single_node_coalescer import coalesce
-    import os
-    import json
-    import datetime
-
-    # get the path to the test file
-    test_filename = os.path.join(os.path.abspath(os.path.dirname(__file__)),'InputJson_1.5','test_property.json')
-
-    # open the file and load it
-    with open(test_filename,'r') as tf:
-        incoming = json.load(tf)
-        incoming = incoming['message']
-
-    # call function that does property coalesce
-    coalesced = coalesce(incoming, method='all')
-    print(len(coalesced['results']))
-    print('hi')
 

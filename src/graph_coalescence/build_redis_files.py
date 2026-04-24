@@ -159,7 +159,7 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
             # The source link and count is going to be just the same, but we're going to modify the target link
             # to look like it's going from target to source.
             element = tk.get_element(just_predicate)
-            if element and element["symmetric"]:
+            if element and element["symmetric"] is True:
                 target_is_source = True
             else:
                 target_is_source = False

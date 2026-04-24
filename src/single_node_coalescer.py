@@ -30,13 +30,16 @@ async def multi_curie_query(in_message, parameters):
     """Takes a TRAPI multi-curie query and returns a TRAPI multi-curie answer."""
     # Get the list of nodes that you want to enrich:
     mcq_definition = MCQDefinition(in_message)
+    context_qualifiers = {k: v for k, v in mcq_definition.edge.predicate.items()
+                          if k.endswith("_context_qualifier")}
     enrichment_results = await coalesce_by_graph(mcq_definition.group_node.curies,
                                                  mcq_definition.group_node.semantic_type,
                                                  node_constraints=mcq_definition.enriched_node.semantic_types,
                                                  predicate_constraints=[mcq_definition.edge.predicate],
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters.get("pvalue_threshold"),
-                                                 max_results=parameters.get("max_results"))
+                                                 max_results=parameters.get("max_results"),
+                                                 context_qualifiers=context_qualifiers)
     return await create_mcq_trapi_response(in_message, enrichment_results, mcq_definition)
 
 
@@ -89,6 +92,9 @@ async def infer(in_message: dict) -> dict:
         # 3 & 4. ENRICHMENT (graph + property run truly concurrently in worker threads)
         enrichment_start = time.time()
 
+        context_qualifiers = {k: v for k, v in params.predicate_dict.items()
+                              if k.endswith("_context_qualifier")}
+
         async def safe_graph_enrichment():
             try:
                 return await asyncio.to_thread(
@@ -100,7 +106,8 @@ async def infer(in_message: dict) -> dict:
                     predicate_constraint_style=inf_params.predicate_constraint_style,
                     predicate_constraints=inf_params.predicate_constraints,
                     pvalue_threshold=inf_params.pvalue_threshold,
-                    filter_predicate_hierarchies=True
+                    filter_predicate_hierarchies=True,
+                    context_qualifiers=context_qualifiers
                 )
             except Exception as e:
                 builder.log_error(f"Graph enrichment failed: {str(e)}")
@@ -241,20 +248,21 @@ def lookup_single(curie: str, predicate_parts: str, is_source: bool, output_sema
     - link_ids: List of connected node IDs
     - lookup_links: List of Lookup_Links with node info and edges
     """
-    link_ids = create_nodes_to_links([curie], param_predicates=[predicate_parts])
-    link_ids = {node: links for node, links in link_ids.items() if links}
+    nodes_to_links = create_nodes_to_links([curie], param_predicates=[predicate_parts])
+    nodes_to_links = {node: links for node, links in nodes_to_links.items() if links}
 
-    if not link_ids:
+    if not nodes_to_links:
         return None
 
-    all_ids = list(chain.from_iterable(link_ids.values())) + [curie]
+    # Extract node IDs from full links for name/type lookups
+    all_ids = [link[0] for links in nodes_to_links.values() for link in links] + [curie]
     all_node_names = get_node_names(all_ids)
     all_node_types = get_node_types(all_ids)
 
     # Filter by output semantic type and create Lookup object
-    for curie_node, id_links in link_ids.items():
+    for curie_node, full_links in nodes_to_links.items():
         filtered = filter_links_by_node_type(
-            {curie_node: id_links},
+            {curie_node: full_links},
             [output_semantic_type],
             all_node_types
         )
@@ -285,9 +293,10 @@ def lookup_batch(curies: list[str], predicates: list[str], is_sources: list[bool
     if not all_nodes_to_links:
         return {}
 
+    # Extract node IDs from full links for name/type lookups
     all_node_ids = set()
     for curie, links in all_nodes_to_links.items():
-        all_node_ids.update(links)
+        all_node_ids.update(link[0] for link in links)
         all_node_ids.add(curie)
 
     all_node_ids = list(all_node_ids)
@@ -343,7 +352,7 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
     graph_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.GRAPH]
     property_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.PROPERTY]
 
-    def _graph_inference_sync():
+    def graph_inference_sync():
         if not graph_enrichments:
             return []
 
@@ -361,7 +370,8 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
 
         return graph_inferred
 
-    def _property_inference_sync():
+    def property_inference_sync():
+        # return {}  # TODO: re-enable once property SQLite DBs are rebuilt from new data
         if not property_enrichments:
             return {}
 
@@ -386,8 +396,8 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
         return property_inferred
 
     graph_inferred, property_inferred = await asyncio.gather(
-        asyncio.to_thread(_graph_inference_sync),
-        asyncio.to_thread(_property_inference_sync)
+        asyncio.to_thread(graph_inference_sync),
+        asyncio.to_thread(property_inference_sync)
     )
 
     return graph_inferred, property_inferred
@@ -949,7 +959,7 @@ def finalize_results(builder: EGARTRAPIBuilder, results_cache: dict, enrichments
     # Capture post-pruning stats
     post_nodes = len(builder.kg_nodes)
     post_edges = len(builder.kg_edges)
-    post_aux = len(builder.aux_graphs)
+    # post_aux = len(builder.aux_graphs)
 
     # Calculate score stats
     scores = [r["analyses"][0].get("score", 0) for r in kept_results]
@@ -963,12 +973,6 @@ def finalize_results(builder: EGARTRAPIBuilder, results_cache: dict, enrichments
                           "scores": {"min": float(min(scores)) if scores else 0,
                                      "max": float(max(scores)) if scores else 0},
                           "enrichments": {"before_pruning": enrichments_before, "after_pruning": enrichments_after},
-                          "knowledge_graph": {
-                              "before filtering": {"nodes": pre_nodes, "edges": pre_edges, "aux_graphs": pre_aux},
-                              "after filtering": {"nodes": post_nodes, "edges": post_edges, "aux_graphs": post_aux},
-                              "after pruning": {"nodes": pre_nodes - post_nodes, "edges": pre_edges - post_edges,
-                                                "aux_graphs": pre_aux - post_aux}
-                          }
                           }
                 )
 

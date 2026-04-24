@@ -2,7 +2,6 @@ from collections import defaultdict
 from scipy.stats import hypergeom, poisson, binom, norm
 from src.components import Enrichment
 from src.util import LoggingUtil
-from itertools import zip_longest
 import logging
 import os
 import redis
@@ -126,6 +125,28 @@ def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_c
 #     return new_nodes_to_links
 
 
+def filter_links_by_context(nodes_to_links, context_qualifiers):
+    """Filter links to only those whose predicate JSON contains all the requested context qualifiers.
+
+    context_qualifiers: dict of qualifier key-value pairs from the query, e.g.
+        {"species_context_qualifier": "NCBITaxon:9606"}
+    """
+    if not context_qualifiers:
+        return nodes_to_links
+    new_nodes_to_links = {}
+    for node, links in nodes_to_links.items():
+        new_links = []
+        for link in links:
+            try:
+                link_dict = orjson.loads(link[1])
+            except (ValueError, TypeError):
+                continue
+            if all(link_dict.get(k) == v for k, v in context_qualifiers.items()):
+                new_links.append(link)
+        new_nodes_to_links[node] = new_links
+    return new_nodes_to_links
+
+
 def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types):
     """Filter out links that don't meet the node constraints
     node constraints is a list of acceptable node types for the returned nodes.  The node type of the other node
@@ -170,7 +191,8 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 
 async def coalesce_by_graph(input_ids, input_node_type,
                             node_constraints=None, predicate_constraints=None, predicate_constraint_style="exclude",
-                            pvalue_threshold=None, max_results=None, filter_predicate_hierarchies=False):
+                            pvalue_threshold=None, max_results=None, filter_predicate_hierarchies=False,
+                            context_qualifiers=None):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -195,6 +217,9 @@ async def coalesce_by_graph(input_ids, input_node_type,
         predicate_constraints = []
     # Get the links for all the input nodes
     nodes_to_links = create_nodes_to_links(input_ids)
+    # Filter by context qualifiers if the query specifies them (e.g. species_context_qualifier)
+    if context_qualifiers:
+        nodes_to_links = filter_links_by_context(nodes_to_links, context_qualifiers)
     # We don't want to do the exlusion here because we want to do it after we've found the enrichments
     # But we can narrow down by the inclusion constraints
     if predicate_constraint_style == "include":
@@ -239,52 +264,45 @@ def augment_enrichments(enriched_links, nodetypes):
 
 
 def add_provs(enrichments):
-    # Now we are going to hit redis to get the provenances for all of the links.
-    # our unique_links are the keys
-    # Convert n2l to edges
     def process_prov(prov_data):
         if isinstance(prov_data, (str, bytes)):
             prov_data = orjson.loads(prov_data)
         return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
                 prov_data.items()]
 
-    edges = []
+    # Collect and deduplicate edges before hitting Redis
+    all_edges = set()
     for enrichment in enrichments:
-        new_edges = enrichment.get_prov_links()
-        edges += new_edges
+        all_edges.update(enrichment.get_prov_links())
+    unique_edges = list(all_edges)
 
     prov = {}
 
-    # now get the prov for those edges
     with get_redis_pipeline(4) as p:
-        for edgegroup in grouper(1000, edges):
+        for edgegroup in grouper(1000, unique_edges):
             for edge in edgegroup:
                 p.get(edge)
             ns = p.execute()
             symmetric_edges = []
             inverted_to_original = {}
             for edge, n in zip(edgegroup, ns):
-                # Convert the svelte key-value attribute into a fat trapi-style attribute
-                if not n:
+                if n:
+                    prov[edge] = process_prov(n)
+                else:
                     inverted = get_edge_symmetric(edge)
                     symmetric_edges.append(inverted)
                     inverted_to_original[inverted] = edge
-                else:
-                    prov[edge] = process_prov(n)
-                # This is cheating.  It's to make up for the fact that we added in inverted edges for
-                # related to, but the prov doesn't know about it. This is not a long term fix, it's a hack
-                # for the prototype and must be fixed. FIXED!!!
             if symmetric_edges:
                 for sym_edge in symmetric_edges:
                     p.get(sym_edge)
                 sym_ns = p.execute()
                 for sym_edge, sn in zip(symmetric_edges, sym_ns):
+                    original = inverted_to_original[sym_edge]
                     if sn:
-                        #This has to be for the original edge, otherwise we don't find it later
-                        prov[inverted_to_original[sym_edge]] = process_prov(sn)
+                        prov[original] = process_prov(sn)
                     else:
-                        prov[sym_edge] = [{}]
-                        logger.info(f'{sym_edge} not exist!')
+                        prov[original] = []
+
     for enrichment in enrichments:
         enrichment.add_provenance(prov)
 
@@ -401,7 +419,15 @@ def predicate_string_is_symmetric(predicate: str) -> bool:
     element = tk.get_element(bare_predicate)
     if element is None:
         return False
-    return element["symmetric"]
+    return element["symmetric"] is True
+
+
+def predicate_matches(param_predicate_str, link_predicate_str):
+    """Check if a param predicate's key-value pairs are all present in the link predicate.
+    This handles the new DB format where links have extra context qualifiers."""
+    param_dict = orjson.loads(param_predicate_str)
+    link_dict = orjson.loads(link_predicate_str)
+    return param_dict.items() <= link_dict.items()
 
 
 def create_nodes_to_links(allnodes, param_predicates=[]):
@@ -417,10 +443,17 @@ def create_nodes_to_links(allnodes, param_predicates=[]):
     #  VS['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', True]
     nodes_to_links = {}
 
+    if param_predicates:
+        node_to_predicates = defaultdict(list)
+        for node, pred in zip(allnodes, param_predicates):
+            node_to_predicates[node].append(pred)
+    else:
+        node_to_predicates = {}
+
+    unique_nodes = list(dict.fromkeys(allnodes))
+
     with get_redis_pipeline(0) as p:
-        for group, param_predicate in zip_longest(grouper(1000, allnodes), param_predicates):
-            if not group:
-                continue
+        for group in grouper(1000, unique_nodes):
             for node in group:
                 p.get(node)
             linkstrings = p.execute()
@@ -429,16 +462,12 @@ def create_nodes_to_links(allnodes, param_predicates=[]):
                     links = []
                 else:
                     links = orjson.loads(linkstring)
-                newlinks = []
-                for link in links:
-                    if param_predicate:
-                        # For lookup operation
-                        if link[1] == param_predicate:
-                            newlinks.append(link[0])
-                if param_predicate:
-                    nodes_to_links[node] = list(set(newlinks))
+                predicates_for_node = node_to_predicates.get(node)
+                if predicates_for_node:
+                    nodes_to_links[node] = [link for link in links
+                                            if any(predicate_matches(pp, link[1])
+                                                   for pp in predicates_for_node)]
                 else:
-                    links += newlinks
                     nodes_to_links[node] = links
     return nodes_to_links
 
@@ -866,17 +895,25 @@ def children_parent_mapping(specific_results):
 
     children_to_parent = {}
 
+    def bare_pred(full_predicate_str):
+        return orjson.loads(full_predicate_str).get("predicate")
+
+    # Map bare predicate -> set of full predicate strings that share it
+    bare_to_full = {}
+    for result in specific_results:
+        pred = result if isinstance(result, str) else result.predicate
+        bp = bare_pred(pred)
+        bare_to_full.setdefault(bp, set()).add(pred)
+
     current_predicate = specific_results[0] if isinstance(specific_results[0], str) else specific_results[0].predicate
 
     for j in range(1, len(specific_results)):
         next_predicate = specific_results[j] if isinstance(specific_results[j], str) else specific_results[j].predicate
 
-        if orjson.loads(current_predicate).get("predicate") in get_ancestors(
-                orjson.loads(next_predicate).get("predicate")):
+        if bare_pred(current_predicate) in get_ancestors(bare_pred(next_predicate)):
             children_to_parent.setdefault(next_predicate, set()).add(current_predicate)
 
-        elif orjson.loads(next_predicate).get("predicate") in get_ancestors(
-                orjson.loads(current_predicate).get("predicate")):
+        elif bare_pred(next_predicate) in get_ancestors(bare_pred(current_predicate)):
             children_to_parent.setdefault(current_predicate, set()).add(next_predicate)
 
         current_predicate = next_predicate
@@ -891,17 +928,22 @@ def children_parent_mapping(specific_results):
             continue
         if any(pred in values for values in children_to_parent.values()):
             continue
-        pred_ancestors = get_ancestors(orjson.loads(pred).get("predicate"))
+        pred_ancestors = get_ancestors(bare_pred(pred))
         if pred_ancestors:
-            pred_ancestors = allowable_predicates.intersection(
-                set([json.dumps({"predicate": pred}) for pred in pred_ancestors]))
-            children_to_parent[pred] = pred_ancestors
+            # Find allowable predicates whose bare predicate is an ancestor
+            matching = set()
+            for ap in allowable_predicates:
+                if bare_pred(ap) in pred_ancestors:
+                    matching.add(ap)
+            children_to_parent[pred] = matching
         else:
-            pred_children = get_children(orjson.loads(pred).get("predicate"))
+            pred_children = get_children(bare_pred(pred))
             if pred_children:
-                pred_children = allowable_predicates.intersection(
-                    set([json.dumps({"predicate": pred}) for pred in pred_ancestors]))
-                for pred_child in pred_children:
+                matching = set()
+                for ap in allowable_predicates:
+                    if bare_pred(ap) in pred_children:
+                        matching.add(ap)
+                for pred_child in matching:
                     if pred_child in children_to_parent:
                         children_to_parent.setdefault(pred_child, set()).add(pred)
             else:

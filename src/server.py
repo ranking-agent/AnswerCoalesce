@@ -54,7 +54,7 @@ INFER_CACHE_TTL = int(os.getenv("INFER_CACHE_TTL", "3600"))
 INFER_CACHE_ENABLED = os.getenv("INFER_CACHE_ENABLED", "true").lower() == "true"
 
 
-def _infer_cache_key(in_message: dict) -> str:
+def infer_cache_key(in_message: dict) -> str:
     qg = in_message.get("message", {}).get("query_graph", {})
     params = in_message.get("parameters", {}) or {}
     blob = orjson.dumps({"qg": qg, "params": params}, option=orjson.OPT_SORT_KEYS)
@@ -68,7 +68,7 @@ async def cached_infer(in_message: dict) -> dict:
 
     key = None
     try:
-        key = _infer_cache_key(in_message)
+        key = infer_cache_key(in_message)
         cached = redis_client.get(key)
         if cached is not None:
             logger.info(f"infer cache HIT {key}")

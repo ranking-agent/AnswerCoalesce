@@ -4,14 +4,9 @@ import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Enrichment
 from reasoner_pydantic import Response as PDResponse
-import pytest
 from src.graph_coalescence.graph_coalescer import filter_links_by_node_type, streamline_children_to_parent
-from src.components import Enrichment
 
 jsondir = 'InputJson_1.5'
-predicates_to_exclude = ["biolink:causes", "biolink:biomarker_for", "biolink:biomarker_for",
-                         "biolink:contraindicated_for",
-                         "biolink:contributes_to", "biolink:has_adverse_event", "biolink:causes_adverse_event"]
 
 
 def test_get_links_and_predicate_filter():
@@ -604,18 +599,8 @@ def get_input_message():
     return input_message
 
 
-#Used in test_graph_coalesce to extract values from attributes, which can be a list or a string
-def flatten(ll):
-    if isinstance(ll, list):
-        temp = []
-        for ele in ll:
-            temp.extend(flatten(ele))
-        return temp
-    else:
-        return [ll]
 
-
-def test_gouper():
+def test_grouper():
     x = 'abcdefghi'
     n = 0
     for group in gc.grouper(3, x):
@@ -625,7 +610,7 @@ def test_gouper():
     assert x == ('g', 'h', 'i')
 
 
-def test_gouper_keys():
+def test_grouper_keys():
     d = {x: x for x in 'abcdefg'}
     n = 0
     for group in gc.grouper(3, d.keys()):

@@ -39,7 +39,7 @@ class MCQEdge:
             self.predicate_only = qedge.get("predicates", ["biolink:related_to"])[0]
             self.predicate = {"predicate": self.predicate_only}
             self.qualifiers = []
-            qualifier_constraints = qedge.get("qualifiers_constraints", [])
+            qualifier_constraints = qedge.get("qualifier_constraints", [])
             if len(qualifier_constraints) > 0:
                 qc = qualifier_constraints[0]
                 self.qualifiers = qc.get("qualifier_set", [])
@@ -239,8 +239,15 @@ class Lookup:
                  score=None):
         self.predicate = predicate
         self.is_source = is_source
-        self.link_ids = lookup_ids
         self.score = score
+
+        # lookup_ids may be plain IDs or full links [id, pred, is_source]
+        if lookup_ids and isinstance(lookup_ids[0], (list, tuple)):
+            self.link_ids = [link[0] for link in lookup_ids]
+            self._link_predicates = {link[0]: link[1] for link in lookup_ids}
+        else:
+            self.link_ids = lookup_ids
+            self._link_predicates = {}
 
         self.add_input_node(curie, node_types)
         self.add_input_node_name(node_names)
@@ -262,13 +269,16 @@ class Lookup:
                              self.link_ids]
 
     def add_linked_edges(self, input_node, input_node_is_source):
-        """Add edges between the newnode (curie) and the curies that they were linked to"""
+        """Add edges between the newnode (curie) and the curies that they were linked to.
+        Uses per-link predicate from Redis when available, falls back to self.predicate."""
         if input_node_is_source:
-            for i, new_ids in enumerate(self.link_ids):
-                self.lookup_links[i].link_edge = NewEdge(input_node, self.predicate, new_ids)
+            for i, link_id in enumerate(self.link_ids):
+                pred = self._link_predicates.get(link_id, self.predicate)
+                self.lookup_links[i].link_edge = NewEdge(input_node, pred, link_id)
         else:
-            for i, new_ids in enumerate(self.link_ids):
-                self.lookup_links[i].link_edge = NewEdge(new_ids, self.predicate, input_node)
+            for i, link_id in enumerate(self.link_ids):
+                pred = self._link_predicates.get(link_id, self.predicate)
+                self.lookup_links[i].link_edge = NewEdge(link_id, pred, input_node)
 
     def add_linked_kg_edges_id(self, eid):
         """Add edges between the newnode (curie) and the curies that they were linked to as written in the KG"""
@@ -279,10 +289,14 @@ class Lookup:
 
     def add_provenance(self, prov):
         for link in self.lookup_links:
-            if prov.get(link.link_edge.get_prov_link()):
-                link.link_edge.add_prov(prov[link.link_edge.get_prov_link()])
+            provlink = link.link_edge.get_prov_link()
+            symprovlink = link.link_edge.get_sym_prov_link()
+            if prov.get(provlink):
+                link.link_edge.add_prov(prov[provlink])
+            elif prov.get(symprovlink):
+                link.link_edge.add_prov(prov[symprovlink])
             else:
-                link.link_edge.add_prov(prov[link.link_edge.get_sym_prov_link()])
+                link.link_edge.add_prov([])
 
     def add_enrichment(self, lookup_indices, enriched_node, predicate, is_source, pvalue):
         for index in lookup_indices:
@@ -349,8 +363,10 @@ class Enrichment:
             symprovlink = link.get_sym_prov_link()
             if prov.get(provlink):
                 link.add_prov(prov[provlink])
-            else:
+            elif prov.get(symprovlink):
                 link.add_prov(prov[symprovlink])
+            else:
+                link.add_prov([])
 
 
 class EnrichmentType(Enum):
