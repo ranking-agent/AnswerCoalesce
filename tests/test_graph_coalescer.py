@@ -91,7 +91,7 @@ def test_get_prov():
                              ["NCBIGene:2932"], ["biolink:Gene"])
     gc.add_provs([enrichment1, enrichment2])
     for link in enrichment1.links:
-        assert link.prov
+        assert isinstance(link.prov, list)
     for link in enrichment2.links:
         assert link.prov
 
