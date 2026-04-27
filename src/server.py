@@ -11,14 +11,17 @@ from redis.backoff import ExponentialBackoff
 from redis.retry import Retry
 import redis.exceptions
 import orjson
+import httpx
 from datetime import datetime
 
 from enum import Enum
 from functools import wraps
+from pydantic import BaseModel, Field
+from typing import Optional
 from reasoner_pydantic import Response as PDResponse
 
 from src.util import LoggingUtil
-from src.default_query import default_input_sync
+from src.default_query import default_input_sync, default_input_infer
 from src.single_node_coalescer import infer, multi_curie_query
 
 from fastapi import Body, FastAPI, BackgroundTasks
@@ -36,7 +39,7 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir + '/')
 
 # Redis connection for async
-REDIS_HOST = os.getenv("REDIS_HOST", "answercoalesce-answer-coalesce-redis-service.translator-dev.svc.cluster.local")
+REDIS_HOST = os.getenv("REDIS_HOST", "answer-coalesce-redis-server-0.answer-coalesce-redis-server.translator-exp.svc.cluster.local")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 JOB_PREFIX = "ac:job:"
 JOB_EXPIRY = 7200  # 2 hours
@@ -116,8 +119,8 @@ conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'conf
 with open(conf_path, 'r') as inf:
     conf = json.load(inf)
 
-# define the default request bodies
 default_request_sync: Body = Body(default=default_input_sync)
+default_request_infer: Body = Body(default=default_input_infer)
 
 
 @APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,
@@ -153,11 +156,23 @@ async def query_handler(request: PDResponse = default_request_sync):
         return JSONResponse(content=in_message, status_code=status_code)
 
 
-@APP.post('/query/async', tags=["Answer coalesce"], response_model=None)
-async def query_async_handler(request: PDResponse, background_tasks: BackgroundTasks):
-    """query for async processing, returns job_id immediately."""
+class AsyncQueryRequest(BaseModel):
+    message: dict
+    callback: Optional[str] = Field(None, description="URL to POST results to when complete")
+    parameters: Optional[dict] = None
+
+
+@APP.post('/asyncquery', tags=["Answer coalesce"], response_model=None, status_code=202)
+async def asyncquery_handler(request: AsyncQueryRequest, background_tasks: BackgroundTasks):
+    """Translator-compliant async query with optional callback.
+
+    Submit a TRAPI query for background processing. Returns a job_id immediately.
+    Poll /query/status/{job_id} and /query/result/{job_id} to track progress.
+    If `callback` is provided, the full TRAPI response is POSTed to that URL on completion.
+    """
     job_id = str(uuid.uuid4())
     in_message = request.dict(exclude_none=True)
+    in_message.pop("callback", None)
 
     save_job(job_id, {
         "status": "running",
@@ -167,7 +182,7 @@ async def query_async_handler(request: PDResponse, background_tasks: BackgroundT
         "created_at": datetime.utcnow().isoformat()
     })
 
-    background_tasks.add_task(process_query, job_id, in_message)
+    background_tasks.add_task(process_query, job_id, in_message, callback=request.callback)
 
     return {"job_id": job_id, "status": "running"}
 
@@ -241,8 +256,8 @@ def update_job(job_id: str, **updates):
         save_job(job_id, job)
 
 
-async def process_query(job_id: str, in_message: dict):
-    """Background task to process the query."""
+async def process_query(job_id: str, in_message: dict, callback: str = None):
+    """Background task to process the query. Fires callback if provided."""
     try:
         parameters = await get_parameters(in_message)
 
@@ -252,14 +267,32 @@ async def process_query(job_id: str, in_message: dict):
             result = await multi_curie_query(in_message, parameters)
         else:
             update_job(job_id, status="failed", error="Invalid query type")
+            if callback:
+                await fire_callback(callback, in_message, job_id, error="Invalid query type")
             return
 
         convert_log_timestamps(result)
         update_job(job_id, status="completed", result=result)
 
+        if callback:
+            await fire_callback(callback, result, job_id)
+
     except Exception as e:
         logger.exception(f"Job {job_id} failed: {e}")
         update_job(job_id, status="failed", error=str(e))
+        if callback:
+            await fire_callback(callback, in_message, job_id, error=str(e))
+
+
+async def fire_callback(callback_url: str, result: dict, job_id: str, error: str = None):
+    """POST the result to the callback URL. Best-effort — log and move on if it fails."""
+    payload = result if not error else {"error": error, "job_id": job_id}
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(callback_url, json=payload)
+            logger.info(f"Callback to {callback_url} returned {resp.status_code} for job {job_id}")
+    except Exception as e:
+        logger.warning(f"Callback to {callback_url} failed for job {job_id}: {e}")
 
 
 async def get_parameters(in_message):

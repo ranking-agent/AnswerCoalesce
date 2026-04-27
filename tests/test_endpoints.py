@@ -67,6 +67,8 @@ def test_genes_to_disease_inference():
                 "predicate_constraints": EXCLUDE_PREDICATES}
     )
     jret = run_test(in_message)
+    with open("NYESQC.json", "w") as outfile:
+        json.dump(jret, outfile)
     assert len(jret["message"]) == 4
     confirm_qg_nodes(in_message, jret, is_source_ids=False)
 
@@ -90,9 +92,58 @@ HUMAN_SPECIES_QUALIFIER = [{"qualifier_set": [
 
 
 @pytest.mark.nongithub
-def test_drugs_to_disease_inference_human_context():
+def test_context_qualifier_changes_results():
+    """Verify species_context_qualifier actually filters enrichment results.
+    Same query with vs. without human context should produce different result sets."""
+    base_params = {
+        "pvalue_threshold": 1e-05, "max_rules": 100,
+        "predicate_constraint_style": "exclude",
+        "predicate_constraints": EXCLUDE_PREDICATES
+    }
+
+    # Without context
+    msg_no_ctx = generate_infer_query(
+        "biolink:Disease", "biolink:Drug", "MONDO:0004975", "biolink:treats",
+        input_is_subject=False, params=base_params
+    )
+    ret_no_ctx = run_test(msg_no_ctx)
+
+    # With human species context
+    msg_human = generate_infer_query(
+        "biolink:Disease", "biolink:Drug", "MONDO:0004975", "biolink:treats",
+        input_is_subject=False, params=base_params,
+        qualifier_constraints=HUMAN_SPECIES_QUALIFIER
+    )
+    ret_human = run_test(msg_human)
+
+    results_no_ctx = ret_no_ctx["message"].get("results", [])
+    results_human = ret_human["message"].get("results", [])
+
+    # Both should produce results
+    assert len(results_no_ctx) > 0, "No-context query returned no results"
+    assert len(results_human) > 0, "Human-context query returned no results"
+
+    # The result counts should differ — context filtering narrows enrichment
+    ids_no_ctx = {r["node_bindings"]["output"][0]["id"] for r in results_no_ctx}
+    ids_human = {r["node_bindings"]["output"][0]["id"] for r in results_human}
+    assert ids_no_ctx != ids_human, (
+        "Context qualifier had no effect on results — filtering may not be working"
+    )
+
+    # Human-filtered should be a subset (or at least smaller)
+    # since context restricts which links enter enrichment
+    assert len(ids_human) <= len(ids_no_ctx), (
+        f"Human-context ({len(ids_human)}) returned more results than no-context ({len(ids_no_ctx)})"
+    )
+
+
+@pytest.mark.nongithub
+def test_context_qualifiers_preserved_on_edges():
+    """Verify that species_context_qualifier appears on support edges in the output.
+    When querying with human context, edges that came from human-specific links
+    should carry the species_context_qualifier in their qualifiers list."""
     in_message = generate_infer_query(
-        "biolink:Gene", "biolink:Gene", "NCBIGene:1050", "biolink:related_to",
+        "biolink:Disease", "biolink:Gene", "MONDO:0004979", "biolink:genetically_associated_with",
         input_is_subject=False,
         params={
             "pvalue_threshold": 1e-05, "max_rules": 100,
@@ -102,8 +153,20 @@ def test_drugs_to_disease_inference_human_context():
         qualifier_constraints=HUMAN_SPECIES_QUALIFIER
     )
     jret = run_test(in_message)
-    assert len(jret["message"]) == 4
-    confirm_qg_nodes(in_message, jret, is_source_ids=False)
+    kg_edges = jret["message"]["knowledge_graph"]["edges"]
+
+    # Check if any edge in the KG carries a species_context_qualifier
+    edges_with_species_ctx = []
+    for eid, edge in kg_edges.items():
+        for q in edge.get("qualifiers", []):
+            if q.get("qualifier_type_id") == "biolink:species_context_qualifier":
+                edges_with_species_ctx.append(eid)
+                break
+
+    assert len(edges_with_species_ctx) > 0, (
+        "No edges in the output carry species_context_qualifier — "
+        "context qualifiers are being stripped from support edges"
+    )
 
 
 @pytest.mark.nongithub
@@ -114,6 +177,8 @@ def test_genes_to_chemical_mcq():
         "biolink:related_to", input_is_subject=True
     )
     jret = run_test(in_message)
+    with open("mcqg2c.json", "w") as f:
+        json.dump(jret, f)
     assert len(jret["message"]) == 4
     confirm_qg_nodes(in_message, jret, is_source_ids=True)
 

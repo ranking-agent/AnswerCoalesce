@@ -44,7 +44,9 @@ class MCQEdge:
                 qc = qualifier_constraints[0]
                 self.qualifiers = qc.get("qualifier_set", [])
                 for q in self.qualifiers:
-                    self.predicate[q["qualifier_type_id"]] = q["qualifier_value"]
+                    qt = q["qualifier_type_id"]
+                    key = qt.split(":")[-1] if ":" in qt else qt
+                    self.predicate[key] = q["qualifier_value"]
 
 
 class MCQDefinition:
@@ -88,7 +90,7 @@ class QueryParams:
     Parsed query parameters from TRAPI message.
     """
     curie: str
-    predicate_parts: str  # JSON string with predicate + qualifiers
+    predicate_parts: str  # JSON string with predicate + all qualifiers
     is_source: bool
     input_qnode: str
     output_qnode: str
@@ -167,13 +169,12 @@ class QueryParams:
 
     @staticmethod
     def _build_predicate_parts(qedge: dict) -> str:
-        """Build predicate JSON string including qualifiers"""
+        """Build predicate JSON string with all qualifiers from the query edge."""
         parts = {"predicate": qedge.get("predicates", ["biolink:related_to"])[0]}
 
         for qc in qedge.get("qualifier_constraints", []):
             for q in qc.get("qualifier_set", []):
                 qualifier_type = q.get("qualifier_type_id", "")
-                # Extract key after colon (e.g., "biolink:aspect" -> "aspect")
                 key = qualifier_type.split(":")[-1] if ":" in qualifier_type else qualifier_type
                 parts[key] = q.get("qualifier_value")
 
@@ -417,20 +418,12 @@ class EnrichmentResult:
             enrichment: Legacy Enrichment object from component.py
         """
         # Convert NewEdge objects to dicts for immutability
-        # Extract just the predicate string, not the full JSON
+        # Keep full JSON predicate so qualifiers (e.g. species_context_qualifier) are preserved
         support_edges = []
         for edge in (enrichment.links or []):
-            pred = edge.predicate
-            if isinstance(pred, str):
-                try:
-                    pred_dict = orjson.loads(pred)
-                    pred = pred_dict.get("predicate", pred) if isinstance(pred_dict, dict) else pred
-                except (orjson.JSONDecodeError, TypeError):
-                    pass
-
             support_edges.append({
                 "source": edge.source,
-                "predicate": pred,
+                "predicate": edge.predicate,
                 "target": edge.target,
                 "prov": getattr(edge, 'prov', None)
             })

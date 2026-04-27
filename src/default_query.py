@@ -32,32 +32,24 @@ default_input_sync: dict = {
     }
 }
 
-default_input_async: dict = {
-    "callback": "https://aragorn.renci.org/1.2/aragorn_callback",
+default_input_infer: dict = {
     "message": {
         "query_graph": {
-            "edges": {
-                "e01": {
-                    "object": "n0",
-                    "subject": "n1",
-                    "predicates": [
-                        "biolink:entity_negatively_regulates_entity"
-                    ]
+            "nodes": {
+                "input": {
+                    "categories": ["biolink:Disease"],
+                    "ids": ["MONDO:0004975"]
+                },
+                "output": {
+                    "categories": ["biolink:Drug"]
                 }
             },
-            "nodes": {
-                "n0": {
-                    "ids": [
-                        "NCBIGene:23221"
-                    ],
-                    "categories": [
-                        "biolink:Gene"
-                    ]
-                },
-                "n1": {
-                    "categories": [
-                        "biolink:Gene"
-                    ]
+            "edges": {
+                "edge_0": {
+                    "subject": "output",
+                    "object": "input",
+                    "predicates": ["biolink:treats"],
+                    "knowledge_type": "inferred"
                 }
             }
         }

@@ -244,11 +244,15 @@ def lookup_single(curie: str, predicate_parts: str, is_source: bool, output_sema
     """
     Look up direct connections for a single curie.
 
+    Lookup matches on predicate only — qualifiers are applied at enrichment time.
+
     Returns a Lookup object with:
     - link_ids: List of connected node IDs
     - lookup_links: List of Lookup_Links with node info and edges
     """
-    nodes_to_links = create_nodes_to_links([curie], param_predicates=[predicate_parts])
+    pred_dict = orjson.loads(predicate_parts) if isinstance(predicate_parts, str) else predicate_parts
+    lookup_predicate = orjson.dumps({"predicate": pred_dict.get("predicate")}, option=orjson.OPT_SORT_KEYS).decode()
+    nodes_to_links = create_nodes_to_links([curie], param_predicates=[lookup_predicate])
     nodes_to_links = {node: links for node, links in nodes_to_links.items() if links}
 
     if not nodes_to_links:
@@ -704,7 +708,8 @@ def build_enrichment_structure(builder: EGARTRAPIBuilder, enrichments: list[Enri
                     edge_dict["source"],
                     edge_dict["predicate"],
                     edge_dict["target"],
-                    attributes=[{"attribute_type_id": "biolink:p_value", "value": enrichment.p_value}]
+                    attributes=[{"attribute_type_id": "biolink:p_value", "value": enrichment.p_value}],
+                    sources=edge_dict.get("prov") or []
                 )
 
                 # Find which lookup node this connects to
@@ -737,19 +742,25 @@ def build_enrichment_structure(builder: EGARTRAPIBuilder, enrichments: list[Enri
                     )
                     aux_graph_ids.append(aux_id)
 
-        # Add enrichment -> UUID edge
+        # Add enrichment <-> UUID edge (direction depends on is_source)
+        # Enrichment edges carry the full predicate with qualifiers (e.g. species_context_qualifier)
         if enrichment.enrichment_type == EnrichmentType.GRAPH:
-            enrichment_predicate = enrichment.predicate_only
+            enrichment_predicate = enrichment.predicate
             prefix = 'e'
         else:
             enrichment_predicate = "biolink:similar_to"
             prefix = 'n'
 
+        if enrichment.enrichment_type == EnrichmentType.GRAPH and not enrichment.is_source:
+            subj, obj = uuid_node, enrichment.enriched_id
+        else:
+            subj, obj = enrichment.enriched_id, uuid_node
+
         enrichment_to_uuid_edge_id = builder.add_edge(
-            enrichment.enriched_id,
+            subj,
             enrichment_predicate,
-            uuid_node,
-            edge_id=f"{prefix}_{enrichment.enriched_id}_{enrichment_predicate}_{uuid_node}",
+            obj,
+            edge_id=f"{prefix}_{enrichment.enriched_id}_{enrichment.predicate_only}_{uuid_node}",
             attributes=[{"attribute_type_id": "biolink:p_value", "value": enrichment.p_value}]
         )
 
@@ -885,7 +896,8 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
                 enriched_to_infer_id = builder.add_edge(
                     edge_dict["subject"],
                     edge_dict["predicate"],
-                    edge_dict["object"]
+                    edge_dict["object"],
+                    sources=edge_dict.get("sources") or []
                 )
 
                 aux_id = builder.add_auxiliary_graph(
@@ -1008,7 +1020,8 @@ def ensure_empty_results(in_message: dict):
 
 
 def edge_from_component(edge: NewEdge) -> dict:
-    """Convert NewEdge component to dict"""
+    """Convert NewEdge component to dict.
+    Extracts predicate only — lookup/inference support edges don't carry context qualifiers."""
     if not edge:
         return {}
 

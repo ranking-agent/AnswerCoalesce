@@ -242,7 +242,7 @@ async def coalesce_by_graph(input_ids, input_node_type,
 
     enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
                                         total_node_counts, predicate_constraints, predicate_constraint_style,
-                                        filter_predicate_hierarchies)
+                                        filter_predicate_hierarchies, max_enrichments=max_results)
 
     if pvalue_threshold:
         enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
@@ -517,7 +517,7 @@ def enrich_equal_qnode(qnode_hash, best_enrich_node):
 
 def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
                        predicate_constraints=None, predicate_constraint_style='exclude',
-                       filter_predicate_hierarchies=False):
+                       filter_predicate_hierarchies=False, max_enrichments=None):
     """Given a set of nodes and the links that they share, as well as some counts, return the enrichments based
     on the links.
     If you want to restrict the answers, then you filter nodes_to_links ahead of time.'
@@ -623,6 +623,11 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
         if len(enriched) > 0:
             results += enriched
+            # Stop once we have enough raw candidates — the final list will be
+            # sorted by p-value and truncated, so 5x headroom covers filtering.
+            if max_enrichments and len(results) >= max_enrichments * 5:
+                logger.info(f'Early termination: {len(results)} raw enrichments (need {max_enrichments})')
+                break
 
     if filter_predicate_hierarchies:
         results = filter_result_hierarchies(results)

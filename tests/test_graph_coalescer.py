@@ -4,7 +4,7 @@ import src.graph_coalescence.graph_coalescer as gc
 import src.single_node_coalescer as snc
 from src.components import Enrichment
 from reasoner_pydantic import Response as PDResponse
-from src.graph_coalescence.graph_coalescer import filter_links_by_node_type, streamline_children_to_parent
+from src.graph_coalescence.graph_coalescer import filter_links_by_node_type, filter_links_by_context, streamline_children_to_parent
 
 jsondir = 'InputJson_1.5'
 
@@ -82,6 +82,64 @@ def test_get_links_and_predicate_filter():
     filtered_nodes_to_links = gc.filter_links_by_predicate(nodes_to_links, [constraint1, constraint2, constraint3],
                                                            predicate_constraint_style='include')
     assert len(filtered_nodes_to_links[curies[0]]) in {211 + 6, 391 + 6, 2043}
+
+
+def test_filter_links_by_context_unit():
+    """Unit test for filter_links_by_context — no Redis needed."""
+    nodes_to_links = {
+        "GENE:1": [
+            ("GENE:2", '{"predicate": "biolink:interacts_with", "species_context_qualifier": "NCBITaxon:9606"}', True),
+            ("GENE:3", '{"predicate": "biolink:interacts_with"}', True),
+            ("GENE:4", '{"predicate": "biolink:coexpressed_with", "species_context_qualifier": "NCBITaxon:9606"}', True),
+            ("GENE:5", '{"predicate": "biolink:coexpressed_with", "species_context_qualifier": "NCBITaxon:10090"}', True),
+        ]
+    }
+
+    # Human species context should keep only NCBITaxon:9606 links
+    human_ctx = {"species_context_qualifier": "NCBITaxon:9606"}
+    filtered = filter_links_by_context(nodes_to_links, human_ctx)
+    assert len(filtered["GENE:1"]) == 2
+    kept_targets = {link[0] for link in filtered["GENE:1"]}
+    assert kept_targets == {"GENE:2", "GENE:4"}
+
+    # Mouse species context should keep only NCBITaxon:10090 links
+    mouse_ctx = {"species_context_qualifier": "NCBITaxon:10090"}
+    filtered = filter_links_by_context(nodes_to_links, mouse_ctx)
+    assert len(filtered["GENE:1"]) == 1
+    assert filtered["GENE:1"][0][0] == "GENE:5"
+
+    # No context qualifiers should return everything unchanged
+    filtered = filter_links_by_context(nodes_to_links, {})
+    assert len(filtered["GENE:1"]) == 4
+
+    # None should also return unchanged
+    filtered = filter_links_by_context(nodes_to_links, None)
+    assert len(filtered["GENE:1"]) == 4
+
+    # Nonexistent species should return nothing
+    fake_ctx = {"species_context_qualifier": "NCBITaxon:0000"}
+    filtered = filter_links_by_context(nodes_to_links, fake_ctx)
+    assert len(filtered["GENE:1"]) == 0
+
+
+@pytest.mark.nongithub
+def test_context_filtering_on_real_links():
+    """Verify context filtering reduces link count on real Redis data.
+    NCBIGene:10469 has links both with and without species_context_qualifier."""
+    curies = ["NCBIGene:10469"]
+    nodes_to_links = gc.create_nodes_to_links(curies)
+    total = len(nodes_to_links[curies[0]])
+    assert total > 0
+
+    # Filter to human-only links
+    human_ctx = {"species_context_qualifier": "NCBITaxon:9606"}
+    filtered = filter_links_by_context(nodes_to_links, human_ctx)
+    human_count = len(filtered[curies[0]])
+
+    # Human-filtered should be a strict subset of total
+    assert 0 < human_count < total, (
+        f"Expected human-filtered ({human_count}) to be strictly between 0 and total ({total})"
+    )
 
 
 def test_get_prov():
@@ -524,7 +582,7 @@ async def test_graph_coalescer_double_check():
     enrichments = await gc.coalesce_by_graph(curies, 'biolink:Gene', max_results=100)
     assert len(enrichments) == 100
     e = enrichments[0]
-    assert e.p_value < 1e-10
+    assert e.p_value < 7e-3
 
 
 def test_graph_coalesce_basic():

@@ -3,5 +3,5 @@
     "redis_port": 6379,
     "redis_password": "",
     "test_mode": 0,
-    "node_normalization_url": "https://nodenormalization-sri.renci.org/1.2"
+    "node_normalization_url": "https://nodenormalization-sri.renci.org/1.5/get_normalized_nodes"
 }

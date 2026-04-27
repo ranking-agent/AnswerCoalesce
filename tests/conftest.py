@@ -1,6 +1,3 @@
-import pytest
-
-
 def generate_infer_query(input_type, output_type, input_curie, predicate,
                          input_is_subject=True, params=None, qualifier_constraints=None):
     edge = {

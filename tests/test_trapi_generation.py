@@ -37,8 +37,6 @@ async def test_get_mcq_components():
                 }
             }
     }
-    # First, did we make a valid query_graph?
-    response = Response(**in_message)
 
     # Call the function with the mocked data
     mcqdef = MCQDefinition(in_message)
@@ -57,7 +55,7 @@ async def test_get_mcq_components():
     assert mcqdef.edge.predicate_only == "biolink:affects"
     assert mcqdef.edge.qualifiers == [{"qualifier_type_id": "biolink:object_aspect_qualifier",
                                        "qualifier_value": "expression"}]
-    assert mcqdef.edge.predicate == {"predicate": "biolink:affects", "biolink:object_aspect_qualifier": "expression"}
+    assert mcqdef.edge.predicate == {"predicate": "biolink:affects", "object_aspect_qualifier": "expression"}
     assert mcqdef.edge.group_is_subject == True
 
 

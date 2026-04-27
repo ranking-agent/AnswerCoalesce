@@ -111,7 +111,8 @@ def add_enrichment_edge_to_knowledge_graph(response, edge):
         new_edge["qualifiers"] = []
         for key, value in edge["predicate"].items():
             if key != "predicate":
-                new_edge["qualifiers"].append({"qualifier_type_id": key, "qualifier_value": value})
+                qualifier_type = f"biolink:{key}" if not key.startswith("biolink:") else key
+                new_edge["qualifiers"].append({"qualifier_type_id": qualifier_type, "qualifier_value": value})
     new_edge["sources"] = edge.prov
     new_edge_id = f"{edge.source}-{edge.predicate['predicate']}-{edge.target}"
     base = new_edge_id
