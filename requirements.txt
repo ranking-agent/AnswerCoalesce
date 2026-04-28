@@ -16,7 +16,7 @@ gunicorn==22.0.0
 numpy
 pydantic<=2.8.2
 uvicorn==0.30.3
-reasoner-pydantic~=5.0.4
+reasoner-pydantic~=5.0.6
 jsonlines
 orjson
 pytest-asyncio
