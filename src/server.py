@@ -38,9 +38,14 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 # init a logger
 logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir + '/')
 
-# Redis connection for async
-REDIS_HOST = os.getenv("REDIS_HOST", "answer-coalesce-redis-server-0.answer-coalesce-redis-server.translator-exp.svc.cluster.local")
-REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+# load up the config file
+conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'config.json')
+with open(conf_path, 'r') as _cf:
+    conf = json.load(_cf)
+
+# Redis connection for async — defaults from config.json (same as graph coalescer)
+REDIS_HOST = os.getenv("REDIS_HOST", conf.get("redis_host", "localhost"))
+REDIS_PORT = int(os.getenv("REDIS_PORT", conf.get("redis_port", 6379)))
 JOB_PREFIX = "ac:job:"
 JOB_EXPIRY = 7200  # 2 hours
 
@@ -114,11 +119,6 @@ class MethodName(str, Enum):
     set = "set"
 
 
-# load up the config file
-conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'config.json')
-with open(conf_path, 'r') as inf:
-    conf = json.load(inf)
-
 default_request_sync: Body = Body(default=default_input_sync)
 default_request_infer: Body = Body(default=default_input_infer)
 
@@ -163,7 +163,7 @@ class AsyncQueryRequest(BaseModel):
 
 
 @APP.post('/asyncquery', tags=["Answer coalesce"], response_model=None, status_code=202)
-async def asyncquery_handler(request: AsyncQueryRequest, background_tasks: BackgroundTasks):
+async def asyncquery_handler(background_tasks: BackgroundTasks, request: AsyncQueryRequest = default_request_infer):
     """Translator-compliant async query with optional callback.
 
     Submit a TRAPI query for background processing. Returns a job_id immediately.
@@ -219,21 +219,17 @@ async def get_job_status(job_id: str):
     }
 
 
-@APP.get('/query/result/{job_id}', response_model=PDResponse, response_model_exclude_none=True)
+@APP.get('/query/result/{job_id}', response_model=None)
 async def get_job_result(job_id: str):
-    """Get job result when complete."""
-    print(f">>> /query/result called for {job_id}")
+    """Get job result when complete. Returns the same TRAPI Response format as /query."""
     job = get_job(job_id)
     if not job:
-        print(f">>> Job {job_id} NOT FOUND")
         return JSONResponse({"error": "Job not found"}, status_code=404)
-
-    print(f">>> Job found, status={job['status']}, has_result={job.get('result') is not None}")
 
     if job["status"] != "completed":
         return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
 
-    return job["result"]
+    return JSONResponse(content=job["result"])
 
 
 def save_job(job_id: str, job_data: dict):

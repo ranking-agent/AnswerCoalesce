@@ -8,11 +8,11 @@ default_input_sync: dict = {
                         'uuid:1'
                     ],
                     'member_ids': [
-                        'HP:0000739',
-                        'HP:0001288',
-                        'HP:0001252',
-                        'HP:0001250',
-                        'HP:0000750',
+                        # 'HP:0000739',
+                        # 'HP:0001288',
+                        # 'HP:0001252',
+                        # 'HP:0001250',
+                        # 'HP:0000750',
                         'HP:0002378',
                         'HP:0002019',
                         'HP:0007146'
@@ -53,5 +53,9 @@ default_input_infer: dict = {
                 }
             }
         }
+    },
+    "parameters": {
+        "pvalue_threshold": 1e-6,
+        "max_rules": 5
     }
 }
