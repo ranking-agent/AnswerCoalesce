@@ -177,10 +177,35 @@ def test_genes_to_chemical_mcq():
         "biolink:related_to", input_is_subject=True
     )
     jret = run_test(in_message)
-    with open("mcqg2c.json", "w") as f:
-        json.dump(jret, f)
     assert len(jret["message"]) == 4
     confirm_qg_nodes(in_message, jret, is_source_ids=True)
+
+
+@pytest.mark.nongithub
+def test_mcq_with_qualifier_constraints():
+    """MCQ query with species_context_qualifier should produce results
+    and carry qualifiers through to the output edges."""
+    in_message = generate_mcq_query(
+        "biolink:Gene", "biolink:Gene",
+        ["NCBIGene:10469", "NCBIGene:2932", "NCBIGene:1500"],
+        "biolink:interacts_with", input_is_subject=True,
+        qualifier_constraints=HUMAN_SPECIES_QUALIFIER
+    )
+    jret = run_test(in_message)
+    message = jret["message"]
+    assert "results" in message
+    assert len(message["results"]) >= 1, "MCQ with species qualifier returned no results"
+
+    # Verify qualifier appears on result edges
+    kg_edges = message["knowledge_graph"]["edges"]
+    edges_with_species = [
+        eid for eid, edge in kg_edges.items()
+        for q in edge.get("qualifiers", [])
+        if q.get("qualifier_type_id") == "biolink:species_context_qualifier"
+    ]
+    assert len(edges_with_species) > 0, (
+        "MCQ output edges missing species_context_qualifier"
+    )
 
 
 @pytest.mark.nongithub
