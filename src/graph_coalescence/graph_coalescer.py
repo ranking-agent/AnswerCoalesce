@@ -97,33 +97,6 @@ def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_c
 
     return new_nodes_to_links
 
-# def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style):
-#     """Filter out links that don't meet the predicate constraints
-#     predicate constraints are just in the form that qualified predicates are described in the links e.g.
-#     {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity"}
-#     Note tht the links are constructed by taking that dictionary and running json.dumps(sort_keys=True) on it.
-#     So we will need to do the same for our constraints
-#     Matching the constraint means that all keys and values match between the link and the constraint
-#     If predicate_constraint style is "include" then only links that match one constraint will be kept
-#     If predicate_constraint style is "exclude" then only links that match no constraints will be kept
-#     """
-#     if len(predicate_constraints) == 0:
-#         return nodes_to_links
-#     string_constraints = [json.dumps(constraint, sort_keys=True) for constraint in predicate_constraints]
-#     new_nodes_to_links = {}
-#     for node, links in nodes_to_links.items():
-#         new_links = []
-#         for link in links:
-#             # link_dict = json.loads(link[1])
-#             if predicate_constraint_style == "include":
-#                 if any(constraint in link[1] for constraint in string_constraints):
-#                     new_links.append(link)
-#             elif predicate_constraint_style == "exclude":
-#                 if not any(constraint in link[1] for constraint in string_constraints):
-#                     new_links.append(link)
-#         new_nodes_to_links[node] = new_links
-#     return new_nodes_to_links
-
 
 def filter_links_by_context(nodes_to_links, context_qualifiers):
     """Filter links to only those whose predicate JSON contains all the requested context qualifiers.
@@ -242,7 +215,7 @@ async def coalesce_by_graph(input_ids, input_node_type,
 
     enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
                                         total_node_counts, predicate_constraints, predicate_constraint_style,
-                                        filter_predicate_hierarchies, max_enrichments=max_results)
+                                        filter_predicate_hierarchies)
 
     if pvalue_threshold:
         enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
@@ -517,7 +490,7 @@ def enrich_equal_qnode(qnode_hash, best_enrich_node):
 
 def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
                        predicate_constraints=None, predicate_constraint_style='exclude',
-                       filter_predicate_hierarchies=False, max_enrichments=None):
+                       filter_predicate_hierarchies=False):
     """Given a set of nodes and the links that they share, as well as some counts, return the enrichments based
     on the links.
     If you want to restrict the answers, then you filter nodes_to_links ahead of time.'
@@ -623,11 +596,6 @@ def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, t
 
         if len(enriched) > 0:
             results += enriched
-            # Stop once we have enough raw candidates — the final list will be
-            # sorted by p-value and truncated, so 5x headroom covers filtering.
-            if max_enrichments and len(results) >= max_enrichments * 5:
-                logger.info(f'Early termination: {len(results)} raw enrichments (need {max_enrichments})')
-                break
 
     if filter_predicate_hierarchies:
         results = filter_result_hierarchies(results)
