@@ -8,11 +8,11 @@ default_input_sync: dict = {
                         'uuid:1'
                     ],
                     'member_ids': [
-                        'HP:0000739',
-                        'HP:0001288',
-                        'HP:0001252',
-                        'HP:0001250',
-                        'HP:0000750',
+                        # 'HP:0000739',
+                        # 'HP:0001288',
+                        # 'HP:0001252',
+                        # 'HP:0001250',
+                        # 'HP:0000750',
                         'HP:0002378',
                         'HP:0002019',
                         'HP:0007146'
@@ -32,34 +32,30 @@ default_input_sync: dict = {
     }
 }
 
-default_input_async: dict = {
-    "callback": "https://aragorn.renci.org/1.2/aragorn_callback",
+default_input_infer: dict = {
     "message": {
         "query_graph": {
-            "edges": {
-                "e01": {
-                    "object": "n0",
-                    "subject": "n1",
-                    "predicates": [
-                        "biolink:entity_negatively_regulates_entity"
-                    ]
+            "nodes": {
+                "input": {
+                    "categories": ["biolink:Disease"],
+                    "ids": ["MONDO:0004975"]
+                },
+                "output": {
+                    "categories": ["biolink:Drug"]
                 }
             },
-            "nodes": {
-                "n0": {
-                    "ids": [
-                        "NCBIGene:23221"
-                    ],
-                    "categories": [
-                        "biolink:Gene"
-                    ]
-                },
-                "n1": {
-                    "categories": [
-                        "biolink:Gene"
-                    ]
+            "edges": {
+                "edge_0": {
+                    "subject": "output",
+                    "object": "input",
+                    "predicates": ["biolink:treats"],
+                    "knowledge_type": "inferred"
                 }
             }
         }
+    },
+    "parameters": {
+        "pvalue_threshold": 1e-6,
+        "max_rules": 5
     }
 }

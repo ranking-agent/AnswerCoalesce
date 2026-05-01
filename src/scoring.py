@@ -1,8 +1,4 @@
 import numpy as np
-# import seaborn as sns
-from scipy import stats
-from scipy.stats import norm, chi2
-from scipy.special import betainc
 
 
 def sigmoid(x):
@@ -12,132 +8,77 @@ def sigmoid(x):
 def modified_sigmoid(x, scale=1, shift=0):
     return sigmoid(scale * (x - shift))
 
-def pvalue_to_sigmoid(p_values, scale=1, shift=0):
-    if np.any((p_values <= 0) | (p_values > 1)):
-        raise ValueError("hold on!]")
+
+def pvalue_to_sigmoid(p_values, scale=0.5, shift=5):
+    p_values = np.atleast_1d(p_values)
     log_value = -np.log10(p_values)
-    return np.round(modified_sigmoid(log_value, scale=scale, shift=shift), 6)
+    result = np.round(modified_sigmoid(log_value, scale=scale, shift=shift), 5)
+    return result[0] if result.size == 1 else result
 
 
-def sum_log_p_values(p_values):
-    """Sum the negative logarithms of the p-values."""
-    p_values = np.asarray(p_values)
-    return -np.sum(np.log(p_values))
+def harmonic_mean(weights):
+    hmp = np.sum(weights) / np.sum(weights / weights)
+    return float(hmp)
 
 
+def geometric_mean(weights):
+    return np.prod(weights) ** (1 / len(weights))
 
-def stouffer_s_z_score(p_values, threshold=1e-5, raw_weights = None, prob_score = False):
+
+def elrond(weights):
+    """"
+        # Graph: 2 nodes (source=Gene A, target=Disease X)
+        n_nodes = 2
+
+        # Step 1 & 2: Build adjacency matrix by summing conductances
+        # Each p-value is a parallel edge between source and target
+        A = np.zeros((n_nodes, n_nodes))
+
+        for p in weights:
+            # Resistance from p-value (weight)
+            R = -np.log(p)
+
+            # Conductance (inverse of resistance)
+            conductance = 1 / R
+
+            # Sum conductances for parallel edges
+            A[0, 1] += conductance
+            A[1, 0] += conductance  # Symmetric
+
+        # Step 3: Build Laplacian L = D - A
+        D = np.diag(np.sum(A, axis=1))
+        L = D - A
+
+        # Step 4: Calculate Kirchhoff index with pseudoinverse method
+        L_pseudo = pinv(L)
+
+        # Difference vector for nodes 0 and 1
+        e_diff = np.array([1, -1])
+
+        # Kirchhoff index: Ω = e_diff^T L^+ e_diff
+        kirchhoff = e_diff.T @ L_pseudo @ e_diff
+
+        # Step 5: Inverse mapping f^(-1)(Ω) = e^(-Ω)
+        combined_pvalue = np.exp(-kirchhoff)
     """
-     Applies Stouffer's Z_Score to a list of p-values.
-        0. Calculate raw weights based on proximity to p_value threshold Inverse of the ratio (p-value / threshold), higher for p-values close to the threshold
-        1. Convert p-values to z-scores
-        2. Calculate the weighted
-        3. Convert combined Z-score back to a p-value
+    weights = np.minimum(weights, 0.99999)
+    conductances = -1 / np.log(weights)
+    total_conductance = np.sum(conductances)
+    kirchhoff = 1 / total_conductance
+    combined_pvalue = np.exp(-kirchhoff)
 
-    Parameters:
-    -----------
-    p_values : list or numpy array
-        List of p-values from the different enrichment tests.
-    weights : list or numpy array ie individual importance assigned to each rule
-        eg. how close each of them is to the significance threshold (e.g., 1e-5).
+    return float(combined_pvalue)
 
-    Returns:
-    --------
-    float
-        Combined p-value according to Stouffer's Z_Score.
+
+def score_inference(pvalues, method='elrond'):
     """
-    p_values = np.array(p_values)
-    p_values = np.clip(p_values, 1e-15, None)
-
-    if not raw_weights:
-        raw_weights = threshold / p_values
-
-    # Then normalize the weights to sum to 1
-    weights = raw_weights / np.sum(raw_weights)
-
-    z_scores = norm.ppf(1 - np.array(p_values))
-    combined_z = np.sum(weights * z_scores) / np.sqrt(np.sum(weights ** 2))
-    if prob_score:
-    #     # To return score as probability
-        combined_p = norm.sf(combined_z)
-        return combined_p
-    return combined_z
-
-
-def simes_method(p_values, alpha):
+    Combine p-values into a score.
     """
-    Applies Simes' method to a list of p-values.
-      Sort p-values in ascending order
-      Get the number of p-values (n)
-      Apply Simes' condition: p(i) <= (i / n) * alpha
-      Find the largest index where p(i) <= (i/n) * alpha
-      Return the corresponding p-value
-            If no p-value satisfies the condition,
-                return the smallest p-value
-                    else
-                return the p-value for the smallest satisfying condition
+    weights = np.atleast_1d(pvalue_to_sigmoid(pvalues))
 
-    Params:
-    -----------
-    p_values : list or numpy array
-        List of p-values from the different enrichment tests.
-    alpha : float
-        Significance threshold (e.g., 0.05).
-
-    Returns:
-    --------
-    float
-        Combined p-value according to Simes' method.
-    """
-    p_values = np.array(p_values)
-    p_values_sorted = np.sort(p_values)
-    n = len(p_values_sorted)
-    thresholds = (np.arange(1, n + 1) / n) * alpha
-
-    for i in range(n):
-        if p_values_sorted[i] > thresholds[i]:
-            break
-
-    if i == 0:
-        return p_values_sorted[0]
+    if method == "elrond":
+        return elrond(weights)
+    elif method == 'harmonic':
+        return harmonic_mean(weights)
     else:
-        return p_values_sorted[:i].mean()
-
-
-def wfisher( pvalues, sample_sizes ):
-    n = len(pvalues)
-    total_sample_size = sum(sample_sizes)
-    weights = [n * s / total_sample_size for s in sample_sizes]
-
-    transformed = [stats.gamma.ppf(1 - p, a=w, scale=2) for p, w in zip(pvalues, weights)]
-    test_statistic = sum(transformed)
-
-    combined_pvalue = 1 - stats.gamma.cdf(test_statistic, a=n, scale=2)
-    return combined_pvalue
-
-def fisher_method_multiple(p_list):
-    X2 = -2 * sum(np.log(p) for p in p_list)
-    df = 2 * len(p_list)
-    return 1 - chi2.cdf(X2, df=df)
-
-
-def ordmeta(pvalues ):
-    n = len(pvalues)
-    sorted_pvalues = sorted(pvalues)
-
-    marginal_pvalues = [1 - betainc(i, n - i + 1, p) for i, p in enumerate(sorted_pvalues, 1)]
-    min_marginal = min(marginal_pvalues)
-
-    combined_pvalue = 1 - (1 - min_marginal) ** n
-    return combined_pvalue
-
-
-def convert_ndarray_to_list(obj):
-    if isinstance(obj, np.ndarray):
-        return obj.tolist()
-    elif isinstance(obj, dict):
-        return {key: convert_ndarray_to_list(value) for key, value in obj.items()}
-    elif isinstance(obj, list):
-        return [convert_ndarray_to_list(element) for element in obj]
-    else:
-        return obj
+        return geometric_mean(weights)

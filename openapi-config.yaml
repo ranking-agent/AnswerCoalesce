@@ -7,8 +7,8 @@ description: 'Answer coalesce: This service accepts a TRAPI object containing re
 servers:
 - description: Default server
   url: https://answercoalesce.renci.org
-#- description: localhost
-#  url: http://127.0.0.1:5000
+- description: Local dev
+  url: http://127.0.0.1:5001
 termsOfService: "https://toss.apps.renci.org/tos?service_long=Answer%20coalesce&provider_long=RENCI"
 title: Answer coalesce
 tags:

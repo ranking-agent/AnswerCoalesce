@@ -16,28 +16,29 @@ loads the necessary test information into it.
 
   Test the functions used in property coalescence.  
 
-* [`test_ontology_coalsecer.py`](test_ontology_coalsecer.py):
+[//]: # (* [`test_ontology_coalsecer.py`]&#40;test_ontology_coalsecer.py&#41;:)
 
-  Test the functions used in ontology coalescence.  
+[//]: # ()
+[//]: # (  Test the functions used in ontology coalescence.  )
 
 * [`test_node_coalsecer.py`](test_node_coalsecer.py):
 
   Test the functions used to find opportunities for coalescence in a set of results.
 
-* [`test_bigs.py`](test_bigs.py):
-  
-  Test performance of the coalsecer on large inputs to verify that performance is acceptable.
+[//]: # (* [`test_bigs.py`]&#40;test_bigs.py&#41;:)
+
+[//]: # (  )
+[//]: # (  Test performance of the coalsecer on large inputs to verify that performance is acceptable.)
 
 * [`test_endpoints.py`](test_endpoints.py):
 
   High level tests calling the external endpoints.
 
-* [`test_ubergraph.py`](test_ubergraph.py):
-  
-  We check our integration with ubergraph, used in calculating coalescence via ontology.
+[//]: # (* [`test_ubergraph.py`]&#40;test_ubergraph.py&#41;:)
+
+[//]: # (  )
+[//]: # (  We check our integration with ubergraph, used in calculating coalescence via ontology.)
 
 ### Workflow
 
 Tests are run automatically via GitHub Actions whenever a pull request review is requested.
-
-
