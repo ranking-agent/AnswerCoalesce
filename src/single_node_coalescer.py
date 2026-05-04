@@ -115,19 +115,22 @@ async def infer(in_message: dict) -> dict:
                 return []
 
         async def safe_property_enrichment():
-            try:
-                return await asyncio.to_thread(
-                    _run_coro_blocking,
-                    coalesce_by_property,
-                    lookup_results.link_ids,
-                    params.output_semantic_type,
-                    property_constraints=inf_params.property_constraints,
-                    pvalue_threshold=inf_params.pvalue_threshold
-                )
-            except Exception as e:
-                builder.log_error(f"Property enrichment failed: {str(e)}")
-                logger.exception("Property enrichment failed")
-                return []
+            return []
+            # Strictly for TranslatorKG with no ChebiRoles
+            # TODO: Uncomment this for ROBOKOP deployment
+            # try:
+            #     return await asyncio.to_thread(
+            #         _run_coro_blocking,
+            #         coalesce_by_property,
+            #         lookup_results.link_ids,
+            #         params.output_semantic_type,
+            #         property_constraints=inf_params.property_constraints,
+            #         pvalue_threshold=inf_params.pvalue_threshold
+            #     )
+            # except Exception as e:
+            #     builder.log_error(f"Property enrichment failed: {str(e)}")
+            #     logger.exception("Property enrichment failed")
+            #     return []
 
         (graph_enrichment_results, property_enrichment_results) = await asyncio.gather(
             safe_graph_enrichment(),
@@ -282,7 +285,8 @@ def lookup_single(curie: str, predicate_parts: str, is_source: bool, output_sema
     return None
 
 
-def lookup_batch(curies: list[str], predicates: list[str], is_sources: list[bool], output_semantic_type: str) -> dict[str, Lookup]:
+def lookup_batch(curies: list[str], predicates: list[str], is_sources: list[bool], output_semantic_type: str) -> dict[
+    str, Lookup]:
     """
     Batch version of lookup_single - looks up multiple curies in batched Redis calls.
     Returns:
@@ -375,7 +379,6 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
         return graph_inferred
 
     def property_inference_sync():
-        # return {}  # TODO: re-enable once property SQLite DBs are rebuilt from new data
         if not property_enrichments:
             return {}
 
@@ -549,7 +552,8 @@ def unify_enrichments(graph_results: list, property_results: list[dict]) -> list
     return unified
 
 
-def filter_enrichments(enrichments: list[EnrichmentResult], exclude_ids: set[str], max_rules=None) -> list[EnrichmentResult]:
+def filter_enrichments(enrichments: list[EnrichmentResult], exclude_ids: set[str], max_rules=None) -> list[
+    EnrichmentResult]:
     """
     Filter enrichments by p-value threshold and excluded IDs.
     Returns:
@@ -615,7 +619,8 @@ def build_edgar_response(builder: EGARTRAPIBuilder, params: QueryParams, lookup_
     finalize_results(builder, results_cache, enrichments, max_results)
 
 
-def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup, uuid_node: str) -> tuple[dict, dict, str]:
+def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup, uuid_node: str) -> \
+        tuple[dict, dict, str]:
     """Build the lookup layer: input -> lookup_nodes -> UUID set"""
 
     uuid_group = lookup_results.link_ids
@@ -848,7 +853,8 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
             used_p += 1
 
     builder.log("Inference filtering complete", level="INFO",
-                metadata={"graph_enrichments_used": used_g, "property_enrichments_used": used_p, "unique_inferred_nodes": len(all_evidence)})
+                metadata={"graph_enrichments_used": used_g, "property_enrichments_used": used_p,
+                          "unique_inferred_nodes": len(all_evidence)})
     # =========================================================================
     # STEP 2: Build results for each inferred node with combined scores
     # =========================================================================
