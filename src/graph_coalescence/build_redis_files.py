@@ -5,6 +5,7 @@ import json
 import orjson
 import gzip
 import requests
+import redis
 import bmt
 
 try:
@@ -188,6 +189,145 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
         for key, value in edgecounts.items():
             outf.write(f'{key}\t{value}\n')
         print('backlinks done')
+
+
+def _pipe_flush(pipe, counter, batch_size=10000):
+    """Execute the pipeline if the batch is full. Returns the new counter."""
+    if counter >= batch_size:
+        pipe.execute()
+        return 0
+    return counter
+
+
+def generate_ac_redis(input_node_file, input_edge_file, redis_host='localhost', redis_port=6379):
+    """Process KGX JSONL files and write directly to Redis, skipping intermediate txt files.
+
+    Same logic as generate_ac_files but pipes data straight into Redis DBs 0-5.
+    """
+    def get_pipe(db):
+        r = redis.Redis(host=redis_host, port=int(redis_port), db=db)
+        return r.pipeline(transaction=False)
+
+    tk = bmt.Toolkit()
+    filter_nodes = get_filter_nodes()
+
+    # -- Pass 1: Nodes → Redis DB 1 (labels), DB 3 (names) --
+    print('Processing nodes...')
+    categories = {}
+    catcount = defaultdict(int)
+
+    pipe_labels = get_pipe(1)
+    pipe_names = get_pipe(3)
+    n_labels = 0
+    n_names = 0
+
+    node_iter = quick_jsonl_file_iterator(input_node_file)
+    if TQDM_AVAILABLE:
+        node_iter = tqdm(node_iter, desc='nodes')
+
+    for node in node_iter:
+        node_id = node["id"]
+        if node_id.startswith('CAID') or node_id in filter_nodes:
+            continue
+        node_category = node["category"]
+        categories[node_id] = node_category
+        for c in node_category:
+            catcount[c] += 1
+
+        pipe_labels.set(node_id, str(node_category))
+        n_labels += 1
+        n_labels = _pipe_flush(pipe_labels, n_labels)
+
+        name = node.get("name", "")
+        if name is not None:
+            name = name.encode('ascii', errors='ignore').decode(encoding="utf-8")
+        pipe_names.set(node_id, name or '')
+        n_names += 1
+        n_names = _pipe_flush(pipe_names, n_names)
+
+    pipe_labels.execute()
+    pipe_names.execute()
+    print(f'Node labels and names loaded into Redis.')
+
+    # -- Category counts → Redis DB 5 --
+    pipe_cat = get_pipe(5)
+    for c, v in catcount.items():
+        pipe_cat.set(c, str(v))
+    pipe_cat.execute()
+    print(f'Category counts loaded into Redis ({len(catcount)} categories).')
+
+    # -- Pass 2: Edges → build links/backlinks in memory, stream prov to Redis DB 4 --
+    print('Processing edges...')
+    nodes_to_links = defaultdict(list)
+    edgecounts = defaultdict(int)
+    pipe_prov = get_pipe(4)
+    n_prov = 0
+    nl = 0
+
+    for line in quick_jsonl_file_iterator(input_edge_file):
+        if line["subject"].startswith('CAID') or line["object"].startswith('CAID'):
+            continue
+        nl += 1
+        source_id, target_id, pred, just_predicate = parse_line(line)
+        if source_id in filter_nodes or target_id in filter_nodes:
+            continue
+        if pred is None:
+            continue
+        if just_predicate in FILTER_PREDICATES:
+            continue
+
+        source_link = (target_id, pred, True)
+        element = tk.get_element(just_predicate)
+        if element and element["symmetric"] is True:
+            target_is_source = True
+        else:
+            target_is_source = False
+        target_link = (source_id, pred, target_is_source)
+
+        nodes_to_links[source_id].append(source_link)
+        nodes_to_links[target_id].append(target_link)
+
+        for tcategory in set(categories[target_id]):
+            edgecounts[(source_id, pred, True, tcategory)] += 1
+        for scategory in set(categories[source_id]):
+            edgecounts[(target_id, pred, target_is_source, scategory)] += 1
+
+        pkey = f'{source_id} {pred} {target_id}'
+        prov = extract_prov(line)
+        if prov and pkey:
+            pipe_prov.set(pkey, json.dumps(prov))
+            n_prov += 1
+            n_prov = _pipe_flush(pipe_prov, n_prov)
+
+        if nl % 1000000 == 0:
+            print(f'  {nl} edges processed...')
+
+    pipe_prov.execute()
+    print(f'Provenance loaded into Redis ({nl} edges processed).')
+
+    # -- Links → Redis DB 0 --
+    print('Loading links into Redis...')
+    pipe_links = get_pipe(0)
+    n_links = 0
+    for node, links in nodes_to_links.items():
+        pipe_links.set(node, json.dumps(links))
+        n_links += 1
+        n_links = _pipe_flush(pipe_links, n_links)
+    pipe_links.execute()
+    print(f'Links loaded into Redis ({len(nodes_to_links)} nodes).')
+
+    # -- Backlinks → Redis DB 2 --
+    print('Loading backlinks into Redis...')
+    pipe_back = get_pipe(2)
+    n_back = 0
+    for key, value in edgecounts.items():
+        pipe_back.set(str(key), str(value))
+        n_back += 1
+        n_back = _pipe_flush(pipe_back, n_back)
+    pipe_back.execute()
+    print(f'Backlinks loaded into Redis ({len(edgecounts)} entries).')
+
+    print('Done — all data loaded directly into Redis.')
 
 
 if __name__ == '__main__':

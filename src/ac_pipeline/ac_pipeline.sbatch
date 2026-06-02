@@ -17,14 +17,13 @@ set -euo pipefail
 # ── Load config
 source "/projects/translator/AnswerCoalesce/src/ac_pipeline/config.env"
 
-TXT_DIR="$OUTDIR/txt_files"
 RDB_DEST="$OUTDIR/answer-coalesce.rdb"
 REDIS_PORT="${REDIS_PORT:-6400}"
 REDIS_LOG="$OUTDIR/redis_${SLURM_JOB_ID:-$$}.log"
 REDIS_PIDFILE="$OUTDIR/redis.pid"
 REQUIREMENTS="$AC_REPO/src/ac_pipeline/requirements.txt"
 
-mkdir -p "$TXT_DIR"
+mkdir -p "$OUTDIR"
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
@@ -45,13 +44,33 @@ conda activate "$CONDA_ENV"
 log "=== STEP 0: Installing Python requirements ==="
 pip install --quiet --disable-pip-version-check -r "$REQUIREMENTS"
 
-log "=== STEP 1: Generating .txt files ==="
-export PYTHONPATH="$AC_REPO:${PYTHONPATH:-}"
-python "$AC_REPO/src/ac_pipeline/generate_ac_files.py" \
-    --nodes "$NODES" \
-    --edges "$EDGES" \
-    --outdir "$TXT_DIR"
-log "Done. Files written to $TXT_DIR"
+log "=== STEP 1: Starting local Redis on port $REDIS_PORT ==="
+redis-server \
+    --daemonize yes \
+    --port "$REDIS_PORT" \
+    --bind 127.0.0.1 \
+    --dir "$OUTDIR" \
+    --dbfilename answer-coalesce.rdb \
+    --pidfile "$REDIS_PIDFILE" \
+    --maxmemory 220gb \
+    --loglevel notice \
+    --logfile "$REDIS_LOG" \
+    --stop-writes-on-bgsave-error no \
+    --proto-max-bulk-len 1000mb \
+    --timeout 60 \
+    --save ""
+
+for i in $(seq 1 30); do
+    if redis-cli -p "$REDIS_PORT" ping 2>/dev/null | grep -q PONG; then
+        log "Redis is up (pid $(cat "$REDIS_PIDFILE"))."
+        break
+    fi
+    sleep 1
+    if [[ $i -eq 30 ]]; then
+        log "ERROR: Redis failed to start. See $REDIS_LOG"
+        exit 1
+    fi
+done
 
 log "=== STEP 1.5: Rebuild property DB if newer CHEBI release exists ==="
 PROP_DIR="$AC_REPO/src/property_coalescence"
@@ -84,41 +103,17 @@ else
     log "WARNING: No releases found in $CHEBI_PROPS_BASE"
 fi
 
-log "=== STEP 2: Starting local Redis on port $REDIS_PORT ==="
-# --save "" disables periodic RDB snapshots during the load; we BGSAVE once at the end.
-redis-server \
-    --daemonize yes \
-    --port "$REDIS_PORT" \
-    --bind 127.0.0.1 \
-    --dir "$OUTDIR" \
-    --dbfilename answer-coalesce.rdb \
-    --pidfile "$REDIS_PIDFILE" \
-    --maxmemory 220gb \
-    --loglevel notice \
-    --logfile "$REDIS_LOG" \
-    --stop-writes-on-bgsave-error no \
-    --proto-max-bulk-len 1000mb \
-    --timeout 60 \
-    --save ""
-
-for i in $(seq 1 30); do
-    if redis-cli -p "$REDIS_PORT" ping 2>/dev/null | grep -q PONG; then
-        log "Redis is up (pid $(cat "$REDIS_PIDFILE"))."
-        break
-    fi
-    sleep 1
-    if [[ $i -eq 30 ]]; then
-        log "ERROR: Redis failed to start. See $REDIS_LOG"
-        exit 1
-    fi
-done
-
-log "=== STEP 3: Loading data into Redis ==="
-REDIS_HOST=localhost REDIS_PORT="$REDIS_PORT" DATA_DIR="$TXT_DIR" \
-    python "$AC_REPO/src/graph_coalescence/load_redis.py"
+log "=== STEP 2: Processing JSONL and loading directly into Redis ==="
+export PYTHONPATH="$AC_REPO:${PYTHONPATH:-}"
+python "$AC_REPO/src/ac_pipeline/generate_ac_files.py" \
+    --nodes "$NODES" \
+    --edges "$EDGES" \
+    --redis \
+    --redis-host localhost \
+    --redis-port "$REDIS_PORT"
 log "Load complete."
 
-log "=== STEP 4: Triggering BGSAVE ==="
+log "=== STEP 3: Triggering BGSAVE ==="
 BEFORE=$(redis-cli -p "$REDIS_PORT" LASTSAVE)
 redis-cli -p "$REDIS_PORT" BGSAVE
 while true; do
@@ -131,7 +126,7 @@ while true; do
     log "Still saving..."
 done
 
-log "=== STEP 5: Shutting down Redis ==="
+log "=== STEP 4: Shutting down Redis ==="
 redis-cli -p "$REDIS_PORT" shutdown nosave || true
 log "RDB saved to: $RDB_DEST"
 
