@@ -35,9 +35,13 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Create virtual environment
+        run: |
+          python -m venv .venv
+
       - name: Install dependencies
         run: |
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          .venv/bin/pip install -r requirements-test.txt
 
 
 #      - name: Start Redis
@@ -47,8 +51,8 @@ jobs:
 
       - name: Load redis
         run: |
-          python src/graph_coalescence/load_redis.py test
+          .venv/bin/python src/graph_coalescence/load_redis.py test
 
       - name: Run the tests
         run: |
-          pytest -m "not nongithub" tests/
+          .venv/bin/pytest -m "not nongithub" tests/
