@@ -5,6 +5,62 @@ import json
 import orjson
 
 
+def _normalized_qualifier_type(qualifier_type: str) -> str:
+    if qualifier_type.startswith("biolink:"):
+        return qualifier_type
+    return f"biolink:{qualifier_type}"
+
+
+def _qedge_qualifier_key(qualifier_type: str) -> str:
+    return qualifier_type.split(":")[-1] if ":" in qualifier_type else qualifier_type
+
+
+def get_qedge_qualifiers(qedge: dict) -> list[dict]:
+    """Extract the first qualifier set from supported QEdge qualifier shapes."""
+    qualifier_constraints = qedge.get("qualifier_constraints", [])
+    if qualifier_constraints:
+        qualifier_set = qualifier_constraints[0].get("qualifier_set", [])
+        return [
+            {
+                "qualifier_type_id": _normalized_qualifier_type(q["qualifier_type_id"]),
+                "qualifier_value": q["qualifier_value"],
+            }
+            for q in qualifier_set
+            if "qualifier_type_id" in q and "qualifier_value" in q
+        ]
+
+    constraints_qualifiers = qedge.get("constraints", {}).get("qualifiers", [])
+    if not constraints_qualifiers:
+        return []
+
+    first_qualifier_set = constraints_qualifiers[0]
+    if "qualifier_type_id" in first_qualifier_set and "qualifier_value" in first_qualifier_set:
+        return [
+            {
+                "qualifier_type_id": _normalized_qualifier_type(q["qualifier_type_id"]),
+                "qualifier_value": q["qualifier_value"],
+            }
+            for q in constraints_qualifiers
+            if "qualifier_type_id" in q and "qualifier_value" in q
+        ]
+
+    return [
+        {
+            "qualifier_type_id": _normalized_qualifier_type(qualifier_type),
+            "qualifier_value": qualifier_value,
+        }
+        for qualifier_type, qualifier_value in first_qualifier_set.items()
+    ]
+
+
+def get_qedge_predicate_parts(qedge: dict) -> dict:
+    parts = {"predicate": qedge.get("predicates", ["biolink:related_to"])[0]}
+    for qualifier in get_qedge_qualifiers(qedge):
+        key = _qedge_qualifier_key(qualifier["qualifier_type_id"])
+        parts[key] = qualifier["qualifier_value"]
+    return parts
+
+
 ###
 # These classes are used to extract the meaning from the TRAPI MCQ query into a more usable form
 ###
@@ -37,16 +93,8 @@ class MCQEdge:
                 self.group_is_subject = False
             self.qedge_id = qedge_id
             self.predicate_only = qedge.get("predicates", ["biolink:related_to"])[0]
-            self.predicate = {"predicate": self.predicate_only}
-            self.qualifiers = []
-            qualifier_constraints = qedge.get("qualifier_constraints", [])
-            if len(qualifier_constraints) > 0:
-                qc = qualifier_constraints[0]
-                self.qualifiers = qc.get("qualifier_set", [])
-                for q in self.qualifiers:
-                    qt = q["qualifier_type_id"]
-                    key = qt.split(":")[-1] if ":" in qt else qt
-                    self.predicate[key] = q["qualifier_value"]
+            self.qualifiers = get_qedge_qualifiers(qedge)
+            self.predicate = get_qedge_predicate_parts(qedge)
 
 
 class MCQDefinition:
@@ -170,14 +218,7 @@ class QueryParams:
     @staticmethod
     def _build_predicate_parts(qedge: dict) -> str:
         """Build predicate JSON string with all qualifiers from the query edge."""
-        parts = {"predicate": qedge.get("predicates", ["biolink:related_to"])[0]}
-
-        for qc in qedge.get("qualifier_constraints", []):
-            for q in qc.get("qualifier_set", []):
-                qualifier_type = q.get("qualifier_type_id", "")
-                key = qualifier_type.split(":")[-1] if ":" in qualifier_type else qualifier_type
-                parts[key] = q.get("qualifier_value")
-
+        parts = get_qedge_predicate_parts(qedge)
         return json.dumps(parts, sort_keys=True)
 
 

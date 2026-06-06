@@ -60,6 +60,57 @@ async def test_get_mcq_components():
 
 
 @pytest.mark.asyncio
+async def test_multi_curie_query_applies_constraints_qualifiers_to_graph_filter(monkeypatch):
+    in_message = {
+        "message": {
+            "query_graph": {
+                "nodes": {
+                    "input": {
+                        "set_interpretation": "MANY",
+                        "member_ids": ["CHEBI:167574", "CHEBI:71193"],
+                        "categories": ["biolink:ChemicalEntity"],
+                        "ids": ["uuid:1"],
+                    },
+                    "output": {"categories": ["biolink:Gene"]},
+                },
+                "edges": {
+                    "edge_0": {
+                        "subject": "input",
+                        "object": "output",
+                        "predicates": ["biolink:affects"],
+                        "constraints": {
+                            "qualifiers": [
+                                {
+                                    "biolink:object_aspect_qualifier": "activity",
+                                    "biolink:object_direction_qualifier": "increased",
+                                }
+                            ]
+                        },
+                    }
+                },
+            }
+        }
+    }
+    observed_kwargs = {}
+
+    async def fake_coalesce_by_graph(*args, **kwargs):
+        observed_kwargs.update(kwargs)
+        return []
+
+    monkeypatch.setattr(snc, "coalesce_by_graph", fake_coalesce_by_graph)
+
+    await snc.multi_curie_query(in_message, {})
+
+    assert observed_kwargs["predicate_constraints"] == [
+        {
+            "predicate": "biolink:affects",
+            "object_aspect_qualifier": "activity",
+            "object_direction_qualifier": "increased",
+        }
+    ]
+
+
+@pytest.mark.asyncio
 async def test_create_or_find_member_of_edges_existing_edges():
     """In this test there is already one member_of edge (for id1) But not for id2"""
     message = {

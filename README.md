@@ -94,6 +94,8 @@ Query edges also support `qualifier_constraints` (e.g. `species_context_qualifie
 ### Local
 
 ```bash
+conda create -n answercoalesce python=3.12
+conda activate answercoalesce
 pip install -r requirements.txt
 uvicorn src.server:APP --host 0.0.0.0 --port 6380
 ```
@@ -116,6 +118,10 @@ The AC Redis database is built on Hatteras via a Slurm pipeline. See [`src/ac_pi
 ## Testing
 
 ```bash
+conda create -n answercoalesce-test python=3.12
+conda activate answercoalesce-test
+pip install -r requirements-test.txt
+
 # Unit tests (no Redis required)
 pytest tests/test_inputs.py tests/test_redis_build.py
 
