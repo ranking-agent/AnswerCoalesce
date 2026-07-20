@@ -157,4 +157,5 @@ Expect six `Selecting DB ID` lines (IDs 0-5), `Checksum OK`, and `\o/ RDB looks 
 For key count validation, per-DB checks, and the full load-and-inspect workflow on a largemem node, see [verifyingDB.md](verifyingDB.md).
 
 ## Contact
-Chris Bizon & Evan Morris — cbizon@renci.org
+Chris Bizon bizon@renci.org
+Evan Morris emorris@renci.org
