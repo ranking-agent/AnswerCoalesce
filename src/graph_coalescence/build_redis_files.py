@@ -7,6 +7,8 @@ import gzip
 import requests
 import bmt
 
+tk = bmt.Toolkit()
+
 try:
     from tqdm import tqdm
     TQDM_AVAILABLE = True
@@ -17,6 +19,15 @@ except ImportError:
 # source is a boolean that is true if node is the source, and false if other_node is the source
 FILTER_PREDICATES = ["biolink:related_to_at_concept_level", "biolink:related_to_at_instance_level"]
 BLOCKLIST_URL = "https://raw.githubusercontent.com/NCATSTranslator/Relay/master/config/blocklist.json"
+PRIMARY_KNOWLEDGE_SOURCE = "primary_knowledge_source"
+ROBOKOP_PRIMARY_SOURCE_KEYS = (
+    PRIMARY_KNOWLEDGE_SOURCE,
+    f"biolink:{PRIMARY_KNOWLEDGE_SOURCE}",
+)
+ROBOKOP_AGGREGATOR_SOURCE_KEYS = (
+    "aggregator_knowledge_source",
+    "biolink:aggregator_knowledge_source",
+)
 
 
 def parse_line(line):
@@ -25,49 +36,58 @@ def parse_line(line):
     pred = line['predicate']
     # Remove variant/anatomy edges from GTEX.  These are going away in the new load anyway
     if source_id.startswith('CAID'):
-        if target_id.startswith('UBERON'):
-            if pred == 'biolink:affects_expression_of':
-                return source_id, target_id, None, None
-    if source_id.startswith('UBERON'):
-        if target_id.startswith('NCBIGene'):
-            if pred == 'biolink:expresses':
-                return source_id, target_id, None, None
-    if pred == 'biolink:expressed_in' and target_id.startswith('UBERON'):
         return source_id, target_id, None, None
     predicate_parts = {'predicate': line['predicate']}
     for key, value in line.items():
-        if 'qualifier' in key:
+        if tk.is_qualifier(key):
             predicate_parts[key] = value
     predicate_string = json.dumps(predicate_parts, sort_keys=True)
     return source_id, target_id, predicate_string, pred
 
 
 def extract_prov(line):
-    # old format: ROBOKOP
-    pks = line.get('primary_knowledge_source')
-    if pks:
-        prov = {'primary_knowledge_source': pks}
-        aks = line.get('aggregator_knowledge_source')
-        if aks:
-            prov['aggregator_knowledge_source'] = aks
-        return prov
+    """Validate and return provenance in its source graph's native shape."""
+    edge_id = line.get('id') or f"{line.get('subject')} {line.get('predicate')} {line.get('object')}"
 
-    # new format: Translator
+    robokop_prov = {
+        key: line[key]
+        for key in ROBOKOP_PRIMARY_SOURCE_KEYS + ROBOKOP_AGGREGATOR_SOURCE_KEYS
+        if key in line
+    }
+    if any(key in line for key in ROBOKOP_PRIMARY_SOURCE_KEYS):
+        primary_sources = []
+        for key in ROBOKOP_PRIMARY_SOURCE_KEYS:
+            value = line.get(key)
+            if isinstance(value, list):
+                primary_sources.extend(value)
+            elif value:
+                primary_sources.append(value)
+        if len(primary_sources) != 1:
+            raise ValueError(
+                f"Edge {edge_id} must have exactly one primary_knowledge_source; "
+                f"found {len(primary_sources)}"
+            )
+        return robokop_prov
+
     sources = line.get('sources')
-    if not sources:
-        return {}
-
-    prov = {}
-    for source in sources:
-        role = source.get('resource_role')
-        rid = source.get('resource_id')
-        if not role or not rid:
-            continue
-        if role == 'primary_knowledge_source':
-            prov['primary_knowledge_source'] = rid
-        elif role == 'aggregator_knowledge_source':
-            prov.setdefault('aggregator_knowledge_source', []).append(rid)
-    return prov
+    if not isinstance(sources, list):
+        sources = []
+    if any(not isinstance(source, dict) for source in sources):
+        raise ValueError(f"Edge {edge_id} has a non-object entry in sources")
+    primary_sources = [
+        source for source in sources
+        if source.get('resource_role') == PRIMARY_KNOWLEDGE_SOURCE
+    ]
+    if len(primary_sources) != 1:
+        raise ValueError(
+            f"Edge {edge_id} must have exactly one primary_knowledge_source; "
+            f"found {len(primary_sources)}"
+        )
+    if not primary_sources[0].get('resource_id'):
+        raise ValueError(
+            f"Edge {edge_id} has a primary_knowledge_source without a resource_id"
+        )
+    return sources
 
 
 def get_filter_nodes():
@@ -117,8 +137,6 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
     output_links_filepath = os.path.join(output_dir, 'links.txt')
     output_backlinks_filepath = os.path.join(output_dir, 'backlinks.txt')
 
-    tk = bmt.Toolkit()
-
     filter_nodes = get_filter_nodes()
     categories = {}
     catcount = defaultdict(int)
@@ -144,6 +162,7 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
     with open(output_prov_filepath, 'w') as provout:
         nl = 0
         for line in quick_jsonl_file_iterator(input_edge_file):
+            prov = extract_prov(line)
             if line["subject"].startswith('CAID') or line["object"].startswith('CAID'):
                 continue
             nl += 1
@@ -158,8 +177,7 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
             #Here's how we're handling symmetric predicates.
             # The source link and count is going to be just the same, but we're going to modify the target link
             # to look like it's going from target to source.
-            element = tk.get_element(just_predicate)
-            if element and element["symmetric"] is True:
+            if tk.is_symmetric(just_predicate):
                 target_is_source = True
             else:
                 target_is_source = False
@@ -171,9 +189,6 @@ def generate_ac_files(input_node_file, input_edge_file, output_dir):
             for scategory in set(categories[source_id]):
                 edgecounts[(target_id, pred, target_is_source, scategory)] += 1
             pkey = f'{source_id} {pred} {target_id}'
-            prov = extract_prov(line)
-            if not prov or not pkey:
-                continue
             provout.write(f'{pkey}\t{json.dumps(prov)}\n')
             if nl % 1000000 == 0:
                 print(nl)
