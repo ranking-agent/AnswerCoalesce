@@ -236,13 +236,22 @@ def augment_enrichments(enriched_links, nodetypes):
     add_provs(enriched_links)
 
 
-def add_provs(enrichments):
-    def process_prov(prov_data):
-        if isinstance(prov_data, (str, bytes)):
-            prov_data = orjson.loads(prov_data)
-        return [{'resource_id': check_prov_value_type(v), 'resource_role': check_prov_value_type(k)} for k, v in
-                prov_data.items()]
+def process_prov(prov_data):
+    """Convert stored provenance to a TRAPI sources list."""
+    if isinstance(prov_data, (str, bytes)):
+        prov_data = orjson.loads(prov_data)
+    if isinstance(prov_data, list):
+        return prov_data
+    return [
+        {
+            'resource_id': check_prov_value_type(value),
+            'resource_role': check_prov_value_type(role),
+        }
+        for role, value in prov_data.items()
+    ]
 
+
+def add_provs(enrichments):
     # Collect and deduplicate edges before hitting Redis
     all_edges = set()
     for enrichment in enrichments:
