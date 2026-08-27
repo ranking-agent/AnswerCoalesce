@@ -284,7 +284,7 @@ def lookup_single(curie: str, predicate_parts: str, is_source: bool, output_sema
 
 def lookup_batch(curies: list[str], predicates: list[str], is_sources: list[bool], output_semantic_type: str) -> dict[str, Lookup]:
     """
-    Batch version of lookup_single - looks up multiple curies in batched Redis calls.
+    Batch version of lookup_single.
     Returns:
         Dict of {curie: Lookup} for curies that had results
     """
@@ -344,12 +344,7 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
     """
     Run second lookup from enriched nodes to find inferred results.
 
-    OPTIMIZED: Uses lookup_batch for batched Redis calls.
-
-    Before: 100 enrichments x 3 Redis calls = 300+ round trips
-    After:  3 batched Redis calls total
-
-    Expected speedup: 138s -> ~15-30s
+    Uses one DuckDB lookup for all graph enrichments.
     """
 
     # Separate by type
@@ -615,7 +610,7 @@ def build_edgar_response(builder: EGARTRAPIBuilder, params: QueryParams, lookup_
     finalize_results(builder, results_cache, enrichments, max_results)
 
 
-def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup, uuid_node: str) -> tuple[dict, dict, str]:
+def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, lookup_results: Lookup, uuid_node: str) -> tuple[dict, list, str]:
     """Build the lookup layer: input -> lookup_nodes -> UUID set"""
 
     uuid_group = lookup_results.link_ids
@@ -630,7 +625,7 @@ def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, looku
     builder.add_node_attribute(uuid_node, "biolink:member_ids", {"sources": uuid_group})
 
     uuid_group_edges = {}
-    lookup_edges = {}
+    lookup_edges = []
 
     for link in lookup_results.lookup_links:
         # Add lookup node
@@ -645,15 +640,16 @@ def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, looku
                 edge_dict["object"],
                 sources=edge_dict.get("sources", [])
             )
-            lookup_edges[link.link_id] = lookup_edge_id
+            lookup_edges.append(lookup_edge_id)
 
         # Add member_of edge: lookup_node -> UUID
-        member_edge_id = builder.add_edge(
-            link.link_id,
-            "biolink:member_of",
-            uuid_node
-        )
-        uuid_group_edges[link.link_id] = member_edge_id
+        if link.link_id not in uuid_group_edges:
+            member_edge_id = builder.add_edge(
+                link.link_id,
+                "biolink:member_of",
+                uuid_node
+            )
+            uuid_group_edges[link.link_id] = member_edge_id
 
     # Add edge: UUID -> input_curie (or reverse)
     if params.is_source:
@@ -666,7 +662,7 @@ def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, looku
         )
 
     # Create auxiliary graph for lookup
-    aux_edges = list(uuid_group_edges.values()) + list(lookup_edges.values())
+    aux_edges = list(uuid_group_edges.values()) + lookup_edges
     aux_id = builder.add_auxiliary_graph(f"SG:_{uuid_to_curie_edge_id}", aux_edges)
     builder.add_support_graph_to_edge(uuid_to_curie_edge_id, aux_id, as_array=True)
 

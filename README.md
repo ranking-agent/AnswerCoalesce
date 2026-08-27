@@ -94,11 +94,21 @@ Query edges also support `qualifier_constraints` (e.g. `species_context_qualifie
 ### Local
 
 ```bash
-conda create -n answercoalesce python=3.12
-conda activate answercoalesce
-pip install -r requirements.txt
-uvicorn src.server:APP --host 0.0.0.0 --port 6380
+uv venv --python 3.12
+uv pip install -r requirements.txt
+uv run python -m src.graph_coalescence.build_duckdb \
+  --nodes /path/to/nodes.jsonl \
+  --edges /path/to/edges.jsonl \
+  --output answer-coalesce.duckdb
+export AC_DUCKDB_PATH=$PWD/answer-coalesce.duckdb
+uv run uvicorn src.server:APP --host 0.0.0.0 --port 6380
 ```
+
+The builder defaults to a 6 GB DuckDB memory cap and 20 GB maximum temporary
+spill space. Runtime queries default to a 4 GB cap. These limits can be changed
+with `AC_DUCKDB_BUILD_MEMORY_LIMIT`,
+`AC_DUCKDB_BUILD_MAX_TEMP_DIRECTORY_SIZE`, and
+`AC_DUCKDB_QUERY_MEMORY_LIMIT`.
 
 ### Docker
 
@@ -111,22 +121,16 @@ docker-compose up -d
 Kubernetes configurations and helm charts can be found at:
 https://github.com/helxplatform/translator-devops/answer-coalesce
 
-## Building the Redis Database
+## Building the Graph Database
 
-The AC Redis database is built on Hatteras via a Slurm pipeline. See [`src/ac_pipeline/README.md`](src/ac_pipeline/README.md) for full setup, configuration, and usage instructions.
+The AC DuckDB database is built directly from KGX JSONL on Hatteras via a
+Slurm pipeline. See [`src/ac_pipeline/README.md`](src/ac_pipeline/README.md).
 
 ## Testing
 
 ```bash
-conda create -n answercoalesce-test python=3.12
-conda activate answercoalesce-test
-pip install -r requirements-test.txt
-
-# Unit tests (no Redis required)
-pytest tests/test_inputs.py tests/test_redis_build.py
-
-# Integration tests (requires Redis)
-pytest -m nongithub tests/test_endpoints.py
+uv run --isolated --with-requirements requirements-test.txt \
+  pytest -m "not nongithub" tests/
 
 # Profiling
 PYTHONPATH=. python tests/test_profiling.py infer MONDO:0004975 biolink:treats biolink:Disease biolink:Drug --object
