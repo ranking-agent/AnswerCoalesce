@@ -105,7 +105,7 @@ uv run uvicorn src.server:APP --host 0.0.0.0 --port 6380
 ```
 
 The builder defaults to a 6 GB DuckDB memory cap and 20 GB maximum temporary
-spill space. Runtime queries default to a 4 GB cap. These limits can be changed
+spill space. Runtime queries default to a 1 GB cap. These limits can be changed
 with `AC_DUCKDB_BUILD_MEMORY_LIMIT`,
 `AC_DUCKDB_BUILD_MAX_TEMP_DIRECTORY_SIZE`, and
 `AC_DUCKDB_QUERY_MEMORY_LIMIT`.

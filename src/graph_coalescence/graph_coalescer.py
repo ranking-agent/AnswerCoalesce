@@ -139,7 +139,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 async def coalesce_by_graph(input_ids, input_node_type,
                             node_constraints=None, predicate_constraints=None, predicate_constraint_style="exclude",
                             pvalue_threshold=None, max_results=None, filter_predicate_hierarchies=False,
-                            context_qualifiers=None):
+                            context_qualifiers=None, exclude_ids=None):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -211,9 +211,22 @@ async def coalesce_by_graph(input_ids, input_node_type,
 
     if filter_predicate_hierarchies:
         enriched_links = filter_result_hierarchies(enriched_links)
-    enriched_links.sort(key=lambda enrichment: enrichment.p_value)
+    if exclude_ids:
+        enriched_links = [
+            enrichment
+            for enrichment in enriched_links
+            if enrichment.enriched_node.new_curie not in exclude_ids
+        ]
+    enriched_links.sort(
+        key=lambda enrichment: (
+            enrichment.p_value,
+            enrichment.enriched_node.new_curie,
+            enrichment.predicate,
+            enrichment.is_source,
+        )
+    )
 
-    if max_results and filter_predicate_hierarchies:
+    if max_results:
         enriched_links = enriched_links[:max_results]
 
     nodetypedict = {
@@ -251,14 +264,18 @@ def get_node_names(unique_link_nodes):
     return duckdb_store.get_node_names(unique_link_nodes)
 
 
-def create_nodes_to_links(allnodes, param_predicates=None):
+def create_nodes_to_links(allnodes, param_predicates=None, neighbor_ids=None):
     """Given a list of nodes identifiers, pull all their links
     If param_predicates is not empty, it should be a list of the same length as allnodes.
     It's use is in EDGAR where create_nodes_to_links is used in the final lookup step. In that case,
     we might be trying to run a bunch of rules at the same time and so the predicates will differ node to node.
 
     Note that we used to add inverted symmetric links to the results, but we no longer do that."""
-    return duckdb_store.create_nodes_to_links(allnodes, param_predicates)
+    return duckdb_store.create_nodes_to_links(
+        allnodes,
+        param_predicates,
+        neighbor_ids=neighbor_ids,
+    )
 
 
 def filter_result_hierarchies(results):

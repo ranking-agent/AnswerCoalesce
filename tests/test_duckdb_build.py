@@ -9,7 +9,16 @@ from scipy.stats import poisson
 from src.graph_coalescence import duckdb_store
 from src.graph_coalescence.build_duckdb import build_database, extract_prov
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph
-from src.single_node_coalescer import multi_curie_query
+from src.components import EnrichmentResult, EnrichmentType, QueryParams
+from src.scoring import (
+    pvalue_to_conductance,
+    score_from_conductance,
+    score_inference,
+)
+from src.single_node_coalescer import (
+    multi_curie_query,
+    run_inference_lookup,
+)
 from tests.conftest import generate_mcq_query
 
 
@@ -38,6 +47,7 @@ def test_duckdb_builder_creates_normalized_graph(tmp_path):
             "relation",
             "fact",
             "evidence",
+            "feature",
             "membership",
             "category_count",
             "feature_stats",
@@ -46,13 +56,13 @@ def test_duckdb_builder_creates_normalized_graph(tmp_path):
     relation = connection.execute(
         "SELECT predicate_json, is_symmetric FROM relation"
     ).fetchone()
-    connection.close()
 
     assert counts == {
         "node": 2,
         "relation": 1,
         "fact": 1,
         "evidence": 1,
+        "feature": 2,
         "membership": 2,
         "category_count": 15,
         "feature_stats": 25,
@@ -62,6 +72,33 @@ def test_duckdb_builder_creates_normalized_graph(tmp_path):
         "species_context_qualifier": "NCBITaxon:9606",
     }
     assert relation[1] is True
+    assert connection.execute(
+        """
+        SELECT count(*)
+        FROM membership
+        JOIN node ON node.node_id = membership.member_node_id
+        JOIN feature USING (feature_id)
+        """
+    ).fetchone()[0] == counts["membership"]
+    connection.close()
+
+
+def test_runtime_rejects_incompatible_schema(tmp_path, monkeypatch):
+    database = tmp_path / "old-schema.duckdb"
+    connection = duckdb.connect(str(database))
+    connection.execute(
+        """
+        CREATE TABLE metadata (key VARCHAR PRIMARY KEY, value VARCHAR NOT NULL);
+        INSERT INTO metadata VALUES ('schema_version', '3');
+        """
+    )
+    connection.close()
+
+    monkeypatch.setenv("AC_DUCKDB_PATH", str(database))
+    duckdb_store.close_connection()
+    with pytest.raises(RuntimeError, match="schema version 3"):
+        duckdb_store.connection()
+    duckdb_store.close_connection()
 
 
 def test_duplicate_evidence_does_not_inflate_enrichment(tmp_path, monkeypatch):
@@ -249,6 +286,166 @@ def test_reciprocal_symmetric_facts_have_unique_membership(tmp_path):
     assert connection.execute("SELECT count(*) FROM evidence").fetchone()[0] == 2
     assert connection.execute("SELECT count(*) FROM membership").fetchone()[0] == 2
     connection.close()
+
+
+def test_edgar_ranks_before_hydrating_inference_evidence(tmp_path, monkeypatch):
+    nodes = [
+        {"id": "PATHWAY:1", "category": ["biolink:Pathway"]},
+        {"id": "PATHWAY:2", "category": ["biolink:Pathway"]},
+        {"id": "GENE:A", "category": ["biolink:Gene"]},
+        {"id": "GENE:B", "category": ["biolink:Gene"]},
+        {"id": "GENE:C", "category": ["biolink:Gene"]},
+    ]
+    sources = [
+        {
+            "resource_id": "infores:primary",
+            "resource_role": "primary_knowledge_source",
+        }
+    ]
+    edges = [
+        {
+            "id": "edge-a-1",
+            "subject": "GENE:A",
+            "predicate": "biolink:causes",
+            "object": "PATHWAY:1",
+            "sources": sources,
+        },
+        {
+            "id": "edge-a-2",
+            "subject": "GENE:A",
+            "predicate": "biolink:causes",
+            "object": "PATHWAY:1",
+            "sources": sources,
+        },
+        {
+            "id": "edge-b-1",
+            "subject": "GENE:B",
+            "predicate": "biolink:causes",
+            "object": "PATHWAY:1",
+            "sources": sources,
+        },
+        {
+            "id": "edge-b-2",
+            "subject": "GENE:B",
+            "predicate": "biolink:causes",
+            "object": "PATHWAY:2",
+            "sources": sources,
+        },
+        {
+            "id": "edge-c-1",
+            "subject": "GENE:C",
+            "predicate": "biolink:causes",
+            "object": "PATHWAY:2",
+            "sources": sources,
+        },
+        {
+            "id": "edge-c-2",
+            "subject": "GENE:C",
+            "predicate": "biolink:causes",
+            "object": "PATHWAY:2",
+            "species_context_qualifier": "NCBITaxon:9606",
+            "sources": sources,
+        },
+    ]
+    node_file = tmp_path / "nodes.jsonl"
+    edge_file = tmp_path / "edges.jsonl"
+    database = tmp_path / "answer-coalesce.duckdb"
+    _write_jsonl(node_file, nodes)
+    _write_jsonl(edge_file, edges)
+    build_database(node_file, edge_file, database, blocklist=set())
+
+    monkeypatch.setenv("AC_DUCKDB_PATH", str(database))
+    duckdb_store.close_connection()
+    predicate = json.dumps({"predicate": "biolink:causes"}, separators=(",", ":"))
+    enrichments = [
+        EnrichmentResult(
+            enrichment_type=EnrichmentType.GRAPH,
+            enriched_id="PATHWAY:1",
+            enriched_name="pathway one",
+            enriched_types=("biolink:Pathway",),
+            predicate=predicate,
+            p_value=1e-10,
+            linked_curies=frozenset(),
+            counts=(0, 0, 0),
+            is_source=False,
+        ),
+        EnrichmentResult(
+            enrichment_type=EnrichmentType.GRAPH,
+            enriched_id="PATHWAY:2",
+            enriched_name="pathway two",
+            enriched_types=("biolink:Pathway",),
+            predicate=predicate,
+            p_value=1e-6,
+            linked_curies=frozenset(),
+            counts=(0, 0, 0),
+            is_source=False,
+        ),
+    ]
+    params = QueryParams(
+        curie="DISEASE:1",
+        predicate_parts=json.dumps({"predicate": "biolink:related_to"}),
+        is_source=False,
+        input_qnode="disease",
+        output_qnode="gene",
+        output_semantic_type="biolink:Gene",
+        input_semantic_type="biolink:Disease",
+        qedge_id="e0",
+    )
+
+    summaries = duckdb_store.graph_inference_summaries(
+        [
+            {
+                "rule_id": index,
+                "enriched_curie": enrichment.enriched_id,
+                "predicate_json": enrichment.predicate,
+                "is_source": enrichment.is_source,
+                "p_value": enrichment.p_value,
+            }
+            for index, enrichment in enumerate(enrichments)
+        ],
+        "biolink:Gene",
+    )
+    by_curie = {summary.inferred_curie: summary for summary in summaries}
+    assert by_curie["GENE:A"].inference_count == 2
+    assert by_curie["GENE:B"].inference_count == 2
+    assert by_curie["GENE:C"].inference_count == 2
+    assert by_curie["GENE:A"].total_conductance == pytest.approx(
+        2 * pvalue_to_conductance([1e-10])[0]
+    )
+    assert by_curie["GENE:A"].first_seen_order < by_curie["GENE:B"].first_seen_order
+
+    graph_inferred, property_inferred, metadata = asyncio.run(
+        run_inference_lookup(
+            enrichments,
+            params,
+            max_results=1,
+        )
+    )
+
+    assert property_inferred == {}
+    assert metadata == {
+        "candidate_count": 3,
+        "selected_count": 1,
+        "graph_inferences_before_selection": 6,
+        "property_inferences_before_selection": 0,
+    }
+    assert len(graph_inferred) == 1
+    selected_enrichment, selected_lookup = graph_inferred[0]
+    assert selected_enrichment.enriched_id == "PATHWAY:1"
+    assert [link.link_id for link in selected_lookup.lookup_links] == [
+        "GENE:A",
+        "GENE:A",
+    ]
+    duckdb_store.close_connection()
+
+
+def test_inference_conductance_preserves_elrond_score():
+    p_values = [0.0, 1e-20, 1e-6]
+    total_conductance = sum(pvalue_to_conductance(p_values))
+
+    assert score_from_conductance(total_conductance) == pytest.approx(
+        score_inference(p_values)
+    )
 
 
 def test_robokop_provenance_is_preserved():

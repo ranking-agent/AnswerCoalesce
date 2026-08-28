@@ -6,10 +6,16 @@ import orjson
 import time
 
 from src.property_coalescence.property_coalescer import coalesce_by_property, lookup_nodes_by_properties
+from src.graph_coalescence import duckdb_store
 from src.graph_coalescence.graph_coalescer import coalesce_by_graph, create_nodes_to_links, get_node_types, \
     filter_links_by_node_type, get_node_names, add_provs
 
-from src.scoring import pvalue_to_sigmoid, score_inference
+from src.scoring import (
+    pvalue_to_conductance,
+    pvalue_to_sigmoid,
+    score_from_conductance,
+    score_inference,
+)
 from src.components import MCQDefinition, Lookup, NewEdge, QueryParams, InferenceParams, EnrichmentResult, \
     EnrichmentType
 
@@ -91,6 +97,7 @@ async def infer(in_message: dict) -> dict:
 
         # 3 & 4. ENRICHMENT (graph + property run truly concurrently in worker threads)
         enrichment_start = time.time()
+        exclude_ids = set(lookup_results.link_ids) | {params.curie}
 
         context_qualifiers = {k: v for k, v in params.predicate_dict.items()
                               if k.endswith("_context_qualifier")}
@@ -106,8 +113,10 @@ async def infer(in_message: dict) -> dict:
                     predicate_constraint_style=inf_params.predicate_constraint_style,
                     predicate_constraints=inf_params.predicate_constraints,
                     pvalue_threshold=inf_params.pvalue_threshold,
+                    max_results=inf_params.max_rules,
                     filter_predicate_hierarchies=True,
-                    context_qualifiers=context_qualifiers
+                    context_qualifiers=context_qualifiers,
+                    exclude_ids=exclude_ids,
                 )
             except Exception as e:
                 builder.log_error(f"Graph enrichment failed: {str(e)}")
@@ -143,7 +152,6 @@ async def infer(in_message: dict) -> dict:
             ensure_empty_results(in_message)
             return in_message
 
-        exclude_ids = set(lookup_results.link_ids) | {params.curie}
         filtered_enrichments = filter_enrichments(
             all_enrichments,
             exclude_ids=exclude_ids,
@@ -175,7 +183,12 @@ async def infer(in_message: dict) -> dict:
         # 6. INFERENCE LOOKUP
         inference_start = time.time()
         try:
-            graph_inferred_results, property_inferred_results = await run_inference_lookup(filtered_enrichments, params)
+            graph_inferred_results, property_inferred_results, inference_metadata = await run_inference_lookup(
+                filtered_enrichments,
+                params,
+                max_results=inf_params.max_results,
+                excluded_ids=set(lookup_results.link_ids),
+            )
         except Exception as e:
             builder.log_error(f"Inference lookup failed: {str(e)}",
                               metadata={"timing_seconds": round(time.time() - inference_start, 3)})
@@ -213,15 +226,33 @@ async def infer(in_message: dict) -> dict:
                                                    "unique": len(unique_graph_inferred)},
                               "property_inferences": {"total": total_property_inferences,
                                                       "unique": len(unique_property_inferred)},
+                              "ranking": inference_metadata,
                               "timing_seconds": round(time.time() - inference_start, 3)
                               }
                     )
+
+        used_enrichment_keys = {
+            enrichment.key
+            for enrichment, _ in graph_inferred_results
+        }
+        used_property_ids = set(property_inferred_results)
+        response_enrichments = [
+            enrichment
+            for enrichment in filtered_enrichments
+            if (
+                enrichment.key in used_enrichment_keys
+                or (
+                    enrichment.enrichment_type == EnrichmentType.PROPERTY
+                    and enrichment.enriched_id in used_property_ids
+                )
+            )
+        ]
 
         # 7. BUILD RESPONSE (sync → thread pool, keeps event loop free)
         build_start = time.time()
         await asyncio.to_thread(
             build_edgar_response,
-            builder, params, lookup_results, filtered_enrichments,
+            builder, params, lookup_results, response_enrichments,
             graph_inferred_results, property_inferred_results,
             max_results=inf_params.max_results
         )
@@ -340,34 +371,89 @@ def lookup_batch(curies: list[str], predicates: list[str], is_sources: list[bool
     return results
 
 
-async def run_inference_lookup(enrichments: list[EnrichmentResult], params: QueryParams) -> tuple[list, dict]:
+def lookup_graph_enrichments(
+    enrichments: list[EnrichmentResult],
+    output_semantic_type: str,
+    allowed_link_ids: list[str],
+) -> list[tuple[EnrichmentResult, Lookup]]:
+    """Hydrate graph inference evidence only for selected inferred nodes."""
+    if not enrichments or not allowed_link_ids:
+        return []
+
+    curies = [enrichment.enriched_id for enrichment in enrichments]
+    nodes_to_links = create_nodes_to_links(
+        curies,
+        neighbor_ids=allowed_link_ids,
+    )
+    all_node_ids = set(curies)
+    all_node_ids.update(allowed_link_ids)
+    node_names = get_node_names(all_node_ids)
+    node_types = get_node_types(all_node_ids)
+
+    lookups = []
+    for enrichment in enrichments:
+        constraint = orjson.loads(enrichment.predicate)
+        matching_links = [
+            link
+            for link in nodes_to_links.get(enrichment.enriched_id, [])
+            if constraint.items() <= orjson.loads(link[1]).items()
+        ]
+        filtered_links = filter_links_by_node_type(
+            {enrichment.enriched_id: matching_links},
+            [output_semantic_type],
+            node_types,
+        ).get(enrichment.enriched_id, [])
+        if not filtered_links:
+            continue
+        lookup = Lookup(
+            enrichment.enriched_id,
+            enrichment.predicate,
+            enrichment.is_source,
+            node_names,
+            node_types,
+            filtered_links,
+            output_semantic_type,
+        )
+        lookups.append((enrichment, lookup))
+
+    add_provs([lookup for _, lookup in lookups])
+    return lookups
+
+
+async def run_inference_lookup(
+    enrichments: list[EnrichmentResult],
+    params: QueryParams,
+    *,
+    max_results: int | None = None,
+    excluded_ids: set[str] | None = None,
+) -> tuple[list, dict, dict]:
     """
     Run second lookup from enriched nodes to find inferred results.
 
-    Uses one DuckDB lookup for all graph enrichments.
+    Rank compact graph/property contributions before hydrating graph evidence.
     """
-
-    # Separate by type
     graph_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.GRAPH]
     property_enrichments = [e for e in enrichments if e.enrichment_type == EnrichmentType.PROPERTY]
+    excluded_ids = excluded_ids or set()
 
-    def graph_inference_sync():
+    def graph_summary_sync():
         if not graph_enrichments:
             return []
-
-        curies = [e.enriched_id for e in graph_enrichments]
-        predicates = [e.predicate for e in graph_enrichments]
-        is_sources = [getattr(e, 'is_source', False) for e in graph_enrichments]
-
-        lookups = lookup_batch(curies, predicates, is_sources, params.output_semantic_type)
-
-        graph_inferred = []
-        for enrichment in graph_enrichments:
-            lookup = lookups.get(enrichment.enriched_id)
-            if lookup:
-                graph_inferred.append((enrichment, lookup))
-
-        return graph_inferred
+        rules = [
+            {
+                "rule_id": rule_id,
+                "enriched_curie": enrichment.enriched_id,
+                "predicate_json": enrichment.predicate,
+                "is_source": enrichment.is_source,
+                "p_value": enrichment.p_value,
+            }
+            for rule_id, enrichment in enumerate(graph_enrichments)
+        ]
+        return duckdb_store.graph_inference_summaries(
+            rules,
+            params.output_semantic_type,
+            excluded_ids=excluded_ids,
+        )
 
     def property_inference_sync():
         # return {}  # TODO: re-enable once property SQLite DBs are rebuilt from new data
@@ -394,12 +480,89 @@ async def run_inference_lookup(enrichments: list[EnrichmentResult], params: Quer
 
         return property_inferred
 
-    graph_inferred, property_inferred = await asyncio.gather(
-        asyncio.to_thread(graph_inference_sync),
+    graph_summaries, property_inferred = await asyncio.gather(
+        asyncio.to_thread(graph_summary_sync),
         asyncio.to_thread(property_inference_sync)
     )
 
-    return graph_inferred, property_inferred
+    candidate_conductance = defaultdict(float)
+    candidate_first_seen = {}
+    graph_inference_count = 0
+    for summary in graph_summaries:
+        candidate_conductance[summary.inferred_curie] += summary.total_conductance
+        candidate_first_seen[summary.inferred_curie] = min(
+            summary.first_seen_order,
+            candidate_first_seen.get(
+                summary.inferred_curie,
+                summary.first_seen_order,
+            ),
+        )
+        graph_inference_count += summary.inference_count
+
+    property_inference_count = 0
+    property_order = (len(graph_enrichments) + 1) * 1000000000
+    for inferred_data in property_inferred.values():
+        contribution = float(
+            pvalue_to_conductance([inferred_data["p_value"]])[0]
+        )
+        for link_id in inferred_data.get("lookup_links", []):
+            if link_id in excluded_ids:
+                continue
+            candidate_conductance[link_id] += contribution
+            candidate_first_seen.setdefault(link_id, property_order)
+            property_order += 1
+            property_inference_count += 1
+
+    ranked_candidates = sorted(
+        (
+            (score_from_conductance(conductance), inferred_id)
+            for inferred_id, conductance in candidate_conductance.items()
+        ),
+        key=lambda item: (
+            -item[0],
+            candidate_first_seen[item[1]],
+            item[1],
+        ),
+    )
+    selected_candidates = (
+        ranked_candidates[:max_results]
+        if max_results
+        else ranked_candidates
+    )
+    selected_ids = [inferred_id for _, inferred_id in selected_candidates]
+    selected_id_set = set(selected_ids)
+
+    graph_inferred = await asyncio.to_thread(
+        lookup_graph_enrichments,
+        graph_enrichments,
+        params.output_semantic_type,
+        selected_ids,
+    )
+
+    filtered_property_inferred = {}
+    for prop, inferred_data in property_inferred.items():
+        selected_links = [
+            (link_id, link_name)
+            for link_id, link_name in zip(
+                inferred_data.get("lookup_links", []),
+                inferred_data.get("lookup_names", []),
+            )
+            if link_id in selected_id_set
+        ]
+        if not selected_links:
+            continue
+        filtered = dict(inferred_data)
+        filtered["lookup_links"] = [link_id for link_id, _ in selected_links]
+        filtered["lookup_names"] = [link_name for _, link_name in selected_links]
+        filtered_property_inferred[prop] = filtered
+
+    metadata = {
+        "candidate_count": len(candidate_conductance),
+        "selected_count": len(selected_ids),
+        "graph_inferences_before_selection": graph_inference_count,
+        "property_inferences_before_selection": property_inference_count,
+    }
+    return graph_inferred, filtered_property_inferred, metadata
 
 
 ######################################
@@ -552,8 +715,14 @@ def filter_enrichments(enrichments: list[EnrichmentResult], exclude_ids: set[str
     """
     filtered = [e for e in enrichments if e.enriched_id not in exclude_ids]
 
-    # Sort by p-value (most significant first)
-    filtered.sort(key=lambda x: x.p_value)
+    filtered.sort(
+        key=lambda enrichment: (
+            enrichment.p_value,
+            enrichment.enriched_id,
+            enrichment.predicate,
+            enrichment.is_source,
+        )
+    )
 
     if max_rules is not None:
         filtered = filtered[:max_rules]

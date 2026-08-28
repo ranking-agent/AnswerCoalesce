@@ -535,6 +535,6 @@ class InferenceParams:
             property_constraints=params.get('properties_constraints', None),
             node_constraints=params.get('node_constraints', None),
             pvalue_threshold=params.get('pvalue_threshold', 1e-5),
-            max_rules=params.get('max_rules', None),
-            max_results=params.get('max_results', None)
+            max_rules=params.get('max_rules', 100),
+            max_results=params.get('max_results', 2000)
         )

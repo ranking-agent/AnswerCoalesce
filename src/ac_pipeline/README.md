@@ -73,12 +73,17 @@ export AC_DUCKDB_BUILD_MAX_TEMP_DIRECTORY_SIZE=100GB
 export AC_DUCKDB_BUILD_THREADS=8
 ```
 
-The database stores normalized memberships, raw evidence, and exact background
-counts in `feature_stats`. Statistics are built one category at a time so each
+The database assigns compact release-local IDs to nodes and graph features.
+`membership(member_node_id, feature_id)` is ordered by member, while
+`feature_stats(category_id, feature_id, background_count)` is ordered by
+category and feature. Statistics are built one category at a time so each
 aggregation remains within the configured memory and spill limits.
-At query time, DuckDB joins candidate support to those counts, computes the
-Poisson score in vectorized batches, and applies thresholds and top-K limits
-before returning candidates to Python.
+
+At query time, DuckDB performs an indexed lookup of the input memberships and
+materializes those matched rows once. Support counting, filtering, scoring,
+top-K selection, and linked-member construction all reuse that bounded
+relation rather than rescanning the complete membership table. Raw evidence
+and CURIE mappings remain in separate tables for lossless TRAPI output.
 
 The property coalescence SQLite rebuild remains a separate step in the same
 job.
@@ -89,7 +94,7 @@ Mount the database read-only and set:
 
 ```bash
 export AC_DUCKDB_PATH=/data/answer-coalesce.duckdb
-export AC_DUCKDB_QUERY_MEMORY_LIMIT=4GB
+export AC_DUCKDB_QUERY_MEMORY_LIMIT=1GB
 export AC_DUCKDB_QUERY_MAX_TEMP_DIRECTORY_SIZE=8GB
 export AC_DUCKDB_QUERY_THREADS=2
 ```

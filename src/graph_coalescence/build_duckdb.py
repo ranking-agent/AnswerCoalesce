@@ -27,7 +27,7 @@ ROBOKOP_AGGREGATOR_SOURCE_KEYS = (
     "aggregator_knowledge_source",
     "biolink:aggregator_knowledge_source",
 )
-SCHEMA_VERSION = "3"
+SCHEMA_VERSION = "4"
 DEFAULT_MEMORY_LIMIT = "6GB"
 DEFAULT_MAX_TEMP_DIRECTORY_SIZE = "20GB"
 DEFAULT_THREADS = 4
@@ -165,7 +165,7 @@ def _configure_connection(
 def _create_staging_schema(connection):
     connection.execute(
         """
-        CREATE TABLE node (
+        CREATE TABLE raw_node (
             curie VARCHAR PRIMARY KEY,
             name VARCHAR,
             categories VARCHAR[] NOT NULL
@@ -188,46 +188,46 @@ def _create_feature_stats(connection):
     connection.execute(
         """
         CREATE TABLE feature_stats (
-            category VARCHAR NOT NULL,
-            neighbor_curie VARCHAR NOT NULL,
-            relation_id BIGINT NOT NULL,
-            member_is_subject BOOLEAN NOT NULL,
+            category_id BIGINT NOT NULL,
+            feature_id BIGINT NOT NULL,
             background_count BIGINT NOT NULL
         )
         """
     )
     categories = [
-        row[0]
+        row
         for row in connection.execute(
-            "SELECT category FROM category_count ORDER BY category"
+            """
+            SELECT category_id, category
+            FROM category_count
+            ORDER BY category_id
+            """
         ).fetchall()
     ]
     started_at = time.monotonic()
     total_rows = 0
-    for index, category in enumerate(categories, start=1):
+    for index, (category_id, category) in enumerate(categories, start=1):
         category_started_at = time.monotonic()
         connection.execute(
             """
             INSERT INTO feature_stats
             SELECT
-                ? AS category,
-                membership.neighbor_curie,
-                membership.relation_id,
-                membership.member_is_subject,
+                ? AS category_id,
+                membership.feature_id,
                 count(*)::BIGINT AS background_count
             FROM membership
-            JOIN node ON node.curie = membership.member_curie
+            JOIN node ON node.node_id = membership.member_node_id
             WHERE list_contains(node.categories, ?)
             GROUP BY
-                membership.neighbor_curie,
-                membership.relation_id,
-                membership.member_is_subject
+                membership.feature_id
+            ORDER BY
+                membership.feature_id
             """,
-            [category, category],
+            [category_id, category],
         )
         category_rows = connection.execute(
-            "SELECT count(*) FROM feature_stats WHERE category = ?",
-            [category],
+            "SELECT count(*) FROM feature_stats WHERE category_id = ?",
+            [category_id],
         ).fetchone()[0]
         total_rows += category_rows
         print(
@@ -268,22 +268,53 @@ def _create_derived_schema(connection):
         """,
         ),
         (
+            "nodes",
+            """
+
+        CREATE TABLE node AS
+        SELECT
+            row_number() OVER (ORDER BY curie)::BIGINT AS node_id,
+            curie,
+            name,
+            categories
+        FROM raw_node
+        ORDER BY curie;
+        """,
+        ),
+        (
+            "node indexes",
+            """
+
+        ALTER TABLE node ADD PRIMARY KEY (node_id);
+        CREATE UNIQUE INDEX node_curie_idx ON node(curie);
+        """,
+        ),
+        (
             "facts",
             """
 
         CREATE TABLE fact AS
         SELECT
             row_number() OVER (
-                ORDER BY raw.subject_curie, relation.relation_id, raw.object_curie
+                ORDER BY
+                    subject_node.node_id,
+                    relation.relation_id,
+                    object_node.node_id
             )::BIGINT AS fact_id,
-            raw.subject_curie,
-            raw.object_curie,
+            subject_node.node_id AS subject_node_id,
+            object_node.node_id AS object_node_id,
             relation.relation_id
         FROM (
             SELECT DISTINCT subject_curie, object_curie, predicate_json
             FROM raw_edge
         ) raw
-        JOIN relation USING (predicate_json);
+        JOIN relation USING (predicate_json)
+        JOIN node subject_node ON subject_node.curie = raw.subject_curie
+        JOIN node object_node ON object_node.curie = raw.object_curie
+        ORDER BY
+            subject_node_id,
+            relation_id,
+            object_node_id;
         """,
         ),
         (
@@ -292,7 +323,7 @@ def _create_derived_schema(connection):
 
         ALTER TABLE fact ADD PRIMARY KEY (fact_id);
         CREATE UNIQUE INDEX fact_semantic_idx
-            ON fact(subject_curie, relation_id, object_curie);
+            ON fact(subject_node_id, relation_id, object_node_id);
         """,
         ),
         (
@@ -307,9 +338,11 @@ def _create_derived_schema(connection):
             raw.sources_json
         FROM raw_edge raw
         JOIN relation USING (predicate_json)
+        JOIN node subject_node ON subject_node.curie = raw.subject_curie
+        JOIN node object_node ON object_node.curie = raw.object_curie
         JOIN fact
-         ON fact.subject_curie = raw.subject_curie
-         AND fact.object_curie = raw.object_curie
+         ON fact.subject_node_id = subject_node.node_id
+         AND fact.object_node_id = object_node.node_id
          AND fact.relation_id = relation.relation_id;
         """,
         ),
@@ -322,37 +355,92 @@ def _create_derived_schema(connection):
         """,
         ),
         (
+            "features",
+            """
+
+        CREATE TABLE feature AS
+        WITH semantic_membership AS (
+            SELECT
+                fact.object_node_id AS neighbor_node_id,
+                fact.relation_id,
+                TRUE AS member_is_subject
+            FROM fact
+
+            UNION
+
+            SELECT
+                fact.subject_node_id AS neighbor_node_id,
+                fact.relation_id,
+                relation.is_symmetric AS member_is_subject
+            FROM fact
+            JOIN relation USING (relation_id)
+            WHERE fact.subject_node_id != fact.object_node_id
+               OR NOT relation.is_symmetric
+        )
+        SELECT
+            row_number() OVER (
+                ORDER BY
+                    neighbor_node_id,
+                    relation_id,
+                    member_is_subject
+            )::BIGINT AS feature_id,
+            neighbor_node_id,
+            relation_id,
+            member_is_subject
+        FROM semantic_membership
+        ORDER BY feature_id;
+        """,
+        ),
+        (
+            "feature indexes",
+            """
+
+        ALTER TABLE feature ADD PRIMARY KEY (feature_id);
+        """,
+        ),
+        (
             "membership",
             """
 
         CREATE TABLE membership AS
+        WITH semantic_membership AS (
+            SELECT
+                fact.subject_node_id AS member_node_id,
+                fact.object_node_id AS neighbor_node_id,
+                fact.relation_id,
+                TRUE AS member_is_subject
+            FROM fact
+
+            UNION
+
+            SELECT
+                fact.object_node_id AS member_node_id,
+                fact.subject_node_id AS neighbor_node_id,
+                fact.relation_id,
+                relation.is_symmetric AS member_is_subject
+            FROM fact
+            JOIN relation USING (relation_id)
+            WHERE fact.subject_node_id != fact.object_node_id
+               OR NOT relation.is_symmetric
+        )
         SELECT
-            fact.subject_curie AS member_curie,
-            fact.object_curie AS neighbor_curie,
-            fact.relation_id,
-            TRUE AS member_is_subject
-        FROM fact
-        UNION
-        SELECT
-            fact.object_curie AS member_curie,
-            fact.subject_curie AS neighbor_curie,
-            fact.relation_id,
-            relation.is_symmetric AS member_is_subject
-        FROM fact
-        JOIN relation USING (relation_id)
-        WHERE fact.subject_curie != fact.object_curie
-           OR NOT relation.is_symmetric;
+            semantic_membership.member_node_id,
+            feature.feature_id
+        FROM semantic_membership
+        JOIN feature
+          ON feature.neighbor_node_id = semantic_membership.neighbor_node_id
+         AND feature.relation_id = semantic_membership.relation_id
+         AND feature.member_is_subject = semantic_membership.member_is_subject
+        ORDER BY
+            semantic_membership.member_node_id,
+            feature.feature_id;
         """,
         ),
         (
             "membership indexes",
             """
 
-        CREATE UNIQUE INDEX membership_semantic_idx
-            ON membership(member_curie, neighbor_curie, relation_id, member_is_subject);
-        CREATE INDEX membership_member_idx ON membership(member_curie);
-        CREATE INDEX membership_feature_idx
-            ON membership(neighbor_curie, relation_id, member_is_subject);
+        CREATE INDEX membership_member_idx ON membership(member_node_id);
         """,
         ),
         (
@@ -360,11 +448,22 @@ def _create_derived_schema(connection):
             """
 
         CREATE TABLE category_count AS
-        SELECT category, count(DISTINCT curie)::BIGINT AS node_count
-        FROM node, unnest(categories) AS category_value(category)
-        GROUP BY category;
+        SELECT
+            row_number() OVER (ORDER BY category)::BIGINT AS category_id,
+            category,
+            node_count
+        FROM (
+            SELECT
+                category,
+                count(*)::BIGINT AS node_count
+            FROM node, unnest(categories) AS category_value(category)
+            GROUP BY category
+        )
+        ORDER BY category_id;
 
-        ALTER TABLE category_count ADD PRIMARY KEY (category);
+        ALTER TABLE category_count ADD PRIMARY KEY (category_id);
+        CREATE UNIQUE INDEX category_count_category_idx
+            ON category_count(category);
         """,
         ),
         (
@@ -376,6 +475,7 @@ def _create_derived_schema(connection):
             value VARCHAR NOT NULL
         );
 
+        DROP TABLE raw_node;
         DROP TABLE raw_edge;
         """,
         ),
@@ -438,14 +538,14 @@ def build_database(
             categories = list(dict.fromkeys(node["category"]))
             node_batch.append((curie, node.get("name"), categories))
             if len(node_batch) >= batch_size:
-                _insert_batch(connection, "node", node_columns, node_batch)
+                _insert_batch(connection, "raw_node", node_columns, node_batch)
                 node_count += len(node_batch)
                 node_batch.clear()
                 if node_count >= next_node_report:
                     _report_progress("Loaded nodes", node_count, node_started_at)
                     next_node_report += 1_000_000
         if node_batch:
-            _insert_batch(connection, "node", node_columns, node_batch)
+            _insert_batch(connection, "raw_node", node_columns, node_batch)
             node_count += len(node_batch)
         _report_progress("Loaded nodes", node_count, node_started_at)
 
@@ -512,7 +612,7 @@ def build_database(
                 UNION
                 SELECT object_curie AS curie FROM raw_edge
             ) endpoint
-            ANTI JOIN node USING (curie)
+            ANTI JOIN raw_node USING (curie)
             LIMIT 10
             """
         ).fetchall()

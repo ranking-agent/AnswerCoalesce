@@ -1,4 +1,5 @@
 from src.server import is_multi_curie_query, is_infer_query
+from src.components import InferenceParams
 from reasoner_pydantic import Response as PDResponse
 import pytest
 
@@ -27,3 +28,10 @@ async def test_infer_input():
     assert PDResponse(**trapi)
     assert not await is_multi_curie_query(trapi)
     assert await is_infer_query(trapi)
+
+
+def test_inference_parameter_defaults_bound_edgar_work():
+    params = InferenceParams.from_message({"message": {}})
+
+    assert params.max_rules == 100
+    assert params.max_results == 2000
