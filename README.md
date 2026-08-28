@@ -126,6 +126,9 @@ https://github.com/helxplatform/translator-devops/answer-coalesce
 The AC DuckDB database is built directly from KGX JSONL on Hatteras via a
 Slurm pipeline. See [`src/ac_pipeline/README.md`](src/ac_pipeline/README.md).
 
+For the database schema and the complete set-input and EDGAR query flows, see
+[`docs/duckdb-architecture.md`](docs/duckdb-architecture.md).
+
 ## Testing
 
 ```bash

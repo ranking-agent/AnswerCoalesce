@@ -83,7 +83,9 @@ At query time, DuckDB performs an indexed lookup of the input memberships and
 materializes those matched rows once. Support counting, filtering, scoring,
 top-K selection, and linked-member construction all reuse that bounded
 relation rather than rescanning the complete membership table. Raw evidence
-and CURIE mappings remain in separate tables for lossless TRAPI output.
+source provenance and CURIE mappings remain in separate tables for TRAPI
+support-edge construction. The database does not preserve arbitrary KGX node
+and edge properties.
 
 The property coalescence SQLite rebuild remains a separate step in the same
 job.
