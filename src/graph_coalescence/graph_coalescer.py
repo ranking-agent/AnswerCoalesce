@@ -1,15 +1,11 @@
-from collections import defaultdict
-from scipy.stats import hypergeom, poisson, binom, norm
+import asyncio
+from scipy.stats import hypergeom, binom, norm
 from src.components import Enrichment
+from src.graph_coalescence import duckdb_store
 from src.util import LoggingUtil
 import logging
 import os
-import redis
-from redis.backoff import ExponentialBackoff
-from redis.retry import Retry
-import redis.exceptions
 import json
-import ast
 import itertools
 import orjson
 import bmt
@@ -21,31 +17,9 @@ tk = bmt.Toolkit()
 
 
 def grouper(n, iterable):
-    it = iter(iterable)
-    while True:
-        chunk = tuple(itertools.islice(it, n))
-        if not chunk:
-            break
+    iterator = iter(iterable)
+    while chunk := tuple(itertools.islice(iterator, n)):
         yield chunk
-
-
-def get_redis_pipeline(dbnum):
-    jpath = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', '..', 'config.json')
-    with open(jpath, 'r') as inf:
-        conf = json.load(inf)
-    retry = Retry(ExponentialBackoff(cap=10, base=0.5), retries=5)
-    kwargs = dict(
-        host=conf['redis_host'],
-        port=int(conf['redis_port']),
-        db=dbnum,
-        retry=retry,
-        retry_on_error=[redis.exceptions.BusyLoadingError, redis.exceptions.ConnectionError, redis.exceptions.TimeoutError],
-    )
-    if 'redis_password' in conf and len(conf['redis_password']) > 0:
-        kwargs['password'] = conf['redis_password']
-    typeredis = redis.Redis(**kwargs)
-    p = typeredis.pipeline(transaction=False)
-    return p
 
 
 def filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style, match_type="exact"):
@@ -165,7 +139,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 async def coalesce_by_graph(input_ids, input_node_type,
                             node_constraints=None, predicate_constraints=None, predicate_constraint_style="exclude",
                             pvalue_threshold=None, max_results=None, filter_predicate_hierarchies=False,
-                            context_qualifiers=None):
+                            context_qualifiers=None, exclude_ids=None):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -188,41 +162,78 @@ async def coalesce_by_graph(input_ids, input_node_type,
         node_constraints = ["biolink:NamedThing"]
     if predicate_constraints is None:
         predicate_constraints = []
-    # Get the links for all the input nodes
-    nodes_to_links = create_nodes_to_links(input_ids)
-    # Filter by context qualifiers if the query specifies them (e.g. species_context_qualifier)
-    if context_qualifiers:
-        nodes_to_links = filter_links_by_context(nodes_to_links, context_qualifiers)
-    # We don't want to do the exlusion here because we want to do it after we've found the enrichments
-    # But we can narrow down by the inclusion constraints
-    if predicate_constraint_style == "include":
-        nodes_to_links = filter_links_by_predicate(nodes_to_links, predicate_constraints, predicate_constraint_style)
-    # Find the unique link nodes and get their types
-    unique_link_nodes, unique_links = uniquify_links(nodes_to_links, input_node_type)
-    nodetypedict = get_node_types(unique_link_nodes)
-    # Now that we know the types, get rid of any links that don't meet the node constraints.
-    # For EDGAR, the default node constraint of NamedThing will let everything be used.
-    nodes_to_links = filter_links_by_node_type(nodes_to_links, node_constraints, nodetypedict)
-    # Having filtered some links out, we need to recompute the unique links
-    unique_link_nodes, unique_links = uniquify_links(nodes_to_links, input_node_type)
-    lcounts = get_link_counts(unique_links)
+    hierarchy_exclusion_pairs = []
+    if filter_predicate_hierarchies and predicate_constraint_style == "exclude":
+        for constraint in predicate_constraints:
+            if isinstance(constraint, dict):
+                excluded_predicate = constraint.get("predicate")
+            elif isinstance(constraint, str) and constraint.startswith("{"):
+                excluded_predicate = orjson.loads(constraint).get("predicate")
+            else:
+                excluded_predicate = constraint
+            if excluded_predicate:
+                hierarchy_exclusion_pairs.extend(
+                    (excluded_predicate, ancestor)
+                    for ancestor in get_ancestors(excluded_predicate)
+                )
+    candidates, total_node_count = await asyncio.to_thread(
+        duckdb_store.enrichment_candidates,
+        input_ids,
+        input_node_type,
+        node_constraints=node_constraints,
+        predicate_constraints=predicate_constraints,
+        predicate_constraint_style=predicate_constraint_style,
+        context_qualifiers=context_qualifiers,
+        hierarchy_exclusion_pairs=hierarchy_exclusion_pairs,
+        pvalue_threshold=pvalue_threshold,
+        max_results=max_results if not filter_predicate_hierarchies else None,
+    )
 
-    total_node_counts = get_total_node_counts(input_node_type)
+    ndraws = len(set(input_ids))
+    enriched_links = []
+    for candidate in candidates:
+        newcurie_is_source = (
+            True if candidate.is_symmetric else not candidate.member_is_subject
+        )
+        enriched_links.append(
+            Enrichment(
+                candidate.p_value,
+                candidate.neighbor_curie,
+                candidate.predicate_json,
+                newcurie_is_source,
+                ndraws,
+                candidate.background_count,
+                total_node_count,
+                candidate.linked_curies,
+                list(candidate.neighbor_categories),
+            )
+        )
 
-    # In a test from test_bigs, we can see that we call sf 1.46M times.  But, we only call with 250k unique parametersets
-    # so we're gonna cache those
-    sf_cache = {}
+    if filter_predicate_hierarchies:
+        enriched_links = filter_result_hierarchies(enriched_links)
+    if exclude_ids:
+        enriched_links = [
+            enrichment
+            for enrichment in enriched_links
+            if enrichment.enriched_node.new_curie not in exclude_ids
+        ]
+    enriched_links.sort(
+        key=lambda enrichment: (
+            enrichment.p_value,
+            enrichment.enriched_node.new_curie,
+            enrichment.predicate,
+            enrichment.is_source,
+        )
+    )
 
-    enriched_links = get_enriched_links(input_ids, input_node_type, nodes_to_links, lcounts, sf_cache, nodetypedict,
-                                        total_node_counts, predicate_constraints, predicate_constraint_style,
-                                        filter_predicate_hierarchies)
-
-    if pvalue_threshold:
-        enriched_links = [link for link in enriched_links if link.p_value < pvalue_threshold]
     if max_results:
         enriched_links = enriched_links[:max_results]
 
-    augment_enrichments(enriched_links, nodetypedict)
+    nodetypedict = {
+        candidate.neighbor_curie: list(candidate.neighbor_categories)
+        for candidate in candidates
+    }
+    await asyncio.to_thread(augment_enrichments, enriched_links, nodetypedict)
 
     return enriched_links
 
@@ -236,418 +247,35 @@ def augment_enrichments(enriched_links, nodetypes):
     add_provs(enriched_links)
 
 
-def process_prov(prov_data):
-    """Convert stored provenance to a TRAPI sources list."""
-    if isinstance(prov_data, (str, bytes)):
-        prov_data = orjson.loads(prov_data)
-    if isinstance(prov_data, list):
-        return prov_data
-    return [
-        {
-            'resource_id': check_prov_value_type(value),
-            'resource_role': check_prov_value_type(role),
-        }
-        for role, value in prov_data.items()
-    ]
-
-
 def add_provs(enrichments):
-    # Collect and deduplicate edges before hitting Redis
     all_edges = set()
     for enrichment in enrichments:
         all_edges.update(enrichment.get_prov_links())
-    unique_edges = list(all_edges)
-
-    prov = {}
-
-    with get_redis_pipeline(4) as p:
-        for edgegroup in grouper(1000, unique_edges):
-            for edge in edgegroup:
-                p.get(edge)
-            ns = p.execute()
-            symmetric_edges = []
-            inverted_to_original = {}
-            for edge, n in zip(edgegroup, ns):
-                if n:
-                    prov[edge] = process_prov(n)
-                else:
-                    inverted = get_edge_symmetric(edge)
-                    symmetric_edges.append(inverted)
-                    inverted_to_original[inverted] = edge
-            if symmetric_edges:
-                for sym_edge in symmetric_edges:
-                    p.get(sym_edge)
-                sym_ns = p.execute()
-                for sym_edge, sn in zip(symmetric_edges, sym_ns):
-                    original = inverted_to_original[sym_edge]
-                    if sn:
-                        prov[original] = process_prov(sn)
-                    else:
-                        prov[original] = []
-
+    prov = duckdb_store.get_edge_provenance(all_edges)
     for enrichment in enrichments:
         enrichment.add_provenance(prov)
 
 
 def get_node_types(unique_link_nodes):
-    # p = get_redis_pipeline(1)
-    nodetypedict = {}
-    with get_redis_pipeline(1) as p:
-        for ncg in grouper(2000, unique_link_nodes):
-            for newcurie in ncg:
-                p.get(newcurie)
-            all_typestrings = p.execute()
-            for newcurie, nodetypestring in zip(ncg, all_typestrings):
-                if nodetypestring:
-                    node_types = ast.literal_eval(nodetypestring.decode())
-                    nodetypedict[newcurie] = node_types
-    return nodetypedict
+    return duckdb_store.get_node_types(unique_link_nodes)
 
 
 def get_node_names(unique_link_nodes):
-    # p = get_redis_pipeline(3)
-    nodenames = {}
-    with get_redis_pipeline(3) as p:
-        for ncg in grouper(1000, unique_link_nodes):
-            for newcurie in ncg:
-                p.get(newcurie)
-            all_names = p.execute()
-            for newcurie, name in zip(ncg, all_names):
-                try:
-                    nodenames[newcurie] = name.decode('UTF-8')
-                except:
-                    nodenames[newcurie] = ''
-    return nodenames
+    return duckdb_store.get_node_names(unique_link_nodes)
 
 
-def get_link_counts(unique_links):
-    # Now we are going to hit redis to get the counts for all of the links.
-    # our unique_links are the keys
-    # p = get_redis_pipeline(2)
-    lcounts = {}
-    with get_redis_pipeline(2) as p:
-        for ulg in grouper(1000, unique_links):
-            for ul in ulg:
-                s = str(ul)
-                p.get(s)
-            ns = p.execute()
-            for ul, n in zip(ulg, ns):
-                try:
-                    lcounts[ul] = int(n)
-                except:
-                    # this can happen becuase we're inferring the category type from the qgraph.  But if we have 0 we have 0
-                    lcounts[ul] = 0
-    return lcounts
-
-
-def check_prov_value_type(value):
-    if isinstance(value, list):
-        val = ','.join(value)
-    else:
-        val = value
-    # I noticed some values are lists eg. ['infores:sri-reference-kg']
-    # This function coerce such to string
-    # Also, the newer pydantic accepts 'primary_knowledge_source' instead of 'biolink:primary_knowledge_source' in the old
-    return val.replace('biolink:', '')
-
-
-def get_edge_symmetric(edge):
-    subject, b = edge.split('{')
-    edge_predicate, obj = b.split('}')
-    edge_predicate = '{' + edge_predicate + '}'
-    return f'{obj.lstrip()} {edge_predicate} {subject.rstrip()}'
-
-
-def filter_opportunities(opportunities, nodes_to_links):
-    new_opportunities = []
-    for opportunity in opportunities:
-        kn = opportunity.get_kg_ids()
-        # These will be the nodes that we actually have links for
-        newkn = list(filter(lambda x: len(nodes_to_links[x]), kn))
-        newopp = opportunity.filter(newkn)
-        if newopp is not None:
-            new_opportunities.append(opportunity)
-    return new_opportunities
-
-
-def uniquify_links(nodes_to_links, input_type):
-    # A link might occur for multiple nodes and across different opportunities
-    # Create the total unique set of links
-    unique_links = set()
-    unique_link_nodes = set()
-    #This is for caching the edge types as symmetric or not because we are parsing json every time.
-    predicate_is_symmetric = {}
-    for n in nodes_to_links:
-        for l in nodes_to_links[n]:
-            # The link as defined uses the input node as is_source, but the lookup into redis uses the
-            # linked node as the is_source, so gotta flip it.   But there is a gross wrinkle here - if the
-            # link is symmetric, then we want the link to always be "True" (Don't flip if it already says True)
-            lplus = l + [input_type]
-            if (l[1] not in predicate_is_symmetric):
-                predicate_is_symmetric[l[1]] = predicate_string_is_symmetric(l[1])
-            if predicate_is_symmetric[l[1]]:
-                lplus[2] = True
-            else:
-                lplus[2] = not lplus[2]
-            tl = tuple(lplus)
-            unique_links.add(tl)
-            unique_link_nodes.add(tl[0])
-    return unique_link_nodes, unique_links
-
-
-def predicate_string_is_symmetric(predicate: str) -> bool:
-    """Check if a predicate string is symmetric. The predicate here is the whole qualified mess as a string"""
-    bare_predicate = orjson.loads(predicate)["predicate"]
-    element = tk.get_element(bare_predicate)
-    if element is None:
-        return False
-    return element["symmetric"] is True
-
-
-def predicate_matches(param_predicate_str, link_predicate_str):
-    """Check if a param predicate's key-value pairs are all present in the link predicate.
-    This handles the new DB format where links have extra context qualifiers."""
-    param_dict = orjson.loads(param_predicate_str)
-    link_dict = orjson.loads(link_predicate_str)
-    return param_dict.items() <= link_dict.items()
-
-
-def create_nodes_to_links(allnodes, param_predicates=[]):
+def create_nodes_to_links(allnodes, param_predicates=None, neighbor_ids=None):
     """Given a list of nodes identifiers, pull all their links
     If param_predicates is not empty, it should be a list of the same length as allnodes.
     It's use is in EDGAR where create_nodes_to_links is used in the final lookup step. In that case,
     we might be trying to run a bunch of rules at the same time and so the predicates will differ node to node.
 
     Note that we used to add inverted symmetric links to the results, but we no longer do that."""
-    # Create a dict from node->links by looking up in redis.
-    #Noticed some qualifiers are have either but not both
-    # eg ['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "predicate": "biolink:affects"}', True]
-    #  VS['UniProtKB:P81908', '{"object_aspect_qualifier": "activity", "object_direction_qualifier": "decreased", "predicate": "biolink:affects"}', True]
-    nodes_to_links = {}
-
-    if param_predicates:
-        node_to_predicates = defaultdict(list)
-        for node, pred in zip(allnodes, param_predicates):
-            node_to_predicates[node].append(pred)
-    else:
-        node_to_predicates = {}
-
-    unique_nodes = list(dict.fromkeys(allnodes))
-
-    with get_redis_pipeline(0) as p:
-        for group in grouper(1000, unique_nodes):
-            for node in group:
-                p.get(node)
-            linkstrings = p.execute()
-            for node, linkstring in zip(group, linkstrings):
-                if linkstring is None:
-                    links = []
-                else:
-                    links = orjson.loads(linkstring)
-                predicates_for_node = node_to_predicates.get(node)
-                if predicates_for_node:
-                    nodes_to_links[node] = [link for link in links
-                                            if any(predicate_matches(pp, link[1])
-                                                   for pp in predicates_for_node)]
-                else:
-                    nodes_to_links[node] = links
-    return nodes_to_links
-
-
-def create_node_to_type(opportunities):
-    # Create a dict from node->type(node) for all nodes in every opportunity
-    allnodes = {}
-    for opportunity in opportunities:
-        kn = opportunity.get_kg_ids()
-        stype = opportunity.get_qg_semantic_type()
-        for node in kn:
-            allnodes[node] = stype
-    return allnodes
-
-
-def filter_opportunities_and_unify(opportunities, nodes_to_links):
-    unique_links = set()
-    unique_link_nodes = set()
-    kn = set(opportunities['qg_curies'].keys())
-    # These will be the nodes that we actually have links for
-    link_nodes = set(filter(lambda x: len(nodes_to_links[x]), kn))
-    new_nodes_to_links = {node: (nodes_to_links[node]) for node in link_nodes}
-    nodes_indices = [list(new_nodes_to_links.keys()).index(node) for node in new_nodes_to_links]
-    seen = set()
-    for n in kn:
-        for l in nodes_to_links[n]:
-            # The link as defined uses the input node as is_source, but the lookup into redis uses the
-            # linked node as the is_source, so gotta flip it
-            lplus = l + [opportunities['qg_curies'].get(n)]
-            lplus[2] = not lplus[2]
-            tl = tuple(lplus)
-            if tl not in seen:
-                unique_links.add(tl)
-                unique_link_nodes.add(tl[0])
-            else:
-                seen.add(tl)
-
-    return new_nodes_to_links, nodes_indices, unique_link_nodes, unique_links
-
-
-def enrich_equal_qnode(qnode_hash, best_enrich_node):
-    for _, val in qnode_hash:
-        if best_enrich_node in val:
-            return True
-    return False
-
-
-def get_enriched_links(nodes, semantic_type, nodes_to_links, lcounts, sfcache, typecache, total_node_counts,
-                       predicate_constraints=None, predicate_constraint_style='exclude',
-                       filter_predicate_hierarchies=False):
-    """Given a set of nodes and the links that they share, as well as some counts, return the enrichments based
-    on the links.
-    If you want to restrict the answers, then you filter nodes_to_links ahead of time.'
-    The enrichments are of the form
-    (enrichp, newcurie, predicate, is_source, ndraws, n, total_node_count, nodeset, node_types)
-    and are sorted so that the lowest p-values (best enrichment) are first.  The enrichp is the pvalue of the enrichment.
-    """
-    logger.info(f'{len(nodes)} enriched node links to process.')
-
-    # Get the most enriched connected node for a group of nodes.
-    logger.debug('start get_shared_links()')
-
-    constraint_triples = {}
-    links_to_nodes = defaultdict(list)
-    for node in nodes:
-        for link in nodes_to_links[node]:
-            links_to_nodes[tuple(link)].append(node)
-
-            # Let's just using this block to save what we might need in edgar
-            if orjson.loads(link[1]).get("predicate") in predicate_constraints:
-                if link[2]:
-                    constraint_triples.setdefault((link[0], node), set()).add(link[1])
-                else:
-                    constraint_triples.setdefault((node, link[0]), set()).add(link[1])
-
-    # For edgar use
-    if filter_predicate_hierarchies and predicate_constraint_style == 'exclude':
-        # Use the constraint_triples to sifter the links
-        links_to_nodes = filter_links_to_nodes(links_to_nodes, constraint_triples, predicate_constraints)
-
-    nodeset_to_links = defaultdict(list)
-    for link, snodes in links_to_nodes.items():
-        nodeset_to_links[frozenset(snodes)].append(link)
-
-    logger.debug('end get_shared_links()')
-
-    logger.debug(f'{len(nodeset_to_links)} nodeset links discovered.')
-
-    results = []
-
-    logger.info(f'{len(nodeset_to_links.items())} possible shared links discovered.')
-
-    total_node_count = total_node_counts[semantic_type]
-    for nodeset, possible_links in nodeset_to_links.items():
-        enriched = []
-
-        for ix, (newcurie, predicate, is_source) in enumerate(possible_links):
-            # For each tuple: ('HP:0001907', 'biolink:treats', True)
-            # The hypergeometric distribution models drawing objects from a bin.
-            # M is the total number of objects (nodes) ,
-            # n is total number of Type I objects (nodes with that property).
-            # The random variate represents the number of Type I objects in N drawn
-            #  without replacement from the total population (len curies).
-            # length of the set of chemicals that mapped to the tuple
-
-            x = len(nodeset)  # draws with the property
-
-            # We only want to do this if the predicate is symmetric
-            #if tk.get_element(orjson.loads(predicate)["predicate"])["symmetric"]:
-            if predicate_string_is_symmetric(predicate):
-                newcurie_is_source = True
-            else:
-                newcurie_is_source = not is_source
-
-            n = lcounts[(newcurie, predicate, newcurie_is_source, semantic_type)]
-
-            if x > 0 and n == 0:
-                logger.info(f"x == {x}; n == 0??? : {newcurie} {predicate} {newcurie_is_source} {semantic_type} ")
-                continue
-
-            ndraws = len(nodes)
-
-            # I only care about things that occur more than by chance, not less than by chance
-            if x < n * ndraws / total_node_count:
-                logger.info(
-                    f"x == {x} < {n * ndraws / total_node_count} : {newcurie} {predicate} {newcurie_is_source} {semantic_type} occur less than by chance")
-                continue
-
-            # The correct distribution to calculate here is the hypergeometric.  However, it's the slowest.
-            # For most cases, it is ok to approximate it.  There are multiple levels of approximation as described
-            # here: https://riskwiki.vosesoftware.com/ApproximationstotheHypergeometricdistribution.php
-            # Ive tested and each approximation is faster, while the quality decreases.
-            # Norm is a bad approximation for this data
-            # the other three are fine.  Poisson very occassionaly is off by a factor of two or so, but that's not
-            # terribly important here.  It's also almost 2x faster than the hypergeometric.
-            # So we're going to use poisson, but if we have problems with it we should drop back to binom rather than hypergeom
-
-            # tuple -> (enrichnode,edge, typemapped)
-
-            args = (x - 1, total_node_count, n, ndraws)
-            if args not in sfcache:
-                sfcache[args] = poisson.sf(x - 1, n * ndraws / total_node_count)
-
-            # Enrichment pvalue
-            enrichp = sfcache[args]
-
-            # get the real labels/types of the enriched node
-            node_types = typecache[newcurie]
-
-            enrichment = Enrichment(enrichp, newcurie, predicate, newcurie_is_source, ndraws, n, total_node_count,
-                                    nodeset, node_types)
-            enriched.append(enrichment)
-
-        if len(enriched) > 0:
-            results += enriched
-
-    if filter_predicate_hierarchies:
-        results = filter_result_hierarchies(results)
-
-    results.sort(key=lambda x: x.p_value)
-
-    logger.debug('end get_enriched_links()')
-
-    return results
-
-
-def filter_links_to_nodes(links_to_nodes, constraint_triples_to_filter, predicate_constraints):
-    """
-    We would like to sifter the links before enrichment calculation.
-    if the predicate between the link and the nodeset is in predicate_to_exclude, we do not want to keep such link
-    if the predicate is also a direct ancestor of any of the predicate to exclude, take 'em out
-
-    """
-    new_links_to_nodes = {}
-    for link, snodes in links_to_nodes.items():
-        link_predicate_only = orjson.loads(link[1]).get("predicate")
-
-        # Takes out the predicate constraints
-        if link_predicate_only in predicate_constraints:
-            continue
-
-        # if any one of the links is connected to the new_curie by the predicate, then all is connected.
-        # To save time, we will consider only the first link
-        # Takes out the predicate constraints ancestors
-        if link[2]:
-            source = link[0]
-            target = snodes[0]
-        else:
-            source = snodes[0]
-            target = link[0]
-        if (source, target) in constraint_triples_to_filter:
-            if any(link_predicate_only in get_ancestors(orjson.loads(preds).get("predicate"))
-                   for preds in constraint_triples_to_filter.get((source, target))):
-                continue
-
-        # if none of the constraint applies
-        new_links_to_nodes[link] = snodes
-    return new_links_to_nodes
+    return duckdb_store.create_nodes_to_links(
+        allnodes,
+        param_predicates,
+        neighbor_ids=neighbor_ids,
+    )
 
 
 def filter_result_hierarchies(results):
@@ -1121,57 +749,3 @@ def get_specific_results(pvalue_group_dict):
         specific_results.append(most_specific_result)
 
     return specific_results
-
-
-def get_total_node_counts(semantic_type):
-    counts = {}
-    # needs to be first so that counts will fill it first
-    semantic_list = ['biolink:NamedThing', semantic_type]
-    with get_redis_pipeline(5) as p:
-        for st in semantic_list:
-            p.get(st)
-        allcounts = p.execute()
-    for st, stc in zip(semantic_list, allcounts):
-        if stc is not None:
-            counts[st] = float(stc)
-        elif not stc and 'biolink:NamedThing' in counts:
-            # If we can't find a type, just use the biggest number.  We could improve this a bit
-            # by fiddling around in the biolink model and using a more closely related superclass.
-            counts[st] = counts['biolink:NamedThing']
-    return counts
-
-
-def get_total_node_count(semantic_type):
-    """In the hypergeometric calculation, you're drawing balls from a bag, and you have
-    to know the total number of possible draws.  What should that be?   It could be the number
-    of nodes in the graph, but is that fair?  If I'm expanding from say, a chemical, there are
-    only certain nodes and certain kinds of nodes that I can connect to.  Is it fair
-    to say that the total number of nodes is all the nodes?
-
-    In some sense it doesn't matter, because all you're doing is scaling the p-value, but it
-    might make sense because of the way that variants are affecting things.   They are
-    preferentially hooked to certain nodes.  So another approach would be to leave them
-    out of everything.  But that doesn't seem fair either.  Especially b/c of gwas catalog.
-    (or maybe even gtex).
-
-    So here, we're going to say that if you have stype, then we're looking at
-    match (a:stype)--(n) return count distinct n.  For genes and for anatomical features,
-    we're ignoring variants, because we don't really want to deal with gtex right now, and we
-    might need to consider the independently somehow?  These numbers are precomputed using
-    the robokopdb2 database march 7, 2020."""
-    stype2counts = {'biolink:Disease': 84000,
-                    'biolink:Gene': 329000,
-                    'biolink:Protein': 329000,
-                    'biolink:PhenotypicFeature': 74000,
-                    'biolink:DiseaseOrPhenotypicFeature': 174000,
-                    'biolink:ChemicalSubstance': 214000,
-                    'biolink:ChemicalEntity': 214000,
-                    'biolink:AnatomicalEntity': 112000,
-                    'biolink:Cell': 40000,
-                    'biolink:BiologicalProcess': 133000,
-                    'biolink:MolecularActivity': 86000,
-                    'biolink:BiologicalProcessOrActivity': 148000}
-    if semantic_type in stype2counts:
-        return stype2counts[semantic_type]
-    # Give up and return the total number of nodes
-    return 6000000

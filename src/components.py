@@ -123,10 +123,10 @@ class NewEdge:
         self.target = target
 
     def get_prov_link(self):
-        return f"{self.source} {self.predicate} {self.target}"
+        return self.source, self.predicate, self.target
 
     def get_sym_prov_link(self):
-        return f"{self.target} {self.predicate} {self.source}"
+        return self.target, self.predicate, self.source
 
     def add_prov(self, prov):
         self.prov = prov
@@ -285,11 +285,11 @@ class Lookup:
 
         # lookup_ids may be plain IDs or full links [id, pred, is_source]
         if lookup_ids and isinstance(lookup_ids[0], (list, tuple)):
-            self.link_ids = [link[0] for link in lookup_ids]
-            self._link_predicates = {link[0]: link[1] for link in lookup_ids}
+            self._link_records = [(link[0], link[1]) for link in lookup_ids]
+            self.link_ids = list(dict.fromkeys(link[0] for link in lookup_ids))
         else:
-            self.link_ids = lookup_ids
-            self._link_predicates = {}
+            self._link_records = [(link_id, self.predicate) for link_id in lookup_ids]
+            self.link_ids = list(dict.fromkeys(lookup_ids))
 
         self.add_input_node(curie, node_types)
         self.add_input_node_name(node_names)
@@ -307,19 +307,19 @@ class Lookup:
         self.input_qnode_curie.name = node_names.get(self.input_qnode_curie.new_curie, None)
 
     def add_links(self, nodenames, nodetypes):
-        self.lookup_links = [LookupLinks(link_id, nodenames.get(link_id), nodetypes.get(link_id)) for link_id in
-                             self.link_ids]
+        self.lookup_links = [
+            LookupLinks(link_id, nodenames.get(link_id), nodetypes.get(link_id))
+            for link_id, _ in self._link_records
+        ]
 
     def add_linked_edges(self, input_node, input_node_is_source):
         """Add edges between the newnode (curie) and the curies that they were linked to.
-        Uses per-link predicate from Redis when available, falls back to self.predicate."""
+        Uses the relation signature returned for each link when available."""
         if input_node_is_source:
-            for i, link_id in enumerate(self.link_ids):
-                pred = self._link_predicates.get(link_id, self.predicate)
+            for i, (link_id, pred) in enumerate(self._link_records):
                 self.lookup_links[i].link_edge = NewEdge(input_node, pred, link_id)
         else:
-            for i, link_id in enumerate(self.link_ids):
-                pred = self._link_predicates.get(link_id, self.predicate)
+            for i, (link_id, pred) in enumerate(self._link_records):
                 self.lookup_links[i].link_edge = NewEdge(link_id, pred, input_node)
 
     def add_linked_kg_edges_id(self, eid):
@@ -330,15 +330,21 @@ class Lookup:
         return [link.link_edge.get_prov_link() for link in self.lookup_links]
 
     def add_provenance(self, prov):
+        expanded_links = []
         for link in self.lookup_links:
             provlink = link.link_edge.get_prov_link()
             symprovlink = link.link_edge.get_sym_prov_link()
-            if prov.get(provlink):
-                link.link_edge.add_prov(prov[provlink])
-            elif prov.get(symprovlink):
-                link.link_edge.add_prov(prov[symprovlink])
-            else:
-                link.link_edge.add_prov([])
+            records = prov.get(provlink) or prov.get(symprovlink) or [[]]
+            for record in records:
+                copied_link = LookupLinks(link.link_id, link.link_name, link.link_type)
+                copied_link.link_edge = NewEdge(
+                    link.link_edge.source,
+                    link.link_edge.predicate,
+                    link.link_edge.target,
+                )
+                copied_link.link_edge.add_prov(record)
+                expanded_links.append(copied_link)
+        self.lookup_links = expanded_links
 
     def add_enrichment(self, lookup_indices, enriched_node, predicate, is_source, pvalue):
         for index in lookup_indices:
@@ -400,15 +406,16 @@ class Enrichment:
         return [link.get_prov_link() for link in self.links]
 
     def add_provenance(self, prov):
+        expanded_links = []
         for link in self.links:
             provlink = link.get_prov_link()
             symprovlink = link.get_sym_prov_link()
-            if prov.get(provlink):
-                link.add_prov(prov[provlink])
-            elif prov.get(symprovlink):
-                link.add_prov(prov[symprovlink])
-            else:
-                link.add_prov([])
+            records = prov.get(provlink) or prov.get(symprovlink) or [[]]
+            for record in records:
+                copied_link = NewEdge(link.source, link.predicate, link.target)
+                copied_link.add_prov(record)
+                expanded_links.append(copied_link)
+        self.links = expanded_links
 
 
 class EnrichmentType(Enum):
@@ -528,6 +535,6 @@ class InferenceParams:
             property_constraints=params.get('properties_constraints', None),
             node_constraints=params.get('node_constraints', None),
             pvalue_threshold=params.get('pvalue_threshold', 1e-5),
-            max_rules=params.get('max_rules', None),
-            max_results=params.get('max_results', None)
+            max_rules=params.get('max_rules', 100),
+            max_results=params.get('max_results', 2000)
         )

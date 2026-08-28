@@ -7,3 +7,7 @@ services:
         context: .
     ports:
       - "6380:6380"
+    environment:
+      AC_DUCKDB_PATH: /data/answer-coalesce.duckdb
+    volumes:
+      - ./answer-coalesce.duckdb:/data/answer-coalesce.duckdb:ro

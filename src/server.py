@@ -1,30 +1,19 @@
 """ Answer Coalesce server. """
 import os
-import hashlib
 import logging
 import requests
 import yaml
 import json
-import uuid
-import redis
-from redis.backoff import ExponentialBackoff
-from redis.retry import Retry
-import redis.exceptions
-import orjson
-import httpx
-from datetime import datetime
 
 from enum import Enum
 from functools import wraps
-from pydantic import BaseModel, Field
-from typing import Optional
 from reasoner_pydantic import Response as PDResponse
 
 from src.util import LoggingUtil
-from src.default_query import default_input_sync, default_input_infer
+from src.default_query import default_input_sync
 from src.single_node_coalescer import infer, multi_curie_query
 
-from fastapi import Body, FastAPI, BackgroundTasks
+from fastapi import Body, FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
@@ -38,63 +27,9 @@ this_dir = os.path.dirname(os.path.realpath(__file__))
 # init a logger
 logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format='long', logFilePath=this_dir + '/')
 
-# load up the config file
 conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'config.json')
-with open(conf_path, 'r') as _cf:
-    conf = json.load(_cf)
-
-# Redis connection for async — defaults from config.json (same as graph coalescer)
-REDIS_HOST = os.getenv("REDIS_HOST", conf.get("redis_host", "localhost"))
-REDIS_PORT = int(os.getenv("REDIS_PORT", conf.get("redis_port", 6379)))
-JOB_PREFIX = "ac:job:"
-JOB_EXPIRY = 7200  # 2 hours
-
-redis_client = redis.Redis(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    decode_responses=True,
-    retry=Retry(ExponentialBackoff(cap=10, base=0.5), retries=5),
-    retry_on_error=[redis.exceptions.BusyLoadingError, redis.exceptions.ConnectionError, redis.exceptions.TimeoutError],
-)
-
-INFER_CACHE_PREFIX = "ac:infer:"
-INFER_CACHE_TTL = int(os.getenv("INFER_CACHE_TTL", "3600"))
-INFER_CACHE_ENABLED = os.getenv("INFER_CACHE_ENABLED", "true").lower() == "true"
-
-
-def infer_cache_key(in_message: dict) -> str:
-    qg = in_message.get("message", {}).get("query_graph", {})
-    params = in_message.get("parameters", {}) or {}
-    blob = orjson.dumps({"qg": qg, "params": params}, option=orjson.OPT_SORT_KEYS)
-    return INFER_CACHE_PREFIX + hashlib.sha256(blob).hexdigest()
-
-
-async def cached_infer(in_message: dict) -> dict:
-    """Wrap infer() with a Redis result cache keyed by query_graph + parameters."""
-    if not INFER_CACHE_ENABLED:
-        return await infer(in_message)
-
-    key = None
-    try:
-        key = infer_cache_key(in_message)
-        cached = redis_client.get(key)
-        if cached is not None:
-            logger.info(f"infer cache HIT {key}")
-            return orjson.loads(cached)
-    except Exception as e:
-        logger.warning(f"infer cache read failed: {e}")
-
-    result = await infer(in_message)
-
-    if key is not None and result is not None:
-        try:
-            redis_client.setex(key, INFER_CACHE_TTL, orjson.dumps(result, default=str))
-            logger.info(f"infer cache SET {key} (ttl={INFER_CACHE_TTL}s)")
-        except Exception as e:
-            logger.warning(f"infer cache write failed: {e}")
-
-    return result
-
+with open(conf_path, encoding="utf-8") as config_file:
+    conf = json.load(config_file)
 
 # declare the application and populate some details
 APP = FastAPI(
@@ -120,7 +55,6 @@ class MethodName(str, Enum):
 
 
 default_request_sync: Body = Body(default=default_input_sync)
-default_request_infer: Body = Body(default=default_input_infer)
 
 
 @APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,
@@ -135,7 +69,7 @@ async def query_handler(request: PDResponse = default_request_sync):
         parameters = await get_parameters(in_message)
 
         if await is_infer_query(in_message):
-            result = await cached_infer(in_message)
+            result = await infer(in_message)
         elif await is_multi_curie_query(in_message):
             result = await multi_curie_query(in_message, parameters)
         else:
@@ -154,141 +88,6 @@ async def query_handler(request: PDResponse = default_request_sync):
         logger.exception(f"Exception encountered {str(e)}")
         convert_log_timestamps(in_message)
         return JSONResponse(content=in_message, status_code=status_code)
-
-
-class AsyncQueryRequest(BaseModel):
-    message: dict
-    callback: Optional[str] = Field(None, description="URL to POST results to when complete")
-    parameters: Optional[dict] = None
-
-
-@APP.post('/asyncquery', tags=["Answer coalesce"], response_model=None, status_code=202)
-async def asyncquery_handler(background_tasks: BackgroundTasks, request: AsyncQueryRequest = default_request_infer):
-    """Translator-compliant async query with optional callback.
-
-    Submit a TRAPI query for background processing. Returns a job_id immediately.
-    Poll /query/status/{job_id} and /query/result/{job_id} to track progress.
-    If `callback` is provided, the full TRAPI response is POSTed to that URL on completion.
-    """
-    job_id = str(uuid.uuid4())
-    in_message = request.dict(exclude_none=True)
-    in_message.pop("callback", None)
-
-    save_job(job_id, {
-        "status": "running",
-        "progress": 0,
-        "result": None,
-        "error": None,
-        "created_at": datetime.utcnow().isoformat()
-    })
-
-    background_tasks.add_task(process_query, job_id, in_message, callback=request.callback)
-
-    return {"job_id": job_id, "status": "running"}
-
-
-@APP.get('/query/jobs', tags=["Answer coalesce"], response_model=None)
-async def list_jobs():
-    """List all active jobs."""
-    keys = redis_client.keys(f"{JOB_PREFIX}*")
-    jobs_list = []
-    for key in keys[:100]:  # Limit to 100
-        job_id = key.replace(JOB_PREFIX, "")
-        job = get_job(job_id)
-        if job:
-            jobs_list.append({
-                "job_id": job_id,
-                "status": job.get("status"),
-                "created_at": job.get("created_at"),
-                "error": job.get("error")
-            })
-    return {"jobs": jobs_list, "count": len(jobs_list)}
-
-
-@APP.get('/query/status/{job_id}', response_model=None)
-async def get_job_status(job_id: str):
-    """Check job status."""
-    job = get_job(job_id)
-    if not job:
-        return JSONResponse({"error": "Job not found"}, status_code=404)
-
-    return {
-        "job_id": job_id,
-        "status": job["status"],
-        "error": job.get("error")
-    }
-
-
-@APP.get('/query/result/{job_id}', response_model=None)
-async def get_job_result(job_id: str):
-    """Get job result when complete. Returns the same TRAPI Response format as /query."""
-    job = get_job(job_id)
-    if not job:
-        return JSONResponse({"error": "Job not found"}, status_code=404)
-
-    if job["status"] != "completed":
-        return JSONResponse({"error": "Job not complete", "status": job["status"]}, status_code=400)
-
-    return JSONResponse(content=job["result"])
-
-
-def save_job(job_id: str, job_data: dict):
-    redis_client.setex(
-        f"{JOB_PREFIX}{job_id}",
-        JOB_EXPIRY,
-        json.dumps(job_data, default=str)
-    )
-
-
-def get_job(job_id: str) -> dict | None:
-    data = redis_client.get(f"{JOB_PREFIX}{job_id}")
-    return json.loads(data) if data else None
-
-
-def update_job(job_id: str, **updates):
-    job = get_job(job_id)
-    if job:
-        job.update(updates)
-        save_job(job_id, job)
-
-
-async def process_query(job_id: str, in_message: dict, callback: str = None):
-    """Background task to process the query. Fires callback if provided."""
-    try:
-        parameters = await get_parameters(in_message)
-
-        if await is_infer_query(in_message):
-            result = await cached_infer(in_message)
-        elif await is_multi_curie_query(in_message):
-            result = await multi_curie_query(in_message, parameters)
-        else:
-            update_job(job_id, status="failed", error="Invalid query type")
-            if callback:
-                await fire_callback(callback, in_message, job_id, error="Invalid query type")
-            return
-
-        convert_log_timestamps(result)
-        update_job(job_id, status="completed", result=result)
-
-        if callback:
-            await fire_callback(callback, result, job_id)
-
-    except Exception as e:
-        logger.exception(f"Job {job_id} failed: {e}")
-        update_job(job_id, status="failed", error=str(e))
-        if callback:
-            await fire_callback(callback, in_message, job_id, error=str(e))
-
-
-async def fire_callback(callback_url: str, result: dict, job_id: str, error: str = None):
-    """POST the result to the callback URL. Best-effort — log and move on if it fails."""
-    payload = result if not error else {"error": error, "job_id": job_id}
-    try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(callback_url, json=payload)
-            logger.info(f"Callback to {callback_url} returned {resp.status_code} for job {job_id}")
-    except Exception as e:
-        logger.warning(f"Callback to {callback_url} failed for job {job_id}: {e}")
 
 
 async def get_parameters(in_message):

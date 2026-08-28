@@ -4,7 +4,6 @@ from scipy.stats import hypergeom, poisson, binom, norm
 from src.util import LoggingUtil
 import logging
 import os
-import redis
 import json
 import ast
 import itertools

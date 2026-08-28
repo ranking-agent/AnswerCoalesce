@@ -9,6 +9,7 @@ from src.graph_coalescence.graph_coalescer import filter_links_by_node_type, fil
 jsondir = 'InputJson_1.5'
 
 
+@pytest.mark.nongithub
 def test_get_links_and_predicate_filter():
     """We expect that this Gene has 2701  links.
     "{\"predicate\": \"biolink:coexpressed_with\", \"species_context_qualifier\": \"NCBITaxon:9606\"}" 1540
@@ -85,7 +86,7 @@ def test_get_links_and_predicate_filter():
 
 
 def test_filter_links_by_context_unit():
-    """Unit test for filter_links_by_context — no Redis needed."""
+    """Unit test for filter_links_by_context."""
     nodes_to_links = {
         "GENE:1": [
             ("GENE:2", '{"predicate": "biolink:interacts_with", "species_context_qualifier": "NCBITaxon:9606"}', True),
@@ -124,7 +125,7 @@ def test_filter_links_by_context_unit():
 
 @pytest.mark.nongithub
 def test_context_filtering_on_real_links():
-    """Verify context filtering reduces link count on real Redis data.
+    """Verify context filtering reduces link count on real graph data.
     NCBIGene:10469 has links both with and without species_context_qualifier."""
     curies = ["NCBIGene:10469"]
     nodes_to_links = gc.create_nodes_to_links(curies)
@@ -143,15 +144,24 @@ def test_context_filtering_on_real_links():
 
 
 def test_get_prov():
-    enrichment1 = Enrichment(1e-10, "NCBIGene:2932", '{"predicate": "biolink:interacts_with"}', True, 100, 10, 1000,
-                             ["NCBIGene:1500"], ["biolink:Gene"])
-    enrichment2 = Enrichment(1e-10, "NCBIGene:1500", '{"predicate": "biolink:interacts_with"}', True, 100, 10, 1000,
-                             ["NCBIGene:2932"], ["biolink:Gene"])
-    gc.add_provs([enrichment1, enrichment2])
-    for link in enrichment1.links:
-        assert isinstance(link.prov, list)
-    for link in enrichment2.links:
-        assert isinstance(link.prov, list)
+    enrichment = Enrichment(
+        1e-10,
+        "UniProtKB:Q9Y4D1-1",
+        '{"predicate":"biolink:related_to","species_context_qualifier":"NCBITaxon:9606"}',
+        True,
+        1,
+        1,
+        1,
+        ["NCBIGene:1005"],
+        ["biolink:Protein"],
+    )
+    gc.add_provs([enrichment])
+    assert enrichment.links[0].prov == [
+        {
+            "resource_id": "infores:string",
+            "resource_role": "primary_knowledge_source",
+        }
+    ]
 
 
 def test_filter_links_by_node_type():
@@ -548,6 +558,7 @@ def test_streamline_children_to_parent():
 
 
 @pytest.mark.asyncio
+@pytest.mark.nongithub
 async def test_graph_coalescer():
     curies = ['NCBIGene:106632262', 'NCBIGene:106632263', 'NCBIGene:106632261']
     enrichments = await gc.coalesce_by_graph(curies, 'biolink:Gene')
@@ -564,6 +575,7 @@ async def test_graph_coalescer():
 
 
 @pytest.mark.asyncio
+@pytest.mark.nongithub
 async def test_graph_coalescer_double_check():
     curies = ['NCBIGene:191',
               'NCBIGene:55832',
@@ -585,6 +597,7 @@ async def test_graph_coalescer_double_check():
     assert e.p_value < 7e-3
 
 
+@pytest.mark.nongithub
 def test_graph_coalesce_basic():
     """Make sure that results are well formed."""
     input_message = get_input_message()
@@ -600,6 +613,7 @@ def test_graph_coalesce_basic():
         assert len(atts) == len(set([x['attribute_type_id'] for x in atts]))
 
 
+@pytest.mark.nongithub
 def test_graph_coalesce_pvalue_threshold():
     input_message = get_input_message()
     threshold = 1e-7
@@ -624,6 +638,7 @@ def test_graph_coalesce_pvalue_threshold():
             assert found
 
 
+@pytest.mark.nongithub
 def test_graph_coalesce_predicate():
     input_message = get_input_message()
     threshold = 1e-7

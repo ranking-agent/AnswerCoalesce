@@ -11,7 +11,8 @@ def modified_sigmoid(x, scale=1, shift=0):
 
 def pvalue_to_sigmoid(p_values, scale=0.5, shift=5):
     p_values = np.atleast_1d(p_values)
-    log_value = -np.log10(p_values)
+    with np.errstate(divide="ignore"):
+        log_value = -np.log10(p_values)
     result = np.round(modified_sigmoid(log_value, scale=scale, shift=shift), 5)
     return result[0] if result.size == 1 else result
 
@@ -70,6 +71,20 @@ def elrond(weights):
     return float(combined_pvalue)
 
 
+def pvalue_to_conductance(p_values):
+    """Convert enrichment p-values into additive Elrond conductances."""
+    weights = np.atleast_1d(pvalue_to_sigmoid(p_values))
+    weights = np.minimum(weights, 0.99999)
+    return -1 / np.log(weights)
+
+
+def score_from_conductance(total_conductance):
+    """Convert an accumulated Elrond conductance into an inference score."""
+    if total_conductance <= 0:
+        return 0.0
+    return float(np.exp(-1 / total_conductance))
+
+
 def score_inference(pvalues, method='elrond'):
     """
     Combine p-values into a score.
@@ -77,7 +92,7 @@ def score_inference(pvalues, method='elrond'):
     weights = np.atleast_1d(pvalue_to_sigmoid(pvalues))
 
     if method == "elrond":
-        return elrond(weights)
+        return score_from_conductance(np.sum(pvalue_to_conductance(pvalues)))
     elif method == 'harmonic':
         return harmonic_mean(weights)
     else:
