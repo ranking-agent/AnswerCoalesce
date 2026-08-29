@@ -13,30 +13,34 @@ the additional steps performed by EDGAR.
 
 ## Database Overview
 
-The final database contains nine tables:
+The final database contains twelve tables:
 
 | Table | Purpose |
 |---|---|
 | `node` | Maps graph CURIEs to compact internal IDs and stores names and categories |
 | `relation` | Stores each distinct predicate and qualifier combination |
+| `relation_implication` | Maps concrete source relations to relationships implied by Biolink |
+| `relation_hierarchy` | Records strict descendant-to-ancestor relationships between query-visible relations |
 | `fact` | Stores each distinct semantic subject-relation-object edge |
 | `evidence` | Stores the original edge IDs and source provenance behind each fact |
 | `feature` | Defines reusable neighbor-relation-direction graph patterns |
+| `feature_hierarchy` | Maps specific features to broader features for the same neighbor and direction |
 | `membership` | Records which nodes possess which features |
 | `category_count` | Stores the total number of nodes in each Biolink category |
 | `feature_stats` | Stores feature background counts for each Biolink category |
 | `metadata` | Identifies the database schema and records basic build counts |
 
-The builder also uses temporary `raw_node` and `raw_edge` staging tables.
-Those tables are dropped before the final database is published.
+The builder also uses temporary `raw_node`, `raw_edge`,
+`raw_relation_implication`, and `raw_relation_hierarchy` staging tables. Those
+tables are dropped before the final database is published.
 
 The central distinction is:
 
 ```text
-fact/evidence: preserve graph edges and their source provenance
+fact/evidence: preserve concrete graph edges and their source provenance
 
 feature/membership/feature_stats:
-    reorganize the graph for fast enrichment calculations
+    include concrete and Biolink-implied relationships for fast enrichment
 ```
 
 ## Node
@@ -72,8 +76,8 @@ stored.
 
 ## Relation
 
-The `relation` table contains one row for each distinct combination of a
-Biolink predicate and its qualifiers:
+The `relation` table contains one row for each concrete or implied combination
+of a Biolink predicate and its qualifiers:
 
 | Column | Meaning |
 |---|---|
@@ -107,9 +111,50 @@ on millions of rows. `fact` and `feature` refer to it using `relation_id`.
 The symmetry flag controls whether an edge can be followed in either
 direction. It is calculated by BMT during the build.
 
+## Relation Implication
+
+The `relation_implication` table contains:
+
+| Column | Meaning |
+|---|---|
+| `concrete_relation_id` | Relation present on the original KGX edge |
+| `implied_relation_id` | Concrete or broader relation implied by Biolink |
+
+Every concrete relation maps to itself. The builder also reproduces the
+historical ORION redundant-edge transformation:
+
+- Add every ancestor of the base predicate, without aspect, direction, or
+  `qualified_predicate`
+- Add every ancestor of `object_aspect_qualifier`
+- Add every ancestor of `object_direction_qualifier`
+- Add the direction-free form of a direction-qualified relation
+- Add the fully unqualified base relation when an aspect qualifier is present
+
+Other qualifiers remain attached unless the historical transformation
+explicitly removed them. In particular, species context is retained.
+`qualified_predicate` and species context are not themselves expanded.
+
+## Relation Hierarchy
+
+The `relation_hierarchy` table contains:
+
+| Column | Meaning |
+|---|---|
+| `descendant_relation_id` | A more specific query-visible relation |
+| `ancestor_relation_id` | A broader relation implied by the descendant |
+
+The table contains strict ancestry only, so a relation does not map to itself.
+It covers both base-predicate ancestry and the aspect and direction qualifier
+ancestry materialized by the historical ORION transformation.
+
+This table is used only for result selection. The application caches its
+compact integer pairs and uses them to remove broader or narrower redundant
+enrichments before linked-member lists are constructed. It does not create
+evidence and does not alter the concrete `fact`/`evidence` model.
+
 ## Fact
 
-The `fact` table stores distinct semantic graph edges:
+The `fact` table stores distinct concrete semantic graph edges:
 
 | Column | Meaning |
 |---|---|
@@ -177,8 +222,8 @@ discarded.
 
 ## Feature
 
-The `feature` table is derived from `fact`. It contains each distinct graph
-pattern of:
+The `feature` table is derived from `fact` and `relation_implication`. It
+contains each distinct concrete or implied graph pattern of:
 
 ```text
 neighbor node + relation + direction
@@ -218,6 +263,19 @@ be treated as the subject.
 
 A feature is not an original KG entity or property. It is an internal
 enrichment key shared by all nodes participating in the same graph pattern.
+Its relation can be broader than the concrete relation on the source fact.
+
+## Feature Hierarchy
+
+The `feature_hierarchy` table materializes relation ancestry in feature space:
+
+| Column | Meaning |
+|---|---|
+| `descendant_feature_id` | A feature using a more specific relation |
+| `ancestor_feature_id` | The corresponding broader feature for the same neighbor and direction |
+
+EDGAR uses this table to suppress implied ancestors of explicitly excluded
+predicates without repeatedly joining the expanded membership set to itself.
 
 ## Membership
 
@@ -250,6 +308,10 @@ node -> features possessed by the node
 
 An enrichment query starts by retrieving the memberships of its input nodes
 and counting how many inputs share each feature.
+
+Membership is deduplicated after relation expansion. If several concrete facts
+between the same nodes imply the same broader relation, the member contributes
+only once to that implied feature.
 
 ## Category Count
 
@@ -366,12 +428,13 @@ Features are filtered by:
 
 An unqualified predicate constraint matches stored relation signatures with the
 same base predicate, including qualified versions. A qualified constraint also
-requires the specified qualifier values.
+requires the specified qualifier values. Predicate and supported qualifier
+hierarchies were expanded while the database was built, so a broad relation can
+match memberships originating from more specific source edges without
+query-time BMT traversal.
 
-Category and predicate hierarchy expansion is not currently performed. Query
-matching depends on the exact predicate and on the categories already stored
-on graph nodes. This is tracked in
-[issue 146](https://github.com/ranking-agent/AnswerCoalesce/issues/146).
+Node category hierarchy expansion is not currently performed. Category
+matching depends on the categories already stored on graph nodes.
 
 ### 3. Count input support
 
@@ -412,13 +475,24 @@ p_value = P(X >= support_count | mean = expected_count)
 The calculation is performed inside DuckDB through a vectorized Arrow
 function.
 
-### 6. Select enrichment results
+### 6. Prune and select enrichment results
 
-Candidates are filtered by the optional p-value threshold, ordered by p-value
-and feature ID, and limited by `max_results` when supplied.
+Candidates are filtered by the optional p-value threshold. For EDGAR queries,
+DuckDB first returns an ordered, compact candidate window containing IDs,
+counts, and p-values but no linked-member arrays. The application compares
+candidates for the same neighbor and edge direction using the cached
+`relation_hierarchy`:
 
-The selected features are joined back to the bounded input memberships to
-collect the exact input CURIEs supporting each result.
+- A descendant removes an ancestor when its p-value is equal or better.
+- An ancestor removes a descendant only when its p-value is strictly better.
+- Unrelated relations are retained independently.
+
+If the window does not yet prove the requested top-K boundary, it is expanded
+and scored again. Once the boundary is complete, the surviving candidates are
+limited by `max_results`.
+
+Only the selected feature IDs are then joined back to the bounded input
+memberships to collect the exact input CURIEs supporting each result.
 
 One neighbor can produce multiple enrichment results when it is reached
 through different predicates, qualifiers, or directions.
@@ -429,7 +503,7 @@ After selection, AnswerCoalesce retrieves:
 
 - Neighbor names and categories from `node`
 - Predicate and qualifiers from `relation`
-- Supporting facts from `fact`
+- Supporting concrete facts reached through `relation_implication`
 - Source provenance from `evidence`
 
 This hydration is batched. It is not performed once per result.
@@ -617,8 +691,9 @@ response is returned.
 
 - The database does not preserve arbitrary KGX node and edge attributes.
 - Artifact metadata does not yet identify the graph release or build inputs.
-- Query-time category and predicate matching does not perform complete Biolink
-  hierarchy expansion.
+- Category hierarchy expansion is not performed.
+- Relation expansion intentionally follows the historical ORION behavior and
+  does not expand `qualified_predicate` or species-context values.
 - Category statistics depend on category expansion already present in the
   source KGX nodes.
 - The initial EDGAR direct lookup matches the base predicate without applying

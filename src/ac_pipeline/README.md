@@ -74,6 +74,15 @@ export AC_DUCKDB_BUILD_THREADS=8
 ```
 
 The database assigns compact release-local IDs to nodes and graph features.
+During the build, each concrete predicate and qualifier signature is expanded
+using the historical ORION redundant-edge rules. The
+`relation_implication` table records the concrete-to-implied mapping, while
+facts and evidence retain only the original KGX relationships. A separate
+`relation_hierarchy` table records strict ancestry between query-visible
+relations so EDGAR can remove redundant predicate and qualifier ancestors
+before linked-member construction. `feature_hierarchy` resolves the same
+ancestry to feature-ID pairs so exclusions can be enforced with an integer
+anti-join.
 `membership(member_node_id, feature_id)` is ordered by member, while
 `feature_stats(category_id, feature_id, background_count)` is ordered by
 category and feature. Statistics are built one category at a time so each
@@ -81,11 +90,14 @@ aggregation remains within the configured memory and spill limits.
 
 At query time, DuckDB performs an indexed lookup of the input memberships and
 materializes those matched rows once. Support counting, filtering, scoring,
-top-K selection, and linked-member construction all reuse that bounded
-relation rather than rescanning the complete membership table. Raw evidence
-source provenance and CURIE mappings remain in separate tables for TRAPI
-support-edge construction. The database does not preserve arbitrary KGX node
-and edge properties.
+top-K candidate selection, and linked-member construction all reuse that
+bounded relation rather than rescanning the complete membership table. EDGAR
+hierarchy filtering operates on an ordered compact candidate window and
+expands that window only when needed to prove the top-K boundary. Only the
+selected candidates have linked-member arrays constructed. Raw evidence source
+provenance and CURIE mappings remain in separate tables for TRAPI support-edge
+construction. The database does not preserve arbitrary KGX node and edge
+properties.
 
 The property coalescence SQLite rebuild remains a separate step in the same
 job.

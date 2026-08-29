@@ -4,6 +4,7 @@ import gzip
 import os
 import shutil
 import time
+from itertools import product
 from pathlib import Path
 
 import bmt
@@ -11,7 +12,6 @@ import duckdb
 import orjson
 import pyarrow
 import requests
-
 
 BLOCKLIST_URL = "https://raw.githubusercontent.com/NCATSTranslator/Relay/master/config/blocklist.json"
 FILTER_PREDICATES = {
@@ -27,10 +27,15 @@ ROBOKOP_AGGREGATOR_SOURCE_KEYS = (
     "aggregator_knowledge_source",
     "biolink:aggregator_knowledge_source",
 )
-SCHEMA_VERSION = "4"
+SCHEMA_VERSION = "7"
 DEFAULT_MEMORY_LIMIT = "6GB"
 DEFAULT_MAX_TEMP_DIRECTORY_SIZE = "20GB"
 DEFAULT_THREADS = 4
+OBJECT_ASPECT_QUALIFIER = "object_aspect_qualifier"
+OBJECT_DIRECTION_QUALIFIER = "object_direction_qualifier"
+QUALIFIED_PREDICATE = "qualified_predicate"
+ASPECT_ENUM = "GeneOrGeneProductOrChemicalEntityAspectEnum"
+DIRECTION_ENUM = "DirectionQualifierEnum"
 
 tk = bmt.Toolkit()
 
@@ -114,6 +119,83 @@ def predicate_json(edge):
     return orjson.dumps(parts, option=orjson.OPT_SORT_KEYS).decode()
 
 
+def _serialized_relation(relation):
+    return orjson.dumps(relation, option=orjson.OPT_SORT_KEYS).decode()
+
+
+@functools.cache
+def _predicate_ancestors(predicate):
+    return tuple(
+        tk.get_ancestors(predicate, formatted=True, reflexive=False) or ()
+    )
+
+
+@functools.cache
+def _qualifier_ancestors(value, enum_name):
+    return tuple(
+        tk.get_permissible_value_ancestors(
+            permissible_value=value,
+            enum_name=enum_name,
+        )
+        or ()
+    )
+
+
+def implied_relations(concrete_relation):
+    """Return the relation signatures emitted by ORION's redundant KG transform."""
+    implied = {}
+
+    def add(relation):
+        implied[_serialized_relation(relation)] = relation
+
+    # Preserve every concrete relation even if an unrecognized qualifier value
+    # has no hierarchy entry in the current Biolink model.
+    add(concrete_relation)
+
+    aspect_values = [None]
+    if OBJECT_ASPECT_QUALIFIER in concrete_relation:
+        aspect_values = _qualifier_ancestors(
+            concrete_relation[OBJECT_ASPECT_QUALIFIER],
+            ASPECT_ENUM,
+        )
+
+    direction_values = [None]
+    if OBJECT_DIRECTION_QUALIFIER in concrete_relation:
+        direction_values += _qualifier_ancestors(
+            concrete_relation[OBJECT_DIRECTION_QUALIFIER],
+            DIRECTION_ENUM,
+        )
+
+    for aspect, direction in product(aspect_values, direction_values):
+        relation = concrete_relation.copy()
+        if aspect:
+            relation[OBJECT_ASPECT_QUALIFIER] = aspect
+        else:
+            relation.pop(OBJECT_ASPECT_QUALIFIER, None)
+        if direction:
+            relation[OBJECT_DIRECTION_QUALIFIER] = direction
+        else:
+            relation.pop(OBJECT_DIRECTION_QUALIFIER, None)
+        add(relation)
+
+    if OBJECT_ASPECT_QUALIFIER in concrete_relation:
+        relation = concrete_relation.copy()
+        relation.pop(OBJECT_ASPECT_QUALIFIER, None)
+        relation.pop(OBJECT_DIRECTION_QUALIFIER, None)
+        relation.pop(QUALIFIED_PREDICATE, None)
+        add(relation)
+
+    for ancestor in _predicate_ancestors(concrete_relation["predicate"]):
+        relation = concrete_relation.copy()
+        relation["predicate"] = ancestor
+        relation.pop(OBJECT_ASPECT_QUALIFIER, None)
+        relation.pop(OBJECT_DIRECTION_QUALIFIER, None)
+        relation.pop(QUALIFIED_PREDICATE, None)
+        add(relation)
+
+    return tuple(implied.values())
+
+
 def _insert_batch(connection, table, columns, rows):
     """Insert a Python row batch through DuckDB's vectorized Arrow scanner."""
     batch = pyarrow.table(
@@ -180,7 +262,129 @@ def _create_staging_schema(connection):
             is_symmetric BOOLEAN NOT NULL,
             sources_json VARCHAR NOT NULL
         );
+        CREATE TABLE raw_relation_implication (
+            concrete_predicate_json VARCHAR NOT NULL,
+            implied_predicate_json VARCHAR NOT NULL,
+            implied_predicate VARCHAR NOT NULL,
+            implied_is_symmetric BOOLEAN NOT NULL
+        );
+        CREATE TABLE raw_relation_hierarchy (
+            descendant_predicate_json VARCHAR NOT NULL,
+            ancestor_predicate_json VARCHAR NOT NULL
+        );
         """
+    )
+
+
+def _create_relation_implications(connection, batch_size):
+    columns = (
+        "concrete_predicate_json",
+        "implied_predicate_json",
+        "implied_predicate",
+        "implied_is_symmetric",
+    )
+    batch = []
+    implication_count = 0
+    started_at = time.monotonic()
+    concrete_relations = connection.execute(
+        """
+        SELECT DISTINCT predicate_json
+        FROM raw_edge
+        ORDER BY predicate_json
+        """
+    ).fetchall()
+    for (concrete_predicate_json,) in concrete_relations:
+        concrete_relation = orjson.loads(concrete_predicate_json)
+        for implied_relation in implied_relations(concrete_relation):
+            implied_predicate = implied_relation["predicate"]
+            if implied_predicate in FILTER_PREDICATES:
+                continue
+            batch.append(
+                (
+                    concrete_predicate_json,
+                    _serialized_relation(implied_relation),
+                    implied_predicate,
+                    is_symmetric(implied_predicate),
+                )
+            )
+        if len(batch) >= batch_size:
+            _insert_batch(
+                connection,
+                "raw_relation_implication",
+                columns,
+                batch,
+            )
+            implication_count += len(batch)
+            batch.clear()
+    if batch:
+        _insert_batch(
+            connection,
+            "raw_relation_implication",
+            columns,
+            batch,
+        )
+        implication_count += len(batch)
+    _report_progress(
+        "Expanded relation signatures",
+        implication_count,
+        started_at,
+    )
+
+
+def _create_relation_hierarchy(connection, batch_size):
+    """Materialize strict ancestry between query-visible relation signatures."""
+    columns = (
+        "descendant_predicate_json",
+        "ancestor_predicate_json",
+    )
+    available_relations = {
+        row[0]
+        for row in connection.execute(
+            """
+            SELECT DISTINCT implied_predicate_json
+            FROM raw_relation_implication
+            """
+        ).fetchall()
+    }
+    batch = []
+    hierarchy_count = 0
+    started_at = time.monotonic()
+    for descendant_predicate_json in sorted(available_relations):
+        descendant_relation = orjson.loads(descendant_predicate_json)
+        for ancestor_relation in implied_relations(descendant_relation):
+            ancestor_predicate_json = _serialized_relation(ancestor_relation)
+            if (
+                ancestor_predicate_json == descendant_predicate_json
+                or ancestor_predicate_json not in available_relations
+            ):
+                continue
+            batch.append(
+                (
+                    descendant_predicate_json,
+                    ancestor_predicate_json,
+                )
+            )
+        if len(batch) >= batch_size:
+            _insert_batch(
+                connection,
+                "raw_relation_hierarchy",
+                columns,
+                batch,
+            )
+            hierarchy_count += len(batch)
+            batch.clear()
+    if batch:
+        _insert_batch(
+            connection,
+            "raw_relation_hierarchy",
+            columns,
+            batch,
+        )
+        hierarchy_count += len(batch)
+    _report_progress(
+        "Built relation hierarchy",
+        hierarchy_count,
+        started_at,
     )
 
 
@@ -251,12 +455,14 @@ def _create_derived_schema(connection):
             """
         CREATE TABLE relation AS
         SELECT
-            row_number() OVER (ORDER BY predicate_json)::BIGINT AS relation_id,
-            predicate_json,
-            any_value(predicate) AS predicate,
-            bool_or(is_symmetric) AS is_symmetric
-        FROM raw_edge
-        GROUP BY predicate_json;
+            row_number() OVER (
+                ORDER BY implied_predicate_json
+            )::BIGINT AS relation_id,
+            implied_predicate_json AS predicate_json,
+            any_value(implied_predicate) AS predicate,
+            bool_or(implied_is_symmetric) AS is_symmetric
+        FROM raw_relation_implication
+        GROUP BY implied_predicate_json;
         """,
         ),
         (
@@ -265,6 +471,54 @@ def _create_derived_schema(connection):
 
         ALTER TABLE relation ADD PRIMARY KEY (relation_id);
         CREATE UNIQUE INDEX relation_signature_idx ON relation(predicate_json);
+        """,
+        ),
+        (
+            "relation implications",
+            """
+
+        CREATE TABLE relation_implication AS
+        SELECT DISTINCT
+            concrete.relation_id AS concrete_relation_id,
+            implied.relation_id AS implied_relation_id
+        FROM raw_relation_implication raw
+        JOIN relation concrete
+          ON concrete.predicate_json = raw.concrete_predicate_json
+        JOIN relation implied
+          ON implied.predicate_json = raw.implied_predicate_json
+        ORDER BY concrete_relation_id, implied_relation_id;
+
+        CREATE UNIQUE INDEX relation_implication_pair_idx
+            ON relation_implication(
+                concrete_relation_id,
+                implied_relation_id
+            );
+        CREATE INDEX relation_implication_implied_idx
+            ON relation_implication(implied_relation_id);
+        """,
+        ),
+        (
+            "relation hierarchy",
+            """
+
+        CREATE TABLE relation_hierarchy AS
+        SELECT DISTINCT
+            descendant.relation_id AS descendant_relation_id,
+            ancestor.relation_id AS ancestor_relation_id
+        FROM raw_relation_hierarchy raw
+        JOIN relation descendant
+          ON descendant.predicate_json = raw.descendant_predicate_json
+        JOIN relation ancestor
+          ON ancestor.predicate_json = raw.ancestor_predicate_json
+        ORDER BY descendant_relation_id, ancestor_relation_id;
+
+        CREATE UNIQUE INDEX relation_hierarchy_pair_idx
+            ON relation_hierarchy(
+                descendant_relation_id,
+                ancestor_relation_id
+            );
+        CREATE INDEX relation_hierarchy_ancestor_idx
+            ON relation_hierarchy(ancestor_relation_id);
         """,
         ),
         (
@@ -359,22 +613,31 @@ def _create_derived_schema(connection):
             """
 
         CREATE TABLE feature AS
-        WITH semantic_membership AS (
+        WITH expanded_fact AS (
             SELECT
-                fact.object_node_id AS neighbor_node_id,
-                fact.relation_id,
-                TRUE AS member_is_subject
+                fact.subject_node_id,
+                fact.object_node_id,
+                implication.implied_relation_id AS relation_id
             FROM fact
+            JOIN relation_implication implication
+              ON implication.concrete_relation_id = fact.relation_id
+        ),
+        semantic_membership AS (
+            SELECT
+                expanded_fact.object_node_id AS neighbor_node_id,
+                expanded_fact.relation_id,
+                TRUE AS member_is_subject
+            FROM expanded_fact
 
             UNION
 
             SELECT
-                fact.subject_node_id AS neighbor_node_id,
-                fact.relation_id,
+                expanded_fact.subject_node_id AS neighbor_node_id,
+                expanded_fact.relation_id,
                 relation.is_symmetric AS member_is_subject
-            FROM fact
+            FROM expanded_fact
             JOIN relation USING (relation_id)
-            WHERE fact.subject_node_id != fact.object_node_id
+            WHERE expanded_fact.subject_node_id != expanded_fact.object_node_id
                OR NOT relation.is_symmetric
         )
         SELECT
@@ -399,28 +662,61 @@ def _create_derived_schema(connection):
         """,
         ),
         (
+            "feature hierarchy",
+            """
+
+        CREATE TABLE feature_hierarchy AS
+        SELECT
+            descendant.feature_id AS descendant_feature_id,
+            ancestor.feature_id AS ancestor_feature_id
+        FROM feature descendant
+        JOIN relation_hierarchy hierarchy
+          ON hierarchy.descendant_relation_id = descendant.relation_id
+        JOIN feature ancestor
+          ON ancestor.neighbor_node_id = descendant.neighbor_node_id
+         AND ancestor.member_is_subject = descendant.member_is_subject
+         AND ancestor.relation_id = hierarchy.ancestor_relation_id
+        ORDER BY descendant_feature_id, ancestor_feature_id;
+
+        CREATE UNIQUE INDEX feature_hierarchy_pair_idx
+            ON feature_hierarchy(
+                descendant_feature_id,
+                ancestor_feature_id
+            );
+        """,
+        ),
+        (
             "membership",
             """
 
         CREATE TABLE membership AS
-        WITH semantic_membership AS (
+        WITH expanded_fact AS (
             SELECT
-                fact.subject_node_id AS member_node_id,
-                fact.object_node_id AS neighbor_node_id,
-                fact.relation_id,
-                TRUE AS member_is_subject
+                fact.subject_node_id,
+                fact.object_node_id,
+                implication.implied_relation_id AS relation_id
             FROM fact
+            JOIN relation_implication implication
+              ON implication.concrete_relation_id = fact.relation_id
+        ),
+        semantic_membership AS (
+            SELECT
+                expanded_fact.subject_node_id AS member_node_id,
+                expanded_fact.object_node_id AS neighbor_node_id,
+                expanded_fact.relation_id,
+                TRUE AS member_is_subject
+            FROM expanded_fact
 
             UNION
 
             SELECT
-                fact.object_node_id AS member_node_id,
-                fact.subject_node_id AS neighbor_node_id,
-                fact.relation_id,
+                expanded_fact.object_node_id AS member_node_id,
+                expanded_fact.subject_node_id AS neighbor_node_id,
+                expanded_fact.relation_id,
                 relation.is_symmetric AS member_is_subject
-            FROM fact
+            FROM expanded_fact
             JOIN relation USING (relation_id)
-            WHERE fact.subject_node_id != fact.object_node_id
+            WHERE expanded_fact.subject_node_id != expanded_fact.object_node_id
                OR NOT relation.is_symmetric
         )
         SELECT
@@ -477,6 +773,8 @@ def _create_derived_schema(connection):
 
         DROP TABLE raw_node;
         DROP TABLE raw_edge;
+        DROP TABLE raw_relation_implication;
+        DROP TABLE raw_relation_hierarchy;
         """,
         ),
     )
@@ -620,6 +918,8 @@ def build_database(
             missing_curies = ", ".join(row[0] for row in missing)
             raise ValueError(f"Edges reference nodes absent from the node file: {missing_curies}")
 
+        _create_relation_implications(connection, batch_size)
+        _create_relation_hierarchy(connection, batch_size)
         _create_derived_schema(connection)
         connection.execute(
             "INSERT INTO metadata VALUES ('node_count', ?), ('raw_edge_count', ?)",
