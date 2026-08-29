@@ -6,10 +6,14 @@ import duckdb
 import pytest
 from scipy.stats import poisson
 
-from src.graph_coalescence import duckdb_store
-from src.graph_coalescence.build_duckdb import build_database, extract_prov
-from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.components import EnrichmentResult, EnrichmentType, QueryParams
+from src.graph_coalescence import build_duckdb, duckdb_store
+from src.graph_coalescence.build_duckdb import (
+    build_database,
+    extract_prov,
+    implied_relations,
+)
+from src.graph_coalescence.graph_coalescer import coalesce_by_graph
 from src.scoring import (
     pvalue_to_conductance,
     score_from_conductance,
@@ -45,9 +49,12 @@ def test_duckdb_builder_creates_normalized_graph(tmp_path):
         for table in (
             "node",
             "relation",
+            "relation_implication",
+            "relation_hierarchy",
             "fact",
             "evidence",
             "feature",
+            "feature_hierarchy",
             "membership",
             "category_count",
             "feature_stats",
@@ -60,9 +67,12 @@ def test_duckdb_builder_creates_normalized_graph(tmp_path):
     assert counts == {
         "node": 2,
         "relation": 1,
+        "relation_implication": 1,
+        "relation_hierarchy": 0,
         "fact": 1,
         "evidence": 1,
         "feature": 2,
+        "feature_hierarchy": 0,
         "membership": 2,
         "category_count": 15,
         "feature_stats": 25,
@@ -83,20 +93,373 @@ def test_duckdb_builder_creates_normalized_graph(tmp_path):
     connection.close()
 
 
+def test_implied_relations_match_old_orion_expansion(monkeypatch):
+    monkeypatch.setattr(
+        build_duckdb,
+        "_predicate_ancestors",
+        lambda predicate: (
+            "biolink:associated_with",
+            "biolink:related_to",
+        ),
+    )
+    monkeypatch.setattr(
+        build_duckdb,
+        "_qualifier_ancestors",
+        lambda value, enum_name: {
+            ("expression", build_duckdb.ASPECT_ENUM): (
+                "expression",
+                "activity_or_abundance",
+            ),
+            ("increased", build_duckdb.DIRECTION_ENUM): (
+                "increased",
+                "changed",
+            ),
+        }[(value, enum_name)],
+    )
+
+    concrete = {
+        "predicate": "biolink:affects",
+        "qualified_predicate": "biolink:causes",
+        "object_aspect_qualifier": "expression",
+        "object_direction_qualifier": "increased",
+        "species_context_qualifier": "NCBITaxon:9606",
+    }
+    expanded = {
+        json.dumps(relation, sort_keys=True)
+        for relation in implied_relations(concrete)
+    }
+
+    expected = set()
+    for aspect in ("expression", "activity_or_abundance"):
+        for direction in (None, "increased", "changed"):
+            relation = concrete.copy()
+            relation["object_aspect_qualifier"] = aspect
+            if direction is None:
+                relation.pop("object_direction_qualifier")
+            else:
+                relation["object_direction_qualifier"] = direction
+            expected.add(json.dumps(relation, sort_keys=True))
+    expected.update(
+        {
+            json.dumps(
+                {
+                    "predicate": "biolink:affects",
+                    "species_context_qualifier": "NCBITaxon:9606",
+                },
+                sort_keys=True,
+            ),
+            json.dumps(
+                {
+                    "predicate": "biolink:associated_with",
+                    "species_context_qualifier": "NCBITaxon:9606",
+                },
+                sort_keys=True,
+            ),
+            json.dumps(
+                {
+                    "predicate": "biolink:related_to",
+                    "species_context_qualifier": "NCBITaxon:9606",
+                },
+                sort_keys=True,
+            ),
+        }
+    )
+
+    assert expanded == expected
+
+
+def test_implied_predicate_membership_uses_concrete_evidence(
+    tmp_path,
+    monkeypatch,
+):
+    nodes = [
+        {
+            "id": "GENE:1",
+            "category": ["biolink:NamedThing", "biolink:Gene"],
+        },
+        {
+            "id": "GENE:2",
+            "category": ["biolink:NamedThing", "biolink:Gene"],
+        },
+        {
+            "id": "GENE:3",
+            "category": ["biolink:NamedThing", "biolink:Gene"],
+        },
+        {
+            "id": "DISEASE:1",
+            "category": ["biolink:NamedThing", "biolink:Disease"],
+        },
+    ]
+    edges = [
+        {
+            "id": "causal-edge",
+            "subject": "GENE:1",
+            "predicate": "biolink:causes",
+            "object": "DISEASE:1",
+            "sources": [
+                {
+                    "resource_id": "infores:causal-source",
+                    "resource_role": "primary_knowledge_source",
+                }
+            ],
+        },
+        {
+            "id": "related-edge",
+            "subject": "GENE:2",
+            "predicate": "biolink:related_to",
+            "object": "DISEASE:1",
+            "sources": [
+                {
+                    "resource_id": "infores:related-source",
+                    "resource_role": "primary_knowledge_source",
+                }
+            ],
+        },
+    ]
+    node_file = tmp_path / "nodes.jsonl"
+    edge_file = tmp_path / "edges.jsonl"
+    database = tmp_path / "answer-coalesce.duckdb"
+    _write_jsonl(node_file, nodes)
+    _write_jsonl(edge_file, edges)
+
+    monkeypatch.setattr(
+        build_duckdb,
+        "_predicate_ancestors",
+        lambda predicate: (
+            (
+                "biolink:related_to_at_instance_level",
+                "biolink:related_to",
+            )
+            if predicate == "biolink:causes"
+            else ()
+        ),
+    )
+    monkeypatch.setattr(
+        build_duckdb,
+        "is_symmetric",
+        lambda predicate: predicate == "biolink:related_to",
+    )
+    build_database(node_file, edge_file, database, blocklist=set())
+
+    database_connection = duckdb.connect(str(database), read_only=True)
+    counts = {
+        table: database_connection.execute(
+            f"SELECT count(*) FROM {table}"
+        ).fetchone()[0]
+        for table in (
+            "relation",
+            "relation_implication",
+            "relation_hierarchy",
+            "fact",
+            "evidence",
+            "feature_hierarchy",
+        )
+    }
+    assert counts == {
+        "relation": 2,
+        "relation_implication": 3,
+        "relation_hierarchy": 1,
+        "fact": 2,
+        "evidence": 2,
+        "feature_hierarchy": 1,
+    }
+    database_connection.close()
+
+    monkeypatch.setenv("AC_DUCKDB_PATH", str(database))
+    duckdb_store.close_connection()
+    candidates, total_node_count = duckdb_store.enrichment_candidates(
+        ["GENE:1", "GENE:2"],
+        "biolink:Gene",
+        node_constraints=["biolink:Disease"],
+        predicate_constraints=["biolink:related_to"],
+        predicate_constraint_style="include",
+    )
+
+    assert total_node_count == 3
+    assert len(candidates) == 1
+    assert candidates[0].support_count == 2
+    assert candidates[0].background_count == 2
+    assert set(candidates[0].linked_curies) == {"GENE:1", "GENE:2"}
+
+    relation_json = json.dumps(
+        {"predicate": "biolink:related_to"},
+        separators=(",", ":"),
+    )
+    provenance = duckdb_store.get_edge_provenance(
+        [("GENE:1", relation_json, "DISEASE:1")]
+    )
+    assert provenance[("GENE:1", relation_json, "DISEASE:1")] == [
+        [
+            {
+                "resource_id": "infores:causal-source",
+                "resource_role": "primary_knowledge_source",
+            }
+        ]
+    ]
+
+    summaries = duckdb_store.graph_inference_summaries(
+        [
+            {
+                "rule_id": 1,
+                "enriched_curie": "DISEASE:1",
+                "predicate_json": relation_json,
+                "p_value": 0.01,
+                "is_source": True,
+            }
+        ],
+        "biolink:Gene",
+    )
+    assert {
+        (summary.inferred_curie, summary.inference_count)
+        for summary in summaries
+    } == {
+        ("GENE:1", 1),
+        ("GENE:2", 1),
+    }
+    duckdb_store.close_connection()
+
+
+def test_hierarchy_pruning_precedes_top_k(tmp_path, monkeypatch):
+    nodes = [
+        {
+            "id": f"GENE:{index}",
+            "category": ["biolink:NamedThing", "biolink:Gene"],
+        }
+        for index in range(1, 5)
+    ] + [
+        {
+            "id": f"DISEASE:{index}",
+            "category": ["biolink:NamedThing", "biolink:Disease"],
+        }
+        for index in range(1, 3)
+    ]
+    sources = [
+        {
+            "resource_id": "infores:primary",
+            "resource_role": "primary_knowledge_source",
+        }
+    ]
+    edges = [
+        {
+            "id": "cause-1",
+            "subject": "GENE:1",
+            "predicate": "biolink:causes",
+            "object": "DISEASE:1",
+            "sources": sources,
+        },
+        {
+            "id": "cause-2",
+            "subject": "GENE:2",
+            "predicate": "biolink:causes",
+            "object": "DISEASE:1",
+            "sources": sources,
+        },
+        {
+            "id": "related-1",
+            "subject": "GENE:3",
+            "predicate": "biolink:related_to",
+            "object": "DISEASE:1",
+            "sources": sources,
+        },
+        {
+            "id": "treat-1",
+            "subject": "GENE:1",
+            "predicate": "biolink:treats",
+            "object": "DISEASE:2",
+            "sources": sources,
+        },
+        {
+            "id": "treat-2",
+            "subject": "GENE:3",
+            "predicate": "biolink:treats",
+            "object": "DISEASE:2",
+            "sources": sources,
+        },
+    ]
+    node_file = tmp_path / "nodes.jsonl"
+    edge_file = tmp_path / "edges.jsonl"
+    database = tmp_path / "answer-coalesce.duckdb"
+    _write_jsonl(node_file, nodes)
+    _write_jsonl(edge_file, edges)
+
+    monkeypatch.setattr(
+        build_duckdb,
+        "_predicate_ancestors",
+        lambda predicate: (
+            ("biolink:related_to",)
+            if predicate in {"biolink:causes", "biolink:treats"}
+            else ()
+        ),
+    )
+    monkeypatch.setattr(
+        build_duckdb,
+        "is_symmetric",
+        lambda predicate: predicate == "biolink:related_to",
+    )
+    build_database(node_file, edge_file, database, blocklist=set())
+
+    database_connection = duckdb.connect(str(database), read_only=True)
+    assert database_connection.execute(
+        "SELECT count(*) FROM relation_hierarchy"
+    ).fetchone()[0] == 2
+    assert database_connection.execute(
+        "SELECT count(*) FROM feature_hierarchy"
+    ).fetchone()[0] == 2
+    database_connection.close()
+
+    monkeypatch.setenv("AC_DUCKDB_PATH", str(database))
+    duckdb_store.close_connection()
+    candidates, _ = duckdb_store.enrichment_candidates(
+        ["GENE:1", "GENE:2"],
+        "biolink:Gene",
+        node_constraints=["biolink:Disease"],
+        filter_predicate_hierarchies=True,
+        max_results=2,
+    )
+
+    assert [
+        (
+            candidate.neighbor_curie,
+            json.loads(candidate.predicate_json)["predicate"],
+        )
+        for candidate in candidates
+    ] == [
+        ("DISEASE:1", "biolink:causes"),
+        ("DISEASE:2", "biolink:treats"),
+    ]
+
+    candidates, _ = duckdb_store.enrichment_candidates(
+        ["GENE:1", "GENE:2"],
+        "biolink:Gene",
+        node_constraints=["biolink:Disease"],
+        filter_predicate_hierarchies=True,
+        exclude_ids={"DISEASE:1"},
+        max_results=1,
+    )
+    assert [
+        (
+            candidate.neighbor_curie,
+            json.loads(candidate.predicate_json)["predicate"],
+        )
+        for candidate in candidates
+    ] == [("DISEASE:2", "biolink:treats")]
+    duckdb_store.close_connection()
+
+
 def test_runtime_rejects_incompatible_schema(tmp_path, monkeypatch):
     database = tmp_path / "old-schema.duckdb"
     connection = duckdb.connect(str(database))
     connection.execute(
         """
         CREATE TABLE metadata (key VARCHAR PRIMARY KEY, value VARCHAR NOT NULL);
-        INSERT INTO metadata VALUES ('schema_version', '3');
+        INSERT INTO metadata VALUES ('schema_version', '6');
         """
     )
     connection.close()
 
     monkeypatch.setenv("AC_DUCKDB_PATH", str(database))
     duckdb_store.close_connection()
-    with pytest.raises(RuntimeError, match="schema version 3"):
+    with pytest.raises(RuntimeError, match="schema version 6"):
         duckdb_store.connection()
     duckdb_store.close_connection()
 

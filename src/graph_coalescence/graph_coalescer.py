@@ -154,8 +154,9 @@ async def coalesce_by_graph(input_ids, input_node_type,
     {"predicate": "biolink:related_to", "object_aspect_qualifier": "activity", "constraint": "include|exclude"}
     By including or not including these constraints, coalesce_by_graph can be used by either an MCQ query or EDGAR.
     max_results determines if we want more answers than we started with, so we need to parameterize.
-    filter_predicate_hierarchies mainly in edgar to exclude/add symmetric edges inline
-    (in create_node_to_link) and filter predicate hierarchies in get_enriched_link enrichment_results
+    filter_predicate_hierarchies is used by EDGAR to suppress excluded
+    ancestors and prune redundant hierarchy results before linked-edge
+    hydration.
     """
     logger.info(f'Start of processing.')
     if node_constraints is None:
@@ -185,8 +186,10 @@ async def coalesce_by_graph(input_ids, input_node_type,
         predicate_constraint_style=predicate_constraint_style,
         context_qualifiers=context_qualifiers,
         hierarchy_exclusion_pairs=hierarchy_exclusion_pairs,
+        filter_predicate_hierarchies=filter_predicate_hierarchies,
+        exclude_ids=exclude_ids,
         pvalue_threshold=pvalue_threshold,
-        max_results=max_results if not filter_predicate_hierarchies else None,
+        max_results=max_results,
     )
 
     ndraws = len(set(input_ids))
@@ -209,8 +212,6 @@ async def coalesce_by_graph(input_ids, input_node_type,
             )
         )
 
-    if filter_predicate_hierarchies:
-        enriched_links = filter_result_hierarchies(enriched_links)
     if exclude_ids:
         enriched_links = [
             enrichment

@@ -12,13 +12,13 @@ from scipy.special import pdtrc
 
 from src.scoring import pvalue_to_conductance
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_QUERY_MEMORY_LIMIT = "1GB"
 DEFAULT_QUERY_MAX_TEMP_DIRECTORY_SIZE = "8GB"
 DEFAULT_QUERY_THREADS = 2
 DEFAULT_INFERENCE_RULE_BATCH_SIZE = 100
-EXPECTED_SCHEMA_VERSION = "4"
+DEFAULT_HIERARCHY_CANDIDATE_WINDOW = 1_000
+EXPECTED_SCHEMA_VERSION = "7"
 BLOCKLIST = {
     "HP:0000118",
     "MONDO:0000001",
@@ -119,6 +119,7 @@ def connection():
             _thread_state.connection = None
             _thread_state.path = None
             _thread_state.relation_rows = None
+            _thread_state.relation_ancestor_ids = None
             found_version = schema_version[0] if schema_version else "missing"
             raise RuntimeError(
                 f"AnswerCoalesce DuckDB schema version {found_version} is not "
@@ -185,6 +186,7 @@ def connection():
         _thread_state.path = path
         _thread_state.connection = cached_connection
         _thread_state.relation_rows = None
+        _thread_state.relation_ancestor_ids = None
     return cached_connection
 
 
@@ -195,6 +197,7 @@ def close_connection():
     _thread_state.connection = None
     _thread_state.path = None
     _thread_state.relation_rows = None
+    _thread_state.relation_ancestor_ids = None
 
 
 def _normalized_constraint(constraint):
@@ -257,6 +260,61 @@ def _relation_ids(predicate_constraints, style, context_qualifiers):
         }
         return context_ids - matched
     return matched
+
+
+def _relation_ancestor_ids():
+    cached = getattr(_thread_state, "relation_ancestor_ids", None)
+    if cached is None:
+        cached = {}
+        for descendant_relation_id, ancestor_relation_id in connection().execute(
+            """
+            SELECT descendant_relation_id, ancestor_relation_id
+            FROM relation_hierarchy
+            ORDER BY descendant_relation_id, ancestor_relation_id
+            """
+        ).fetchall():
+            cached.setdefault(descendant_relation_id, []).append(
+                ancestor_relation_id
+            )
+        cached = {
+            relation_id: tuple(ancestor_ids)
+            for relation_id, ancestor_ids in cached.items()
+        }
+        _thread_state.relation_ancestor_ids = cached
+    return cached
+
+
+def _prune_hierarchy_candidate_rows(rows):
+    """Remove statistically dominated ancestors or descendants."""
+    candidate_by_relation = {
+        (row[1], row[3], row[2]): row
+        for row in rows
+    }
+    dominated_feature_ids = set()
+    relation_ancestors = _relation_ancestor_ids()
+    for descendant in rows:
+        for ancestor_relation_id in relation_ancestors.get(
+            descendant[2],
+            (),
+        ):
+            ancestor = candidate_by_relation.get(
+                (
+                    descendant[1],
+                    descendant[3],
+                    ancestor_relation_id,
+                )
+            )
+            if ancestor is None:
+                continue
+            if descendant[4] <= ancestor[4]:
+                dominated_feature_ids.add(ancestor[0])
+            if ancestor[4] < descendant[4]:
+                dominated_feature_ids.add(descendant[0])
+    return [
+        row
+        for row in rows
+        if row[0] not in dominated_feature_ids
+    ]
 
 
 def get_node_types(curies):
@@ -523,8 +581,12 @@ def graph_inference_summaries(rules, output_category, excluded_ids=None):
                         matched.relation_id,
                         fact.fact_id
                     FROM _graph_inference_matches matched
+                    JOIN relation_implication implication
+                      ON implication.implied_relation_id
+                         = matched.relation_id
                     JOIN fact
-                      ON fact.relation_id = matched.relation_id
+                      ON fact.relation_id
+                         = implication.concrete_relation_id
                      AND fact.subject_node_id = matched.enriched_node_id
                      AND fact.object_node_id = matched.candidate_node_id
                     WHERE matched.is_source
@@ -537,8 +599,12 @@ def graph_inference_summaries(rules, output_category, excluded_ids=None):
                         matched.relation_id,
                         fact.fact_id
                     FROM _graph_inference_matches matched
+                    JOIN relation_implication implication
+                      ON implication.implied_relation_id
+                         = matched.relation_id
                     JOIN fact
-                      ON fact.relation_id = matched.relation_id
+                      ON fact.relation_id
+                         = implication.concrete_relation_id
                      AND fact.subject_node_id = matched.candidate_node_id
                      AND fact.object_node_id = matched.enriched_node_id
                     WHERE NOT matched.is_source
@@ -551,8 +617,12 @@ def graph_inference_summaries(rules, output_category, excluded_ids=None):
                         matched.relation_id,
                         fact.fact_id
                     FROM _graph_inference_matches matched
+                    JOIN relation_implication implication
+                      ON implication.implied_relation_id
+                         = matched.relation_id
                     JOIN fact
-                      ON fact.relation_id = matched.relation_id
+                      ON fact.relation_id
+                         = implication.concrete_relation_id
                      AND fact.subject_node_id = matched.candidate_node_id
                      AND fact.object_node_id = matched.enriched_node_id
                     WHERE matched.is_source
@@ -568,8 +638,12 @@ def graph_inference_summaries(rules, output_category, excluded_ids=None):
                         matched.relation_id,
                         fact.fact_id
                     FROM _graph_inference_matches matched
+                    JOIN relation_implication implication
+                      ON implication.implied_relation_id
+                         = matched.relation_id
                     JOIN fact
-                      ON fact.relation_id = matched.relation_id
+                      ON fact.relation_id
+                         = implication.concrete_relation_id
                      AND fact.subject_node_id = matched.enriched_node_id
                      AND fact.object_node_id = matched.candidate_node_id
                     WHERE NOT matched.is_source
@@ -665,6 +739,8 @@ def enrichment_candidates(
     predicate_constraint_style="exclude",
     context_qualifiers=None,
     hierarchy_exclusion_pairs=None,
+    filter_predicate_hierarchies=False,
+    exclude_ids=None,
     pvalue_threshold=None,
     max_results=None,
 ):
@@ -724,35 +800,39 @@ def enrichment_candidates(
     query_params = [input_node_ids]
     if hierarchy_exclusion_pairs:
         hierarchy_cte = """,
-        hierarchy_pairs AS (
-            SELECT
-                unnest(?) AS excluded_predicate,
-                unnest(?) AS ancestor_predicate
+        excluded_predicates AS (
+            SELECT unnest(?) AS predicate
+        ),
+        excluded_ancestor_membership AS MATERIALIZED (
+            SELECT DISTINCT
+                excluded_membership.member_node_id,
+                hierarchy.ancestor_feature_id AS feature_id
+            FROM matched_membership excluded_membership
+            JOIN feature excluded_feature USING (feature_id)
+            JOIN relation excluded_relation
+              ON excluded_relation.relation_id = excluded_feature.relation_id
+            JOIN excluded_predicates
+              ON excluded_predicates.predicate = excluded_relation.predicate
+            JOIN feature_hierarchy hierarchy
+              ON hierarchy.descendant_feature_id
+                 = excluded_membership.feature_id
         )
         """
-        hierarchy_join = """
-            JOIN relation candidate_relation
-              ON candidate_relation.relation_id = feature.relation_id
-        """
-        query_params.extend(
-            [
-                [pair[0] for pair in hierarchy_exclusion_pairs],
-                [pair[1] for pair in hierarchy_exclusion_pairs],
-            ]
+        query_params.append(
+            sorted(
+                {
+                    excluded_predicate
+                    for excluded_predicate, _ in hierarchy_exclusion_pairs
+                }
+            )
         )
         hierarchy_filter = """
           AND NOT EXISTS (
               SELECT 1
-              FROM matched_membership excluded_membership
-              JOIN feature excluded_feature USING (feature_id)
-              JOIN relation excluded_relation
-                ON excluded_relation.relation_id = excluded_feature.relation_id
-              JOIN hierarchy_pairs
-                ON hierarchy_pairs.excluded_predicate = excluded_relation.predicate
-               AND hierarchy_pairs.ancestor_predicate = candidate_relation.predicate
-              WHERE excluded_membership.member_node_id = matched_membership.member_node_id
-                AND excluded_feature.neighbor_node_id = feature.neighbor_node_id
-                AND excluded_feature.member_is_subject = feature.member_is_subject
+              FROM excluded_ancestor_membership excluded
+              WHERE excluded.member_node_id
+                    = candidate_membership.member_node_id
+                AND excluded.feature_id = candidate_membership.feature_id
           )
         """
 
@@ -763,6 +843,13 @@ def enrichment_candidates(
         """
         query_params.append(relation_ids)
     query_params.extend(BLOCKLIST)
+    exclude_filter = ""
+    excluded_curies = list(dict.fromkeys(exclude_ids or ()))
+    if excluded_curies:
+        exclude_filter = """
+              AND neighbor.curie NOT IN (SELECT unnest(?))
+        """
+        query_params.append(excluded_curies)
     category_filter = ""
     requested_categories = node_constraints or ["biolink:NamedThing"]
     if "biolink:NamedThing" not in requested_categories:
@@ -779,26 +866,19 @@ def enrichment_candidates(
     if pvalue_threshold is not None:
         candidate_filter = "WHERE p_value < ?"
 
-    candidate_limit = ""
-    if max_results is not None:
-        candidate_limit = "LIMIT ?"
-
-    query_params.extend(
-        [
-            len(input_ids),
-            total_node_count,
-            background_category_id,
-            len(input_ids),
-            total_node_count,
-        ]
-    )
+    eligibility_params = query_params
+    scoring_params = [
+        len(input_ids),
+        total_node_count,
+        background_category_id,
+        len(input_ids),
+        total_node_count,
+    ]
     if pvalue_threshold is not None:
-        query_params.append(pvalue_threshold)
-    if max_results is not None:
-        query_params.append(max_results)
-    rows = current_connection.execute(
-        f"""
-        WITH matched_membership AS MATERIALIZED (
+        scoring_params.append(pvalue_threshold)
+
+    eligibility_ctes = f"""
+        matched_membership AS MATERIALIZED (
             SELECT
                 membership.member_node_id,
                 membership.feature_id
@@ -809,9 +889,9 @@ def enrichment_candidates(
         ,
         eligible_membership AS MATERIALIZED (
             SELECT
-                matched_membership.member_node_id,
-                matched_membership.feature_id
-            FROM matched_membership
+                candidate_membership.member_node_id,
+                candidate_membership.feature_id
+            FROM matched_membership candidate_membership
             JOIN feature USING (feature_id)
             JOIN node neighbor ON neighbor.node_id = feature.neighbor_node_id
             {hierarchy_join}
@@ -820,9 +900,13 @@ def enrichment_candidates(
               AND neighbor.curie NOT IN (
                 {",".join("?" for _ in BLOCKLIST)}
             )
+              {exclude_filter}
               {hierarchy_filter}
               {category_filter}
-        ),
+        )
+    """
+    scoring_ctes = """
+        ,
         candidate_support AS (
             SELECT
                 feature_id,
@@ -844,14 +928,184 @@ def enrichment_candidates(
               ON stats.category_id = ?
              AND stats.feature_id = candidate.feature_id
             WHERE candidate.support_count >= stats.background_count * ? / ?
-        ),
+        )
+    """
+
+    if filter_predicate_hierarchies:
+        candidate_window = (
+            None
+            if max_results is None
+            else max(
+                DEFAULT_HIERARCHY_CANDIDATE_WINDOW,
+                max_results * 10,
+            )
+        )
+        while True:
+            window_limit = "LIMIT ?" if candidate_window is not None else ""
+            compact_params = eligibility_params + scoring_params
+            if candidate_window is not None:
+                compact_params.append(candidate_window)
+            compact_rows = current_connection.execute(
+                f"""
+                WITH
+                {eligibility_ctes}
+                {scoring_ctes}
+                ,
+                selected AS (
+                    SELECT
+                        surviving.feature_id,
+                        feature.neighbor_node_id,
+                        feature.relation_id,
+                        feature.member_is_subject,
+                        surviving.p_value,
+                        surviving.support_count,
+                        surviving.background_count
+                    FROM surviving
+                    JOIN feature USING (feature_id)
+                    {candidate_filter}
+                    ORDER BY
+                        surviving.p_value,
+                        feature.neighbor_node_id,
+                        feature.relation_id,
+                        feature.member_is_subject,
+                        surviving.feature_id
+                    {window_limit}
+                )
+                SELECT
+                    selected.feature_id,
+                    selected.neighbor_node_id,
+                    selected.relation_id,
+                    selected.member_is_subject,
+                    selected.p_value,
+                    selected.support_count,
+                    selected.background_count,
+                    neighbor.curie,
+                    relation.predicate_json,
+                    relation.is_symmetric,
+                    neighbor.categories
+                FROM selected
+                JOIN relation
+                  ON relation.relation_id = selected.relation_id
+                JOIN node neighbor
+                  ON neighbor.node_id = selected.neighbor_node_id
+                ORDER BY
+                    selected.p_value,
+                    selected.neighbor_node_id,
+                    selected.relation_id,
+                    selected.member_is_subject,
+                    selected.feature_id
+                """,
+                compact_params,
+            ).fetchall()
+            selected_rows = _prune_hierarchy_candidate_rows(compact_rows)
+            if candidate_window is None or len(compact_rows) < candidate_window:
+                break
+            if max_results is not None and len(selected_rows) >= max_results:
+                cutoff = (
+                    selected_rows[max_results - 1][4],
+                    selected_rows[max_results - 1][1],
+                )
+                fetched_boundary = (
+                    compact_rows[-1][4],
+                    compact_rows[-1][1],
+                )
+                if fetched_boundary > cutoff:
+                    break
+            candidate_window *= 4
+
+        if max_results is not None:
+            selected_rows = selected_rows[:max_results]
+        if not selected_rows:
+            return [], total_node_count
+
+        selected_feature_ids = [row[0] for row in selected_rows]
+        linked_params = [input_node_ids]
+        if hierarchy_exclusion_pairs:
+            linked_params.append(
+                sorted(
+                    {
+                        excluded_predicate
+                        for excluded_predicate, _ in hierarchy_exclusion_pairs
+                    }
+                )
+            )
+        linked_params.append(selected_feature_ids)
+        linked_rows = current_connection.execute(
+            f"""
+            WITH matched_membership AS MATERIALIZED (
+                SELECT
+                    membership.member_node_id,
+                    membership.feature_id
+                FROM membership
+                WHERE membership.member_node_id IN (SELECT unnest(?))
+            )
+            {hierarchy_cte}
+            ,
+            eligible_membership AS (
+                SELECT
+                    candidate_membership.member_node_id,
+                    candidate_membership.feature_id
+                FROM matched_membership candidate_membership
+                JOIN feature USING (feature_id)
+                {hierarchy_join}
+                WHERE candidate_membership.feature_id IN (SELECT unnest(?))
+                  {hierarchy_filter}
+            )
+            SELECT
+                eligible_membership.feature_id,
+                list(member.curie ORDER BY member.curie) AS linked_curies
+            FROM eligible_membership
+            JOIN node member
+              ON member.node_id = eligible_membership.member_node_id
+            GROUP BY eligible_membership.feature_id
+            """,
+            linked_params,
+        ).fetchall()
+        linked_curies = {
+            feature_id: tuple(curies)
+            for feature_id, curies in linked_rows
+        }
+        return [
+            EnrichmentCandidate(
+                neighbor_curie=row[7],
+                predicate_json=row[8],
+                member_is_subject=row[3],
+                is_symmetric=row[9],
+                p_value=row[4],
+                support_count=row[5],
+                background_count=row[6],
+                linked_curies=linked_curies[row[0]],
+                neighbor_categories=tuple(row[10]),
+            )
+            for row in selected_rows
+        ], total_node_count
+
+    candidate_limit = ""
+    query_params = eligibility_params + scoring_params
+    if max_results is not None:
+        candidate_limit = "LIMIT ?"
+        query_params.append(max_results)
+    rows = current_connection.execute(
+        f"""
+        WITH
+        {eligibility_ctes}
+        {scoring_ctes}
+        ,
         selected AS (
-            SELECT *
+            SELECT
+                surviving.feature_id,
+                surviving.support_count,
+                surviving.background_count,
+                surviving.p_value
             FROM surviving
+            JOIN feature USING (feature_id)
             {candidate_filter}
             ORDER BY
-                p_value,
-                feature_id
+                surviving.p_value,
+                feature.neighbor_node_id,
+                feature.relation_id,
+                feature.member_is_subject,
+                surviving.feature_id
             {candidate_limit}
         ),
         linked AS (
@@ -988,8 +1242,11 @@ def get_edge_provenance(edges):
                     requested.requested_object,
                     fact.fact_id
                 FROM _requested_provenance requested
+                JOIN relation_implication implication
+                  ON implication.implied_relation_id
+                     = requested.relation_id
                 JOIN fact
-                  ON fact.relation_id = requested.relation_id
+                  ON fact.relation_id = implication.concrete_relation_id
                  AND fact.subject_node_id = requested.subject_node_id
                  AND fact.object_node_id = requested.object_node_id
 
@@ -1001,9 +1258,12 @@ def get_edge_provenance(edges):
                     requested.requested_object,
                     fact.fact_id
                 FROM _requested_provenance requested
+                JOIN relation_implication implication
+                  ON implication.implied_relation_id
+                     = requested.relation_id
                 JOIN fact
                   ON requested.is_symmetric
-                 AND fact.relation_id = requested.relation_id
+                 AND fact.relation_id = implication.concrete_relation_id
                  AND fact.subject_node_id = requested.object_node_id
                  AND fact.object_node_id = requested.subject_node_id
             )
