@@ -139,7 +139,7 @@ def filter_links_by_node_type(nodes_to_links, node_constraints, link_node_types)
 async def coalesce_by_graph(input_ids, input_node_type,
                             node_constraints=None, predicate_constraints=None, predicate_constraint_style="exclude",
                             pvalue_threshold=None, max_results=None, filter_predicate_hierarchies=False,
-                            context_qualifiers=None, exclude_ids=None):
+                            context_qualifiers=None, exclude_ids=None, input_is_subject=None):
     """
     Given a list of input_ids, find nodes that are enriched.
     Return a list of Enrichment objects describing each enrichment.
@@ -157,6 +157,8 @@ async def coalesce_by_graph(input_ids, input_node_type,
     filter_predicate_hierarchies is used by EDGAR to suppress excluded
     ancestors and prune redundant hierarchy results before linked-edge
     hydration.
+    input_is_subject constrains asymmetric relations to the query direction.
+    Symmetric relations remain eligible in either direction.
     """
     logger.info(f'Start of processing.')
     if node_constraints is None:
@@ -181,6 +183,7 @@ async def coalesce_by_graph(input_ids, input_node_type,
         duckdb_store.enrichment_candidates,
         input_ids,
         input_node_type,
+        input_is_subject=input_is_subject,
         node_constraints=node_constraints,
         predicate_constraints=predicate_constraints,
         predicate_constraint_style=predicate_constraint_style,

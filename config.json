@@ -1,5 +1,5 @@
 {
-    "duckdb_path": "answer-coalesce.duckdb",
+    "duckdb_path": "answer-coalesce-hierarchy-pruned.duckdb",
     "test_mode": 0,
     "node_normalization_url": "https://nodenormalization-sri.renci.org/1.5/get_normalized_nodes"
 }

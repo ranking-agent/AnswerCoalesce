@@ -1,4 +1,6 @@
 import asyncio
+import sqlite3
+
 import src.property_coalescence.property_coalescer as pc
 
 
@@ -91,4 +93,89 @@ def test_property_coalsecer():
     assert 'CHEBI_ROLE_biochemical_role' not in [enr_prop["enriched_property"] for enr_prop in enr_props]
 
 
+def test_lookup_nodes_by_properties_uses_exact_membership(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        pc,
+        "__file__",
+        str(tmp_path / "property_coalescer.py"),
+    )
+    database = tmp_path / "biolink.ChemicalEntity.db"
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "CREATE TABLE properties (node text PRIMARY KEY, propertyset text)"
+        )
+        connection.executemany(
+            "INSERT INTO properties (node, propertyset) VALUES (?, ?)",
+            [
+                (
+                    "CHEBI:INPUT",
+                    str({"CHEBI_ROLE_neurotransmitter"}),
+                ),
+                (
+                    "CHEBI:EXACT",
+                    str({"CHEBI_ROLE_neurotransmitter"}),
+                ),
+                (
+                    "CHEBI:AGENT",
+                    str({"CHEBI_ROLE_neurotransmitter_agent"}),
+                ),
+                (
+                    "CHEBI:TRANSPORTER",
+                    str({
+                        "CHEBI_ROLE_neurotransmitter_transporter_modulator"
+                    }),
+                ),
+                (
+                    "CHEBI:BOTH",
+                    str({
+                        "CHEBI_ROLE_neurotransmitter",
+                        "CHEBI_ROLE_neurotransmitter_agent",
+                    }),
+                ),
+            ],
+        )
 
+    results = [
+        {
+            "enriched_property": "CHEBI_ROLE_neurotransmitter",
+            "p_value": 1e-10,
+            "linked_curies": frozenset({"CHEBI:INPUT"}),
+            "semantic_type": "biolink:ChemicalEntity",
+            "counts": [2, 23, 24804],
+        },
+        {
+            "enriched_property": "CHEBI_ROLE_neurotransmitter_agent",
+            "p_value": 1e-5,
+            "linked_curies": frozenset(),
+            "semantic_type": "biolink:ChemicalEntity",
+            "counts": [2, 785, 24804],
+        },
+    ]
+
+    response, nodes = pc.lookup_nodes_by_properties(
+        results,
+        "biolink:ChemicalEntity",
+        return_nodeset=True,
+    )
+
+    assert response["CHEBI_ROLE_neurotransmitter"]["lookup_links"] == [
+        "CHEBI:EXACT",
+        "CHEBI:BOTH",
+    ]
+    assert response["CHEBI_ROLE_neurotransmitter_agent"]["lookup_links"] == [
+        "CHEBI:AGENT",
+        "CHEBI:BOTH",
+    ]
+    assert nodes == {"CHEBI:EXACT", "CHEBI:AGENT", "CHEBI:BOTH"}
+
+
+def test_lookup_nodes_by_properties_handles_no_rules():
+    assert pc.lookup_nodes_by_properties(
+        [],
+        "biolink:ChemicalEntity",
+    ) == {}
+    assert pc.lookup_nodes_by_properties(
+        [],
+        "biolink:ChemicalEntity",
+        return_nodeset=True,
+    ) == ({}, set())

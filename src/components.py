@@ -283,10 +283,24 @@ class Lookup:
         self.is_source = is_source
         self.score = score
 
-        # lookup_ids may be plain IDs or full links [id, pred, is_source]
+        # Full links are [id, predicate, member_is_subject, is_symmetric].
         if lookup_ids and isinstance(lookup_ids[0], (list, tuple)):
-            self._link_records = [(link[0], link[1]) for link in lookup_ids]
-            self.link_ids = list(dict.fromkeys(link[0] for link in lookup_ids))
+            directional_links = [
+                link
+                for link in lookup_ids
+                if (
+                    len(link) < 3
+                    or (len(link) > 3 and link[3])
+                    or bool(link[2]) == is_source
+                )
+            ]
+            self._link_records = [
+                (link[0], link[1])
+                for link in directional_links
+            ]
+            self.link_ids = list(
+                dict.fromkeys(link[0] for link in directional_links)
+            )
         else:
             self._link_records = [(link_id, self.predicate) for link_id in lookup_ids]
             self.link_ids = list(dict.fromkeys(lookup_ids))
