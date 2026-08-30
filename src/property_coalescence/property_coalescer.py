@@ -149,7 +149,13 @@ def enrichment(enrichp: float, property: str, ndraws: int, n: int, total_node_co
 
 
 def lookup_nodes_by_properties(results, stype, return_nodeset=False):
-    properties = [result.get("enriched_property") for result in results]
+    properties = list(dict.fromkeys(
+        result.get("enriched_property")
+        for result in results
+        if result.get("enriched_property")
+    ))
+    if not properties:
+        return ({}, set()) if return_nodeset else {}
 
     if stype in ['biolink:SmallMolecule', 'biolink:MolecularMixture', 'biolink:Drug']:
         stype = 'biolink:ChemicalEntity'
@@ -162,11 +168,12 @@ def lookup_nodes_by_properties(results, stype, return_nodeset=False):
     with sqlite3.connect(pf) as conn:
         conn.row_factory = sqlite3.Row
 
-        # Construct the SQL query
+        # Python set serialization uses repr() for each string. Searching for
+        # the complete quoted token avoids retrieving prefix-name collisions.
         conditions = " OR ".join(["INSTR(propertyset, ?) > 0"] * len(properties))
         sql_query = f'SELECT node, propertyset FROM properties WHERE {conditions}'
 
-        cur = conn.execute(sql_query, properties)
+        cur = conn.execute(sql_query, [repr(prop) for prop in properties])
         rows = cur.fetchall()
 
     results_dicts = {result["enriched_property"]: result for result in results}
@@ -183,7 +190,7 @@ def lookup_nodes_by_properties(results, stype, return_nodeset=False):
     nodeset = set()
     for row in rows:
         node = row['node']
-        propertyset = row['propertyset']
+        propertyset = literal_eval(row['propertyset'])
         for prop in properties:
             if prop in propertyset:
                 if node in response[prop]["linked_curies"]:

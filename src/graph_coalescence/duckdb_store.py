@@ -396,7 +396,8 @@ def create_nodes_to_links(allnodes, param_predicates=None, neighbor_ids=None):
             membership.member_node_id,
             neighbor.curie,
             relation.predicate_json,
-            feature.member_is_subject
+            feature.member_is_subject,
+            relation.is_symmetric
         FROM membership
         JOIN feature USING (feature_id)
         JOIN relation USING (relation_id)
@@ -412,14 +413,22 @@ def create_nodes_to_links(allnodes, param_predicates=None, neighbor_ids=None):
         for node, predicate in zip(allnodes, param_predicates):
             predicates_by_node.setdefault(node, []).append(_normalized_constraint(predicate))
 
-    for member_id, neighbor, relation_json, member_is_subject in rows:
+    for (
+        member_id,
+        neighbor,
+        relation_json,
+        member_is_subject,
+        is_symmetric,
+    ) in rows:
         member = node_curie_by_id[member_id]
         constraints = predicates_by_node.get(member)
         if constraints:
             relation = orjson.loads(relation_json)
             if not any(constraint.items() <= relation.items() for constraint in constraints):
                 continue
-        result[member].append([neighbor, relation_json, member_is_subject])
+        result[member].append(
+            [neighbor, relation_json, member_is_subject, is_symmetric]
+        )
     return result
 
 
@@ -734,6 +743,7 @@ def enrichment_candidates(
     input_ids,
     input_category,
     *,
+    input_is_subject=None,
     node_constraints=None,
     predicate_constraints=None,
     predicate_constraint_style="exclude",
@@ -842,6 +852,20 @@ def enrichment_candidates(
               AND feature.relation_id IN (SELECT unnest(?))
         """
         query_params.append(relation_ids)
+    direction_join = ""
+    direction_filter = ""
+    if input_is_subject is not None:
+        direction_join = """
+            JOIN relation direction_relation
+              ON direction_relation.relation_id = feature.relation_id
+        """
+        direction_filter = """
+              AND (
+                  direction_relation.is_symmetric
+                  OR feature.member_is_subject = ?
+              )
+        """
+        query_params.append(input_is_subject)
     query_params.extend(BLOCKLIST)
     exclude_filter = ""
     excluded_curies = list(dict.fromkeys(exclude_ids or ()))
@@ -893,10 +917,12 @@ def enrichment_candidates(
                 candidate_membership.feature_id
             FROM matched_membership candidate_membership
             JOIN feature USING (feature_id)
+            {direction_join}
             JOIN node neighbor ON neighbor.node_id = feature.neighbor_node_id
             {hierarchy_join}
             WHERE TRUE
               {relation_filter}
+              {direction_filter}
               AND neighbor.curie NOT IN (
                 {",".join("?" for _ in BLOCKLIST)}
             )

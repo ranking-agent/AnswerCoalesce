@@ -20,6 +20,7 @@ from src.scoring import (
     score_inference,
 )
 from src.single_node_coalescer import (
+    lookup_single,
     multi_curie_query,
     run_inference_lookup,
 )
@@ -31,6 +32,89 @@ def _write_jsonl(path, rows):
         "".join(json.dumps(row) + "\n" for row in rows),
         encoding="utf-8",
     )
+
+
+def _build_direction_test_database(tmp_path, monkeypatch):
+    nodes = [
+        {"id": "DRUG:1", "category": ["biolink:Drug"]},
+        {"id": "DRUG:2", "category": ["biolink:Drug"]},
+        {"id": "DISEASE:FORWARD", "category": ["biolink:Disease"]},
+        {"id": "DISEASE:REVERSE", "category": ["biolink:Disease"]},
+        {"id": "DISEASE:SYMMETRIC", "category": ["biolink:Disease"]},
+    ]
+    sources = [
+        {
+            "resource_id": "infores:test",
+            "resource_role": "primary_knowledge_source",
+        }
+    ]
+    edges = [
+        {
+            "id": "forward-1",
+            "subject": "DRUG:1",
+            "predicate": "biolink:treats",
+            "object": "DISEASE:FORWARD",
+            "sources": sources,
+        },
+        {
+            "id": "forward-2",
+            "subject": "DRUG:2",
+            "predicate": "biolink:treats",
+            "object": "DISEASE:FORWARD",
+            "sources": sources,
+        },
+        {
+            "id": "reverse-1",
+            "subject": "DISEASE:REVERSE",
+            "predicate": "biolink:treats",
+            "object": "DRUG:1",
+            "sources": sources,
+        },
+        {
+            "id": "reverse-2",
+            "subject": "DISEASE:REVERSE",
+            "predicate": "biolink:treats",
+            "object": "DRUG:2",
+            "sources": sources,
+        },
+        {
+            "id": "symmetric-1",
+            "subject": "DISEASE:SYMMETRIC",
+            "predicate": "biolink:related_to",
+            "object": "DRUG:1",
+            "sources": sources,
+        },
+        {
+            "id": "symmetric-2",
+            "subject": "DISEASE:SYMMETRIC",
+            "predicate": "biolink:related_to",
+            "object": "DRUG:2",
+            "sources": sources,
+        },
+    ]
+    node_file = tmp_path / "direction-nodes.jsonl"
+    edge_file = tmp_path / "direction-edges.jsonl"
+    database = tmp_path / "direction.duckdb"
+    _write_jsonl(node_file, nodes)
+    _write_jsonl(edge_file, edges)
+
+    monkeypatch.setattr(build_duckdb, "_predicate_ancestors", lambda predicate: ())
+    monkeypatch.setattr(
+        build_duckdb,
+        "is_symmetric",
+        lambda predicate: predicate == "biolink:related_to",
+    )
+    build_database(node_file, edge_file, database, blocklist=set())
+    monkeypatch.setenv("AC_DUCKDB_PATH", str(database))
+    duckdb_store.close_connection()
+
+
+def _mcq_output_ids(response):
+    return {
+        binding["id"]
+        for result in response["message"].get("results", [])
+        for binding in result["node_bindings"]["output"]
+    }
 
 
 def test_duckdb_builder_creates_normalized_graph(tmp_path):
@@ -91,6 +175,107 @@ def test_duckdb_builder_creates_normalized_graph(tmp_path):
         """
     ).fetchone()[0] == counts["membership"]
     connection.close()
+
+
+def test_mcq_enforces_asymmetric_direction_and_allows_symmetric(
+    tmp_path,
+    monkeypatch,
+):
+    _build_direction_test_database(tmp_path, monkeypatch)
+
+    forward_message = generate_mcq_query(
+        "biolink:Drug",
+        "biolink:Disease",
+        ["DRUG:1", "DRUG:2"],
+        "biolink:treats",
+        input_is_subject=True,
+        params={"pvalue_threshold": 1.0, "max_results": 10},
+    )
+    forward_response = asyncio.run(
+        multi_curie_query(forward_message, forward_message["parameters"])
+    )
+    assert _mcq_output_ids(forward_response) == {"DISEASE:FORWARD"}
+
+    reverse_message = generate_mcq_query(
+        "biolink:Drug",
+        "biolink:Disease",
+        ["DRUG:1", "DRUG:2"],
+        "biolink:treats",
+        input_is_subject=False,
+        params={"pvalue_threshold": 1.0, "max_results": 10},
+    )
+    reverse_response = asyncio.run(
+        multi_curie_query(reverse_message, reverse_message["parameters"])
+    )
+    assert _mcq_output_ids(reverse_response) == {"DISEASE:REVERSE"}
+
+    for input_is_subject in (True, False):
+        symmetric_message = generate_mcq_query(
+            "biolink:Drug",
+            "biolink:Disease",
+            ["DRUG:1", "DRUG:2"],
+            "biolink:related_to",
+            input_is_subject=input_is_subject,
+            params={"pvalue_threshold": 1.0, "max_results": 10},
+        )
+        symmetric_response = asyncio.run(
+            multi_curie_query(
+                symmetric_message,
+                symmetric_message["parameters"],
+            )
+        )
+        assert _mcq_output_ids(symmetric_response) == {
+            "DISEASE:SYMMETRIC"
+        }
+
+    duckdb_store.close_connection()
+
+
+def test_edgar_initial_lookup_enforces_direction_and_allows_symmetric(
+    tmp_path,
+    monkeypatch,
+):
+    _build_direction_test_database(tmp_path, monkeypatch)
+    treats = json.dumps({"predicate": "biolink:treats"}, sort_keys=True)
+    related_to = json.dumps(
+        {"predicate": "biolink:related_to"},
+        sort_keys=True,
+    )
+
+    forward = lookup_single(
+        "DRUG:1",
+        treats,
+        True,
+        "biolink:Disease",
+    )
+    reverse = lookup_single(
+        "DRUG:1",
+        treats,
+        False,
+        "biolink:Disease",
+    )
+    symmetric_forward = lookup_single(
+        "DRUG:1",
+        related_to,
+        True,
+        "biolink:Disease",
+    )
+    symmetric_reverse = lookup_single(
+        "DRUG:1",
+        related_to,
+        False,
+        "biolink:Disease",
+    )
+
+    assert forward.link_ids == ["DISEASE:FORWARD"]
+    assert reverse.link_ids == ["DISEASE:REVERSE"]
+    assert symmetric_forward.link_ids == ["DISEASE:SYMMETRIC"]
+    assert symmetric_reverse.link_ids == ["DISEASE:SYMMETRIC"]
+    assert forward.lookup_links[0].link_edge.source == "DRUG:1"
+    assert forward.lookup_links[0].link_edge.target == "DISEASE:FORWARD"
+    assert reverse.lookup_links[0].link_edge.source == "DISEASE:REVERSE"
+    assert reverse.lookup_links[0].link_edge.target == "DRUG:1"
+    duckdb_store.close_connection()
 
 
 def test_implied_relations_match_old_orion_expansion(monkeypatch):

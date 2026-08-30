@@ -45,7 +45,8 @@ async def multi_curie_query(in_message, parameters):
                                                  predicate_constraint_style="include",
                                                  pvalue_threshold=parameters.get("pvalue_threshold"),
                                                  max_results=parameters.get("max_results"),
-                                                 context_qualifiers=context_qualifiers)
+                                                 context_qualifiers=context_qualifiers,
+                                                 input_is_subject=mcq_definition.edge.group_is_subject)
     return await create_mcq_trapi_response(in_message, enrichment_results, mcq_definition)
 
 
@@ -307,8 +308,9 @@ def lookup_single(curie: str, predicate_parts: str, is_source: bool, output_sema
                 all_node_names, all_node_types, links,
                 output_semantic_type
             )
-            add_provs([lookup])
-            return lookup
+            if lookup.link_ids:
+                add_provs([lookup])
+                return lookup
 
     return None
 
@@ -363,7 +365,8 @@ def lookup_batch(curies: list[str], predicates: list[str], is_sources: list[bool
                     all_node_names, all_node_types, filtered_links,
                     output_semantic_type
                 )
-                results[curie] = lookup
+                if lookup.link_ids:
+                    results[curie] = lookup
 
     if results:
         add_provs(list(results.values()))
