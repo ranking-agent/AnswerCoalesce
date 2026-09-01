@@ -571,8 +571,10 @@ predicate, and requested output category.
 For a Wilson's disease gene query, these known genes become the seed set. They
 are retained as evidence but excluded from the final inferred candidates.
 
-The initial lookup currently matches the base predicate. Query qualifiers are
-not applied to this direct lookup.
+The initial lookup applies the complete relation constraint. When the query
+contains qualifiers, every requested qualifier must be present with the same
+value on a matching relation. Unqualified queries continue to match qualified
+relations with the requested base predicate.
 
 ### 2. Enrich the known answers
 
@@ -696,8 +698,6 @@ response is returned.
   does not expand `qualified_predicate` or species-context values.
 - Category statistics depend on category expansion already present in the
   source KGX nodes.
-- The initial EDGAR direct lookup matches the base predicate without applying
-  query qualifiers.
 - Property enrichment remains in separate SQLite databases rather than the
   DuckDB graph artifact.
 

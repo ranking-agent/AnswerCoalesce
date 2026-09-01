@@ -1,19 +1,43 @@
 [![Build Status](https://travis-ci.com/TranslatorIIPrototypes/AnswerCoalesce.svg?branch=master)](https://travis-ci.com/TranslatorIIPrototypes/AnswerCoalesce)
 
 # AnswerCoalesce
-### A web service and Swagger UI for the Answer Coalesce service for ARAGORN.
+### A web service and query workbench for the Answer Coalesce service for ARAGORN.
 
 This service accepts [TRAPI](https://github.com/NCATSTranslator/ReasonerAPI) queries and returns coalesced answers using graph and property enrichment.
 
 A live version of the API can be found [here](https://answercoalesce.renci.org/docs).
 
+## Web UI
+
+The built-in workbench is served at `/` and `/ui`. It provides two independent query modes:
+
+- **Enrichment** resolves a pasted or incrementally assembled set of names and CURIEs, retrieves their semantic types from NodeNorm, and finds concepts enriched across that set.
+- **EDGAR** accepts one resolved concept, learns enrichment rules from its local neighborhood, and applies those rules to rank inferred answers.
+
+Both modes show ranked summaries first. Selecting a result opens its inferred relationship, score, p-value when present, provenance, and supporting auxiliary graphs. The full TRAPI response can also be downloaded.
+
+EDGAR results are separated into its three processing stages: directly known
+matches, learned enrichment rules, and newly inferred entities. The new
+entities view is selected by default.
+
+EDGAR's directly known matches apply the complete query relationship,
+including every requested qualifier. The result cards and detail views display
+the qualifiers retained on direct and supporting evidence edges.
+
+The UI uses same-origin proxy endpoints for Name Resolver and NodeNorm. Their upstream locations can be overridden with `NAME_RESOLVER_URL`, `NODE_NORMALIZER_URL`, and `IDENTITY_SERVICE_TIMEOUT`.
+
+Relationship qualifiers are entered in the second query step as repeatable
+qualifier type/value pairs. The rows form one TRAPI qualifier set, so every
+listed qualifier must match. This supports qualified predicates, object aspect
+and direction, species context, and other Biolink qualifier types.
+
 
 ## Query Types
 
-**Inference (EDGAR):** Single-curie queries with `knowledge_type: "inferred"`. Finds enriched associations via graph structure and chemical properties. The EDGAR UI is available at https://edgar-test.apps.renci.org/
+**Inference (EDGAR):** Single-curie queries with `knowledge_type: "inferred"`. Finds enriched associations via graph structure and chemical properties. Use the EDGAR tab in the built-in workbench.
 
 
-**Multi-Curie (MCQ):** Queries with `set_interpretation: "MANY"` and `member_ids`. Finds shared enrichments across a set of input curies. The Enrichment UI is accessible at  https://robokop.renci.org/explore/enrichment-analysis
+**Multi-Curie (MCQ):** Queries with `set_interpretation: "MANY"` and `member_ids`. Finds shared enrichments across a set of input curies. Use the Enrichment tab in the built-in workbench.
 
 ### Sample Inference Query
 

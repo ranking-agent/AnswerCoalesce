@@ -22,6 +22,7 @@ from src.components import MCQDefinition, Lookup, NewEdge, QueryParams, Inferenc
 from src.trapi import create_knowledge_graph_edge, create_knowledge_graph_edge_from_component, \
     create_knowledge_graph_node, add_node_to_knowledge_graph, add_edge_to_knowledge_graph, add_auxgraph_for_enrichment, \
     add_enrichment_edge, add_enrichment_result, add_member_of_klat, EGARTRAPIBuilder, prune_message
+from src.trapi import qualifiers_from_predicate
 
 logger = logging.getLogger(__name__)
 role_predicate = "biolink:has_chemical_role"
@@ -276,15 +277,13 @@ def lookup_single(curie: str, predicate_parts: str, is_source: bool, output_sema
     """
     Look up direct connections for a single curie.
 
-    Lookup matches on predicate only — qualifiers are applied at enrichment time.
+    Lookup matches the complete query relation, including all qualifiers.
 
     Returns a Lookup object with:
     - link_ids: List of connected node IDs
     - lookup_links: List of Lookup_Links with node info and edges
     """
-    pred_dict = orjson.loads(predicate_parts) if isinstance(predicate_parts, str) else predicate_parts
-    lookup_predicate = orjson.dumps({"predicate": pred_dict.get("predicate")}, option=orjson.OPT_SORT_KEYS).decode()
-    nodes_to_links = create_nodes_to_links([curie], param_predicates=[lookup_predicate])
+    nodes_to_links = create_nodes_to_links([curie], param_predicates=[predicate_parts])
     nodes_to_links = {node: links for node, links in nodes_to_links.items() if links}
 
     if not nodes_to_links:
@@ -787,11 +786,6 @@ def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, looku
 
     uuid_group = lookup_results.link_ids
 
-    # Extract just the predicate string, not the full JSON
-    pred_json = orjson.loads(lookup_results.predicate) if isinstance(lookup_results.predicate,
-                                                                     str) else lookup_results.predicate
-    predicate_only = pred_json.get("predicate") if isinstance(pred_json, dict) else lookup_results.predicate
-
     # Create UUID set node
     builder.add_node(uuid_node, [params.output_semantic_type], uuid_node, is_set=True)
     builder.add_node_attribute(uuid_node, "biolink:member_ids", {"sources": uuid_group})
@@ -810,7 +804,8 @@ def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, looku
                 edge_dict["subject"],
                 edge_dict["predicate"],
                 edge_dict["object"],
-                sources=edge_dict.get("sources", [])
+                sources=edge_dict.get("sources", []),
+                qualifiers=edge_dict.get("qualifiers"),
             )
             lookup_edges.append(lookup_edge_id)
 
@@ -826,11 +821,11 @@ def build_lookup_structure(builder: EGARTRAPIBuilder, params: QueryParams, looku
     # Add edge: UUID -> input_curie (or reverse)
     if params.is_source:
         uuid_to_curie_edge_id = builder.add_edge(
-            params.curie, predicate_only, uuid_node
+            params.curie, lookup_results.predicate, uuid_node
         )
     else:
         uuid_to_curie_edge_id = builder.add_edge(
-            uuid_node, predicate_only, params.curie
+            uuid_node, lookup_results.predicate, params.curie
         )
 
     # Create auxiliary graph for lookup
@@ -1065,7 +1060,8 @@ def build_inference_results(builder: EGARTRAPIBuilder, params: QueryParams, grap
                     edge_dict["subject"],
                     edge_dict["predicate"],
                     edge_dict["object"],
-                    sources=edge_dict.get("sources") or []
+                    sources=edge_dict.get("sources") or [],
+                    qualifiers=edge_dict.get("qualifiers"),
                 )
 
                 aux_id = builder.add_auxiliary_graph(
@@ -1188,20 +1184,23 @@ def ensure_empty_results(in_message: dict):
 
 
 def edge_from_component(edge: NewEdge) -> dict:
-    """Convert NewEdge component to dict.
-    Extracts predicate only — lookup/inference support edges don't carry context qualifiers."""
+    """Convert a NewEdge component to a TRAPI edge dictionary."""
     if not edge:
         return {}
 
     pred_json = orjson.loads(edge.predicate) if isinstance(edge.predicate, str) else edge.predicate
     predicate_only = pred_json.get("predicate") if isinstance(pred_json, dict) else edge.predicate
-
-    return {
+    edge_dict = {
         "subject": edge.source,
         "predicate": predicate_only,
         "object": edge.target,
         "sources": getattr(edge, 'prov', []) or []
     }
+    if isinstance(pred_json, dict):
+        qualifiers = qualifiers_from_predicate(pred_json)
+        if qualifiers:
+            edge_dict["qualifiers"] = qualifiers
+    return edge_dict
 
 ######################################
 #

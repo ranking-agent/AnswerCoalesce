@@ -10,6 +10,29 @@ logger = logging.getLogger(__name__)
 infores = "infores:answercoalesce"
 
 
+def qualifiers_from_predicate(predicate: dict) -> list[dict]:
+    """Convert a relation signature into TRAPI qualifier entries."""
+    qualifiers = []
+    for key, value in predicate.items():
+        if key == "predicate":
+            continue
+        qualifier_type = key if key.startswith("biolink:") else f"biolink:{key}"
+        values = value if isinstance(value, list) else [value]
+        for qualifier_value in values:
+            if qualifier_value in (None, ""):
+                continue
+            if not isinstance(qualifier_value, str):
+                raise TypeError(
+                    f"Qualifier {qualifier_type} must contain string values, "
+                    f"not {type(qualifier_value).__name__}"
+                )
+            qualifiers.append({
+                "qualifier_type_id": qualifier_type,
+                "qualifier_value": qualifier_value,
+            })
+    return qualifiers
+
+
 def create_knowledge_graph_node(curie, categories, name=None):
     """
     Create a TRAPI knowledge graph node.
@@ -24,16 +47,10 @@ def create_knowledge_graph_node(curie, categories, name=None):
 
 def create_knowledge_graph_edge_from_component(input_edge: NewEdge):
     # The NewEdge predicate has both the predicate and qualifiers in it:
-    if not isinstance(input_edge.predicate, str):
-        print("wtf")
     jsonpred = orjson.loads(input_edge.predicate)
     predicate_only = jsonpred["predicate"]
-    qualifiers = []
-    for key, value in jsonpred.items():
-        if key != "predicate":
-            qualifiers.append({"qualifier_type_id": f"biolink:{key}", "qualifier_value": value})
     return create_knowledge_graph_edge(input_edge.source, input_edge.target, predicate_only,
-                                       qualifiers=qualifiers, sources=input_edge.prov)
+                                       qualifiers=qualifiers_from_predicate(jsonpred), sources=input_edge.prov)
 
 
 def create_knowledge_graph_edge(subject, object, predicate, qualifiers=None, sources=None, attributes=None):
@@ -108,11 +125,7 @@ def add_enrichment_edge_to_knowledge_graph(response, edge):
     }
     # is there anything else in the predicate? it's qualifiers
     if len(edge["predicate"]) > 1:
-        new_edge["qualifiers"] = []
-        for key, value in edge["predicate"].items():
-            if key != "predicate":
-                qualifier_type = f"biolink:{key}" if not key.startswith("biolink:") else key
-                new_edge["qualifiers"].append({"qualifier_type_id": qualifier_type, "qualifier_value": value})
+        new_edge["qualifiers"] = qualifiers_from_predicate(edge["predicate"])
     new_edge["sources"] = edge.prov
     new_edge_id = f"{edge.source}-{edge.predicate['predicate']}-{edge.target}"
     base = new_edge_id
@@ -180,11 +193,7 @@ def add_enrichment_edge(in_message, enrichment, mcq_definition: MCQDefinition, a
         new_edge["object"] = mcq_definition.group_node.uuid
         new_edge["subject"] = enrichment.enriched_node.new_curie
     # Add any qualifiers
-    qualifiers = []
-    for key, value in epred.items():
-        if key != "predicate":
-            qualifiers.append({"qualifier_type_id": f"biolink:{key}", "qualifier_value": value})
-    new_edge["qualifiers"] = qualifiers
+    new_edge["qualifiers"] = qualifiers_from_predicate(epred)
     # Add provenance
     add_local_prov(new_edge)
     # Add KL/AT
@@ -503,19 +512,8 @@ class EGARTRAPIBuilder:
                 pred_dict = orjson.loads(predicate)
                 predicate_only = pred_dict.get("predicate", "biolink:related_to")
 
-                # Extract qualifiers from the dict
-                qualifiers = []
-                for key, value in pred_dict.items():
-                    if key != "predicate":
-                        # Add biolink: prefix if not present
-                        qualifier_type = f"biolink:{key}" if not key.startswith("biolink:") else key
-                        qualifiers.append({
-                            "qualifier_type_id": qualifier_type,
-                            "qualifier_value": value
-                        })
-
-                return predicate_only, qualifiers
-            except (orjson.JSONDecodeError, TypeError, AttributeError):
+                return predicate_only, qualifiers_from_predicate(pred_dict)
+            except (orjson.JSONDecodeError, AttributeError):
                 pass
 
         # Plain predicate string

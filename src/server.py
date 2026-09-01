@@ -6,17 +6,24 @@ import yaml
 import json
 
 from enum import Enum
-from functools import wraps
+from functools import lru_cache, wraps
+from pathlib import Path
+from typing import Any
+
+import httpx
+from bmt import Toolkit
+from pydantic import BaseModel, Field
 from reasoner_pydantic import Response as PDResponse
 
 from src.util import LoggingUtil
 from src.default_query import default_input_sync
 from src.single_node_coalescer import infer, multi_curie_query
 
-from fastapi import Body, FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.staticfiles import StaticFiles
 
 
 AC_VERSION = '3.1.1'
@@ -30,6 +37,19 @@ logger = LoggingUtil.init_logging('answer_coalesce', level=logging.INFO, format=
 conf_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '..', 'config.json')
 with open(conf_path, encoding="utf-8") as config_file:
     conf = json.load(config_file)
+
+UI_DIR = Path(__file__).resolve().parent / "ui"
+NAME_RESOLVER_URL = os.environ.get(
+    "NAME_RESOLVER_URL",
+    "https://name-resolution-sri.renci.org",
+).rstrip("/")
+NODE_NORMALIZER_URL = os.environ.get(
+    "NODE_NORMALIZER_URL",
+    conf["node_normalization_url"],
+).rstrip("/")
+if not NODE_NORMALIZER_URL.endswith("/get_normalized_nodes"):
+    NODE_NORMALIZER_URL = f"{NODE_NORMALIZER_URL}/get_normalized_nodes"
+IDENTITY_SERVICE_TIMEOUT = float(os.environ.get("IDENTITY_SERVICE_TIMEOUT", "20"))
 
 # declare the application and populate some details
 APP = FastAPI(
@@ -54,7 +74,171 @@ class MethodName(str, Enum):
     set = "set"
 
 
+class BatchLookupRequest(BaseModel):
+    terms: list[str] = Field(min_length=1, max_length=100)
+    limit: int = Field(default=5, ge=1, le=20)
+
+
+class NormalizeRequest(BaseModel):
+    curies: list[str] = Field(min_length=1, max_length=500)
+
+
 default_request_sync: Body = Body(default=default_input_sync)
+
+
+APP.mount("/ui/assets", StaticFiles(directory=UI_DIR), name="ui-assets")
+
+
+@APP.get("/", include_in_schema=False)
+@APP.get("/ui", include_in_schema=False)
+async def user_interface():
+    return FileResponse(UI_DIR / "index.html")
+
+
+async def request_identity_service(method: str, url: str, **kwargs) -> Any:
+    try:
+        async with httpx.AsyncClient(timeout=IDENTITY_SERVICE_TIMEOUT) as client:
+            response = await client.request(method, url, **kwargs)
+            response.raise_for_status()
+    except httpx.HTTPStatusError as err:
+        logger.error("Identity service returned %s for %s", err.response.status_code, url)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Identity service returned HTTP {err.response.status_code}.",
+        ) from err
+    except httpx.RequestError as err:
+        logger.error("Identity service request failed for %s: %s", url, err)
+        raise HTTPException(
+            status_code=502,
+            detail="Identity service could not be reached.",
+        ) from err
+
+    return response.json()
+
+
+def simplify_lookup_results(results: list[dict] | None) -> list[dict]:
+    if not isinstance(results, list):
+        return []
+    return [
+        {
+            "curie": result.get("curie"),
+            "label": result.get("label"),
+            "types": result.get("types", []),
+            "taxa": result.get("taxa", []),
+            "score": result.get("score"),
+        }
+        for result in results
+        if result.get("curie")
+    ]
+
+
+@lru_cache(maxsize=1)
+def get_biolink_type_metadata() -> dict[str, dict[str, Any]]:
+    toolkit = Toolkit()
+    metadata = {}
+    for category in toolkit.get_all_classes(formatted=True):
+        element = toolkit.get_element(category)
+        ancestors = toolkit.get_ancestors(category, formatted=True, reflexive=True) or []
+        metadata[category] = {
+            "depth": len(ancestors),
+            "abstract": bool(getattr(element, "abstract", False)),
+            "mixin": bool(getattr(element, "mixin", False)),
+        }
+    return metadata
+
+
+@APP.get("/ui-api/biolink-types", tags=["UI support"])
+async def biolink_types():
+    return {"types": get_biolink_type_metadata()}
+
+
+@APP.get("/ui-api/resolve", tags=["UI support"])
+async def resolve_name(
+    q: str = Query(min_length=2, max_length=200),
+    limit: int = Query(default=8, ge=1, le=20),
+):
+    results = await request_identity_service(
+        "GET",
+        f"{NAME_RESOLVER_URL}/lookup",
+        params={
+            "string": q,
+            "autocomplete": "true",
+            "highlighting": "false",
+            "limit": limit,
+        },
+    )
+    return {"query": q, "results": simplify_lookup_results(results)}
+
+
+@APP.post("/ui-api/resolve-batch", tags=["UI support"])
+async def resolve_names(request: BatchLookupRequest):
+    terms = list(dict.fromkeys(term.strip() for term in request.terms if term.strip()))
+    if not terms:
+        raise HTTPException(status_code=422, detail="At least one non-empty term is required.")
+
+    results = await request_identity_service(
+        "POST",
+        f"{NAME_RESOLVER_URL}/bulk-lookup",
+        json={
+            "strings": terms,
+            "autocomplete": False,
+            "highlighting": False,
+            "limit": request.limit,
+        },
+    )
+    return {
+        "results": {
+            term: simplify_lookup_results(results.get(term, []))
+            for term in terms
+        }
+    }
+
+
+@APP.post("/ui-api/normalize", tags=["UI support"])
+async def normalize_curies(request: NormalizeRequest):
+    curies = list(dict.fromkeys(curie.strip() for curie in request.curies if curie.strip()))
+    if not curies:
+        raise HTTPException(status_code=422, detail="At least one non-empty CURIE is required.")
+
+    normalized = await request_identity_service(
+        "POST",
+        NODE_NORMALIZER_URL,
+        json={
+            "curies": curies,
+            "conflate": True,
+            "drug_chemical_conflate": True,
+            "description": False,
+            "individual_types": False,
+            "include_taxa": True,
+        },
+    )
+    entities = []
+    for input_curie in curies:
+        node = normalized.get(input_curie)
+        if not node:
+            entities.append({
+                "input_curie": input_curie,
+                "curie": input_curie,
+                "label": input_curie,
+                "types": [],
+                "taxa": [],
+                "normalized": False,
+            })
+            continue
+
+        preferred = node.get("id") or {}
+        entities.append({
+            "input_curie": input_curie,
+            "curie": preferred.get("identifier", input_curie),
+            "label": preferred.get("label") or preferred.get("identifier") or input_curie,
+            "types": node.get("type", []),
+            "taxa": node.get("taxa", []),
+            "information_content": node.get("information_content"),
+            "equivalent_identifier_count": len(node.get("equivalent_identifiers", [])),
+            "normalized": True,
+        })
+
+    return {"entities": entities}
 
 
 @APP.post('/query', tags=["Answer coalesce"], response_model=PDResponse, response_model_exclude_none=True,

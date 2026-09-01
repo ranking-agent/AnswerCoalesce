@@ -20,6 +20,7 @@ from src.scoring import (
     score_inference,
 )
 from src.single_node_coalescer import (
+    edge_from_component,
     lookup_single,
     multi_curie_query,
     run_inference_lookup,
@@ -275,6 +276,104 @@ def test_edgar_initial_lookup_enforces_direction_and_allows_symmetric(
     assert forward.lookup_links[0].link_edge.target == "DISEASE:FORWARD"
     assert reverse.lookup_links[0].link_edge.source == "DISEASE:REVERSE"
     assert reverse.lookup_links[0].link_edge.target == "DRUG:1"
+    duckdb_store.close_connection()
+
+
+def test_edgar_initial_lookup_requires_and_preserves_query_qualifiers(
+    tmp_path,
+    monkeypatch,
+):
+    nodes = [
+        {"id": "GENE:1", "category": ["biolink:Gene"]},
+        {"id": "CHEM:MATCH", "category": ["biolink:ChemicalEntity"]},
+        {"id": "CHEM:UNQUALIFIED", "category": ["biolink:ChemicalEntity"]},
+        {"id": "CHEM:WRONG_DIRECTION", "category": ["biolink:ChemicalEntity"]},
+    ]
+    sources = [
+        {
+            "resource_id": "infores:test",
+            "resource_role": "primary_knowledge_source",
+        }
+    ]
+    query_relation = {
+        "predicate": "biolink:affects",
+        "qualified_predicate": "biolink:causes",
+        "object_aspect_qualifier": "activity_or_abundance",
+        "object_direction_qualifier": "decreased",
+    }
+    matching_relation = {
+        **query_relation,
+        "anatomical_context_qualifier": ["UBERON:0000955", "UBERON:0002037"],
+    }
+    edges = [
+        {
+            "id": "matching",
+            "subject": "CHEM:MATCH",
+            "object": "GENE:1",
+            **matching_relation,
+            "sources": sources,
+        },
+        {
+            "id": "unqualified",
+            "subject": "CHEM:UNQUALIFIED",
+            "predicate": "biolink:affects",
+            "object": "GENE:1",
+            "sources": sources,
+        },
+        {
+            "id": "wrong-direction",
+            "subject": "CHEM:WRONG_DIRECTION",
+            "object": "GENE:1",
+            **{
+                **matching_relation,
+                "object_direction_qualifier": "increased",
+            },
+            "sources": sources,
+        },
+    ]
+    node_file = tmp_path / "qualified-nodes.jsonl"
+    edge_file = tmp_path / "qualified-edges.jsonl"
+    database = tmp_path / "qualified.duckdb"
+    _write_jsonl(node_file, nodes)
+    _write_jsonl(edge_file, edges)
+
+    build_database(node_file, edge_file, database, blocklist=set())
+    monkeypatch.setenv("AC_DUCKDB_PATH", str(database))
+    duckdb_store.close_connection()
+
+    predicate_parts = json.dumps(query_relation, sort_keys=True)
+    lookup = lookup_single(
+        "GENE:1",
+        predicate_parts,
+        False,
+        "biolink:ChemicalEntity",
+    )
+
+    assert lookup.link_ids == ["CHEM:MATCH"]
+    direct_edge = edge_from_component(lookup.lookup_links[0].link_edge)
+    assert direct_edge["predicate"] == "biolink:affects"
+    assert direct_edge["qualifiers"] == [
+        {
+            "qualifier_type_id": "biolink:anatomical_context_qualifier",
+            "qualifier_value": "UBERON:0000955",
+        },
+        {
+            "qualifier_type_id": "biolink:anatomical_context_qualifier",
+            "qualifier_value": "UBERON:0002037",
+        },
+        {
+            "qualifier_type_id": "biolink:object_aspect_qualifier",
+            "qualifier_value": "activity_or_abundance",
+        },
+        {
+            "qualifier_type_id": "biolink:object_direction_qualifier",
+            "qualifier_value": "decreased",
+        },
+        {
+            "qualifier_type_id": "biolink:qualified_predicate",
+            "qualifier_value": "biolink:causes",
+        },
+    ]
     duckdb_store.close_connection()
 
 

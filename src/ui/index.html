@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Build enrichment and EDGAR queries against AnswerCoalesce.">
+  <title>AnswerCoalesce Workbench</title>
+  <link rel="stylesheet" href="/ui/assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#workspace">Skip to query builder</a>
+
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="AnswerCoalesce home">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M12 15.5 24 8l12 7.5v17L24 40l-12-7.5z"></path>
+        <circle cx="12" cy="15.5" r="4"></circle>
+        <circle cx="36" cy="15.5" r="4"></circle>
+        <circle cx="24" cy="40" r="4"></circle>
+        <circle cx="24" cy="24" r="5"></circle>
+      </svg>
+      <span>
+        <strong>AnswerCoalesce</strong>
+        <small>Query workbench</small>
+      </span>
+    </a>
+    <div class="service-state">
+      <a href="/docs">API docs</a>
+    </div>
+  </header>
+
+  <nav class="mode-tabs" role="tablist" aria-label="Query mode">
+    <button class="mode-tab is-active" id="tab-enrichment" type="button" role="tab" aria-selected="true" aria-controls="workspace" data-mode="enrichment">
+      <span class="tab-index">01</span>
+      <span>
+        <strong>Enrichment</strong>
+        <small>Find what a set shares</small>
+      </span>
+    </button>
+    <button class="mode-tab" id="tab-edgar" type="button" role="tab" aria-selected="false" aria-controls="workspace" data-mode="edgar">
+      <span class="tab-index">02</span>
+      <span>
+        <strong>EDGAR</strong>
+        <small>Learn and apply local rules</small>
+      </span>
+    </button>
+  </nav>
+
+  <main class="workspace" id="workspace">
+    <section class="panel composer-panel" aria-labelledby="composer-title">
+      <div class="panel-heading">
+        <div>
+          <p class="section-label" id="mode-kicker">Set enrichment</p>
+          <h2 id="composer-title">Build an enrichment query</h2>
+        </div>
+        <button class="text-button" id="load-example" type="button">Load example</button>
+      </div>
+      <p class="mode-description" id="mode-description">Start with two or more entities. AnswerCoalesce will rank concepts that are unexpectedly shared across the set.</p>
+
+      <form id="query-form">
+        <fieldset class="form-section">
+          <legend><span>1</span> Add input concepts</legend>
+          <div class="search-wrap">
+            <label for="entity-search">Find by name or CURIE</label>
+            <div class="search-row">
+              <input id="entity-search" name="entity-search" type="search" placeholder="Search asthma, PIK3CA, MONDO:0004979..." autocomplete="off" spellcheck="false">
+              <button class="secondary-button" id="search-button" type="button">Find</button>
+            </div>
+            <div class="search-results" id="search-results" role="listbox" aria-label="Name Resolver matches" hidden></div>
+          </div>
+
+          <div class="paste-block" id="paste-block">
+            <div class="label-row">
+              <label for="paste-input">Or paste a list</label>
+              <span>One per line, or comma separated</span>
+            </div>
+            <textarea id="paste-input" rows="3" placeholder="PIK3CA&#10;NCBIGene:5297&#10;PI4KB"></textarea>
+            <button class="secondary-button compact" id="resolve-paste" type="button">Resolve pasted entries</button>
+          </div>
+
+          <div class="resolution-queue" id="resolution-queue" hidden>
+            <div class="subheading-row">
+              <h3>Choose matches</h3>
+              <div class="inline-actions">
+                <button class="text-button" id="add-all-resolution" type="button">Add selected</button>
+                <button class="text-button" id="clear-resolution" type="button">Clear</button>
+              </div>
+            </div>
+            <div id="resolution-items"></div>
+          </div>
+
+          <div class="selected-block">
+            <div class="subheading-row">
+              <h3>Selected inputs</h3>
+              <span class="count-badge" id="entity-count">0</span>
+            </div>
+            <div class="entity-list" id="entity-list">
+              <p class="empty-inline">No inputs yet. Search, paste, or load the example.</p>
+            </div>
+          </div>
+
+          <div class="type-block" id="type-block" hidden>
+            <div class="subheading-row">
+              <h3>Possible input types</h3>
+              <span class="source-note">from NodeNorm</span>
+            </div>
+            <p class="field-help" id="type-help">Choose the type AnswerCoalesce should use for the input.</p>
+            <div class="type-options" id="type-options"></div>
+          </div>
+        </fieldset>
+
+        <fieldset class="form-section">
+          <legend><span>2</span> Define the relationship</legend>
+          <div class="control-grid">
+            <label>
+              Output type
+              <input id="output-type" name="output-type" list="category-list" value="biolink:ChemicalEntity" spellcheck="false">
+            </label>
+            <label>
+              Predicate
+              <input id="predicate" name="predicate" list="predicate-list" value="biolink:related_to" spellcheck="false">
+            </label>
+          </div>
+
+          <div class="direction-field">
+            <span class="control-label">Direction</span>
+            <div class="direction-options">
+              <label>
+                <input type="radio" name="direction" value="forward" checked>
+                <span id="forward-label">Inputs are subjects</span>
+              </label>
+              <label>
+                <input type="radio" name="direction" value="reverse">
+                <span id="reverse-label">Inputs are objects</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="qualifier-editor">
+            <div class="qualifier-heading">
+              <div>
+                <span class="control-label">Relationship qualifiers</span>
+                <small>Optional. All qualifiers in this set must match.</small>
+              </div>
+              <button class="secondary-button compact" id="add-qualifier" type="button">Add qualifier</button>
+            </div>
+            <div class="qualifier-rows" id="qualifier-rows">
+              <p class="empty-inline">No qualifiers. The query uses the base predicate.</p>
+            </div>
+          </div>
+        </fieldset>
+
+        <details class="advanced-section">
+          <summary>Advanced Settings (p-value, max results)</summary>
+          <div class="advanced-body">
+            <div class="control-grid">
+              <label>
+                P-value threshold
+                <input id="pvalue-threshold" name="pvalue-threshold" type="number" min="0" max="1" step="any" value="0.00001">
+              </label>
+              <label>
+                Maximum results
+                <input id="max-results" name="max-results" type="number" min="1" max="2000" value="25">
+              </label>
+            </div>
+            <div class="edgar-only" id="edgar-settings" hidden>
+              <label>
+                Maximum learned rules
+                <input id="max-rules" name="max-rules" type="number" min="1" max="1000" value="100">
+              </label>
+              <label>
+                Excluded predicates
+                <textarea id="excluded-predicates" rows="4" spellcheck="false"></textarea>
+              </label>
+            </div>
+          </div>
+        </details>
+
+        <details class="request-preview">
+          <summary>TRAPI request preview</summary>
+          <pre id="query-preview">Add inputs to build a request.</pre>
+        </details>
+
+        <div class="form-actions">
+          <p id="validation-message" aria-live="polite"></p>
+          <button class="primary-button" id="run-query" type="submit">
+            <span>Run enrichment</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 13 0m-5-5 5 5-5 5"></path></svg>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel results-panel" aria-labelledby="results-title">
+      <div class="panel-heading results-heading">
+        <div>
+          <p class="section-label">Ranked evidence</p>
+          <h2 id="results-title">Results</h2>
+        </div>
+        <button class="icon-button" id="download-results" type="button" title="Download TRAPI response" aria-label="Download TRAPI response" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"></path></svg>
+        </button>
+      </div>
+
+      <div class="edgar-result-tabs" id="edgar-result-tabs" role="tablist" aria-label="EDGAR result stages" hidden>
+        <button class="edgar-result-tab" type="button" role="tab" aria-selected="false" aria-controls="results-body" data-edgar-stage="matches">
+          <span class="stage-number">1</span>
+          <span>
+            <strong>Existing matches</strong>
+            <small id="edgar-match-count">0 found</small>
+          </span>
+        </button>
+        <button class="edgar-result-tab" type="button" role="tab" aria-selected="false" aria-controls="results-body" data-edgar-stage="rules">
+          <span class="stage-number">2</span>
+          <span>
+            <strong>Learned rules</strong>
+            <small id="edgar-rule-count">0 learned</small>
+          </span>
+        </button>
+        <button class="edgar-result-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="results-body" data-edgar-stage="new">
+          <span class="stage-number">3</span>
+          <span>
+            <strong>New entities</strong>
+            <small id="edgar-new-count">0 ranked</small>
+          </span>
+        </button>
+      </div>
+
+      <div class="result-summary" id="result-summary" hidden></div>
+      <div class="results-body" id="results-body" aria-live="polite">
+        <div class="empty-state">
+          <svg viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="60" cy="60" r="42"></circle>
+            <circle cx="37" cy="45" r="8"></circle>
+            <circle cx="81" cy="43" r="8"></circle>
+            <circle cx="69" cy="82" r="8"></circle>
+            <path d="M43 50 63 76M74 49 69 74M45 45h28"></path>
+          </svg>
+          <h3 id="empty-title">Your enrichment results will appear here</h3>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+  <aside class="result-drawer" id="result-drawer" aria-labelledby="drawer-title" aria-modal="true" role="dialog" hidden>
+    <div class="drawer-header">
+      <div>
+        <p class="section-label">Evidence detail</p>
+        <h2 id="drawer-title">Result</h2>
+      </div>
+      <button class="icon-button" id="close-drawer" type="button" aria-label="Close details">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+      </button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </aside>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <datalist id="category-list">
+    <option value="biolink:Gene"></option>
+    <option value="biolink:Protein"></option>
+    <option value="biolink:Disease"></option>
+    <option value="biolink:PhenotypicFeature"></option>
+    <option value="biolink:ChemicalEntity"></option>
+    <option value="biolink:Drug"></option>
+    <option value="biolink:BiologicalProcess"></option>
+    <option value="biolink:MolecularActivity"></option>
+    <option value="biolink:Pathway"></option>
+    <option value="biolink:AnatomicalEntity"></option>
+  </datalist>
+  <datalist id="predicate-list">
+    <option value="biolink:related_to"></option>
+    <option value="biolink:treats"></option>
+    <option value="biolink:has_phenotype"></option>
+    <option value="biolink:genetically_associated_with"></option>
+    <option value="biolink:affects"></option>
+    <option value="biolink:interacts_with"></option>
+    <option value="biolink:participates_in"></option>
+    <option value="biolink:actively_involved_in"></option>
+    <option value="biolink:associated_with"></option>
+  </datalist>
+
+  <datalist id="qualifier-value-list">
+    <option value="biolink:causes"></option>
+    <option value="biolink:contributes_to"></option>
+    <option value="activity"></option>
+    <option value="activity_or_abundance"></option>
+    <option value="abundance"></option>
+    <option value="expression"></option>
+    <option value="secretion"></option>
+    <option value="transport"></option>
+    <option value="degradation"></option>
+    <option value="molecular_interaction"></option>
+    <option value="localization"></option>
+    <option value="increased"></option>
+    <option value="decreased"></option>
+    <option value="activation"></option>
+    <option value="inhibition"></option>
+    <option value="NCBITaxon:9606"></option>
+    <option value="NCBITaxon:10090"></option>
+  </datalist>
+
+  <script src="/ui/assets/app.js" defer></script>
+</body>
+</html>
