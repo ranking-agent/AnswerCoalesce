@@ -6,6 +6,13 @@ from src import server
 client = TestClient(server.APP)
 
 
+def test_openapi_reports_application_version():
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+    assert response.json()["info"]["version"] == server.AC_VERSION
+
+
 def test_ui_is_served_from_root_and_ui_path():
     root_response = client.get("/")
     ui_response = client.get("/ui")
