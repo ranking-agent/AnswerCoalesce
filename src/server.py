@@ -26,7 +26,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
 
-AC_VERSION = '3.1.1'
+AC_VERSION = '3.1.2'
 
 # get the location for the log
 this_dir = os.path.dirname(os.path.realpath(__file__))
