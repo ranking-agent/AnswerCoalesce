@@ -1,11 +1,8 @@
 # leverage the renci python base image
-FROM ghcr.io/translatorsri/renci-python-image:3.12.4
+FROM ghcr.io/translatorsri/renci-python-image:3.12.13
 
 #Build from this branch.  Assume master for this repo
 ARG BRANCH_NAME=master
-
-# update the container
-RUN apt-get update
 
 # make a directory for the repo
 RUN mkdir /repo
